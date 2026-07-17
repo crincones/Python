@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import json
 import pickle
 import argparse
 
@@ -9,6 +10,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
+from datetime import datetime, timezone
 
 SCOPES = [
     "https://www.googleapis.com/auth/youtube.upload",
@@ -23,6 +25,29 @@ VIDEO_EXTENSIONS = (
     ".webm",
     ".m4v"
 )
+
+REGISTRY_FILE = "uploaded_videos.json"
+
+
+def load_registry(registry_path):
+    if os.path.exists(registry_path):
+        with open(registry_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return {}
+
+
+def save_registry(registry_path, registry):
+    # grava em arquivo temporário e substitui, para evitar corromper
+    # o registro caso o processo seja interrompido no meio da escrita
+    tmp_path = registry_path + ".tmp"
+    with open(tmp_path, "w", encoding="utf-8") as f:
+        json.dump(registry, f, ensure_ascii=False, indent=2)
+    os.replace(tmp_path, registry_path)
+
+
+def make_key(filename, playlist_id):
+    abs_path = os.path.abspath(filename)
+    return f"{abs_path}::{playlist_id or ''}"
 
 
 def get_authenticated_service():
@@ -48,47 +73,73 @@ def get_authenticated_service():
     return build("youtube", "v3", credentials=creds)
 
 
-def upload_video(youtube, filename, playlist_id):
+def upload_video(youtube, filename, playlist_id, registry, registry_path):
 
+    key = make_key(filename, playlist_id)
     title = os.path.splitext(os.path.basename(filename))[0]
 
-    body = {
-        "snippet": {
-            "title": title,
-            "description": "",
-            "categoryId": "22"
-        },
-        "status": {
-            "privacyStatus": "unlisted",
-            "selfDeclaredMadeForKids": False
+    entry = registry.get(key)
+
+    # já foi enviado e (se havia playlist) já foi adicionado a ela
+    if entry and entry.get("status") == "done":
+        print(f"Já enviado, pulando: {title}")
+        print("-" * 40)
+        return
+
+    video_id = entry.get("video_id") if entry else None
+
+    if video_id:
+        print(f"Upload já feito anteriormente (video_id={video_id}), retomando etapa de playlist: {title}")
+    else:
+        body = {
+            "snippet": {
+                "title": title,
+                "description": "",
+                "categoryId": "22"
+            },
+            "status": {
+                "privacyStatus": "unlisted",
+                "selfDeclaredMadeForKids": False
+            }
         }
-    }
 
-    media = MediaFileUpload(
-        filename,
-        chunksize=8 * 1024 * 1024,
-        resumable=True
-    )
+        media = MediaFileUpload(
+            filename,
+            chunksize=8 * 1024 * 1024,
+            resumable=True
+        )
 
-    request = youtube.videos().insert(
-        part="snippet,status",
-        body=body,
-        media_body=media
-    )
+        request = youtube.videos().insert(
+            part="snippet,status",
+            body=body,
+            media_body=media
+        )
 
-    print(f"Enviando: {title}")
+        print(f"Enviando: {title}")
 
-    response = None
+        response = None
 
-    while response is None:
-        status, response = request.next_chunk()
+        while response is None:
+            status, response = request.next_chunk()
 
-        if status:
-            print(f"{title}: {int(status.progress()*100)}%")
+            if status:
+                print(f"{title}: {int(status.progress()*100)}%")
 
-    video_id = response["id"]
+        video_id = response["id"]
 
-    print("Upload concluído.")
+        print("Upload concluído.")
+
+        # salva o registro imediatamente após o upload, antes de mexer
+        # na playlist, para não reenviar o vídeo caso a etapa seguinte falhe
+        registry[key] = {
+            "filename": os.path.abspath(filename),
+            "title": title,
+            "playlist_id": playlist_id or None,
+            "video_id": video_id,
+            "status": "uploaded",
+            "uploaded_at": datetime.now(timezone.utc).isoformat()
+        }
+        save_registry(registry_path, registry)
 
     if playlist_id:
 
@@ -107,7 +158,10 @@ def upload_video(youtube, filename, playlist_id):
 
         print("Adicionado à playlist.")
 
-    print("-"*40)
+    registry[key]["status"] = "done"
+    save_registry(registry_path, registry)
+
+    print("-" * 40)
 
 
 def main():
@@ -126,9 +180,17 @@ def main():
         help="ID da playlist"
     )
 
+    parser.add_argument(
+        "--registry",
+        default=REGISTRY_FILE,
+        help="Caminho do arquivo de registro de uploads (padrão: uploaded_videos.json)"
+    )
+
     args = parser.parse_args()
 
     youtube = get_authenticated_service()
+
+    registry = load_registry(args.registry)
 
     videos = []
 
@@ -142,7 +204,9 @@ def main():
         upload_video(
             youtube,
             video,
-            args.playlist
+            args.playlist,
+            registry,
+            args.registry
         )
 
     print("Todos os uploads finalizaram.")
