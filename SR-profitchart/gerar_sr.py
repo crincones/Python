@@ -84,8 +84,8 @@ CONFIG = {
     # Preco de ancoragem: os niveis sao escolhidos em torno dele, N acima e
     # N abaixo. None = usa o fechamento da ultima barra da janela.
     "preco_referencia": 172000.0,
-    "niveis_acima": 10,
-    "niveis_abaixo": 10,
+    "niveis_acima": 20,
+    "niveis_abaixo": 20,
     # "proximidade" = escada densa em volta do preco de referencia (varre de
     # dentro para fora). "relevancia" = os melhores niveis da janela, onde
     # quer que estejam — mais espalhados.
@@ -131,7 +131,7 @@ CONFIG = {
 
     # ------------------------------------------------------------- saidas
     "saida_csv": "niveis_sr.csv",
-    "saida_ntsl": "niveis_sr_ntsl.txt",
+    "saida_ntsl": "niveis_sr.ntsl",
     "saida_png": "niveis_sr.png",
 }
 
