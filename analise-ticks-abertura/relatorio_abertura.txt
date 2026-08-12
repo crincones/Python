@@ -1,0 +1,73 @@
+==============================================================================
+RELATÓRIO - TICKS DE ABERTURA
+==============================================================================
+Janela analisada : 2026-08-03 09:03:04.430000 -> 2026-08-03 09:03:59.991000  (55.6 s)
+Total de ticks   : 16170  (LAST: 15890, ticks BID/ASK: 280, ciclos de quote assentados: 144)
+Tick size detectado (LAST): 5 pontos
+
+------------------------------------------------------------------------------
+1) QUANDO SURGE O PRIMEIRO BID/ASK UTILIZÁVEL
+------------------------------------------------------------------------------
+Primeiro bid&ask ASSENTADO (ambos já atualizados) com spread coerente:
+    2026-08-03 09:03:04.774000
+  -> 344 ms depois do primeiro tick do arquivo.
+Ciclos de quote (bid+ask já assentados): 144  (dos quais 0 são 'lixo': spread negativo ou > limite)
+
+------------------------------------------------------------------------------
+2) BID E ASK NÃO CHEGAM ATÔMICOS (cuidado ao ler tick a tick)
+------------------------------------------------------------------------------
+Olhando tick a tick (estado bruto após cada linha), 53 instantes
+mostram spread NEGATIVO (book aparentemente cruzado).
+Agrupando bid+ask que chegam a poucos ms de distância no mesmo 'ciclo' de
+atualização e olhando só o estado final de cada ciclo, sobram apenas
+0 spread(s) negativo(s) reais.
+  -> Ou seja: quase todo 'spread negativo' é artefato de ler o book no meio
+     de uma atualização (BID já chegou, ASK ainda não, ou vice-versa) - não
+     é o mercado cruzando de verdade. Se o seu código decide o stop olhando
+     o bid/ask tick a tick, ele pode reagir a um cruzamento que não existiu.
+     Sempre use o par bid&ask já assentado (mesmo timestamp/poucos ms).
+
+------------------------------------------------------------------------------
+3) BID/ASK É RARO PERTO DO LAST: CADÊNCIA DE ATUALIZAÇÃO
+------------------------------------------------------------------------------
+Intervalo mediano entre ciclos de bid/ask assentados: 350 ms (p90: 360 ms)
+Intervalo mediano entre negócios (LAST)              : 1.0 ms
+Negócios (LAST) executados dentro de cada ciclo de quote: mediana 92, máx 463
+  -> Entre um refresh de bid/ask e o próximo, o preço já andou várias
+     vezes no LAST. Um stop referenciado só no LAST reage mais rápido,
+     mas 'no escuro' quanto ao book; um stop que depende de BID/ASK só
+     vê o mercado em fotos espaçadas por esse intervalo.
+
+------------------------------------------------------------------------------
+4) SPREAD (ASK - BID) DOS CICLOS ASSENTADOS, JÁ SEM OUTLIERS
+------------------------------------------------------------------------------
+mínimo : 5 pontos
+mediana: 5 pontos
+p90    : 10 pontos
+p99    : 10 pontos
+máximo : 10 pontos
+
+------------------------------------------------------------------------------
+5) RECOMENDAÇÃO PRÁTICA PARA A SELL STOP
+------------------------------------------------------------------------------
+Distância mínima sugerida abaixo do preço de referência:
+    spread_p99 (10) + 2 tick(s) de folga (10 pts) = 20 pontos
+
+Conclusão sobre 'esperar bid/ask ou usar LAST':
+  - Bid/ask aparece cedo (poucas centenas de ms), mas ATUALIZA POUCO
+    (a cada ~350 ms), enquanto o LAST tickeia dezenas/centenas de vezes
+    por segundo. Esperar 'o' bid/ask se formar não resolve sozinho, pois
+    ele fica 'desatualizado' entre os próprios refreshes.
+  - Regra prática: só considere o book confiável a partir do primeiro
+    bid&ask ASSENTADO com spread dentro do range normal (itens 1/4 acima)
+    - e sempre leia o par bid&ask já assentado (item 2), nunca um tick
+    isolado no meio de uma atualização.
+  - Coloque a sell stop com folga >= (spread_p99 + alguns ticks) abaixo
+    do LAST/BID vigente para não ser 'varrida' pelo próprio spread indo
+    e voltando nos primeiros segundos.
+  - Se a plataforma valida/dispara a stop contra o BID (padrão comum em
+    MT5 para ordens de venda), o gatilho efetivo só é confiável a partir
+    do primeiro-quote-válido apontado no item 1 - antes disso o BID pode
+    nem existir ou estar 'descolado' do LAST. Confirme no seu corretor
+    qual preço (bid/ask/last) ele usa para checar o disparo da pendente.
+==============================================================================
