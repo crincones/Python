@@ -1,0 +1,5 @@
+numpy>=1.26
+pandas>=2.2
+scipy>=1.11
+matplotlib>=3.8
+MetaTrader5>=5.0.45; platform_system == "Windows"  # so p/ atualiza-historico.py

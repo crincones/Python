@@ -1,0 +1,129 @@
+//========================================================================
+// Niveis importantes (preco + relevancia) -- sem suporte/resistencia, sem zonas
+// Gerado automaticamente por main.py em 12/08/2026 21:01
+// Historico       : 2021-08-12 09:00:00  ->  2026-08-11 18:24:00
+// Candles 1m      : 690.950
+// Tick size       : 5.0
+// Grafico         : Renko 40R = 195 pts | 32.953 tijolos
+// Eventos         : 10.291
+// Clustering      : kde | banda 68 pts
+// Separacao linhas: 195 pts (media obtida 195 pts)
+// Niveis          : 20 de 402 candidatos
+//------------------------------------------------------------------------
+// Se a sua versao do ProfitChart nao aceitar RGB(), troque a linha
+//   Cor := RGB( CorR, CorG, CorB );   por   Cor := clBlue;
+//------------------------------------------------------------------------
+// #    Preco        Score  Ev   Dias  Meses  Span(d)  Esc  Ultimo evento
+// 1       173.940   86.7   18    12      4      181    4  21/07/2026
+// 2       173.745   79.1   22    12      4      168    3  09/07/2026
+// 3       173.550   57.4   15    10      3       70    3  10/08/2026
+// 4       173.355   71.4   13     8      4      197    3  07/08/2026
+// 5       173.160   62.6   21    10      3       70    3  10/08/2026
+// 6       172.965   53.5   12     8      3       70    3  10/08/2026
+// 7       172.770   77.4   16    10      3       70    4  10/08/2026
+// 8       172.575   51.8   11     7      3       68    2  10/08/2026
+// 9       172.380   78.7   12     8      2       69    4  11/08/2026
+// 10      172.185   68.4   12     6      3       68    3  10/08/2026
+// 11      171.990   56.9    8     6      2       69    2  11/08/2026
+// 12      171.795   63.5   13     6      3      201    3  10/08/2026
+// 13      171.600   48.8    8     6      2       69    3  11/08/2026
+// 14      171.405   62.4   10     8      3      202    3  11/08/2026
+// 15      171.210   39.6    7     4      1       13    3  18/06/2026
+// 16      171.015   53.6   11     5      2      152    3  22/06/2026
+// 17      170.820   53.1   12     8      2      149    3  19/06/2026
+// 18      170.625   43.3   10     4      1       11    3  16/06/2026
+// 19      170.430   57.2    6     5      2      148    3  18/06/2026
+// 20      170.235   55.7   12     7      1       17    3  22/06/2026
+//========================================================================
+
+input
+  CorR         ( 0 );
+  CorG         ( 90 );
+  CorB         ( 255 );
+  Espessura    ( 1 );
+  TipoLinha    ( 1 );   // 0=solida 1=tracejada 2=pontilhada 3=traco-ponto 4=traco-ponto-ponto
+  TamanhoTexto ( 9 );
+  LocalTexto   ( 0 );
+
+var
+  Cor    : Integer;
+  Estilo : Integer;
+
+begin
+
+  Cor := RGB( CorR, CorG, CorB );
+
+  // 0=solida 1=tracejada 2=pontilhada 3=traco-ponto 4=traco-ponto-ponto
+  if      TipoLinha = 0 then Estilo := psSolid
+  else if TipoLinha = 2 then Estilo := psDot
+  else if TipoLinha = 3 then Estilo := psDashDot
+  else if TipoLinha = 4 then Estilo := psDashDotDot
+  else                       Estilo := psDash;
+
+  // Desenha uma unica vez, na ultima barra do grafico.
+  if LastBarOnChart then
+  begin
+
+    // Nivel 1: score=86.7 | eventos=18 | dias=12 | meses=4 | ultimo evento 21/07/2026
+    HorizontalLineCustom( 173940.00, Cor, Espessura, Estilo, "R87 T18", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 2: score=79.1 | eventos=22 | dias=12 | meses=4 | ultimo evento 09/07/2026
+    HorizontalLineCustom( 173745.00, Cor, Espessura, Estilo, "R79 T22", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 3: score=57.4 | eventos=15 | dias=10 | meses=3 | ultimo evento 10/08/2026
+    HorizontalLineCustom( 173550.00, Cor, Espessura, Estilo, "R57 T15", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 4: score=71.4 | eventos=13 | dias=8 | meses=4 | ultimo evento 07/08/2026
+    HorizontalLineCustom( 173355.00, Cor, Espessura, Estilo, "R71 T13", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 5: score=62.6 | eventos=21 | dias=10 | meses=3 | ultimo evento 10/08/2026
+    HorizontalLineCustom( 173160.00, Cor, Espessura, Estilo, "R63 T21", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 6: score=53.5 | eventos=12 | dias=8 | meses=3 | ultimo evento 10/08/2026
+    HorizontalLineCustom( 172965.00, Cor, Espessura, Estilo, "R54 T12", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 7: score=77.4 | eventos=16 | dias=10 | meses=3 | ultimo evento 10/08/2026
+    HorizontalLineCustom( 172770.00, Cor, Espessura, Estilo, "R77 T16", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 8: score=51.8 | eventos=11 | dias=7 | meses=3 | ultimo evento 10/08/2026
+    HorizontalLineCustom( 172575.00, Cor, Espessura, Estilo, "R52 T11", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 9: score=78.7 | eventos=12 | dias=8 | meses=2 | ultimo evento 11/08/2026
+    HorizontalLineCustom( 172380.00, Cor, Espessura, Estilo, "R79 T12", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 10: score=68.4 | eventos=12 | dias=6 | meses=3 | ultimo evento 10/08/2026
+    HorizontalLineCustom( 172185.00, Cor, Espessura, Estilo, "R68 T12", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 11: score=56.9 | eventos=8 | dias=6 | meses=2 | ultimo evento 11/08/2026
+    HorizontalLineCustom( 171990.00, Cor, Espessura, Estilo, "R57 T8", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 12: score=63.5 | eventos=13 | dias=6 | meses=3 | ultimo evento 10/08/2026
+    HorizontalLineCustom( 171795.00, Cor, Espessura, Estilo, "R64 T13", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 13: score=48.8 | eventos=8 | dias=6 | meses=2 | ultimo evento 11/08/2026
+    HorizontalLineCustom( 171600.00, Cor, Espessura, Estilo, "R49 T8", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 14: score=62.4 | eventos=10 | dias=8 | meses=3 | ultimo evento 11/08/2026
+    HorizontalLineCustom( 171405.00, Cor, Espessura, Estilo, "R62 T10", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 15: score=39.6 | eventos=7 | dias=4 | meses=1 | ultimo evento 18/06/2026
+    HorizontalLineCustom( 171210.00, Cor, Espessura, Estilo, "R40 T7", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 16: score=53.6 | eventos=11 | dias=5 | meses=2 | ultimo evento 22/06/2026
+    HorizontalLineCustom( 171015.00, Cor, Espessura, Estilo, "R54 T11", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 17: score=53.1 | eventos=12 | dias=8 | meses=2 | ultimo evento 19/06/2026
+    HorizontalLineCustom( 170820.00, Cor, Espessura, Estilo, "R53 T12", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 18: score=43.3 | eventos=10 | dias=4 | meses=1 | ultimo evento 16/06/2026
+    HorizontalLineCustom( 170625.00, Cor, Espessura, Estilo, "R43 T10", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 19: score=57.2 | eventos=6 | dias=5 | meses=2 | ultimo evento 18/06/2026
+    HorizontalLineCustom( 170430.00, Cor, Espessura, Estilo, "R57 T6", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 20: score=55.7 | eventos=12 | dias=7 | meses=1 | ultimo evento 22/06/2026
+    HorizontalLineCustom( 170235.00, Cor, Espessura, Estilo, "R56 T12", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+  end;
+
+end;

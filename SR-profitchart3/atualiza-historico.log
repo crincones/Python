@@ -1,0 +1,72 @@
+========================================================================
+[2026-08-13 08:02:44] DRY-RUN
+------------------------------------------------------------------------
+Simbolo  : WIN$N M1 | desde 2021-01-01
+Arquivo  : C:\Users\Carlos\Dev\Python\SR-profitchart3\WIN$N_M1_202108120900_202608111824.csv
+Atual    : 690.950 barras | 2021-08-12 09:00 -> 2026-08-11 18:24
+Terminal : MetaTrader 5 build 6090 (C:\Users\Carlos\AppData\Roaming\MetaQuotes\Terminal\Metatrader5B3)
+Conta    : 2191249 @ XPMT5-PRD | conectado=True
+MT5      : 690.980 barras baixadas em 14 blocos
+
+Novas    : 565 barras
+           de 2026-08-12 09:00 ate 2026-08-12 18:24
+Corrigidas: 690.415 barras ja existentes
+Preservadas: 535 barras que o MT5 nao serve mais
+Resultado : 691.515 barras | 2021-08-12 09:00 -> 2026-08-12 18:24
+
+DRY-RUN: nada foi gravado.
+
+========================================================================
+[2026-08-13 08:04:17] SUCESSO
+------------------------------------------------------------------------
+Simbolo  : WIN$N M1 | desde 2021-01-01
+Arquivo  : C:\Users\Carlos\Dev\Python\SR-profitchart3\WIN$N_M1_202108120900_202608111824.csv
+Atual    : 690.950 barras | 2021-08-12 09:00 -> 2026-08-11 18:24
+Terminal : MetaTrader 5 build 6090 (C:\Users\Carlos\AppData\Roaming\MetaQuotes\Terminal\Metatrader5B3)
+Conta    : 2191249 @ XPMT5-PRD | conectado=True
+MT5      : 690.980 barras baixadas em 14 blocos
+
+Novas    : 565 barras
+           de 2026-08-12 09:00 ate 2026-08-12 18:24
+Corrigidas: 0 barras ja existentes
+Preservadas: 535 barras que o MT5 nao serve mais
+Resultado : 691.515 barras | 2021-08-12 09:00 -> 2026-08-12 18:24
+Backup   : C:\Users\Carlos\Dev\Python\SR-profitchart3\WIN$N_M1_202108120900_202608111824.csv.bak
+Gravado  : C:\Users\Carlos\Dev\Python\SR-profitchart3\WIN$N_M1_202108120900_202608111824.csv (41.0 MB)
+
+SUCESSO.
+
+========================================================================
+[2026-08-13 08:04:41] SEM MUDANCAS
+------------------------------------------------------------------------
+Simbolo  : WIN$N M1 | desde 2021-01-01
+Arquivo  : C:\Users\Carlos\Dev\Python\SR-profitchart3\WIN$N_M1_202108120900_202608111824.csv
+Atual    : 691.515 barras | 2021-08-12 09:00 -> 2026-08-12 18:24
+Terminal : MetaTrader 5 build 6090 (C:\Users\Carlos\AppData\Roaming\MetaQuotes\Terminal\Metatrader5B3)
+Conta    : 2191249 @ XPMT5-PRD | conectado=True
+MT5      : 690.980 barras baixadas em 14 blocos
+
+Novas    : 0 barras
+Corrigidas: 0 barras ja existentes
+Preservadas: 535 barras que o MT5 nao serve mais
+Resultado : 691.515 barras | 2021-08-12 09:00 -> 2026-08-12 18:24
+
+Nada a fazer: o arquivo ja esta atualizado.
+
+========================================================================
+[2026-08-13 08:05:03] FALHA
+------------------------------------------------------------------------
+Simbolo  : NAOEXISTE M1 | desde 2021-01-01
+Arquivo  : C:\Users\Carlos\Dev\Python\SR-profitchart3\WIN$N_M1_202108120900_202608111824.csv
+Atual    : 691.515 barras | 2021-08-12 09:00 -> 2026-08-12 18:24
+Terminal : MetaTrader 5 build 6090 (C:\Users\Carlos\AppData\Roaming\MetaQuotes\Terminal\Metatrader5B3)
+Conta    : 2191249 @ XPMT5-PRD | conectado=True
+
+FALHA: simbolo NAOEXISTE nao existe neste terminal
+Traceback (most recent call last):
+  File "C:\Users\Carlos\Dev\Python\SR-profitchart3\atualiza-historico.py", line 227, in main
+    novo = baixar(args.symbol, desde, agora, args.chunk_dias, log)
+  File "C:\Users\Carlos\Dev\Python\SR-profitchart3\atualiza-historico.py", line 145, in baixar
+    raise RuntimeError(f"simbolo {symbol} nao existe neste terminal")
+RuntimeError: simbolo NAOEXISTE nao existe neste terminal
+

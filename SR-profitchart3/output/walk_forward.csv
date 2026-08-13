@@ -1,0 +1,4 @@
+teste,treino_ate,n_niveis,pct_tocados,toques_niveis,toques_controle,forca_niveis,forca_controle,razao,razao_toques,corr_score_forca,reacao_media_pts,min_ate_movimento,min_ate_movimento_controle
+2023,2022-12-31,16,100.0,41.0,35.9,1.046,0.989,1.058,1.142,-0.318,667.9,87.7,99.4
+2025,2024-12-31,15,100.0,11.27,26.01,0.995,1.1,0.905,0.433,-0.087,521.1,112.3,85.0
+2026,2025-12-31,2,50.0,1.5,6.15,0.901,1.017,0.886,0.244,,795.0,112.7,156.2

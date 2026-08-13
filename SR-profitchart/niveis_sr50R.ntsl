@@ -1,0 +1,186 @@
+//======================================================================
+// SR Automatico
+// Gerado automaticamente por gerar_sr.py em 12/08/2026 15:29
+// Janela analisada : 08/10/2021 09:00  ->  06/08/2026 17:20
+// Barras / caixa   : 19887 barras | box renko ~ 245 pts
+// Criterios        : >= 2 toques distintos, relevancia >= 25, pivo n=3, zona +-122 pts
+// Referencia       : 172,000 (20 acima / 20 abaixo)
+// Niveis           : 40 (separacao min. 150 pts)
+//----------------------------------------------------------------------
+// #   Preco        Zona                  Toques  Rej  Flip  Relev
+// 1   176,510      176,390 - 176,630        26    14    S    84.3
+// 2   176,330      176,210 - 176,450        25    15    S    87.0
+// 3   176,110      175,990 - 176,230        23    8     S    78.3
+// 4   175,930      175,810 - 176,050        27    11    S    81.0
+// 5   175,725      175,600 - 175,850        26    12    S    85.7
+// 6   175,495      175,370 - 175,620        28    16    S    88.3
+// 7   175,245      175,120 - 175,370        28    15    S    85.7
+// 8   175,000      174,880 - 175,120        25    11    S    84.1
+// 9   174,705      174,580 - 174,830        23    11    S    83.3
+// 10  174,485      174,360 - 174,610        25    16    S    86.1
+// 11  174,270      174,150 - 174,390        24    13    S    82.6
+// 12  174,030      173,910 - 174,150        24    13    S    82.9
+// 13  173,830      173,710 - 173,950        25    14    S    86.8
+// 14  173,485      173,360 - 173,610        22    9     S    80.5
+// 15  173,245      173,120 - 173,370        18    6     S    68.3
+// 16  173,070      172,950 - 173,190        16    9     S    78.3
+// 17  172,900      172,780 - 173,020        17    10    S    83.2
+// 18  172,630      172,510 - 172,750        16    8     S    71.1
+// 19  172,465      172,340 - 172,590        19    13    S    83.8
+// 20  172,200      172,080 - 172,320        18    12    S    82.4
+// 21  171,990      171,870 - 172,110        17    10    S    84.1
+// 22  171,720      171,600 - 171,840        12    5     S    72.4
+// 23  171,205      171,080 - 171,330        13    6     S    71.1
+// 24  171,055      170,930 - 171,180        11    6     S    73.1
+// 25  170,845      170,720 - 170,970        10    5     S    66.5
+// 26  170,445      170,320 - 170,570        11    7     S    75.2
+// 27  170,190      170,070 - 170,310        13    8     S    77.7
+// 28  169,920      169,800 - 170,040        14    9     S    76.8
+// 29  169,755      169,630 - 169,880        12    7     S    77.8
+// 30  169,205      169,080 - 169,330        6     5     -    63.8
+// 31  168,790      168,670 - 168,910        6     5     -    60.3
+// 32  168,435      168,310 - 168,560        4     3     -    64.6
+// 33  165,835      165,710 - 165,960        6     5     S    39.3
+// 34  165,650      165,530 - 165,770        8     7     S    51.9
+// 35  165,440      165,320 - 165,560        8     5     S    38.3
+// 36  165,285      165,160 - 165,410        7     4     S    28.7
+// 37  165,015      164,890 - 165,140        11    6     S    45.1
+// 38  164,855      164,730 - 164,980        9     5     S    37.7
+// 39  164,510      164,390 - 164,630        8     5     S    33.1
+// 40  164,315      164,190 - 164,440        8     5     S    45.6
+//======================================================================
+
+input
+  TamanhoTexto ( 9 );
+  LocalTexto   ( 0 );  // posicao do rotulo sobre a linha
+
+begin
+
+  // Desenha UMA unica vez, na ultima barra do grafico. Sem esta guarda
+  // a NTSL repetiria as chamadas em todas as barras da serie.
+  if LastBarOnChart then
+  begin
+
+    // Nivel 1: toques=26 | rejeicoes=14 | relevancia=84.3 | ultimo toque 06/08/2026
+    HorizontalLineCustom( 176510.00, clBlue, 1, psDash, "R84 T26", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 2: toques=25 | rejeicoes=15 | relevancia=87.0 | ultimo toque 06/08/2026
+    HorizontalLineCustom( 176330.00, clBlue, 1, psDash, "R87 T25", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 3: toques=23 | rejeicoes=8 | relevancia=78.3 | ultimo toque 06/08/2026
+    HorizontalLineCustom( 176110.00, clBlue, 1, psDash, "R78 T23", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 4: toques=27 | rejeicoes=11 | relevancia=81.0 | ultimo toque 06/08/2026
+    HorizontalLineCustom( 175930.00, clBlue, 1, psDash, "R81 T27", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 5: toques=26 | rejeicoes=12 | relevancia=85.7 | ultimo toque 06/08/2026
+    HorizontalLineCustom( 175725.00, clBlue, 1, psDash, "R86 T26", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 6: toques=28 | rejeicoes=16 | relevancia=88.3 | ultimo toque 06/08/2026
+    HorizontalLineCustom( 175495.00, clBlue, 1, psDash, "R88 T28", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 7: toques=28 | rejeicoes=15 | relevancia=85.7 | ultimo toque 30/07/2026
+    HorizontalLineCustom( 175245.00, clBlue, 1, psDash, "R86 T28", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 8: toques=25 | rejeicoes=11 | relevancia=84.1 | ultimo toque 30/07/2026
+    HorizontalLineCustom( 175000.00, clBlue, 1, psDash, "R84 T25", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 9: toques=23 | rejeicoes=11 | relevancia=83.3 | ultimo toque 30/07/2026
+    HorizontalLineCustom( 174705.00, clBlue, 1, psDash, "R83 T23", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 10: toques=25 | rejeicoes=16 | relevancia=86.1 | ultimo toque 30/07/2026
+    HorizontalLineCustom( 174485.00, clBlue, 1, psDash, "R86 T25", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 11: toques=24 | rejeicoes=13 | relevancia=82.6 | ultimo toque 29/07/2026
+    HorizontalLineCustom( 174270.00, clBlue, 1, psDash, "R83 T24", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 12: toques=24 | rejeicoes=13 | relevancia=82.9 | ultimo toque 29/07/2026
+    HorizontalLineCustom( 174030.00, clBlue, 1, psDash, "R83 T24", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 13: toques=25 | rejeicoes=14 | relevancia=86.8 | ultimo toque 21/07/2026
+    HorizontalLineCustom( 173830.00, clBlue, 1, psDash, "R87 T25", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 14: toques=22 | rejeicoes=9 | relevancia=80.5 | ultimo toque 21/07/2026
+    HorizontalLineCustom( 173485.00, clBlue, 1, psDash, "R80 T22", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 15: toques=18 | rejeicoes=6 | relevancia=68.3 | ultimo toque 09/07/2026
+    HorizontalLineCustom( 173245.00, clBlue, 1, psDash, "R68 T18", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 16: toques=16 | rejeicoes=9 | relevancia=78.3 | ultimo toque 09/07/2026
+    HorizontalLineCustom( 173070.00, clBlue, 1, psDash, "R78 T16", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 17: toques=17 | rejeicoes=10 | relevancia=83.2 | ultimo toque 09/07/2026
+    HorizontalLineCustom( 172900.00, clBlue, 1, psDash, "R83 T17", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 18: toques=16 | rejeicoes=8 | relevancia=71.1 | ultimo toque 09/07/2026
+    HorizontalLineCustom( 172630.00, clBlue, 1, psDash, "R71 T16", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 19: toques=19 | rejeicoes=13 | relevancia=83.8 | ultimo toque 09/07/2026
+    HorizontalLineCustom( 172465.00, clBlue, 1, psDash, "R84 T19", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 20: toques=18 | rejeicoes=12 | relevancia=82.4 | ultimo toque 08/07/2026
+    HorizontalLineCustom( 172200.00, clBlue, 1, psDash, "R82 T18", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 21: toques=17 | rejeicoes=10 | relevancia=84.1 | ultimo toque 08/07/2026
+    HorizontalLineCustom( 171990.00, clBlue, 1, psDash, "R84 T17", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 22: toques=12 | rejeicoes=5 | relevancia=72.4 | ultimo toque 23/06/2026
+    HorizontalLineCustom( 171720.00, clBlue, 1, psDash, "R72 T12", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 23: toques=13 | rejeicoes=6 | relevancia=71.1 | ultimo toque 22/06/2026
+    HorizontalLineCustom( 171205.00, clBlue, 1, psDash, "R71 T13", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 24: toques=11 | rejeicoes=6 | relevancia=73.1 | ultimo toque 22/06/2026
+    HorizontalLineCustom( 171055.00, clBlue, 1, psDash, "R73 T11", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 25: toques=10 | rejeicoes=5 | relevancia=66.5 | ultimo toque 22/06/2026
+    HorizontalLineCustom( 170845.00, clBlue, 1, psDash, "R66 T10", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 26: toques=11 | rejeicoes=7 | relevancia=75.2 | ultimo toque 22/06/2026
+    HorizontalLineCustom( 170445.00, clBlue, 1, psDash, "R75 T11", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 27: toques=13 | rejeicoes=8 | relevancia=77.7 | ultimo toque 22/06/2026
+    HorizontalLineCustom( 170190.00, clBlue, 1, psDash, "R78 T13", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 28: toques=14 | rejeicoes=9 | relevancia=76.8 | ultimo toque 17/06/2026
+    HorizontalLineCustom( 169920.00, clBlue, 1, psDash, "R77 T14", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 29: toques=12 | rejeicoes=7 | relevancia=77.8 | ultimo toque 17/06/2026
+    HorizontalLineCustom( 169755.00, clBlue, 1, psDash, "R78 T12", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 30: toques=6 | rejeicoes=5 | relevancia=63.8 | ultimo toque 16/06/2026
+    HorizontalLineCustom( 169205.00, clBlue, 1, psDash, "R64 T6", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 31: toques=6 | rejeicoes=5 | relevancia=60.3 | ultimo toque 11/06/2026
+    HorizontalLineCustom( 168790.00, clBlue, 1, psDash, "R60 T6", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 32: toques=4 | rejeicoes=3 | relevancia=64.6 | ultimo toque 11/06/2026
+    HorizontalLineCustom( 168435.00, clBlue, 1, psDash, "R65 T4", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 33: toques=6 | rejeicoes=5 | relevancia=39.3 | ultimo toque 20/01/2026
+    HorizontalLineCustom( 165835.00, clBlue, 1, psDash, "R39 T6", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 34: toques=8 | rejeicoes=7 | relevancia=51.9 | ultimo toque 20/01/2026
+    HorizontalLineCustom( 165650.00, clBlue, 1, psDash, "R52 T8", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 35: toques=8 | rejeicoes=5 | relevancia=38.3 | ultimo toque 20/01/2026
+    HorizontalLineCustom( 165440.00, clBlue, 1, psDash, "R38 T8", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 36: toques=7 | rejeicoes=4 | relevancia=28.7 | ultimo toque 20/01/2026
+    HorizontalLineCustom( 165285.00, clBlue, 1, psDash, "R29 T7", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 37: toques=11 | rejeicoes=6 | relevancia=45.1 | ultimo toque 20/01/2026
+    HorizontalLineCustom( 165015.00, clBlue, 1, psDash, "R45 T11", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 38: toques=9 | rejeicoes=5 | relevancia=37.7 | ultimo toque 20/01/2026
+    HorizontalLineCustom( 164855.00, clBlue, 1, psDash, "R38 T9", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 39: toques=8 | rejeicoes=5 | relevancia=33.1 | ultimo toque 14/01/2026
+    HorizontalLineCustom( 164510.00, clBlue, 1, psDash, "R33 T8", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+    // Nivel 40: toques=8 | rejeicoes=5 | relevancia=45.6 | ultimo toque 14/01/2026
+    HorizontalLineCustom( 164315.00, clBlue, 1, psDash, "R46 T8", TamanhoTexto, LocalTexto, 0, 0, 0 );
+
+  end;
+
+end;
