@@ -1,0 +1,1465 @@
+{
+  "p2c2|BASE": {
+    "target": "p2c2",
+    "feature_set": "BASE",
+    "n_folds": 6,
+    "top_k": 15,
+    "stable_features": [
+      "AggBalanceNorm_lag3",
+      "AggBalanceNorm_lag2",
+      "AggBalanceNorm",
+      "QuantityNorm_lag2",
+      "DurationResidual_lag5",
+      "DurationResidual"
+    ],
+    "unstable_but_sometimes_top": [
+      "QuantityNorm_lag5",
+      "AggBuyNorm_lag4",
+      "AggTotalNorm_lag1",
+      "AggTotalNorm_lag3",
+      "TradesNorm_lag4",
+      "AggBuyNorm_lag5",
+      "AggSellNorm_lag3",
+      "AggTotalNorm",
+      "DurationResidual_lag4",
+      "QuantityNorm_lag1",
+      "AggSellNorm_lag2",
+      "QuantityNorm",
+      "TradesNorm_lag1",
+      "AggSellNorm_lag5",
+      "TradesNorm_lag3",
+      "AggBuyNorm_lag3"
+    ],
+    "top20_by_mean_importance": [
+      {
+        "feature": "AggBalanceNorm_lag3",
+        "imp_mean": 0.0582827909360717,
+        "imp_std": 0.0401082371337498,
+        "rank_mean": 5.833333333333333,
+        "rank_std": 7.054549359574051,
+        "rank_worst": 19.0,
+        "times_in_topk": 5,
+        "n_folds": 6,
+        "topk_fraction": 0.8333333333333334,
+        "imp_cv": 0.6881660347690468
+      },
+      {
+        "feature": "AggBalanceNorm_lag2",
+        "imp_mean": 0.04578588717667103,
+        "imp_std": 0.02676888093274623,
+        "rank_mean": 8.166666666666666,
+        "rank_std": 13.702797767852617,
+        "rank_worst": 36.0,
+        "times_in_topk": 5,
+        "n_folds": 6,
+        "topk_fraction": 0.8333333333333334,
+        "imp_cv": 0.5846535380969006
+      },
+      {
+        "feature": "AggBalanceNorm",
+        "imp_mean": 0.04258048937515254,
+        "imp_std": 0.02735779726823569,
+        "rank_mean": 10.333333333333334,
+        "rank_std": 13.321661558028962,
+        "rank_worst": 36.0,
+        "times_in_topk": 5,
+        "n_folds": 6,
+        "topk_fraction": 0.8333333333333334,
+        "imp_cv": 0.642496074368748
+      },
+      {
+        "feature": "QuantityNorm_lag2",
+        "imp_mean": 0.04037873097856795,
+        "imp_std": 0.02179105717219341,
+        "rank_mean": 10.833333333333334,
+        "rank_std": 9.086620200419222,
+        "rank_worst": 26.0,
+        "times_in_topk": 5,
+        "n_folds": 6,
+        "topk_fraction": 0.8333333333333334,
+        "imp_cv": 0.5396667167118149
+      },
+      {
+        "feature": "DurationResidual_lag5",
+        "imp_mean": 0.035077345896043007,
+        "imp_std": 0.009625837321123744,
+        "rank_mean": 10.666666666666666,
+        "rank_std": 4.366539438350084,
+        "rank_worst": 17.0,
+        "times_in_topk": 5,
+        "n_folds": 6,
+        "topk_fraction": 0.8333333333333334,
+        "imp_cv": 0.2744174929782704
+      },
+      {
+        "feature": "DurationResidual",
+        "imp_mean": 0.022707283586789532,
+        "imp_std": 0.011246953851024278,
+        "rank_mean": 17.333333333333332,
+        "rank_std": 9.179687721631202,
+        "rank_worst": 36.0,
+        "times_in_topk": 5,
+        "n_folds": 6,
+        "topk_fraction": 0.8333333333333334,
+        "imp_cv": 0.4953015981870876
+      },
+      {
+        "feature": "AggBalanceNorm_lag4",
+        "imp_mean": 0.045144220233230205,
+        "imp_std": 0.0275149931433285,
+        "rank_mean": 8.666666666666666,
+        "rank_std": 8.310635755865292,
+        "rank_worst": 21.0,
+        "times_in_topk": 4,
+        "n_folds": 6,
+        "topk_fraction": 0.6666666666666666,
+        "imp_cv": 0.6094909381793905
+      },
+      {
+        "feature": "TradesNorm_lag2",
+        "imp_mean": 0.030984354388862972,
+        "imp_std": 0.017008088530575644,
+        "rank_mean": 14.166666666666666,
+        "rank_std": 8.773064838850027,
+        "rank_worst": 28.0,
+        "times_in_topk": 4,
+        "n_folds": 6,
+        "topk_fraction": 0.6666666666666666,
+        "imp_cv": 0.5489250580186056
+      },
+      {
+        "feature": "DurationResidual_lag2",
+        "imp_mean": 0.030531501066568194,
+        "imp_std": 0.008562258402320886,
+        "rank_mean": 14.333333333333334,
+        "rank_std": 8.891943919451284,
+        "rank_worst": 29.0,
+        "times_in_topk": 4,
+        "n_folds": 6,
+        "topk_fraction": 0.6666666666666666,
+        "imp_cv": 0.28044013897818165
+      },
+      {
+        "feature": "AggBalanceNorm_lag1",
+        "imp_mean": 0.030418584986289066,
+        "imp_std": 0.009354032695822119,
+        "rank_mean": 13.5,
+        "rank_std": 6.892024376045111,
+        "rank_worst": 24.0,
+        "times_in_topk": 4,
+        "n_folds": 6,
+        "topk_fraction": 0.6666666666666666,
+        "imp_cv": 0.30751044797246074
+      },
+      {
+        "feature": "DurationResidual_lag3",
+        "imp_mean": 0.03671340748026614,
+        "imp_std": 0.019040748902854763,
+        "rank_mean": 12.5,
+        "rank_std": 8.87130204648675,
+        "rank_worst": 22.0,
+        "times_in_topk": 3,
+        "n_folds": 6,
+        "topk_fraction": 0.5,
+        "imp_cv": 0.5186320260000212
+      },
+      {
+        "feature": "AggBalanceNorm_lag5",
+        "imp_mean": 0.029200836182984035,
+        "imp_std": 0.020825400702529973,
+        "rank_mean": 15.833333333333334,
+        "rank_std": 11.513759884011247,
+        "rank_worst": 31.0,
+        "times_in_topk": 3,
+        "n_folds": 6,
+        "topk_fraction": 0.5,
+        "imp_cv": 0.7131782313365872
+      },
+      {
+        "feature": "AggSellNorm",
+        "imp_mean": 0.02568456401105801,
+        "imp_std": 0.009353045256584255,
+        "rank_mean": 19.833333333333332,
+        "rank_std": 9.806460455570434,
+        "rank_worst": 37.0,
+        "times_in_topk": 3,
+        "n_folds": 6,
+        "topk_fraction": 0.5,
+        "imp_cv": 0.36415043886115706
+      },
+      {
+        "feature": "QuantityNorm_lag4",
+        "imp_mean": 0.02527148413470647,
+        "imp_std": 0.010569954612831433,
+        "rank_mean": 16.0,
+        "rank_std": 10.198039027185569,
+        "rank_worst": 33.0,
+        "times_in_topk": 3,
+        "n_folds": 6,
+        "topk_fraction": 0.5,
+        "imp_cv": 0.41825618774463813
+      },
+      {
+        "feature": "AggBuyNorm_lag2",
+        "imp_mean": 0.024923536863154353,
+        "imp_std": 0.007821591766775514,
+        "rank_mean": 17.166666666666668,
+        "rank_std": 7.985403350280227,
+        "rank_worst": 29.0,
+        "times_in_topk": 3,
+        "n_folds": 6,
+        "topk_fraction": 0.5,
+        "imp_cv": 0.31382350786410834
+      },
+      {
+        "feature": "AggSellNorm_lag4",
+        "imp_mean": 0.023389906175086263,
+        "imp_std": 0.012104470052033743,
+        "rank_mean": 20.166666666666668,
+        "rank_std": 9.703951085339758,
+        "rank_worst": 35.0,
+        "times_in_topk": 3,
+        "n_folds": 6,
+        "topk_fraction": 0.5,
+        "imp_cv": 0.5175082773494324
+      },
+      {
+        "feature": "AggBuyNorm",
+        "imp_mean": 0.022878231467117562,
+        "imp_std": 0.01358198253303869,
+        "rank_mean": 20.0,
+        "rank_std": 11.045361017187261,
+        "rank_worst": 32.0,
+        "times_in_topk": 3,
+        "n_folds": 6,
+        "topk_fraction": 0.5,
+        "imp_cv": 0.5936640055661562
+      },
+      {
+        "feature": "QuantityNorm_lag5",
+        "imp_mean": 0.03418468708717872,
+        "imp_std": 0.0257180692793188,
+        "rank_mean": 19.833333333333332,
+        "rank_std": 13.790093062291735,
+        "rank_worst": 35.0,
+        "times_in_topk": 2,
+        "n_folds": 6,
+        "topk_fraction": 0.3333333333333333,
+        "imp_cv": 0.7523271812824227
+      },
+      {
+        "feature": "AggBuyNorm_lag4",
+        "imp_mean": 0.029261686308086426,
+        "imp_std": 0.016897376036074187,
+        "rank_mean": 17.0,
+        "rank_std": 10.198039027185569,
+        "rank_worst": 30.0,
+        "times_in_topk": 2,
+        "n_folds": 6,
+        "topk_fraction": 0.3333333333333333,
+        "imp_cv": 0.5774573569741475
+      },
+      {
+        "feature": "AggTotalNorm_lag1",
+        "imp_mean": 0.02446790484590772,
+        "imp_std": 0.019290938991082526,
+        "rank_mean": 21.333333333333332,
+        "rank_std": 11.74166370948626,
+        "rank_worst": 35.0,
+        "times_in_topk": 2,
+        "n_folds": 6,
+        "topk_fraction": 0.3333333333333333,
+        "imp_cv": 0.7884180976087518
+      }
+    ],
+    "shap": {
+      "available": true,
+      "top20": [
+        {
+          "feature": "AggBalanceNorm_lag5",
+          "mean_abs_shap": 0.003377395761407587
+        },
+        {
+          "feature": "DurationResidual_lag3",
+          "mean_abs_shap": 0.0027347440629008563
+        },
+        {
+          "feature": "TradesNorm_lag1",
+          "mean_abs_shap": 0.002364857861299181
+        },
+        {
+          "feature": "AggBalanceNorm_lag1",
+          "mean_abs_shap": 0.0022468484893665487
+        },
+        {
+          "feature": "DurationResidual_lag4",
+          "mean_abs_shap": 0.0
+        },
+        {
+          "feature": "DurationResidual_lag5",
+          "mean_abs_shap": 0.0
+        },
+        {
+          "feature": "TradesNorm_lag5",
+          "mean_abs_shap": 0.0
+        },
+        {
+          "feature": "TradesNorm_lag4",
+          "mean_abs_shap": 0.0
+        },
+        {
+          "feature": "DurationResidual_lag1",
+          "mean_abs_shap": 0.0
+        },
+        {
+          "feature": "DurationResidual_lag2",
+          "mean_abs_shap": 0.0
+        },
+        {
+          "feature": "TradesNorm_lag2",
+          "mean_abs_shap": 0.0
+        },
+        {
+          "feature": "TradesNorm_lag3",
+          "mean_abs_shap": 0.0
+        },
+        {
+          "feature": "QuantityNorm_lag5",
+          "mean_abs_shap": 0.0
+        },
+        {
+          "feature": "QuantityNorm_lag4",
+          "mean_abs_shap": 0.0
+        },
+        {
+          "feature": "QuantityNorm_lag1",
+          "mean_abs_shap": 0.0
+        },
+        {
+          "feature": "AggTotalNorm_lag5",
+          "mean_abs_shap": 0.0
+        },
+        {
+          "feature": "QuantityNorm_lag3",
+          "mean_abs_shap": 0.0
+        },
+        {
+          "feature": "QuantityNorm_lag2",
+          "mean_abs_shap": 0.0
+        },
+        {
+          "feature": "AggTotalNorm_lag3",
+          "mean_abs_shap": 0.0
+        },
+        {
+          "feature": "AggTotalNorm_lag4",
+          "mean_abs_shap": 0.0
+        }
+      ]
+    }
+  },
+  "p2c2|EXTENDED": {
+    "target": "p2c2",
+    "feature_set": "EXTENDED",
+    "n_folds": 6,
+    "top_k": 15,
+    "stable_features": [
+      "AggTotalPerQuantity",
+      "LogDuration"
+    ],
+    "unstable_but_sometimes_top": [
+      "TradesNorm_lag2",
+      "AggBalanceNorm_lag3",
+      "AggBalanceNorm",
+      "AggBalanceNormMean3Change",
+      "AggTotalNorm_lag3",
+      "AggTotalRatio20",
+      "AggBuyNorm_lag2",
+      "AggSellNorm_lag5",
+      "SecondsSinceSessionOpen",
+      "AggTotalNorm_lag5",
+      "DurationResidualPct",
+      "SellShare",
+      "AggSellNorm_lag2",
+      "DurationResidual",
+      "DurationResidualMean5",
+      "AggImbalanceChange",
+      "DurationRatio20",
+      "AggBuyNorm",
+      "TradesNorm",
+      "AggBalanceChange",
+      "QuantityPerTrade",
+      "QuantityNorm",
+      "QuantityResidual20",
+      "AggTotalNorm_lag4",
+      "AggTotalPerTrade",
+      "Range",
+      "QuantityRatio20",
+      "AggTotalNorm_lag1",
+      "AggBalanceNorm_lag1",
+      "AggBuyNorm_lag3",
+      "AggPerBrickProgress",
+      "AggTotalResidual20",
+      "AggBalanceNorm_lag5",
+      "HourOfDay",
+      "DurationResidual_lag5",
+      "AggBuyNorm_lag5",
+      "AggShareOfQuantity"
+    ],
+    "top20_by_mean_importance": [
+      {
+        "feature": "AggTotalPerQuantity",
+        "imp_mean": 0.11435621855968627,
+        "imp_std": 0.08529765112541797,
+        "rank_mean": 3.1666666666666665,
+        "rank_std": 0.9831920802501749,
+        "rank_worst": 5.0,
+        "times_in_topk": 6,
+        "n_folds": 6,
+        "topk_fraction": 1.0,
+        "imp_cv": 0.7458942959092192
+      },
+      {
+        "feature": "LogDuration",
+        "imp_mean": 0.13601754855117507,
+        "imp_std": 0.13375574342605398,
+        "rank_mean": 7.833333333333333,
+        "rank_std": 11.513759884011247,
+        "rank_worst": 30.0,
+        "times_in_topk": 5,
+        "n_folds": 6,
+        "topk_fraction": 0.8333333333333334,
+        "imp_cv": 0.9833712256307126
+      },
+      {
+        "feature": "DurationResidual_lag3",
+        "imp_mean": 0.045832171168178025,
+        "imp_std": 0.06215197872834915,
+        "rank_mean": 25.083333333333332,
+        "rank_std": 26.359849519044424,
+        "rank_worst": 65.5,
+        "times_in_topk": 4,
+        "n_folds": 6,
+        "topk_fraction": 0.6666666666666666,
+        "imp_cv": 1.3560775574058384
+      },
+      {
+        "feature": "QuantityNorm_lag2",
+        "imp_mean": 0.09856346511418561,
+        "imp_std": 0.17832017528693628,
+        "rank_mean": 25.083333333333332,
+        "rank_std": 28.23900966157749,
+        "rank_worst": 68.5,
+        "times_in_topk": 3,
+        "n_folds": 6,
+        "topk_fraction": 0.5,
+        "imp_cv": 1.8091914187508795
+      },
+      {
+        "feature": "AggTotalNormMean5",
+        "imp_mean": 0.06227791953093715,
+        "imp_std": 0.08203793812422987,
+        "rank_mean": 19.833333333333332,
+        "rank_std": 20.292034562031148,
+        "rank_worst": 51.0,
+        "times_in_topk": 3,
+        "n_folds": 6,
+        "topk_fraction": 0.5,
+        "imp_cv": 1.3172877119550652
+      },
+      {
+        "feature": "TradesNorm_lag3",
+        "imp_mean": 0.021015205227651688,
+        "imp_std": 0.02568786474612688,
+        "rank_mean": 30.416666666666668,
+        "rank_std": 26.706584706148156,
+        "rank_worst": 61.5,
+        "times_in_topk": 3,
+        "n_folds": 6,
+        "topk_fraction": 0.5,
+        "imp_cv": 1.2223466041781468
+      },
+      {
+        "feature": "TradesNorm_lag2",
+        "imp_mean": 0.025189900095209574,
+        "imp_std": 0.03562278913788603,
+        "rank_mean": 33.5,
+        "rank_std": 28.1407178302189,
+        "rank_worst": 71.0,
+        "times_in_topk": 2,
+        "n_folds": 6,
+        "topk_fraction": 0.3333333333333333,
+        "imp_cv": 1.4141695283920759
+      },
+      {
+        "feature": "AggBalanceNorm_lag3",
+        "imp_mean": 0.01984043482146069,
+        "imp_std": 0.03833071244444896,
+        "rank_mean": 40.333333333333336,
+        "rank_std": 29.832309107185562,
+        "rank_worst": 68.5,
+        "times_in_topk": 2,
+        "n_folds": 6,
+        "topk_fraction": 0.3333333333333333,
+        "imp_cv": 1.931949213279741
+      },
+      {
+        "feature": "AggBalanceNorm",
+        "imp_mean": 0.015659658819441796,
+        "imp_std": 0.01741029321951181,
+        "rank_mean": 29.833333333333332,
+        "rank_std": 17.702165592567106,
+        "rank_worst": 51.0,
+        "times_in_topk": 2,
+        "n_folds": 6,
+        "topk_fraction": 0.3333333333333333,
+        "imp_cv": 1.111792627173752
+      },
+      {
+        "feature": "AggBalanceNormMean3Change",
+        "imp_mean": 0.012832458451357928,
+        "imp_std": 0.018218648496474813,
+        "rank_mean": 30.5,
+        "rank_std": 19.572940504686567,
+        "rank_worst": 51.0,
+        "times_in_topk": 2,
+        "n_folds": 6,
+        "topk_fraction": 0.3333333333333333,
+        "imp_cv": 1.4197317346113767
+      },
+      {
+        "feature": "AggTotalNorm_lag3",
+        "imp_mean": 0.01089083729974701,
+        "imp_std": 0.014649230179183207,
+        "rank_mean": 41.75,
+        "rank_std": 24.028628758212566,
+        "rank_worst": 64.0,
+        "times_in_topk": 2,
+        "n_folds": 6,
+        "topk_fraction": 0.3333333333333333,
+        "imp_cv": 1.3450967796134006
+      },
+      {
+        "feature": "AggTotalRatio20",
+        "imp_mean": 0.010087132359929406,
+        "imp_std": 0.01413311777585829,
+        "rank_mean": 43.083333333333336,
+        "rank_std": 24.755639088229305,
+        "rank_worst": 70.0,
+        "times_in_topk": 2,
+        "n_folds": 6,
+        "topk_fraction": 0.3333333333333333,
+        "imp_cv": 1.4011036309983742
+      },
+      {
+        "feature": "AggBuyNorm_lag2",
+        "imp_mean": 0.008809915456390925,
+        "imp_std": 0.013652343362431636,
+        "rank_mean": 40.666666666666664,
+        "rank_std": 26.551208384302715,
+        "rank_worst": 65.5,
+        "times_in_topk": 2,
+        "n_folds": 6,
+        "topk_fraction": 0.3333333333333333,
+        "imp_cv": 1.5496565693519677
+      },
+      {
+        "feature": "AggSellNorm_lag5",
+        "imp_mean": 0.028966674419880226,
+        "imp_std": 0.04911701673106711,
+        "rank_mean": 34.916666666666664,
+        "rank_std": 24.650388773134324,
+        "rank_worst": 68.5,
+        "times_in_topk": 1,
+        "n_folds": 6,
+        "topk_fraction": 0.16666666666666666,
+        "imp_cv": 1.6956387888751712
+      },
+      {
+        "feature": "SecondsSinceSessionOpen",
+        "imp_mean": 0.018962628225004094,
+        "imp_std": 0.03253189247691263,
+        "rank_mean": 34.916666666666664,
+        "rank_std": 23.122319664485797,
+        "rank_worst": 61.5,
+        "times_in_topk": 1,
+        "n_folds": 6,
+        "topk_fraction": 0.16666666666666666,
+        "imp_cv": 1.7155793010810665
+      },
+      {
+        "feature": "AggTotalNorm_lag5",
+        "imp_mean": 0.015379315386773043,
+        "imp_std": 0.02796168133907313,
+        "rank_mean": 46.416666666666664,
+        "rank_std": 28.541928222645833,
+        "rank_worst": 81.0,
+        "times_in_topk": 1,
+        "n_folds": 6,
+        "topk_fraction": 0.16666666666666666,
+        "imp_cv": 1.8181356345108528
+      },
+      {
+        "feature": "DurationResidualPct",
+        "imp_mean": 0.012927724107357147,
+        "imp_std": 0.015315093248092024,
+        "rank_mean": 33.833333333333336,
+        "rank_std": 15.184421841699033,
+        "rank_worst": 51.0,
+        "times_in_topk": 1,
+        "n_folds": 6,
+        "topk_fraction": 0.16666666666666666,
+        "imp_cv": 1.184670489632141
+      },
+      {
+        "feature": "SellShare",
+        "imp_mean": 0.012733837876730226,
+        "imp_std": 0.02903680360016681,
+        "rank_mean": 52.0,
+        "rank_std": 25.68462575160479,
+        "rank_worst": 73.0,
+        "times_in_topk": 1,
+        "n_folds": 6,
+        "topk_fraction": 0.16666666666666666,
+        "imp_cv": 2.2802868923931072
+      },
+      {
+        "feature": "AggSellNorm_lag2",
+        "imp_mean": 0.012706189379653931,
+        "imp_std": 0.020892571059396403,
+        "rank_mean": 37.833333333333336,
+        "rank_std": 20.113842662869438,
+        "rank_worst": 58.0,
+        "times_in_topk": 1,
+        "n_folds": 6,
+        "topk_fraction": 0.16666666666666666,
+        "imp_cv": 1.6442829895838873
+      },
+      {
+        "feature": "DurationResidual",
+        "imp_mean": 0.012353800500997053,
+        "imp_std": 0.020982909930030463,
+        "rank_mean": 44.583333333333336,
+        "rank_std": 21.79086199916531,
+        "rank_worst": 65.5,
+        "times_in_topk": 1,
+        "n_folds": 6,
+        "topk_fraction": 0.16666666666666666,
+        "imp_cv": 1.6984983631828092
+      }
+    ],
+    "shap": {
+      "available": true,
+      "top20": [
+        {
+          "feature": "AggBalanceNormMean3Change",
+          "mean_abs_shap": 0.004608332787066928
+        },
+        {
+          "feature": "AggTotalNormMean5",
+          "mean_abs_shap": 0.004532078294585356
+        },
+        {
+          "feature": "DurationResidual_lag3",
+          "mean_abs_shap": 0.003320854042168072
+        },
+        {
+          "feature": "AggTotalPerQuantity",
+          "mean_abs_shap": 0.0031331554610551896
+        },
+        {
+          "feature": "LogDuration",
+          "mean_abs_shap": 0.003107803258631357
+        },
+        {
+          "feature": "AggBalanceNorm_lag1",
+          "mean_abs_shap": 0.0012754039008012418
+        },
+        {
+          "feature": "QuantityPerTrade",
+          "mean_abs_shap": 0.0012213780472097684
+        },
+        {
+          "feature": "DurationResidual_lag2",
+          "mean_abs_shap": 0.0
+        },
+        {
+          "feature": "DurationResidual_lag5",
+          "mean_abs_shap": 0.0
+        },
+        {
+          "feature": "TradesNorm_lag1",
+          "mean_abs_shap": 0.0
+        },
+        {
+          "feature": "QuantityNorm_lag5",
+          "mean_abs_shap": 0.0
+        },
+        {
+          "feature": "QuantityNorm_lag4",
+          "mean_abs_shap": 0.0
+        },
+        {
+          "feature": "DurationResidual_lag4",
+          "mean_abs_shap": 0.0
+        },
+        {
+          "feature": "TradesNorm_lag5",
+          "mean_abs_shap": 0.0
+        },
+        {
+          "feature": "TradesNorm_lag4",
+          "mean_abs_shap": 0.0
+        },
+        {
+          "feature": "TradesNorm_lag3",
+          "mean_abs_shap": 0.0
+        },
+        {
+          "feature": "DurationResidual_lag1",
+          "mean_abs_shap": 0.0
+        },
+        {
+          "feature": "AggTotalNorm_lag4",
+          "mean_abs_shap": 0.0
+        },
+        {
+          "feature": "AggTotalNorm_lag3",
+          "mean_abs_shap": 0.0
+        },
+        {
+          "feature": "AggTotalNorm_lag1",
+          "mean_abs_shap": 0.0
+        }
+      ]
+    }
+  },
+  "p3c2|BASE": {
+    "target": "p3c2",
+    "feature_set": "BASE",
+    "n_folds": 6,
+    "top_k": 15,
+    "stable_features": [
+      "AggBalanceNorm_lag4"
+    ],
+    "unstable_but_sometimes_top": [
+      "AggTotalNorm_lag2",
+      "TradesNorm_lag1",
+      "AggTotalNorm_lag3",
+      "DurationResidual_lag3",
+      "QuantityNorm_lag4",
+      "AggSellNorm_lag2",
+      "AggBalanceNorm_lag1",
+      "QuantityNorm",
+      "DurationResidual_lag4",
+      "DurationResidual",
+      "TradesNorm_lag3",
+      "DurationResidual_lag1",
+      "TradesNorm",
+      "AggSellNorm_lag5",
+      "AggBuyNorm_lag1",
+      "AggTotalNorm_lag1",
+      "QuantityNorm_lag2",
+      "AggBalanceNorm_lag5",
+      "AggSellNorm_lag4"
+    ],
+    "top20_by_mean_importance": [
+      {
+        "feature": "AggBalanceNorm_lag4",
+        "imp_mean": 0.07905410394941602,
+        "imp_std": 0.052467717691076665,
+        "rank_mean": 6.0,
+        "rank_std": 9.38083151964686,
+        "rank_worst": 25.0,
+        "times_in_topk": 5,
+        "n_folds": 6,
+        "topk_fraction": 0.8333333333333334,
+        "imp_cv": 0.6636937877968858
+      },
+      {
+        "feature": "AggBuyNorm_lag2",
+        "imp_mean": 0.07896009635341074,
+        "imp_std": 0.07445159235715605,
+        "rank_mean": 9.666666666666666,
+        "rank_std": 7.8655366420014,
+        "rank_worst": 22.0,
+        "times_in_topk": 4,
+        "n_folds": 6,
+        "topk_fraction": 0.6666666666666666,
+        "imp_cv": 0.9429014881633951
+      },
+      {
+        "feature": "TradesNorm_lag2",
+        "imp_mean": 0.07301725260990015,
+        "imp_std": 0.09707052527715215,
+        "rank_mean": 10.583333333333334,
+        "rank_std": 11.137399457084525,
+        "rank_worst": 25.5,
+        "times_in_topk": 4,
+        "n_folds": 6,
+        "topk_fraction": 0.6666666666666666,
+        "imp_cv": 1.3294190319068606
+      },
+      {
+        "feature": "AggBuyNorm",
+        "imp_mean": 0.06690186518850984,
+        "imp_std": 0.08523981897763006,
+        "rank_mean": 11.0,
+        "rank_std": 6.324555320336759,
+        "rank_worst": 20.0,
+        "times_in_topk": 4,
+        "n_folds": 6,
+        "topk_fraction": 0.6666666666666666,
+        "imp_cv": 1.274102280070208
+      },
+      {
+        "feature": "AggBalanceNorm",
+        "imp_mean": 0.04451654603383725,
+        "imp_std": 0.0329615022771336,
+        "rank_mean": 10.833333333333334,
+        "rank_std": 9.064583093924764,
+        "rank_worst": 25.0,
+        "times_in_topk": 4,
+        "n_folds": 6,
+        "topk_fraction": 0.6666666666666666,
+        "imp_cv": 0.7404326079583846
+      },
+      {
+        "feature": "AggBalanceNorm_lag3",
+        "imp_mean": 0.041780833562335896,
+        "imp_std": 0.04433862884379913,
+        "rank_mean": 11.916666666666666,
+        "rank_std": 10.660284549047773,
+        "rank_worst": 25.5,
+        "times_in_topk": 4,
+        "n_folds": 6,
+        "topk_fraction": 0.6666666666666666,
+        "imp_cv": 1.061219345412223
+      },
+      {
+        "feature": "DurationResidual_lag2",
+        "imp_mean": 0.04041308373365,
+        "imp_std": 0.03120180571701134,
+        "rank_mean": 12.833333333333334,
+        "rank_std": 8.818541073594128,
+        "rank_worst": 25.0,
+        "times_in_topk": 4,
+        "n_folds": 6,
+        "topk_fraction": 0.6666666666666666,
+        "imp_cv": 0.7720718845078165
+      },
+      {
+        "feature": "DurationResidual_lag5",
+        "imp_mean": 0.03214857613902213,
+        "imp_std": 0.026454592476871923,
+        "rank_mean": 12.75,
+        "rank_std": 10.018732454756938,
+        "rank_worst": 25.5,
+        "times_in_topk": 4,
+        "n_folds": 6,
+        "topk_fraction": 0.6666666666666666,
+        "imp_cv": 0.8228853546257429
+      },
+      {
+        "feature": "AggBuyNorm_lag4",
+        "imp_mean": 0.05105608720700013,
+        "imp_std": 0.05905399045147087,
+        "rank_mean": 14.0,
+        "rank_std": 9.423375191511797,
+        "rank_worst": 25.0,
+        "times_in_topk": 3,
+        "n_folds": 6,
+        "topk_fraction": 0.5,
+        "imp_cv": 1.1566493572459695
+      },
+      {
+        "feature": "QuantityNorm_lag3",
+        "imp_mean": 0.028530738441798615,
+        "imp_std": 0.03509994354917922,
+        "rank_mean": 20.833333333333332,
+        "rank_std": 12.480651692386367,
+        "rank_worst": 40.0,
+        "times_in_topk": 3,
+        "n_folds": 6,
+        "topk_fraction": 0.5,
+        "imp_cv": 1.2302500904693188
+      },
+      {
+        "feature": "AggBalanceNorm_lag2",
+        "imp_mean": 0.02741079468183542,
+        "imp_std": 0.026475821776024065,
+        "rank_mean": 15.583333333333334,
+        "rank_std": 11.32438372127449,
+        "rank_worst": 27.0,
+        "times_in_topk": 3,
+        "n_folds": 6,
+        "topk_fraction": 0.5,
+        "imp_cv": 0.9658903393110692
+      },
+      {
+        "feature": "AggSellNorm",
+        "imp_mean": 0.020066736083717063,
+        "imp_std": 0.01713582532983376,
+        "rank_mean": 17.416666666666668,
+        "rank_std": 7.939878252635028,
+        "rank_worst": 25.5,
+        "times_in_topk": 3,
+        "n_folds": 6,
+        "topk_fraction": 0.5,
+        "imp_cv": 0.8539418298194714
+      },
+      {
+        "feature": "AggTotalNorm_lag2",
+        "imp_mean": 0.034533148823908594,
+        "imp_std": 0.06309980296262584,
+        "rank_mean": 26.0,
+        "rank_std": 16.29723902997069,
+        "rank_worst": 41.0,
+        "times_in_topk": 2,
+        "n_folds": 6,
+        "topk_fraction": 0.3333333333333333,
+        "imp_cv": 1.8272241342480613
+      },
+      {
+        "feature": "TradesNorm_lag1",
+        "imp_mean": 0.0275896309901011,
+        "imp_std": 0.04094284106544836,
+        "rank_mean": 23.416666666666668,
+        "rank_std": 13.260530406686858,
+        "rank_worst": 37.0,
+        "times_in_topk": 2,
+        "n_folds": 6,
+        "topk_fraction": 0.3333333333333333,
+        "imp_cv": 1.483993790280786
+      },
+      {
+        "feature": "AggTotalNorm_lag3",
+        "imp_mean": 0.022291327857151697,
+        "imp_std": 0.02233512402872064,
+        "rank_mean": 18.916666666666668,
+        "rank_std": 10.071825389008026,
+        "rank_worst": 29.0,
+        "times_in_topk": 2,
+        "n_folds": 6,
+        "topk_fraction": 0.3333333333333333,
+        "imp_cv": 1.0019647179319957
+      },
+      {
+        "feature": "DurationResidual_lag3",
+        "imp_mean": 0.018630768730938135,
+        "imp_std": 0.02113024508380588,
+        "rank_mean": 20.416666666666668,
+        "rank_std": 9.318887630327273,
+        "rank_worst": 29.0,
+        "times_in_topk": 2,
+        "n_folds": 6,
+        "topk_fraction": 0.3333333333333333,
+        "imp_cv": 1.1341585196491184
+      },
+      {
+        "feature": "QuantityNorm_lag4",
+        "imp_mean": 0.01844537911287512,
+        "imp_std": 0.022674102199779826,
+        "rank_mean": 20.166666666666668,
+        "rank_std": 12.110601416389967,
+        "rank_worst": 38.5,
+        "times_in_topk": 2,
+        "n_folds": 6,
+        "topk_fraction": 0.3333333333333333,
+        "imp_cv": 1.2292565016434387
+      },
+      {
+        "feature": "AggSellNorm_lag2",
+        "imp_mean": 0.01746513048041628,
+        "imp_std": 0.016632813233394335,
+        "rank_mean": 20.75,
+        "rank_std": 8.83034540660783,
+        "rank_worst": 31.0,
+        "times_in_topk": 2,
+        "n_folds": 6,
+        "topk_fraction": 0.3333333333333333,
+        "imp_cv": 0.9523440578955179
+      },
+      {
+        "feature": "AggBalanceNorm_lag1",
+        "imp_mean": 0.017293631690996455,
+        "imp_std": 0.01529599244013166,
+        "rank_mean": 19.083333333333332,
+        "rank_std": 7.2139910359430495,
+        "rank_worst": 25.5,
+        "times_in_topk": 2,
+        "n_folds": 6,
+        "topk_fraction": 0.3333333333333333,
+        "imp_cv": 0.8844870015414505
+      },
+      {
+        "feature": "QuantityNorm",
+        "imp_mean": 0.017059002029422114,
+        "imp_std": 0.01673394941333086,
+        "rank_mean": 20.416666666666668,
+        "rank_std": 9.552050390710189,
+        "rank_worst": 33.0,
+        "times_in_topk": 2,
+        "n_folds": 6,
+        "topk_fraction": 0.3333333333333333,
+        "imp_cv": 0.980945390854012
+      }
+    ],
+    "shap": {
+      "available": true,
+      "top20": [
+        {
+          "feature": "AggBuyNorm_lag2",
+          "mean_abs_shap": 0.0068719315821549574
+        },
+        {
+          "feature": "TradesNorm_lag2",
+          "mean_abs_shap": 0.005411557997594007
+        },
+        {
+          "feature": "AggBalanceNorm",
+          "mean_abs_shap": 0.004750904160637231
+        },
+        {
+          "feature": "AggBalanceNorm_lag4",
+          "mean_abs_shap": 0.0039812869184378255
+        },
+        {
+          "feature": "AggBuyNorm",
+          "mean_abs_shap": 0.0037284637509728898
+        },
+        {
+          "feature": "DurationResidual_lag2",
+          "mean_abs_shap": 0.0037070481333037445
+        },
+        {
+          "feature": "TradesNorm",
+          "mean_abs_shap": 0.0016833819919896656
+        },
+        {
+          "feature": "DurationResidual_lag4",
+          "mean_abs_shap": 0.0
+        },
+        {
+          "feature": "DurationResidual_lag1",
+          "mean_abs_shap": 0.0
+        },
+        {
+          "feature": "DurationResidual_lag5",
+          "mean_abs_shap": 0.0
+        },
+        {
+          "feature": "TradesNorm_lag1",
+          "mean_abs_shap": 0.0
+        },
+        {
+          "feature": "TradesNorm_lag3",
+          "mean_abs_shap": 0.0
+        },
+        {
+          "feature": "TradesNorm_lag4",
+          "mean_abs_shap": 0.0
+        },
+        {
+          "feature": "TradesNorm_lag5",
+          "mean_abs_shap": 0.0
+        },
+        {
+          "feature": "DurationResidual_lag3",
+          "mean_abs_shap": 0.0
+        },
+        {
+          "feature": "QuantityNorm_lag5",
+          "mean_abs_shap": 0.0
+        },
+        {
+          "feature": "QuantityNorm_lag3",
+          "mean_abs_shap": 0.0
+        },
+        {
+          "feature": "QuantityNorm_lag4",
+          "mean_abs_shap": 0.0
+        },
+        {
+          "feature": "AggTotalNorm_lag3",
+          "mean_abs_shap": 0.0
+        },
+        {
+          "feature": "AggTotalNorm_lag2",
+          "mean_abs_shap": 0.0
+        }
+      ]
+    }
+  },
+  "p3c2|EXTENDED": {
+    "target": "p3c2",
+    "feature_set": "EXTENDED",
+    "n_folds": 6,
+    "top_k": 15,
+    "stable_features": [
+      "QuantityNorm_lag2",
+      "AggBuyNorm_lag4",
+      "AggBalanceChange"
+    ],
+    "unstable_but_sometimes_top": [
+      "DurationResidualMean5",
+      "AggTotalNorm_lag4",
+      "AggBalanceNorm",
+      "AggTotalPerQuantity",
+      "AggBalanceNorm_lag2",
+      "AggBuyNorm_lag5",
+      "AggSellNorm_lag5",
+      "DurationResidualMean3",
+      "AggTotalNorm_lag2",
+      "DurationResidual_lag3",
+      "AggTotalNormMean5",
+      "DurationResidual_lag2",
+      "DurationResidual_lag4",
+      "RangeMean5",
+      "AggSellNorm_lag4",
+      "AggBuyNorm",
+      "SellShare",
+      "AggBalanceNorm_lag3",
+      "AggTotalResidual20",
+      "AggImbalanceChange",
+      "QuantityPerTradeRatio20",
+      "AggSellNorm_lag2",
+      "QuantityNorm_lag5",
+      "AggBalanceRunSum",
+      "BuyShare",
+      "QuantityNorm_lag3",
+      "TradesRatio20",
+      "AggBuyNorm_lag2",
+      "TradesNorm_lag1",
+      "AggImbalance",
+      "TradesPerQuantity"
+    ],
+    "top20_by_mean_importance": [
+      {
+        "feature": "QuantityNorm_lag2",
+        "imp_mean": 0.045685669468799595,
+        "imp_std": 0.03526985712444061,
+        "rank_mean": 8.833333333333334,
+        "rank_std": 6.3377177806105145,
+        "rank_worst": 19.0,
+        "times_in_topk": 5,
+        "n_folds": 6,
+        "topk_fraction": 0.8333333333333334,
+        "imp_cv": 0.7720113885718076
+      },
+      {
+        "feature": "AggBuyNorm_lag4",
+        "imp_mean": 0.03715110706675856,
+        "imp_std": 0.024702916226881345,
+        "rank_mean": 10.833333333333334,
+        "rank_std": 8.70440501508671,
+        "rank_worst": 26.0,
+        "times_in_topk": 5,
+        "n_folds": 6,
+        "topk_fraction": 0.8333333333333334,
+        "imp_cv": 0.6649308237972968
+      },
+      {
+        "feature": "AggBalanceChange",
+        "imp_mean": 0.03273947752188662,
+        "imp_std": 0.023785093299111066,
+        "rank_mean": 13.666666666666666,
+        "rank_std": 21.978777642686744,
+        "rank_worst": 58.0,
+        "times_in_topk": 5,
+        "n_folds": 6,
+        "topk_fraction": 0.8333333333333334,
+        "imp_cv": 0.7264958117676291
+      },
+      {
+        "feature": "BodyNormMean5",
+        "imp_mean": 0.034880531243691296,
+        "imp_std": 0.022571568572580792,
+        "rank_mean": 14.166666666666666,
+        "rank_std": 15.10518674716293,
+        "rank_worst": 38.0,
+        "times_in_topk": 4,
+        "n_folds": 6,
+        "topk_fraction": 0.6666666666666666,
+        "imp_cv": 0.6471108027250365
+      },
+      {
+        "feature": "TradesNorm_lag2",
+        "imp_mean": 0.027669252402670014,
+        "imp_std": 0.01987766827550779,
+        "rank_mean": 14.333333333333334,
+        "rank_std": 6.831300510639732,
+        "rank_worst": 22.0,
+        "times_in_topk": 4,
+        "n_folds": 6,
+        "topk_fraction": 0.6666666666666666,
+        "imp_cv": 0.7184027955012491
+      },
+      {
+        "feature": "RangeRatio20",
+        "imp_mean": 0.025941601222786898,
+        "imp_std": 0.011887000504993275,
+        "rank_mean": 15.666666666666666,
+        "rank_std": 14.665151436881471,
+        "rank_worst": 43.0,
+        "times_in_topk": 4,
+        "n_folds": 6,
+        "topk_fraction": 0.6666666666666666,
+        "imp_cv": 0.4582215416429972
+      },
+      {
+        "feature": "AggBalanceNormMean5",
+        "imp_mean": 0.038320288397926804,
+        "imp_std": 0.03501839740036052,
+        "rank_mean": 22.833333333333332,
+        "rank_std": 28.407158722171893,
+        "rank_worst": 74.0,
+        "times_in_topk": 3,
+        "n_folds": 6,
+        "topk_fraction": 0.5,
+        "imp_cv": 0.9138343907206888
+      },
+      {
+        "feature": "AggBalanceNorm_lag1",
+        "imp_mean": 0.035291795578497355,
+        "imp_std": 0.045845275772732876,
+        "rank_mean": 21.333333333333332,
+        "rank_std": 18.853823661704983,
+        "rank_worst": 47.0,
+        "times_in_topk": 3,
+        "n_folds": 6,
+        "topk_fraction": 0.5,
+        "imp_cv": 1.2990349462600186
+      },
+      {
+        "feature": "AggShareOfQuantity",
+        "imp_mean": 0.0333823583315866,
+        "imp_std": 0.0389864684705082,
+        "rank_mean": 18.416666666666668,
+        "rank_std": 22.59738185424733,
+        "rank_worst": 62.5,
+        "times_in_topk": 3,
+        "n_folds": 6,
+        "topk_fraction": 0.5,
+        "imp_cv": 1.167876399961202
+      },
+      {
+        "feature": "DurationResidual_lag5",
+        "imp_mean": 0.025488534247814703,
+        "imp_std": 0.021004378223207394,
+        "rank_mean": 23.5,
+        "rank_std": 19.86705816169067,
+        "rank_worst": 60.0,
+        "times_in_topk": 3,
+        "n_folds": 6,
+        "topk_fraction": 0.5,
+        "imp_cv": 0.8240716401731981
+      },
+      {
+        "feature": "AggTotalNorm",
+        "imp_mean": 0.02423866984232978,
+        "imp_std": 0.019166642085919356,
+        "rank_mean": 18.333333333333332,
+        "rank_std": 12.878923350446135,
+        "rank_worst": 34.0,
+        "times_in_topk": 3,
+        "n_folds": 6,
+        "topk_fraction": 0.5,
+        "imp_cv": 0.7907464481589346
+      },
+      {
+        "feature": "AggBalanceNorm_lag4",
+        "imp_mean": 0.02029304008358813,
+        "imp_std": 0.012908187643113076,
+        "rank_mean": 22.0,
+        "rank_std": 20.9093280618962,
+        "rank_worst": 58.0,
+        "times_in_topk": 3,
+        "n_folds": 6,
+        "topk_fraction": 0.5,
+        "imp_cv": 0.6360893976429136
+      },
+      {
+        "feature": "SecondsSinceSessionOpen",
+        "imp_mean": 0.01854912765754255,
+        "imp_std": 0.01627282849607115,
+        "rank_mean": 26.25,
+        "rank_std": 27.308881339227355,
+        "rank_worst": 62.5,
+        "times_in_topk": 3,
+        "n_folds": 6,
+        "topk_fraction": 0.5,
+        "imp_cv": 0.8772826839355004
+      },
+      {
+        "feature": "AggBalanceNormMean3",
+        "imp_mean": 0.016498233706678588,
+        "imp_std": 0.013489527891228823,
+        "rank_mean": 26.25,
+        "rank_std": 27.043945718034564,
+        "rank_worst": 62.5,
+        "times_in_topk": 3,
+        "n_folds": 6,
+        "topk_fraction": 0.5,
+        "imp_cv": 0.8176346711447164
+      },
+      {
+        "feature": "DurationResidualMean5",
+        "imp_mean": 0.01944532436320077,
+        "imp_std": 0.026460613954329474,
+        "rank_mean": 54.75,
+        "rank_std": 37.0050672205848,
+        "rank_worst": 89.0,
+        "times_in_topk": 2,
+        "n_folds": 6,
+        "topk_fraction": 0.3333333333333333,
+        "imp_cv": 1.360769995917618
+      },
+      {
+        "feature": "AggTotalNorm_lag4",
+        "imp_mean": 0.015962556439482946,
+        "imp_std": 0.012157999592975527,
+        "rank_mean": 38.833333333333336,
+        "rank_std": 27.665261008468125,
+        "rank_worst": 71.0,
+        "times_in_topk": 2,
+        "n_folds": 6,
+        "topk_fraction": 0.3333333333333333,
+        "imp_cv": 0.76165742242283
+      },
+      {
+        "feature": "AggBalanceNorm",
+        "imp_mean": 0.014330921372828992,
+        "imp_std": 0.013527782409853036,
+        "rank_mean": 30.75,
+        "rank_std": 24.13659048001602,
+        "rank_worst": 62.5,
+        "times_in_topk": 2,
+        "n_folds": 6,
+        "topk_fraction": 0.3333333333333333,
+        "imp_cv": 0.9439576184892979
+      },
+      {
+        "feature": "AggTotalPerQuantity",
+        "imp_mean": 0.014110698226233025,
+        "imp_std": 0.011150910903522288,
+        "rank_mean": 32.666666666666664,
+        "rank_std": 30.883112969172437,
+        "rank_worst": 80.5,
+        "times_in_topk": 2,
+        "n_folds": 6,
+        "topk_fraction": 0.3333333333333333,
+        "imp_cv": 0.7902451547572442
+      },
+      {
+        "feature": "AggBalanceNorm_lag2",
+        "imp_mean": 0.013544697026154996,
+        "imp_std": 0.009320462592644449,
+        "rank_mean": 32.333333333333336,
+        "rank_std": 18.532853710820326,
+        "rank_worst": 58.0,
+        "times_in_topk": 2,
+        "n_folds": 6,
+        "topk_fraction": 0.3333333333333333,
+        "imp_cv": 0.6881263253542332
+      },
+      {
+        "feature": "AggBuyNorm_lag5",
+        "imp_mean": 0.010887103468420338,
+        "imp_std": 0.009909001557631553,
+        "rank_mean": 35.75,
+        "rank_std": 23.1424933833846,
+        "rank_worst": 62.5,
+        "times_in_topk": 2,
+        "n_folds": 6,
+        "topk_fraction": 0.3333333333333333,
+        "imp_cv": 0.9101595834350326
+      }
+    ],
+    "shap": {
+      "available": true,
+      "top20": [
+        {
+          "feature": "QuantityNorm_lag2",
+          "mean_abs_shap": 0.008428059703541314
+        },
+        {
+          "feature": "AggBalanceNorm_lag1",
+          "mean_abs_shap": 0.007848976334188299
+        },
+        {
+          "feature": "AggBalanceNormMean5",
+          "mean_abs_shap": 0.007411392140918387
+        },
+        {
+          "feature": "HourOfDay",
+          "mean_abs_shap": 0.006845435228784251
+        },
+        {
+          "feature": "TradesNorm_lag2",
+          "mean_abs_shap": 0.006566052257727182
+        },
+        {
+          "feature": "BodyNormMean5",
+          "mean_abs_shap": 0.005861689510825679
+        },
+        {
+          "feature": "RangeMean5",
+          "mean_abs_shap": 0.0055029842238315
+        },
+        {
+          "feature": "AggTotalNorm_lag2",
+          "mean_abs_shap": 0.005251547946285849
+        },
+        {
+          "feature": "AggTotalPerQuantity",
+          "mean_abs_shap": 0.004998819883865769
+        },
+        {
+          "feature": "LogDuration",
+          "mean_abs_shap": 0.004872788787803808
+        },
+        {
+          "feature": "RangeRatio20",
+          "mean_abs_shap": 0.004520382881571055
+        },
+        {
+          "feature": "DurationResidual_lag5",
+          "mean_abs_shap": 0.004499034902329626
+        },
+        {
+          "feature": "AggShareOfQuantity",
+          "mean_abs_shap": 0.004380653080393309
+        },
+        {
+          "feature": "TradesNorm_lag5",
+          "mean_abs_shap": 0.004069660509707475
+        },
+        {
+          "feature": "AggTotalNorm_lag4",
+          "mean_abs_shap": 0.004062619797807262
+        },
+        {
+          "feature": "AggSellNorm_lag2",
+          "mean_abs_shap": 0.003813041963898334
+        },
+        {
+          "feature": "DurationResidualMean5",
+          "mean_abs_shap": 0.003545206562270384
+        },
+        {
+          "feature": "DurationResidual_lag4",
+          "mean_abs_shap": 0.0032487476629279827
+        },
+        {
+          "feature": "AggTotalNorm",
+          "mean_abs_shap": 0.00307697967903208
+        },
+        {
+          "feature": "AggTotalNorm_lag1",
+          "mean_abs_shap": 0.0015674965781479271
+        }
+      ]
+    }
+  }
+}

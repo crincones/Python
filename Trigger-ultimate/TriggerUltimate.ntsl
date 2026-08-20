@@ -1,0 +1,563 @@
+//======================================================================
+// TRIGGER ULTIMATE 11R  --  versao SCORE
+// Gatilho de reversao para Renko de 50 pts (ajuste "11R" do WIN)
+//
+// Seta ACIMA do tijolo com vies descendente, ABAIXO com vies ascendente.
+// A frequencia e regulada continuamente por MinScore, no molde do
+// PivoReversao: cada componente vira uma rampa 0..1 e entra com um peso.
+//
+// O TRIGGER VEM NA BARRA EM ESTUDO. Nao ha barra de confirmacao, nao ha
+// deslocamento -- o equivalente a Direita=0. Todos os componentes usam
+// apenas a barra corrente e o passado. E no Renko isso e melhor que num
+// grafico de tick: o tijolo fecha num nivel PREDETERMINADO (base +- 50),
+// entao o fechamento e conhecido no instante em que o preco cruza, e a
+// seta nasce exatamente no preco de entrada. Com AguardarFechamento=true
+// nao se espera barra nenhuma: espera-se o cruzamento, que E o gatilho.
+// Com false a seta aparece no tijolo em formacao, mas repinta -- o pavio
+// contrario ainda esta crescendo.
+//
+//----------------------------------------------------------------------
+// O QUE A PESQUISA DIZ SOBRE OS PESOS  (base de 20.001 tijolos, 35
+// pregoes; alvo de +100 pts antes do stop; so caminhos sem tijolo
+// fantasma, que e o unico conjunto executavel)
+//
+//   componente          P (1o quartil -> ultimo)   pts/sinal      peso
+//   cAgr  agressao      0.294 -> 0.340             -5.9 -> +1.0   100
+//   cPav  pavio curto   0.309 -> 0.330             -3.6 -> -0.5     0
+//   cLonge longe do
+//         extremo       0.297 -> 0.326             -5.5 -> -1.1     0
+//   cFuro falso romp.   0.329 -> 0.287  (AO CONTRARIO)              0
+//   cExt  no extremo    0.326 -> 0.297  (AO CONTRARIO)              0
+//   cPerna, cLimpa      nao monotonicos (quartil do meio e o melhor)  0
+//
+//   ATENCAO: a versao anterior deste indicador trazia DistExtremo=0.5
+//   como padrao, ou seja, exigia a reversao NO topo/fundo recente. A
+//   medicao no conjunto limpo mostra que isso e o INVERSO do certo. O
+//   filtro saiu; quem quiser o efeito use PesoLonge, que aponta para o
+//   outro lado.
+//
+//   Misturar geometria com agressao PIORA (medido: cAgr100 da +1.97
+//   pts/sinal em MinScore=60; cAgr80+cPav20 da +1.26; cAgr50+cPav50 da
+//   -0.65). Por isso o padrao e agressao pura.
+//
+//----------------------------------------------------------------------
+// HONESTIDADE SOBRE O SCORE DE AGRESSAO
+//
+//   Permutacao de aFavor dentro do pregao (preserva deriva, dia e lado):
+//      MinScore 50 -> z=+2.39 p=0.0075   |  60 -> z=+2.63 p=0.0042
+//      MinScore 70 -> z=+2.13 p=0.0175   |  80 -> z=+1.76 p=0.0458
+//   E o unico teste da pesquisa inteira que passou. MAS:
+//      - o bootstrap de PREGAO inclui zero em todos os limiares
+//        (MinScore=60: +1.97 pts com IC95 [-0.65, +4.63])
+//      - o efeito e quase todo do lado COMPRADO: em MinScore=60,
+//        +4.30 pts na alta contra -0.19 na baixa
+//      - walk-forward: so 3 de 5 dobras positivas
+//   Ou seja: dentro do dia a agressao ORDENA os sinais; o tamanho do
+//   efeito e pequeno perto da variacao entre pregoes. Nao e edge
+//   comprovado. O placar existe para voce julgar na sua base.
+//
+//----------------------------------------------------------------------
+// O TRADE RESOLVE EM 1 A 3 TIJOLOS -- SEMPRE
+//
+//   Medido nas 5.698 reversoes da base, com alvo 100 e ancora na
+//   abertura: 2.674 resolvem em 1 tijolo, 2.069 em 2, 955 em 3.
+//   ZERO estouros de prazo. O resultado e binario: +100 ou -50, e 47%
+//   ja se decide no tijolo seguinte ao sinal.
+//
+//   Consequencias praticas:
+//     - Horizonte 8 nunca e atingido; 3 bastaria. Fica em 8 so por
+//       margem, porque com AlvoPontos maior ou AlvoPontos=0 o prazo
+//       volta a importar.
+//     - NAO existe exposicao sobreposta: sinais do mesmo lado ficam a
+//       15 tijolos de mediana (minimo 2) e a operacao dura no maximo 3.
+//       Medi a fracao de sinais que entram com o anterior do mesmo lado
+//       ainda aberto: 0 de 1.671. O cooldown, portanto, NAO serve para
+//       reduzir risco correlacionado -- esse problema nao existe aqui.
+//       Ele serve para reduzir a contagem e espacar as entradas.
+//
+//   Efeito medido do cooldown (MinScore=60, pts/sinal do conjunto limpo):
+//       cooldown 0 -> 47,7 sinais/pregao   +1.97
+//       cooldown 3 -> 46,5                 +2.40
+//       cooldown 4 -> 44,5                 +2.40   <- padrao
+//       cooldown 8 -> 38,1                 +3.13
+//   A melhora esta dentro do ruido (foram 24 combinacoes olhadas). O
+//   custo tambem e pequeno, entao 4 fica como padrao por ser barato.
+//
+// Ver LEIA-ME-TRIGGER.md.
+//======================================================================
+
+input
+  Tijolo             (   50 );  // pontos por tijolo (11R = 50)
+  Horizonte          (    8 );  // prazo em tijolos (max 8)
+  AlvoPontos         (  100 );  // andamento exigido; 0 = so nao levar stop
+  Reversao           (    1 );  // 0=todos  1=so reversao  2=so continuacao
+  Ancora             (    1 );  // 0=extremo contrario (pavio)  1=abertura
+
+  MinScore           (   60 );  // score minimo para plotar
+  MinBarras          (    4 );  // COOLDOWN por lado, em tijolos: depois de um
+                                // sinal, o mesmo lado so volta a sinalizar
+                                // MinBarras tijolos depois. 0 desliga.
+
+  PesoAgr            (  100 );  // agressao a favor da reversao
+  PesoPav            (    0 );  // pavio contrario curto
+  PesoLonge          (    0 );  // reversao LONGE do topo/fundo recente
+  PesoFuro           (    0 );  // furou o extremo recente e voltou
+  PesoPerna          (    0 );  // perna quebrada longa
+  PesoLimpa          (    0 );  // perna quebrada sem repique
+
+  AgrIni             (    0 );  // rampas: inicio e saturacao
+  AgrFim             ( 0.30 );
+  PavIni             (  150 );
+  PavFim             (   95 );
+  LongeIni           (    0 );
+  LongeFim           (    3 );
+  FuroIni            (   -1 );
+  FuroFim            (  0.5 );
+  PernaIni           (    1 );
+  PernaFim           (    5 );
+  LimpaIni           (  110 );
+  LimpaFim           (   60 );
+
+  JanelaExtremo      (   50 );  // barras para o topo/fundo recente
+  PavioMaximo        (    0 );  // teto duro no pavio contrario; 0 desliga
+
+  MostrarSetas       ( true );
+  MostrarScore       ( false );
+  OffsetFrac         (  0.6 );  // afastamento da seta, em tijolos
+  PintarBarra        ( false );
+  MostrarPlacar      ( true );
+  MostrarLinhas      ( false ); // ligue SO se puser o indicador em painel
+                                // separado -- PlotN desenha em 0..100
+  TamanhoFonte       (   12 );
+  ExcluirFantasma    ( true );
+  AguardarFechamento ( true );
+  DuracaoHistorica   ( true );  // se o compilador reclamar de BarDurationF[n],
+                                // ponha false
+
+var
+  corpo, absCorpo, pavio, risco, jFair, p, resp : Float;
+  topoRec, fundoRec, dext, furo                 : Float;
+  agrTot, imb, aFavor                           : Float;
+  cAgr, cPav, cLonge, cFuro, cPerna, cLimpa     : Float;
+  score, pesoTot, rr                            : Float;
+  sentido, sentidoAnt, cor                      : Integer;
+  valido, sinal, ehRev, espacado                : Boolean;
+  // --- perna quebrada (contadores persistentes)
+  seqAtual, pernaAnt        : Integer;
+  somaPavLeg, pernaPav      : Float;
+  barrasBaixa, barrasAlta   : Integer;
+  // --- avaliacao do sinal disparado ha Horizonte tijolos
+  corpoS, riscoS, nivelS, pS, jFairS, respS : Float;
+  sentidoS                  : Integer;
+  sinalS, terminado, temFantasma : Boolean;
+  ganho, pnl                : Float;
+  res, i, j, k              : Integer;
+  // --- registrador de deslocamento do SINAL (garante que o placar avalie
+  //     exatamente as setas desenhadas, sem recalcular nada)
+  sg1, sg2, sg3, sg4, sg5, sg6, sg7, sg8 : Float;
+  sgS                       : Float;
+  // --- placar acumulado
+  nSin, nOk, nAlvo, nFant, nSinL, nOkL, nAlvoL : Float;
+  somaP, somaR, somaAte, somaPnl, somaPnlL     : Float;
+  txt                       : String;
+
+begin
+
+  if CurrentBar <= 1 then
+  begin
+    nSin := 0; nOk := 0; nAlvo := 0; nFant := 0;
+    nSinL := 0; nOkL := 0; nAlvoL := 0;
+    somaP := 0; somaR := 0; somaAte := 0; somaPnl := 0; somaPnlL := 0;
+    sg1 := 0; sg2 := 0; sg3 := 0; sg4 := 0;
+    sg5 := 0; sg6 := 0; sg7 := 0; sg8 := 0;
+    seqAtual := 1; pernaAnt := 0; somaPavLeg := 0; pernaPav := 0;
+    barrasBaixa := 9999; barrasAlta := 9999;
+  end;
+
+  barrasBaixa := barrasBaixa + 1;
+  barrasAlta  := barrasAlta + 1;
+
+  //--------------------------------------------------------------
+  // 1) o tijolo corrente
+  //--------------------------------------------------------------
+  corpo   := Close - Open;
+  sentido := 0;
+  if corpo > 0 then sentido :=  1;
+  if corpo < 0 then sentido := -1;
+
+  absCorpo := corpo;
+  if absCorpo < 0 then absCorpo := 0 - absCorpo;
+  valido := absCorpo >= Tijolo * 0.9;
+
+  sentidoAnt := 0;
+  if Close[1] > Open[1] then sentidoAnt :=  1;
+  if Close[1] < Open[1] then sentidoAnt := -1;
+  ehRev := (sentido <> sentidoAnt) and (sentidoAnt <> 0);
+
+  // o extremo contrario ao vies: num tijolo de baixa e a maxima, num de
+  // alta e a minima (o outro extremo fica travado no fechamento pela
+  // propria construcao do Renko)
+  if sentido < 0 then
+    pavio := High - Close
+  else
+    pavio := Close - Low;
+
+  // --- perna quebrada: comprimento e pavio medio, por contador -------
+  if ehRev then
+  begin
+    pernaAnt := seqAtual;
+    if seqAtual > 0 then pernaPav := somaPavLeg / seqAtual else pernaPav := 0;
+    seqAtual := 1;
+    somaPavLeg := pavio;
+  end
+  else
+  begin
+    seqAtual := seqAtual + 1;
+    somaPavLeg := somaPavLeg + pavio;
+  end;
+
+  // --- topo/fundo das JanelaExtremo barras ANTERIORES ----------------
+  topoRec  := High[1];
+  fundoRec := Low[1];
+  for i := 1 to JanelaExtremo do
+  begin
+    if High[i] > topoRec  then topoRec  := High[i];
+    if Low[i]  < fundoRec then fundoRec := Low[i];
+  end;
+  if sentido < 0 then
+  begin
+    dext := ( topoRec - High ) / Tijolo;   // distancia ao topo recente
+    furo := ( High - topoRec ) / Tijolo;   // >0 = furou e voltou
+  end
+  else
+  begin
+    dext := ( Low - fundoRec ) / Tijolo;
+    furo := ( fundoRec - Low ) / Tijolo;
+  end;
+
+  // --- agressao projetada no sentido do tijolo -----------------------
+  agrTot := AgressionVolBuy() + AgressionVolSell();
+  if agrTot > 0 then
+    imb := ( AgressionVolBuy() - AgressionVolSell() ) / agrTot
+  else
+    imb := 0;
+  aFavor := sentido * imb;
+
+  //--------------------------------------------------------------
+  // 2) componentes do score (rampas 0..1)
+  //--------------------------------------------------------------
+  cAgr := 0;
+  if AgrFim <> AgrIni then
+  begin
+    rr := ( aFavor - AgrIni ) / ( AgrFim - AgrIni );
+    if rr < 0 then rr := 0;  if rr > 1 then rr := 1;
+    cAgr := rr;
+  end;
+
+  cPav := 0;
+  if PavFim <> PavIni then
+  begin
+    rr := ( pavio - PavIni ) / ( PavFim - PavIni );
+    if rr < 0 then rr := 0;  if rr > 1 then rr := 1;
+    cPav := rr;
+  end;
+
+  cLonge := 0;
+  if LongeFim <> LongeIni then
+  begin
+    rr := ( dext - LongeIni ) / ( LongeFim - LongeIni );
+    if rr < 0 then rr := 0;  if rr > 1 then rr := 1;
+    cLonge := rr;
+  end;
+
+  cFuro := 0;
+  if FuroFim <> FuroIni then
+  begin
+    rr := ( furo - FuroIni ) / ( FuroFim - FuroIni );
+    if rr < 0 then rr := 0;  if rr > 1 then rr := 1;
+    cFuro := rr;
+  end;
+
+  cPerna := 0;
+  if PernaFim <> PernaIni then
+  begin
+    rr := ( pernaAnt - PernaIni ) / ( PernaFim - PernaIni );
+    if rr < 0 then rr := 0;  if rr > 1 then rr := 1;
+    cPerna := rr;
+  end;
+
+  cLimpa := 0;
+  if LimpaFim <> LimpaIni then
+  begin
+    rr := ( pernaPav - LimpaIni ) / ( LimpaFim - LimpaIni );
+    if rr < 0 then rr := 0;  if rr > 1 then rr := 1;
+    cLimpa := rr;
+  end;
+
+  pesoTot := PesoAgr + PesoPav + PesoLonge + PesoFuro + PesoPerna + PesoLimpa;
+  if pesoTot <= 0 then pesoTot := 1;
+  score := 100 * ( PesoAgr   * cAgr   + PesoPav   * cPav
+                 + PesoLonge * cLonge + PesoFuro  * cFuro
+                 + PesoPerna * cPerna + PesoLimpa * cLimpa ) / pesoTot;
+
+  //--------------------------------------------------------------
+  // 3) risco, alvo e probabilidade de referencia
+  //--------------------------------------------------------------
+  if Ancora = 1 then risco := Tijolo else risco := pavio;
+
+  if AlvoPontos > 0 then
+  begin
+    // passeio aleatorio com a mesma geometria, aferido em 56.683
+    // reversoes sinteticas
+    jFair := risco / ( AlvoPontos + risco );
+    p     := jFair * ( 1.1894 - 0.187 * jFair );
+    resp  := AlvoPontos / risco;
+  end
+  else
+  begin
+    if Ancora = 1 then
+    begin
+      p := 0.3623;  resp := 2.2;
+    end
+    else
+    begin
+      jFair := pavio / Tijolo;
+      if jFair < 1 then jFair := 1;
+      if jFair > 3 then jFair := 3;
+      if jFair >= 3 then p := 0.7940 else p := 0.2422 + 0.1465 * jFair;
+      resp := 2.2 / jFair;
+    end;
+  end;
+
+  //--------------------------------------------------------------
+  // 4) o sinal
+  //--------------------------------------------------------------
+  espacado := true;
+  if MinBarras > 0 then
+  begin
+    if sentido < 0 then
+    begin
+      if barrasBaixa < MinBarras then espacado := false;
+    end
+    else
+    begin
+      if barrasAlta < MinBarras then espacado := false;
+    end;
+  end;
+
+  sinal := valido and (sentido <> 0) and (score >= MinScore) and espacado;
+
+  if (Reversao = 1) and (not ehRev) then sinal := false;
+  if (Reversao = 2) and ehRev       then sinal := false;
+  if (PavioMaximo > 0) and (pavio > PavioMaximo) then sinal := false;
+
+  // tijolo fantasma: fechou sem tempo ou sem volume. Sao os de gap/spike,
+  // varios fechando no mesmo tick -- nao ha execucao no fechamento deles.
+  if ExcluirFantasma and ((BarDurationF <= 0) or (Quantity <= 0)) then
+    sinal := false;
+
+  if CurrentBar < JanelaExtremo + 3 then sinal := false;
+
+  if sinal then
+  begin
+    if sentido < 0 then barrasBaixa := 0 else barrasAlta := 0;
+  end;
+
+  //--------------------------------------------------------------
+  // 5) desenha
+  //--------------------------------------------------------------
+  if sinal and MostrarSetas and (not (AguardarFechamento and LastBarOnChart)) then
+  begin
+    if sentido < 0 then
+    begin
+      if score >= MinScore + 25 then cor := RGB(255,  40,   0)
+      else if score >= MinScore + 12 then cor := RGB(255,  69,   0)
+      else cor := RGB(205,  92,  92);
+      if MostrarScore then
+        PlotText( "▼ " + Round(score), cor, 2, TamanhoFonte,
+                  High + OffsetFrac * Tijolo )
+      else
+        PlotText( "▼", cor, 2, TamanhoFonte, High + OffsetFrac * Tijolo );
+    end
+    else
+    begin
+      if score >= MinScore + 25 then cor := RGB(  0, 200, 255)
+      else if score >= MinScore + 12 then cor := RGB( 30, 144, 255)
+      else cor := RGB( 70, 130, 180);
+      if MostrarScore then
+        PlotText( "▲ " + Round(score), cor, 0, TamanhoFonte,
+                  Low - OffsetFrac * Tijolo )
+      else
+        PlotText( "▲", cor, 0, TamanhoFonte, Low - OffsetFrac * Tijolo );
+    end;
+
+    if PintarBarra then
+    begin
+      if sentido < 0 then PaintBar( clRed ) else PaintBar( clLime );
+    end;
+  end;
+
+  //--------------------------------------------------------------
+  // 6) placar: simula o trade disparado ha Horizonte tijolos.
+  //    O sinal vem do registrador, entao o placar avalia EXATAMENTE
+  //    as setas desenhadas -- nao ha recalculo que possa divergir.
+  //--------------------------------------------------------------
+  sgS := sg4;
+  if Horizonte = 1 then sgS := sg1;
+  if Horizonte = 2 then sgS := sg2;
+  if Horizonte = 3 then sgS := sg3;
+  if Horizonte = 5 then sgS := sg5;
+  if Horizonte = 6 then sgS := sg6;
+  if Horizonte = 7 then sgS := sg7;
+  if Horizonte = 8 then sgS := sg8;
+  sinalS := sgS > 0;
+
+  if sinalS and (CurrentBar > Horizonte + JanelaExtremo + 3) then
+  begin
+    corpoS   := Close[Horizonte] - Open[Horizonte];
+    sentidoS := 0;
+    if corpoS > 0 then sentidoS :=  1;
+    if corpoS < 0 then sentidoS := -1;
+
+    if Ancora = 1 then
+    begin
+      riscoS := Tijolo;
+      nivelS := Open[Horizonte];
+    end
+    else
+    begin
+      if sentidoS < 0 then
+      begin
+        riscoS := High[Horizonte] - Close[Horizonte];
+        nivelS := High[Horizonte];
+      end
+      else
+      begin
+        riscoS := Close[Horizonte] - Low[Horizonte];
+        nivelS := Low[Horizonte];
+      end;
+    end;
+
+    if AlvoPontos > 0 then
+    begin
+      jFairS := riscoS / ( AlvoPontos + riscoS );
+      pS     := jFairS * ( 1.1894 - 0.187 * jFairS );
+      respS  := AlvoPontos / riscoS;
+    end
+    else
+    begin
+      if Ancora = 1 then
+      begin
+        pS := 0.3623;  respS := 2.2;
+      end
+      else
+      begin
+        jFairS := riscoS / Tijolo;
+        if jFairS < 1 then jFairS := 1;
+        if jFairS > 3 then jFairS := 3;
+        if jFairS >= 3 then pS := 0.7940 else pS := 0.2422 + 0.1465 * jFairS;
+        respS := 2.2 / jFairS;
+      end;
+    end;
+
+    // caminha os tijolos seguintes, do mais antigo ao mais novo.
+    // pior caso: se o tijolo violou a ancora, e stop -- mesmo que o
+    // fechamento ja estivesse no alvo.
+    res := 0;  ganho := 0;  terminado := false;  temFantasma := false;
+    k := Horizonte;
+    for j := 1 to Horizonte do
+    begin
+      if not terminado then
+      begin
+        i := Horizonte - j;
+        if Quantity[i] <= 0 then temFantasma := true;
+        if DuracaoHistorica and (BarDurationF[i] <= 0) then temFantasma := true;
+
+        if sentidoS < 0 then
+        begin
+          if High[i] > nivelS then
+          begin
+            res := -1;  ganho := 0 - riscoS;  k := j;  terminado := true;
+          end;
+        end
+        else
+        begin
+          if Low[i] < nivelS then
+          begin
+            res := -1;  ganho := 0 - riscoS;  k := j;  terminado := true;
+          end;
+        end;
+
+        if not terminado then
+        begin
+          if sentidoS < 0 then
+            ganho := Close[Horizonte] - Close[i]
+          else
+            ganho := Close[i] - Close[Horizonte];
+          if (AlvoPontos > 0) and (ganho >= AlvoPontos) then
+          begin
+            res := 1;  ganho := AlvoPontos;  k := j;  terminado := true;
+          end;
+        end;
+      end;
+    end;
+    pnl := ganho;
+
+    nSin    := nSin + 1;
+    somaP   := somaP + pS;
+    somaR   := somaR + respS;
+    somaAte := somaAte + k;
+    somaPnl := somaPnl + pnl;
+    if res =  1 then nAlvo := nAlvo + 1;
+    if res <> -1 then nOk := nOk + 1;
+
+    // placar "limpo": so os sinais cujo caminho ate o desfecho nao passou
+    // por tijolo fantasma. E o numero honesto.
+    if temFantasma then
+      nFant := nFant + 1
+    else
+    begin
+      nSinL    := nSinL + 1;
+      somaPnlL := somaPnlL + pnl;
+      if res =  1 then nAlvoL := nAlvoL + 1;
+      if res <> -1 then nOkL := nOkL + 1;
+    end;
+  end;
+
+  //--------------------------------------------------------------
+  // 7) linhas (so em painel separado) e placar
+  //--------------------------------------------------------------
+  if MostrarLinhas then
+  begin
+    SetPlotColor( 1, clAqua );
+    SetPlotColor( 2, clYellow );
+    if sinal then PlotN( 1, score ) else PlotN( 1, 0 );
+    if nSin > 0 then PlotN( 2, 100 * nOk / nSin ) else PlotN( 2, 0 );
+  end;
+
+  if MostrarPlacar and LastBarOnChart and (nSin > 0) then
+  begin
+    txt := "TRIGGER ULTIMATE   n=" + FloatToString( nSin, 0 )
+         + "   P ref=" + FloatToString( 100 * somaP / nSin, 1 ) + "%"
+         + "   sem stop=" + FloatToString( 100 * nOk / nSin, 1 ) + "%"
+         + "   alvo=" + FloatToString( 100 * nAlvo / nSin, 1 ) + "%"
+         + "   R=" + FloatToString( somaR / nSin, 2 )
+         + "   tijolos=" + FloatToString( somaAte / nSin, 1 )
+         + "   |  pts/sinal=" + FloatToString( somaPnl / nSin, 2 );
+    if nSinL > 0 then
+      txt := txt + "   ||  SEM FANTASMA (n=" + FloatToString( nSinL, 0 )
+                 + ", " + FloatToString( 100 * nFant / nSin, 0 ) + "% fora)"
+                 + "  alvo=" + FloatToString( 100 * nAlvoL / nSinL, 1 ) + "%"
+                 + "  pts/sinal=" + FloatToString( somaPnlL / nSinL, 2 )
+                 + "  <== o numero executavel";
+    PlotText( txt, clWhite, 1, TamanhoFonte );
+  end;
+
+  //--------------------------------------------------------------
+  // 8) desloca o registrador do sinal (sempre por ultimo)
+  //--------------------------------------------------------------
+  sg8 := sg7;  sg7 := sg6;  sg6 := sg5;  sg5 := sg4;
+  sg4 := sg3;  sg3 := sg2;  sg2 := sg1;
+  if sinal then sg1 := 1 else sg1 := 0;
+
+end;

@@ -1,0 +1,13 @@
+// Agressão de compra
+// Agresdsão de venda
+// Duração da barra
+// Volume de negócios
+// Quantidade de trades
+
+begin
+  Plot(AgressionVolBuy());
+  Plot2(AgressionVolSell());
+  Plot3(BarDurationF);
+  Plot4(Quantity);
+  Plot5(Trades);
+end;

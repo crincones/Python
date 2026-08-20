@@ -1,0 +1,62 @@
+//////////////////////////////////////////////////////////////////////////////
+// Score de reversao Renko -- constantes geradas por renko_reversao.py
+// Gerado em 14/08/2026 14:37
+// Rotulo: rev_next | box detectado: 140 | janela de normalizacao: 50 bricks
+// AUC out-of-sample: 0.5369 | taxa base: 0.3275
+//
+// O score abaixo e o LOGITO (z). Probabilidade = 1/(1+exp(-z)).
+// Para evitar depender de Exp() no NTSL, compare z direto com o limiar:
+//   z >= 0.1001  <=>  p >= 0.53
+//
+// Padronizacao: cada feature entra como (valor - MEDIA) / DESVIO,
+// com MEDIA/DESVIO abaixo (calculados APENAS no periodo de treino).
+//////////////////////////////////////////////////////////////////////////////
+
+// intercepto
+// z := -0.003981
+// z := z +  0.000000 * ((wick_adv) - 0.000000) / 1.000000;
+// z := z +  0.046488 * ((wick_cnt) - 0.615762) / 0.603892;
+// z := z +  0.046488 * ((rng) - 1.615762) / 0.603892;
+// z := z +  0.023300 * ((delta_sig) - 0.460742) / 0.387591;
+// z := z + -0.111411 * ((vol_rel) - 1.063996) / 1.059753;
+// z := z + -0.008975 * ((trades_rel) - 1.087891) / 0.982235;
+// z := z + -0.006040 * ((avgtrade_rel) - 0.960781) / 0.420473;
+// z := z + -0.096342 * ((dur_rel) - 1.064671) / 1.276209;
+// z := z +  0.004286 * ((speed_rel) - 1.022582) / 1.232839;
+// z := z +  0.170135 * ((absorcao) - 1.975165) / 4.209352;
+// z := z +  0.075400 * ((run_len) - 3.922171) / 2.436049;
+// z := z + -0.093871 * ((run_delta_sum) - 1.385001) / 1.394487;
+// z := z +  0.027140 * ((delta_vs_run) - 0.246297) / 0.505094;
+// z := z + -0.027218 * ((vol_vs_run) - -0.122095) / 1.214220;
+// z := z + -0.022020 * ((dur_vs_run) - -0.346471) / 1.503952;
+// z := z + -0.087530 * ((wick_cnt_run) - 0.881241) / 0.316142;
+// z := z +  0.098836 * ((delta_sig_p1) - 0.314586) / 0.444532;
+// z := z +  0.051965 * ((rng_p1) - 1.887814) / 0.677697;
+// z := z + -0.003081 * ((extremo_run) - 0.562873) / 0.302260;
+// z := z +  0.099242 * ((hora_dec) - 13.113352) / 2.856737;
+
+// ---- limiares sugeridos (out-of-sample) ----
+// p>=0.40 (z>=-0.4055): acerto=32.8%, cobertura=99.1%, expectativa=-2.1 pts
+// p>=0.50 (z>=+0.0000): acerto=35.1%, cobertura=44.3%, expectativa=+7.5 pts
+// p>=0.60 (z>=+0.4055): acerto=48.8%, cobertura=3.4%, expectativa=+65.0 pts
+// p>=0.70 (z>=+0.8473): acerto=48.8%, cobertura=3.4%, expectativa=+65.0 pts
+
+
+// ---- alternativa: arvore de decisao (cortes em unidade REAL,
+// nao padronizada -- da para transcrever direto como if/else) ----
+// |--- hora_dec <= 18.4083
+// |   |--- delta_sig <= 0.7246
+// |   |   |--- delta_sig_p1 <= 0.3289
+// |   |   |   |--- class: 0.0
+// |   |   |--- delta_sig_p1 >  0.3289
+// |   |   |   |--- class: 0.0
+// |   |--- delta_sig >  0.7246
+// |   |   |--- delta_sig <= 0.7739
+// |   |   |   |--- class: 1.0
+// |   |   |--- delta_sig >  0.7739
+// |   |   |   |--- class: 1.0
+// |--- hora_dec >  18.4083
+// |   |--- absorcao <= 0.1625
+// |   |   |--- class: 1.0
+// |   |--- absorcao >  0.1625
+// |   |   |--- class: 1.0

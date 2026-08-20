@@ -1,0 +1,116 @@
+
+================================================================================
+RELATÓRIO DE PIVÔS RENKO – Mini Índice (WIN) 11R
+Gerado em: 2026-08-14 14:01:37
+================================================================================
+
+RESUMO GERAL
+------------
+Total de barras analisadas : 44,792
+Total de pivôs válidos     : 8,403
+  (virada + pelo menos 2 bricks na nova direção)
+Score final (0-100)        : 69.2
+
+DETALHES DO SCORE
+-----------------
+  total_pivos: 8403
+  avg_continuacao_apos_2: 2.91
+  pct_sequencias_>=3: 70.8
+  pct_sequencias_>=5: 37.2
+  estabilidade_pct: 72.3
+  freq_score: 100
+  cont_score: 72.8
+  ge3_score: 70.8
+  ge5_score: 37.2
+  stab_score: 72.3
+
+POR TIPO DE PIVÔ
+----------------
+                                qtd  avg_bricks  avg_cont  med_bricks_ant
+tipo                                                                     
+Pivô de Alta → Baixa (venda)   4197        5.01      3.01             3.0
+Pivô de Baixa → Alta (compra)  4206        4.81      2.81             3.0
+
+DISTRIBUIÇÃO DO TAMANHO DAS SEQUÊNCIAS APÓS A VIRADA
+----------------------------------------------------
+bricks_novos
+2     2450
+3     1660
+4     1163
+5      807
+6      634
+7      455
+8      289
+9      218
+10     163
+11     124
+12     100
+13      53
+14      42
+15      46
+16      33
+17      14
+18      20
+19      18
+20      12
+21       9
+22       8
+23       4
+24       7
+25       7
+27       4
+28       4
+29       3
+30       4
+31       5
+33       4
+34       2
+35       2
+37       3
+38       2
+39       3
+40       2
+41       3
+42       2
+43       2
+45       4
+46       1
+47       1
+48       1
+49       1
+52       2
+53       2
+56       2
+60       2
+65       1
+69       2
+71       1
+72       1
+85       1
+
+Volume médio no candle da virada: 21,797
+
+INTERPRETAÇÃO RÁPIDA DO SCORE
+-----------------------------
+≥ 75  → padrão forte e frequente, boa continuação
+50-74 → utilizável, filtrar por bricks anteriores ou volume
+< 50  → muitos pivôs fracos ou pouca continuação; revisar regra ou filtros
+
+RECOMENDAÇÕES DE USO DO TRIGGER
+-------------------------------
+1. Trigger no fechamento do candle da virada (streak_pos == 1).
+2. Só considere o setup válido se o próximo brick confirmar a mesma direção
+   (assim você garante os ≥ 2 bricks sem “esperar” visualmente demais).
+3. Filtros opcionais que costumam melhorar o score:
+   - bricks_anteriores ≥ 4 (tendência anterior mais estabelecida)
+   - volume/quantidade acima da média das últimas N barras
+   - horário (abertura / meio do pregão / final)
+4. Gestão sugerida (teste no seu backtest):
+   - Entrada: no 2º brick da nova direção (ou market no fechamento da virada)
+   - Stop: 1–2 bricks contra a nova direção
+   - Alvo parcial: 3–5 bricks / trailing de 1 brick
+
+Arquivos gerados nesta pasta:
+- relatorio_pivos_renko.txt  (este relatório)
+- pivos_detalhados.csv       (todos os pivôs com features)
+================================================================================

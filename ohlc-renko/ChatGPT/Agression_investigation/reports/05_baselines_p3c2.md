@@ -1,0 +1,44 @@
+# 05 — Baselines e grupos de informacao (target `p3c2`)
+
+Walk-forward expansivo no conjunto de desenvolvimento (holdout final excluido).
+
+| experimento | modelo | features | n | AUC | IC95 | PR-AUC | prec@0.5 | base | edge | folds AUC>0.5 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| `EXP009_STRUCT_CATBOOST` | catboost | STRUCT (5) | 1485 | 0.5202 | [0.489, 0.547] | 0.4883 | 0.5007 | 0.4761 | +0.0246 | 4/6 |
+| `EXP001_STRUCT_LOGISTIC` | logistic | STRUCT (5) | 1485 | 0.5157 | [0.485, 0.546] | 0.4867 | 0.4918 | 0.4761 | +0.0157 | 4/6 |
+| `EXP002_STRUCT_LOGISTIC` | logistic | STRUCT (5) | 1485 | 0.5157 | [0.485, 0.546] | 0.4867 | 0.4918 | 0.4761 | +0.0157 | 4/6 |
+| `EXP006_STRUCT+CANDLE_LOGISTIC` | logistic | STRUCT+CANDLE (18) | 1485 | 0.5125 | [0.484, 0.541] | 0.4924 | 0.4853 | 0.4761 | +0.0092 | 3/6 |
+| `EXP101_EXTENDED_RF` | random_forest | EXTENDED (97) | 1485 | 0.5111 | [0.483, 0.538] | 0.4887 | 0.4743 | 0.4761 | -0.0018 | 5/6 |
+| `EXP003_STRUCT+AGG_LOGISTIC` | logistic | STRUCT+AGG (41) | 1485 | 0.5109 | [0.481, 0.541] | 0.4929 | 0.5072 | 0.4761 | +0.0311 | 4/6 |
+| `EXP005_STRUCT+TIME_LOGISTIC` | logistic | STRUCT+TIME (18) | 1485 | 0.5095 | [0.479, 0.538] | 0.4837 | 0.4768 | 0.4761 | +0.0007 | 4/6 |
+| `EXP004_STRUCT+VOL_LOGISTIC` | logistic | STRUCT+VOL (28) | 1485 | 0.5070 | [0.479, 0.536] | 0.4812 | 0.4947 | 0.4761 | +0.0186 | 4/6 |
+| `EXP014_BASE_CATBOOST` | catboost | BASE (42) | 1485 | 0.5061 | [0.477, 0.536] | 0.4790 | 0.4754 | 0.4761 | -0.0007 | 2/6 |
+| `EXP011_STRUCT+VOL_CATBOOST` | catboost | STRUCT+VOL (28) | 1485 | 0.5059 | [0.476, 0.535] | 0.4845 | 0.4868 | 0.4761 | +0.0107 | 4/6 |
+| `EXP008_EXTENDED_LOGISTIC` | logistic | EXTENDED (97) | 1485 | 0.5028 | [0.475, 0.532] | 0.4810 | 0.4771 | 0.4761 | +0.0010 | 5/6 |
+| `EXP007_BASE_LOGISTIC` | logistic | BASE (42) | 1485 | 0.5027 | [0.473, 0.531] | 0.4824 | 0.4888 | 0.4761 | +0.0127 | 3/6 |
+| `EXP010_STRUCT+AGG_CATBOOST` | catboost | STRUCT+AGG (41) | 1485 | 0.5025 | [0.474, 0.531] | 0.4746 | 0.4835 | 0.4761 | +0.0074 | 3/6 |
+| `EXP012_STRUCT+TIME_CATBOOST` | catboost | STRUCT+TIME (18) | 1485 | 0.5021 | [0.473, 0.530] | 0.4853 | 0.4738 | 0.4761 | -0.0023 | 3/6 |
+| `EXP000_ALWAYS_SIGNAL` | always_signal | STRUCT (5) | 1485 | 0.5000 | [0.500, 0.500] | 0.4761 | 0.4761 | 0.4761 | +0.0000 | 0/6 |
+| `EXP013_STRUCT+CANDLE_CATBOOST` | catboost | STRUCT+CANDLE (18) | 1485 | 0.4997 | [0.473, 0.529] | 0.4725 | 0.4694 | 0.4761 | -0.0067 | 4/6 |
+| `EXP015_EXTENDED_CATBOOST` | catboost | EXTENDED (97) | 1485 | 0.4966 | [0.470, 0.527] | 0.4693 | 0.4740 | 0.4761 | -0.0021 | 3/6 |
+| `EXP100_EXTENDED_TREE` | tree | EXTENDED (97) | 1485 | 0.4886 | [0.460, 0.517] | 0.4731 | 0.4666 | 0.4761 | -0.0095 | 2/6 |
+
+## p-valor bootstrap vs baseline estrutural (AUC pareado)
+
+- `EXP100_EXTENDED_TREE`: p = 0.1710
+- `EXP000_ALWAYS_SIGNAL`: p = 0.2860
+- `EXP015_EXTENDED_CATBOOST`: p = 0.3030
+- `EXP013_STRUCT+CANDLE_CATBOOST`: p = 0.3470
+- `EXP008_EXTENDED_LOGISTIC`: p = 0.4260
+- `EXP007_BASE_LOGISTIC`: p = 0.4460
+- `EXP010_STRUCT+AGG_CATBOOST`: p = 0.4520
+- `EXP012_STRUCT+TIME_CATBOOST`: p = 0.4600
+- `EXP004_STRUCT+VOL_LOGISTIC`: p = 0.4910
+- `EXP005_STRUCT+TIME_LOGISTIC`: p = 0.5670
+- `EXP014_BASE_CATBOOST`: p = 0.6130
+- `EXP011_STRUCT+VOL_CATBOOST`: p = 0.6160
+- `EXP009_STRUCT_CATBOOST`: p = 0.6720
+- `EXP003_STRUCT+AGG_LOGISTIC`: p = 0.7440
+- `EXP006_STRUCT+CANDLE_LOGISTIC`: p = 0.7560
+- `EXP101_EXTENDED_RF`: p = 0.7600
+- `EXP002_STRUCT_LOGISTIC`: p = 1.0000

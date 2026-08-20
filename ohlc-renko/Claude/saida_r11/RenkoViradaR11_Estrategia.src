@@ -1,0 +1,151 @@
+//////////////////////////////////////////////////////////////////////////////
+//  RenkoViradaR11_Estrategia
+//  Automacao da regra do RenkoViradaR11_Sinal.
+//
+//  >>> AVISO <<<
+//  O nucleo de calculo (secoes 1 a 3) e identico ao do indicador e usa apenas
+//  construcoes NTSL estaveis. Ja as CHAMADAS DE ORDEM da secao 4 variam de
+//  assinatura entre versoes do ProfitChart. Compile antes de usar; se o
+//  compilador reclamar, o ajuste e local, so na secao 4 -- a logica de sinal
+//  nao muda.
+//
+//  Semantica dos exits: alvo e stop sao enviados como ordens pendentes, nao
+//  checados a mercado na barra seguinte. Num Renko de 50 pts de corpo, esperar
+//  a proxima barra para sair custa um corpo inteiro e destrui a expectativa,
+//  que e de ~19 pts por trade.
+//
+//  ECONOMIA MEDIDA (35 pregoes, 362 trades)
+//    acerto 47,8% com alvo 150 / stop 100 (breakeven 40,0%)
+//    +19,5 pts/trade bruto | +9,5 pts/trade com 10 pts de custo total
+//    max drawdown -1.050 pts bruto | fator de lucro 1,37
+//    Antes de ligar em conta real, meça o SEU custo por trade. Acima de
+//    ~19 pts a estrategia nao tem expectativa.
+//////////////////////////////////////////////////////////////////////////////
+
+input
+  MinSeq          (3);
+  MinAposAbertura (60);
+  DPosMin         (0.25);
+  UsarFiltroDelta (0);
+  DeltaMin        (0.10);
+  CorpoPts        (50);
+  AlvoCorpos      (3);
+  StopCorpos      (2);
+  Contratos       (1);
+  HoraLimite      (1700);   // nao abre posicao depois disto (HHMM)
+  MaxBarrasSeq    (60);
+  MaxBarrasDia    (1200);
+  DurMaxMin       (60);
+
+var
+  i        : Integer;
+  dirAtual : Integer;
+  dirAnt   : Integer;
+  seq      : Integer;
+  nDia     : Integer;
+  parou    : Boolean;
+  limpo    : Boolean;
+  elegivel : Boolean;
+  sinal    : Boolean;
+  dHi      : Float;
+  dLo      : Float;
+  minAcum  : Float;
+  faixa    : Float;
+  dpos     : Float;
+  agTot    : Float;
+  delta    : Float;
+  pAlvo    : Float;
+  pStop    : Float;
+
+begin
+  //------------------------------------------------------------------ 1. geometria
+  if (Close > Open) then dirAtual := 1 else dirAtual := -1;
+  if (Close[1] > Open[1]) then dirAnt := 1 else dirAnt := -1;
+
+  seq   := 0;
+  parou := False;
+  for i := 1 to MaxBarrasSeq do
+  begin
+    if (parou = False) then
+    begin
+      if (((Close[i] > Open[i]) and (dirAnt =  1)) or
+          ((Close[i] < Open[i]) and (dirAnt = -1))) then
+        seq := seq + 1
+      else
+        parou := True;
+    end;
+  end;
+
+  //------------------------------------------------------------------ 2. higiene
+  limpo := True;
+  if (Quantity <= 0)                            then limpo := False;
+  if (Date <> Date[1])                          then limpo := False;
+  if (BarDurationF > DurMaxMin)                 then limpo := False;
+  if ((Open <> Close[1]) and (Open <> Open[1])) then limpo := False;
+
+  elegivel := limpo and (dirAtual <> dirAnt) and (seq >= MinSeq);
+
+  //------------------------------------------------------------------ 3. contexto
+  sinal := False;
+  if (elegivel = True) then
+  begin
+    nDia  := 1;
+    parou := False;
+    for i := 1 to MaxBarrasDia do
+    begin
+      if (parou = False) then
+      begin
+        if (Date[i] = Date[0]) then nDia := nDia + 1 else parou := True;
+      end;
+    end;
+
+    dHi     := High;
+    dLo     := Low;
+    minAcum := 0;
+    for i := 0 to nDia - 1 do
+    begin
+      if (High[i] > dHi) then dHi := High[i];
+      if (Low[i]  < dLo) then dLo := Low[i];
+      if (i >= 1) then minAcum := minAcum + BarDurationF[i];
+    end;
+
+    faixa := dHi - dLo;
+    if (faixa < CorpoPts) then faixa := CorpoPts;
+    dpos := dirAtual * (Close - (dHi + dLo) / 2) / faixa;
+
+    delta := 0;
+    agTot := AgressionVolBuy + AgressionVolSell;
+    if (agTot > 0) then
+      delta := dirAtual * (AgressionVolBuy - AgressionVolSell) / agTot;
+
+    sinal := (minAcum >= MinAposAbertura) and (dpos >= DPosMin);
+    if ((UsarFiltroDelta = 1) and (delta < DeltaMin)) then sinal := False;
+    if (Time >= HoraLimite) then sinal := False;
+  end;
+
+  //------------------------------------------------------------------ 4. ordens
+  //  >>> a unica secao que pode precisar de ajuste de assinatura <<<
+  //  pAlvo/pStop sao CONGELADOS na entrada. Recalcula-los a cada barra faria os
+  //  niveis andarem junto com o preco e a posicao nunca fecharia no lugar certo.
+  if ((sinal = True) and (IsBought = False) and (IsSold = False)) then
+  begin
+    pAlvo := Close + dirAtual * AlvoCorpos * CorpoPts;
+    pStop := Close - dirAtual * StopCorpos * CorpoPts;
+    if (dirAtual = 1) then
+      BuyAtMarket(Contratos)
+    else
+      SellShortAtMarket(Contratos);
+  end;
+
+  if (IsBought = True) then
+  begin
+    SellToCoverLimit(pAlvo, Contratos);
+    SellToCoverStop (pStop, pStop, Contratos);
+  end;
+
+  if (IsSold = True) then
+  begin
+    BuyToCoverLimit(pAlvo, Contratos);
+    BuyToCoverStop (pStop, pStop, Contratos);
+  end;
+end;

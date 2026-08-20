@@ -1,0 +1,742 @@
+//------------------------------------------------------------------
+// ReversalDetectorClaude  —  Renko WIN  —  ProfitChart Pro / NTSL
+//
+//   NON-REPAINT           (uma barra fechada nunca muda de sinal)
+//   NO-CONFIRMATION       (nao espera t+1)
+//   SIGNAL-ON-CLOSED-BAR  (a seta sai no fechamento da barra da virada)
+//
+// Gerado automaticamente por src/model_to_ntsl.py a partir do modelo
+// CatBoost treinado em data/processed/dataset.parquet.
+//
+// Modelo   : CatBoost, 40 arvores oblivias de profundidade 3
+// Features : 33 (somente as calculaveis em NTSL — ver abaixo)
+// Threshold: 0.5000 de probabilidade, aplicado como
+//            raw >= 0   (escolhido na validacao,
+//            nunca no teste final)
+//
+// POR QUE NAO HA SIGMOIDE AQUI: a probabilidade do CatBoost e
+// 1/(1+exp(-raw)), e nenhum dos indicadores ja compilados deste repo usa
+// Exp(). Como a sigmoide e estritamente crescente,
+//     prob >= T   <=>   raw >= ln(T/(1-T))
+// entao comparar o score bruto contra o logito do threshold da EXATAMENTE
+// o mesmo sinal, sem precisar de funcao nao verificada. O valor
+// ln(T/(1-T)) foi calculado em Python e esta fixado no input LimiarRaw.
+//
+//==================================================================
+// LEIA ANTES DE OPERAR
+//==================================================================
+// RESULTADO DA VALIDACAO — ESTE INDICADOR NAO ATINGIU O CRITERIO
+// DE SUCESSO DA SECAO 41 DO CLAUDE.md. Ele e entregue porque foi
+// pedido como entregavel, e para servir de arcabouco auditavel,
+// NAO porque a pesquisa recomendou opera-lo.
+//
+//   AUC walk-forward (desenvolvimento) : 0.5145
+//   AUC holdout (out-of-sample)        : 0.5164
+//   taxa-base do evento                : 0.4536
+//   precision no threshold escolhido   : 0.5854
+//   ganho sobre a taxa-base            : +0.1318
+//   sinais por pregao                  : 5.9
+//
+//   deslocamento medio 12 barras, SINAIS      : +45.1 pts
+//   deslocamento medio 12 barras, TODOS CAND. : +2.2 pts
+//
+// Ou seja: filtrar os candidatos com o modelo nao melhorou o
+// resultado economico em relacao a simplesmente aceitar todas as
+// viradas estruturais. Ver reports/final_report.md.
+//==================================================================
+// AUSENCIA DE LOOK-AHEAD
+//==================================================================
+// Todas as expressoes abaixo usam indices >= 0 (barra corrente e
+// passado). Nao existe nenhuma referencia a barras futuras — o NTSL
+// nem sequer permite indice negativo. O sinal de uma barra depende
+// exclusivamente de dados congelados no fechamento dela.
+//
+// REPINTURA DURANTE A FORMACAO: enquanto o brick corrente nao fecha,
+// High, Low, AgressionVolBuy, AgressionVolSell e QuantityVol dele ainda
+// crescem, entao a seta pode piscar. Assim que o brick FECHA os valores
+// congelam e a seta fica definitiva. Nenhuma barra ja fechada muda de
+// sinal depois — que e a definicao de nao repintar. Isso e consequencia
+// direta de pedir sinal no proprio candle da virada (requisito 3 do
+// CLAUDE.md), nao um defeito do codigo.
+//
+//==================================================================
+// LIMITACAO DE FEATURES
+//==================================================================
+// O NTSL (funcoes verificadas nos indicadores ja compilados) NAO expoe
+// o numero de negocios da barra. Todas as features derivadas de Trades
+// ficaram de fora do modelo exportado. O CSV de pesquisa as contem e
+// elas foram avaliadas — ver reports/final_report.md.
+//
+// Inserir no MESMO painel do grafico de precos.
+//------------------------------------------------------------------
+
+input
+  LimiarRaw(0);   // = ln(T/(1-T)) para T = 0.5000
+  PreSeq(2);                 // candles consecutivos exigidos antes da virada
+  PeriodoMedia(20);         // janela das medias moveis das features
+  MostrarScore(0);                   // 1 = escreve o score bruto x100 junto da seta
+  MostrarCompras(1);
+  MostrarVendas(1);
+  MinBarras(0);                      // distancia minima entre setas do mesmo lado
+  OffsetFrac(0.60);                  // afastamento da seta, em fracao do range medio
+  TamFonte(10);
+
+var
+  minimo, idx                     : integer;
+  dirn, runLen                    : integer;
+  barrasC, barrasV                : integer;
+  agrB, agrS, qtd, dur            : float;
+  rng, rngSafe, corpo, totAgr     : float;
+  balNorm, imbal                  : float;
+  mDur, mRng, mTot, mQtd          : float;
+  raw                             : float;
+  ehVirada                        : boolean;
+  cor                             : integer;
+
+begin
+  //--- grandezas brutas da barra (viram serie automaticamente) --------
+  agrB   := AgressionVolBuy();
+  agrS   := AgressionVolSell();
+  qtd    := QuantityVol(false, false);
+  dur    := BarDurationF();
+  rng    := High - Low;
+  corpo  := Abs(Close - Open);
+  totAgr := agrB + agrS;
+
+  //--- protecao numerica: RangeSafe = max(High-Low, epsilon) ----------
+  rngSafe := rng;
+  if rngSafe < 1 then rngSafe := 1;
+
+  balNorm := (agrB - agrS) / rngSafe;
+  if totAgr > 0 then imbal := (agrB - agrS) / totAgr else imbal := 0;
+
+  //--- direcao e comprimento da sequencia corrente (somente ate t) ----
+  if Close > Open then
+    dirn := 1
+  else if Close < Open then
+    dirn := -1
+  else
+    dirn := 0;
+
+  if CurrentBar <= 1 then
+    runLen := 1
+  else if dirn = dirn[1] then
+    runLen := runLen[1] + 1
+  else
+    runLen := 1;
+
+  //--- medias moveis causais (janela terminando na barra corrente) ----
+  mDur := Media(PeriodoMedia, dur);
+  mRng := Media(PeriodoMedia, rng);
+  mTot := Media(PeriodoMedia, totAgr);
+  mQtd := Media(PeriodoMedia, qtd);
+  if mRng <= 0 then mRng := 1;
+  if mTot <= 0 then mTot := 1;
+  if mQtd <= 0 then mQtd := 1;
+
+  barrasC := barrasC[1] + 1;
+  barrasV := barrasV[1] + 1;
+
+  minimo := PeriodoMedia + 4 + PreSeq + 2;
+
+  if CurrentBar >= minimo then
+  begin
+    //--- CANDIDATO ESTRUTURAL: PreSeq barras numa direcao e virada em t
+    //    Usa apenas t-1..t-PreSeq. Nada de futuro.
+    ehVirada := (dirn <> 0) and (dirn[1] <> 0) and (dirn[1] <> dirn)
+                and (runLen[1] >= PreSeq);
+
+    if ehVirada then
+    begin
+    //=== MODELO CATBOOST GERADO AUTOMATICAMENTE ===============
+    //  arvores: 40   escala: 1   vies: 0
+    //  equivale a probabilidade >= 0.5000
+    //  NAO EDITAR A MAO — regenerar com src/model_to_ntsl.py
+
+    raw := 0;
+    //--- arvore 0 (profundidade 3) ---
+    idx := 0;
+    if agrB / rngSafe > 0.042911879718 then idx := idx + 1;   // AggBuyNorm
+    if agrB[2] / rngSafe[2] > 18.226572036743 then idx := idx + 2;   // AggBuyNorm_lag2
+    if dur[2] - mDur[2] > -126.324996948242 then idx := idx + 4;   // DurationResidual_lag2
+    if idx = 0 then raw := raw + 0.0
+    else if idx = 1 then raw := raw + 0.007707534009
+    else if idx = 2 then raw := raw + 0.052409986881
+    else if idx = 3 then raw := raw - 0.006080356695
+    else if idx = 4 then raw := raw - 0.10554194747
+    else if idx = 5 then raw := raw + 0.003312469325
+    else if idx = 6 then raw := raw + 0.063517730538
+    else if idx = 7 then raw := raw - 0.00839889848;
+
+    //--- arvore 1 (profundidade 3) ---
+    idx := 0;
+    if agrS[3] / rngSafe[3] > 3.586057662964 then idx := idx + 1;   // AggSellNorm_lag3
+    if agrB[3] / rngSafe[3] > 38.76025390625 then idx := idx + 2;   // AggBuyNorm_lag3
+    if totAgr / mTot > 0.971371650696 then idx := idx + 4;   // AggTotalRatio20
+    if idx = 0 then raw := raw - 0.050380474798
+    else if idx = 1 then raw := raw - 0.008877080174
+    else if idx = 2 then raw := raw - 0.078916298437
+    else if idx = 3 then raw := raw - 0.002741148404
+    else if idx = 4 then raw := raw - 0.020041769986
+    else if idx = 5 then raw := raw - 0.001104168724
+    else if idx = 6 then raw := raw + 0.037897051946
+    else if idx = 7 then raw := raw - 0.006261469061;
+
+    //--- arvore 2 (profundidade 3) ---
+    idx := 0;
+    if (agrB[1] + agrS[1]) / rngSafe[1] > 33.261363983154 then idx := idx + 1;   // AggTotalNorm_lag1
+    if (agrB[1] - agrS[1]) / rngSafe[1] > 14.082000732422 then idx := idx + 2;   // AggBalanceNorm_lag1
+    if agrS[3] / rngSafe[3] > 82.682861328125 then idx := idx + 4;   // AggSellNorm_lag3
+    if idx = 0 then raw := raw - 0.023139373013
+    else if idx = 1 then raw := raw + 0.000085344352
+    else if idx = 2 then raw := raw - 0.016012624457
+    else if idx = 3 then raw := raw - 0.009446110808
+    else if idx = 4 then raw := raw + 0.061912502354
+    else if idx = 5 then raw := raw - 0.001363555724
+    else if idx = 6 then raw := raw - 0.021810117556
+    else if idx = 7 then raw := raw - 0.008142986754;
+
+    //--- arvore 3 (profundidade 3) ---
+    idx := 0;
+    if agrS[3] / rngSafe[3] > 0.042727272958 then idx := idx + 1;   // AggSellNorm_lag3
+    if dur[3] - mDur[3] > -121.850006103516 then idx := idx + 2;   // DurationResidual_lag3
+    if agrB / rngSafe > 110.079498291016 then idx := idx + 4;   // AggBuyNorm
+    if idx = 0 then raw := raw - 0.006616473519
+    else if idx = 1 then raw := raw - 0.003791840732
+    else if idx = 2 then raw := raw - 0.079184620901
+    else if idx = 3 then raw := raw - 0.002120922208
+    else if idx = 4 then raw := raw + 0.072621532791
+    else if idx = 5 then raw := raw - 0.010403842404
+    else if idx = 6 then raw := raw + 0.0
+    else if idx = 7 then raw := raw - 0.004631647277;
+
+    //--- arvore 4 (profundidade 3) ---
+    idx := 0;
+    if qtd / rngSafe > 2.838095188141 then idx := idx + 1;   // QuantityNorm
+    if (agrB[3] + agrS[3]) / rngSafe[3] > 31.369564056396 then idx := idx + 2;   // AggTotalNorm_lag3
+    if (agrB[1] + agrS[1]) / rngSafe[1] > 0.239999994636 then idx := idx + 4;   // AggTotalNorm_lag1
+    if idx = 0 then raw := raw - 0.082226390952
+    else if idx = 1 then raw := raw + 0.045992702656
+    else if idx = 2 then raw := raw + 0.0
+    else if idx = 3 then raw := raw + 0.06982577467
+    else if idx = 4 then raw := raw - 0.011977418981
+    else if idx = 5 then raw := raw + 0.006750371108
+    else if idx = 6 then raw := raw + 0.017209506899
+    else if idx = 7 then raw := raw - 0.005113582523;
+
+    //--- arvore 5 (profundidade 3) ---
+    idx := 0;
+    if qtd / rngSafe > 0.5 then idx := idx + 1;   // QuantityNorm
+    if agrS[3] / rngSafe[3] > 17.523845672607 then idx := idx + 2;   // AggSellNorm_lag3
+    if (agrB[1] - agrS[1]) / rngSafe[1] > 62.631427764893 then idx := idx + 4;   // AggBalanceNorm_lag1
+    if idx = 0 then raw := raw - 0.070129261249
+    else if idx = 1 then raw := raw - 0.002958442832
+    else if idx = 2 then raw := raw + 0.021292929389
+    else if idx = 3 then raw := raw - 0.003701179302
+    else if idx = 4 then raw := raw + 0.0
+    else if idx = 5 then raw := raw - 0.000509744229
+    else if idx = 6 then raw := raw + 0.0
+    else if idx = 7 then raw := raw - 0.005711038133;
+
+    //--- arvore 6 (profundidade 3) ---
+    idx := 0;
+    if qtd / rngSafe > 0.754666686058 then idx := idx + 1;   // QuantityNorm
+    if imbal > -0.152761593461 then idx := idx + 2;   // AggImbalance
+    if (agrB[3] + agrS[3]) / rngSafe[3] > 17.46342086792 then idx := idx + 4;   // AggTotalNorm_lag3
+    if idx = 0 then raw := raw - 0.070057075495
+    else if idx = 1 then raw := raw + 0.001404275542
+    else if idx = 2 then raw := raw - 0.060806963135
+    else if idx = 3 then raw := raw + 0.01207985911
+    else if idx = 4 then raw := raw + 0.021065377017
+    else if idx = 5 then raw := raw - 0.004593748044
+    else if idx = 6 then raw := raw - 0.021413643686
+    else if idx = 7 then raw := raw - 0.004033286325;
+
+    //--- arvore 7 (profundidade 3) ---
+    idx := 0;
+    if qtd[3] / rngSafe[3] > 0.003333333414 then idx := idx + 1;   // QuantityNorm_lag3
+    if (agrB[2] - agrS[2]) / rngSafe[2] > -13.47200012207 then idx := idx + 2;   // AggBalanceNorm_lag2
+    if qtd / rngSafe > 6.390909194946 then idx := idx + 4;   // QuantityNorm
+    if idx = 0 then raw := raw + 0.0
+    else if idx = 1 then raw := raw - 0.010967615408
+    else if idx = 2 then raw := raw - 0.12502585001
+    else if idx = 3 then raw := raw - 0.019271525156
+    else if idx = 4 then raw := raw + 0.0
+    else if idx = 5 then raw := raw + 0.001519792927
+    else if idx = 6 then raw := raw + 0.017006583201
+    else if idx = 7 then raw := raw - 0.006512364213;
+
+    //--- arvore 8 (profundidade 3) ---
+    idx := 0;
+    if qtd / rngSafe > 0.091619044542 then idx := idx + 1;   // QuantityNorm
+    if rng / mRng > 1.804327726364 then idx := idx + 2;   // RangeRatio20
+    if (agrB[3] + agrS[3]) / rngSafe[3] > 631.284790039062 then idx := idx + 4;   // AggTotalNorm_lag3
+    if idx = 0 then raw := raw - 0.082758533966
+    else if idx = 1 then raw := raw - 0.004437979319
+    else if idx = 2 then raw := raw - 0.015778041654
+    else if idx = 3 then raw := raw + 0.00478665842
+    else if idx = 4 then raw := raw + 0.0
+    else if idx = 5 then raw := raw + 0.019291330395
+    else if idx = 6 then raw := raw + 0.0
+    else if idx = 7 then raw := raw + 0.0;
+
+    //--- arvore 9 (profundidade 3) ---
+    idx := 0;
+    if qtd[1] / rngSafe[1] > 0.077037036419 then idx := idx + 1;   // QuantityNorm_lag1
+    if dur[3] - mDur[3] > 562.474975585938 then idx := idx + 2;   // DurationResidual_lag3
+    if qtd[2] / rngSafe[2] > 129.29182434082 then idx := idx + 4;   // QuantityNorm_lag2
+    if idx = 0 then raw := raw - 0.049147586967
+    else if idx = 1 then raw := raw + 0.000979897106
+    else if idx = 2 then raw := raw + 0.048267729812
+    else if idx = 3 then raw := raw + 0.005784498497
+    else if idx = 4 then raw := raw + 0.0
+    else if idx = 5 then raw := raw - 0.007714778227
+    else if idx = 6 then raw := raw + 0.01998998572
+    else if idx = 7 then raw := raw + 0.003790212573;
+
+    //--- arvore 10 (profundidade 3) ---
+    idx := 0;
+    if agrB[3] / rngSafe[3] > 1.319285750389 then idx := idx + 1;   // AggBuyNorm_lag3
+    if (agrB[2] - agrS[2]) / rngSafe[2] > -9.871794700623 then idx := idx + 2;   // AggBalanceNorm_lag2
+    if totAgr / mTot > 1.081812858582 then idx := idx + 4;   // AggTotalRatio20
+    if idx = 0 then raw := raw - 0.006834905947
+    else if idx = 1 then raw := raw + 0.004101850068
+    else if idx = 2 then raw := raw - 0.0358794092
+    else if idx = 3 then raw := raw - 0.005498455905
+    else if idx = 4 then raw := raw - 0.008147617439
+    else if idx = 5 then raw := raw - 0.000654662867
+    else if idx = 6 then raw := raw - 0.001718381916
+    else if idx = 7 then raw := raw - 0.007046242995;
+
+    //--- arvore 11 (profundidade 3) ---
+    idx := 0;
+    if agrS[3] / rngSafe[3] > 0.011428572237 then idx := idx + 1;   // AggSellNorm_lag3
+    if dur[2] - mDur[2] > -1345.824951171875 then idx := idx + 2;   // DurationResidual_lag2
+    if (agrB[3] - agrS[3]) / rngSafe[3] > -85.967308044434 then idx := idx + 4;   // AggBalanceNorm_lag3
+    if idx = 0 then raw := raw + 0.021893258172
+    else if idx = 1 then raw := raw - 0.023535249104
+    else if idx = 2 then raw := raw + 0.0
+    else if idx = 3 then raw := raw - 0.012569791198
+    else if idx = 4 then raw := raw + 0.003644601231
+    else if idx = 5 then raw := raw + 0.011532501756
+    else if idx = 6 then raw := raw - 0.061071192474
+    else if idx = 7 then raw := raw - 0.002825031226;
+
+    //--- arvore 12 (profundidade 3) ---
+    idx := 0;
+    if (agrB[2] - agrS[2]) / rngSafe[2] > -14.979999542236 then idx := idx + 1;   // AggBalanceNorm_lag2
+    if qtd[3] / rngSafe[3] > 33.23999786377 then idx := idx + 2;   // QuantityNorm_lag3
+    if agrB[1] / rngSafe[1] > 9.047618865967 then idx := idx + 4;   // AggBuyNorm_lag1
+    if idx = 0 then raw := raw + 0.011504148629
+    else if idx = 1 then raw := raw - 0.018941339253
+    else if idx = 2 then raw := raw + 0.006569893287
+    else if idx = 3 then raw := raw - 0.00946102083
+    else if idx = 4 then raw := raw - 0.017105800071
+    else if idx = 5 then raw := raw + 0.018812592479
+    else if idx = 6 then raw := raw + 0.00188966187
+    else if idx = 7 then raw := raw - 0.007513514948;
+
+    //--- arvore 13 (profundidade 3) ---
+    idx := 0;
+    if agrB / rngSafe > 0.123090907931 then idx := idx + 1;   // AggBuyNorm
+    if agrS[1] / rngSafe[1] > 44.82088470459 then idx := idx + 2;   // AggSellNorm_lag1
+    if (agrB[2] - agrS[2]) / rngSafe[2] > 49.569320678711 then idx := idx + 4;   // AggBalanceNorm_lag2
+    if idx = 0 then raw := raw - 0.044475703466
+    else if idx = 1 then raw := raw + 0.000008157475
+    else if idx = 2 then raw := raw + 0.02109598545
+    else if idx = 3 then raw := raw - 0.002516062272
+    else if idx = 4 then raw := raw + 0.0
+    else if idx = 5 then raw := raw - 0.014240126678
+    else if idx = 6 then raw := raw + 0.0
+    else if idx = 7 then raw := raw - 0.002219454925;
+
+    //--- arvore 14 (profundidade 3) ---
+    idx := 0;
+    if agrS[2] / rngSafe[2] > 0.498275876045 then idx := idx + 1;   // AggSellNorm_lag2
+    if dur[3] - mDur[3] > -2382.10009765625 then idx := idx + 2;   // DurationResidual_lag3
+    if (agrB[1] - agrS[1]) / rngSafe[1] > 14.082000732422 then idx := idx + 4;   // AggBalanceNorm_lag1
+    if idx = 0 then raw := raw + 0.009720923783
+    else if idx = 1 then raw := raw - 0.004726888863
+    else if idx = 2 then raw := raw - 0.022425885132
+    else if idx = 3 then raw := raw + 0.000383707649
+    else if idx = 4 then raw := raw + 0.0
+    else if idx = 5 then raw := raw + 0.028138602215
+    else if idx = 6 then raw := raw - 0.017041395528
+    else if idx = 7 then raw := raw - 0.007146586351;
+
+    //--- arvore 15 (profundidade 3) ---
+    idx := 0;
+    if agrS / rngSafe > 11.377332687378 then idx := idx + 1;   // AggSellNorm
+    if (agrB[3] + agrS[3]) / rngSafe[3] > 113.186111450195 then idx := idx + 2;   // AggTotalNorm_lag3
+    if rng / mRng > 1.394020557404 then idx := idx + 4;   // RangeRatio20
+    if idx = 0 then raw := raw - 0.024113330164
+    else if idx = 1 then raw := raw - 0.004569788703
+    else if idx = 2 then raw := raw - 0.014374003464
+    else if idx = 3 then raw := raw - 0.000179835371
+    else if idx = 4 then raw := raw - 0.010316540048
+    else if idx = 5 then raw := raw + 0.008339762849
+    else if idx = 6 then raw := raw + 0.020866935253
+    else if idx = 7 then raw := raw - 0.007973779886;
+
+    //--- arvore 16 (profundidade 3) ---
+    idx := 0;
+    if qtd / rngSafe > 0.261999994516 then idx := idx + 1;   // QuantityNorm
+    if (agrB[2] - agrS[2]) / rngSafe[2] > -49.251747131348 then idx := idx + 2;   // AggBalanceNorm_lag2
+    if (agrB[1] - agrS[1]) / rngSafe[1] > -52.229999542236 then idx := idx + 4;   // AggBalanceNorm_lag1
+    if idx = 0 then raw := raw + 0.0
+    else if idx = 1 then raw := raw - 0.00124804126
+    else if idx = 2 then raw := raw + 0.0
+    else if idx = 3 then raw := raw - 0.012541720772
+    else if idx = 4 then raw := raw + 0.0
+    else if idx = 5 then raw := raw + 0.005670627289
+    else if idx = 6 then raw := raw - 0.052887014159
+    else if idx = 7 then raw := raw - 0.001342863664;
+
+    //--- arvore 17 (profundidade 3) ---
+    idx := 0;
+    if (agrB - agrS) / rngSafe > 51.086364746094 then idx := idx + 1;   // AggBalanceNorm
+    if (agrB + agrS) / rngSafe > 1.945779204369 then idx := idx + 2;   // AggTotalNorm
+    if corpo / rngSafe > 0.339080452919 then idx := idx + 4;   // BodyNorm
+    if idx = 0 then raw := raw + 0.0230042477
+    else if idx = 1 then raw := raw + 0.0
+    else if idx = 2 then raw := raw + 0.005430688826
+    else if idx = 3 then raw := raw + 0.005974283405
+    else if idx = 4 then raw := raw - 0.029225216148
+    else if idx = 5 then raw := raw + 0.0
+    else if idx = 6 then raw := raw - 0.003779055927
+    else if idx = 7 then raw := raw + 0.008882151211;
+
+    //--- arvore 18 (profundidade 3) ---
+    idx := 0;
+    if qtd[2] / rngSafe[2] > 974.491516113281 then idx := idx + 1;   // QuantityNorm_lag2
+    if imbal > 0.195058017969 then idx := idx + 2;   // AggImbalance
+    if agrS[1] / rngSafe[1] > 167.197784423828 then idx := idx + 4;   // AggSellNorm_lag1
+    if idx = 0 then raw := raw - 0.003384852754
+    else if idx = 1 then raw := raw + 0.010773668557
+    else if idx = 2 then raw := raw - 0.011111063786
+    else if idx = 3 then raw := raw + 0.044386144638
+    else if idx = 4 then raw := raw - 0.001593953581
+    else if idx = 5 then raw := raw + 0.005385760541
+    else if idx = 6 then raw := raw + 0.01308436167
+    else if idx = 7 then raw := raw + 0.074836936167;
+
+    //--- arvore 19 (profundidade 3) ---
+    idx := 0;
+    if qtd / rngSafe > 0.091619044542 then idx := idx + 1;   // QuantityNorm
+    if dur[2] - mDur[2] > -83.150001525879 then idx := idx + 2;   // DurationResidual_lag2
+    if (agrB[3] - agrS[3]) / rngSafe[3] > 0.395999997854 then idx := idx + 4;   // AggBalanceNorm_lag3
+    if idx = 0 then raw := raw + 0.0
+    else if idx = 1 then raw := raw + 0.002887850674
+    else if idx = 2 then raw := raw - 0.063490848422
+    else if idx = 3 then raw := raw + 0.002136446669
+    else if idx = 4 then raw := raw + 0.0
+    else if idx = 5 then raw := raw - 0.004317801107
+    else if idx = 6 then raw := raw + 0.0
+    else if idx = 7 then raw := raw - 0.008193155766;
+
+    //--- arvore 20 (profundidade 3) ---
+    idx := 0;
+    if (agrB + agrS) / rngSafe > 1.945779204369 then idx := idx + 1;   // AggTotalNorm
+    if agrS[3] / rngSafe[3] > 17.809999465942 then idx := idx + 2;   // AggSellNorm_lag3
+    if dirn > 0.0 then idx := idx + 4;   // Direction
+    if idx = 0 then raw := raw - 0.028436982124
+    else if idx = 1 then raw := raw + 0.004939142669
+    else if idx = 2 then raw := raw + 0.05126586068
+    else if idx = 3 then raw := raw - 0.00476495516
+    else if idx = 4 then raw := raw - 0.032381776074
+    else if idx = 5 then raw := raw - 0.001064310457
+    else if idx = 6 then raw := raw + 0.050766845014
+    else if idx = 7 then raw := raw + 0.000095864808;
+
+    //--- arvore 21 (profundidade 3) ---
+    idx := 0;
+    if (agrB[1] - agrS[1]) / rngSafe[1] > -103.626663208008 then idx := idx + 1;   // AggBalanceNorm_lag1
+    if agrS[1] / rngSafe[1] > 128.453567504883 then idx := idx + 2;   // AggSellNorm_lag1
+    if agrB[2] / rngSafe[2] > 35.111793518066 then idx := idx + 4;   // AggBuyNorm_lag2
+    if idx = 0 then raw := raw + 0.063807032145
+    else if idx = 1 then raw := raw + 0.001097022403
+    else if idx = 2 then raw := raw - 0.013624476769
+    else if idx = 3 then raw := raw + 0.007476747986
+    else if idx = 4 then raw := raw + 0.051757614339
+    else if idx = 5 then raw := raw - 0.005545716275
+    else if idx = 6 then raw := raw + 0.005723914962
+    else if idx = 7 then raw := raw - 0.002914094209;
+
+    //--- arvore 22 (profundidade 3) ---
+    idx := 0;
+    if qtd / rngSafe > 6.390909194946 then idx := idx + 1;   // QuantityNorm
+    if (agrB + agrS) / rngSafe > 0.104105092585 then idx := idx + 2;   // AggTotalNorm
+    if agrB[2] / rngSafe[2] > 0.697777748108 then idx := idx + 4;   // AggBuyNorm_lag2
+    if idx = 0 then raw := raw - 0.05718182875
+    else if idx = 1 then raw := raw + 0.0
+    else if idx = 2 then raw := raw - 0.00632760388
+    else if idx = 3 then raw := raw + 0.047705341204
+    else if idx = 4 then raw := raw + 0.012482669156
+    else if idx = 5 then raw := raw + 0.076276077966
+    else if idx = 6 then raw := raw - 0.019635845954
+    else if idx = 7 then raw := raw - 0.001909954561;
+
+    //--- arvore 23 (profundidade 3) ---
+    idx := 0;
+    if dur[2] - mDur[2] > -0.975000023842 then idx := idx + 1;   // DurationResidual_lag2
+    if (agrB[2] + agrS[2]) / rngSafe[2] > 214.787872314453 then idx := idx + 2;   // AggTotalNorm_lag2
+    if agrS / rngSafe > 106.871429443359 then idx := idx + 4;   // AggSellNorm
+    if idx = 0 then raw := raw + 0.004025940193
+    else if idx = 1 then raw := raw - 0.00622644795
+    else if idx = 2 then raw := raw - 0.014208522839
+    else if idx = 3 then raw := raw + 0.003904692093
+    else if idx = 4 then raw := raw - 0.005601098685
+    else if idx = 5 then raw := raw - 0.008286974291
+    else if idx = 6 then raw := raw - 0.004706813986
+    else if idx = 7 then raw := raw - 0.005075543956;
+
+    //--- arvore 24 (profundidade 3) ---
+    idx := 0;
+    if agrB[3] / rngSafe[3] > 306.742584228516 then idx := idx + 1;   // AggBuyNorm_lag3
+    if agrB[3] / rngSafe[3] > 31.317691802979 then idx := idx + 2;   // AggBuyNorm_lag3
+    if (agrB[2] - agrS[2]) / rngSafe[2] > 27.25714302063 then idx := idx + 4;   // AggBalanceNorm_lag2
+    if idx = 0 then raw := raw + 0.000043142724
+    else if idx = 1 then raw := raw + 0.0
+    else if idx = 2 then raw := raw - 0.002332351379
+    else if idx = 3 then raw := raw + 0.021560702963
+    else if idx = 4 then raw := raw - 0.051920273724
+    else if idx = 5 then raw := raw + 0.0
+    else if idx = 6 then raw := raw - 0.00307978699
+    else if idx = 7 then raw := raw + 0.010513997606;
+
+    //--- arvore 25 (profundidade 3) ---
+    idx := 0;
+    if agrS[1] / rngSafe[1] > 0.360000014305 then idx := idx + 1;   // AggSellNorm_lag1
+    if (agrB + agrS) / rngSafe > 918.773681640625 then idx := idx + 2;   // AggTotalNorm
+    if (agrB[3] - agrS[3]) / rngSafe[3] > -25.751298904419 then idx := idx + 4;   // AggBalanceNorm_lag3
+    if idx = 0 then raw := raw + 0.030783012846
+    else if idx = 1 then raw := raw + 0.001765570833
+    else if idx = 2 then raw := raw + 0.0
+    else if idx = 3 then raw := raw + 0.049996558604
+    else if idx = 4 then raw := raw - 0.01745923795
+    else if idx = 5 then raw := raw - 0.003304169469
+    else if idx = 6 then raw := raw + 0.0
+    else if idx = 7 then raw := raw + 0.040993332445;
+
+    //--- arvore 26 (profundidade 3) ---
+    idx := 0;
+    if agrS / rngSafe > 307.031311035156 then idx := idx + 1;   // AggSellNorm
+    if rng / mRng > 1.327006220818 then idx := idx + 2;   // RangeRatio20
+    if agrB[1] / rngSafe[1] > 19.60072517395 then idx := idx + 4;   // AggBuyNorm_lag1
+    if idx = 0 then raw := raw - 0.005777400447
+    else if idx = 1 then raw := raw + 0.0
+    else if idx = 2 then raw := raw - 0.000186691756
+    else if idx = 3 then raw := raw + 0.04000319898
+    else if idx = 4 then raw := raw - 0.002671648725
+    else if idx = 5 then raw := raw - 0.030959980778
+    else if idx = 6 then raw := raw + 0.000591607974
+    else if idx = 7 then raw := raw + 0.000008726541;
+
+    //--- arvore 27 (profundidade 3) ---
+    idx := 0;
+    if (agrB[2] - agrS[2]) / rngSafe[2] > -79.389739990234 then idx := idx + 1;   // AggBalanceNorm_lag2
+    if dur - mDur > 3856.175048828125 then idx := idx + 2;   // DurationResidual
+    if (balNorm - balNorm[1]) > 128.900177001953 then idx := idx + 4;   // AggBalanceChange
+    if idx = 0 then raw := raw + 0.016426296104
+    else if idx = 1 then raw := raw - 0.003761686827
+    else if idx = 2 then raw := raw - 0.035621511199
+    else if idx = 3 then raw := raw + 0.008786036883
+    else if idx = 4 then raw := raw - 0.01042359444
+    else if idx = 5 then raw := raw + 0.016651465893
+    else if idx = 6 then raw := raw + 0.007982106393
+    else if idx = 7 then raw := raw - 0.004293011266;
+
+    //--- arvore 28 (profundidade 3) ---
+    idx := 0;
+    if qtd / mQtd > 2.030109882355 then idx := idx + 1;   // QuantityRatio20
+    if (agrB[1] + agrS[1]) / rngSafe[1] > 49.933975219727 then idx := idx + 2;   // AggTotalNorm_lag1
+    if dur[2] - mDur[2] > -484.174987792969 then idx := idx + 4;   // DurationResidual_lag2
+    if idx = 0 then raw := raw - 0.00247239767
+    else if idx = 1 then raw := raw + 0.037491258827
+    else if idx = 2 then raw := raw - 0.002138503468
+    else if idx = 3 then raw := raw - 0.005779357015
+    else if idx = 4 then raw := raw - 0.008166102524
+    else if idx = 5 then raw := raw + 0.003692020544
+    else if idx = 6 then raw := raw + 0.002006594781
+    else if idx = 7 then raw := raw - 0.011536901934;
+
+    //--- arvore 29 (profundidade 3) ---
+    idx := 0;
+    if agrS / rngSafe > 134.823333740234 then idx := idx + 1;   // AggSellNorm
+    if (agrB[1] - agrS[1]) / rngSafe[1] > -45.231929779053 then idx := idx + 2;   // AggBalanceNorm_lag1
+    if (agrB[2] - agrS[2]) / rngSafe[2] > -18.716232299805 then idx := idx + 4;   // AggBalanceNorm_lag2
+    if idx = 0 then raw := raw + 0.002617396571
+    else if idx = 1 then raw := raw - 0.011188573434
+    else if idx = 2 then raw := raw + 0.014932979646
+    else if idx = 3 then raw := raw + 0.012087117277
+    else if idx = 4 then raw := raw - 0.024728282938
+    else if idx = 5 then raw := raw - 0.045735244252
+    else if idx = 6 then raw := raw - 0.003808186052
+    else if idx = 7 then raw := raw - 0.000528956909;
+
+    //--- arvore 30 (profundidade 3) ---
+    idx := 0;
+    if dur[3] - mDur[3] > 2116.25 then idx := idx + 1;   // DurationResidual_lag3
+    if dirn > 0.0 then idx := idx + 2;   // Direction
+    if agrB / rngSafe > 6.378623008728 then idx := idx + 4;   // AggBuyNorm
+    if idx = 0 then raw := raw - 0.00811319622
+    else if idx = 1 then raw := raw + 0.034367909502
+    else if idx = 2 then raw := raw - 0.018609248152
+    else if idx = 3 then raw := raw + 0.04635146835
+    else if idx = 4 then raw := raw - 0.002471840933
+    else if idx = 5 then raw := raw + 0.003164291933
+    else if idx = 6 then raw := raw - 0.001202059981
+    else if idx = 7 then raw := raw + 0.035445460063;
+
+    //--- arvore 31 (profundidade 3) ---
+    idx := 0;
+    if qtd[2] / rngSafe[2] > 0.007019704208 then idx := idx + 1;   // QuantityNorm_lag2
+    if dur[1] - mDur[1] > -2636.64990234375 then idx := idx + 2;   // DurationResidual_lag1
+    if qtd[2] / rngSafe[2] > 1009.27001953125 then idx := idx + 4;   // QuantityNorm_lag2
+    if idx = 0 then raw := raw - 0.006372607546
+    else if idx = 1 then raw := raw - 0.007647960004
+    else if idx = 2 then raw := raw + 0.090622688164
+    else if idx = 3 then raw := raw - 0.001965305278
+    else if idx = 4 then raw := raw + 0.0
+    else if idx = 5 then raw := raw + 0.082767939638
+    else if idx = 6 then raw := raw + 0.0
+    else if idx = 7 then raw := raw + 0.003102124936;
+
+    //--- arvore 32 (profundidade 3) ---
+    idx := 0;
+    if (agrB[1] + agrS[1]) / rngSafe[1] > 396.717956542969 then idx := idx + 1;   // AggTotalNorm_lag1
+    if agrS / rngSafe > 292.934478759766 then idx := idx + 2;   // AggSellNorm
+    if qtd[2] / rngSafe[2] > 1320.490966796875 then idx := idx + 4;   // QuantityNorm_lag2
+    if idx = 0 then raw := raw - 0.001952565674
+    else if idx = 1 then raw := raw + 0.009158033919
+    else if idx = 2 then raw := raw - 0.010183925943
+    else if idx = 3 then raw := raw - 0.00378826557
+    else if idx = 4 then raw := raw + 0.020202182891
+    else if idx = 5 then raw := raw + 0.03070035826
+    else if idx = 6 then raw := raw - 0.011364225338
+    else if idx = 7 then raw := raw + 0.001459378139;
+
+    //--- arvore 33 (profundidade 3) ---
+    idx := 0;
+    if dur[3] - mDur[3] > 813.875 then idx := idx + 1;   // DurationResidual_lag3
+    if imbal > -0.057519309223 then idx := idx + 2;   // AggImbalance
+    if agrB[2] / rngSafe[2] > 101.577011108398 then idx := idx + 4;   // AggBuyNorm_lag2
+    if idx = 0 then raw := raw + 0.001828097294
+    else if idx = 1 then raw := raw - 0.044625214412
+    else if idx = 2 then raw := raw - 0.002759201079
+    else if idx = 3 then raw := raw + 0.01021679753
+    else if idx = 4 then raw := raw - 0.003813418881
+    else if idx = 5 then raw := raw + 0.014111805477
+    else if idx = 6 then raw := raw - 0.004675616208
+    else if idx = 7 then raw := raw + 0.010818228536;
+
+    //--- arvore 34 (profundidade 3) ---
+    idx := 0;
+    if dur[2] - mDur[2] > -1417.625 then idx := idx + 1;   // DurationResidual_lag2
+    if (agrB[2] - agrS[2]) / rngSafe[2] > -6.628000259399 then idx := idx + 2;   // AggBalanceNorm_lag2
+    if corpo / rngSafe > 0.425724625587 then idx := idx + 4;   // BodyNorm
+    if idx = 0 then raw := raw - 0.003334677778
+    else if idx = 1 then raw := raw + 0.000616493735
+    else if idx = 2 then raw := raw + 0.008351433827
+    else if idx = 3 then raw := raw - 0.004057867286
+    else if idx = 4 then raw := raw + 0.001672059323
+    else if idx = 5 then raw := raw + 0.004373926006
+    else if idx = 6 then raw := raw + 0.029179947799
+    else if idx = 7 then raw := raw - 0.006650542291;
+
+    //--- arvore 35 (profundidade 3) ---
+    idx := 0;
+    if agrB / rngSafe > 76.036758422852 then idx := idx + 1;   // AggBuyNorm
+    if agrS[3] / rngSafe[3] > 62.163333892822 then idx := idx + 2;   // AggSellNorm_lag3
+    if agrS / rngSafe > 83.678985595703 then idx := idx + 4;   // AggSellNorm
+    if idx = 0 then raw := raw - 0.002703909812
+    else if idx = 1 then raw := raw + 0.002425405418
+    else if idx = 2 then raw := raw + 0.007457754084
+    else if idx = 3 then raw := raw + 0.005047880375
+    else if idx = 4 then raw := raw - 0.02427791192
+    else if idx = 5 then raw := raw - 0.001449660569
+    else if idx = 6 then raw := raw + 0.018886541375
+    else if idx = 7 then raw := raw - 0.005363079047;
+
+    //--- arvore 36 (profundidade 3) ---
+    idx := 0;
+    if qtd / rngSafe > 178.615661621094 then idx := idx + 1;   // QuantityNorm
+    if qtd / mQtd > 0.321194827557 then idx := idx + 2;   // QuantityRatio20
+    if qtd[3] / rngSafe[3] > 216.918518066406 then idx := idx + 4;   // QuantityNorm_lag3
+    if idx = 0 then raw := raw - 0.010541155292
+    else if idx = 1 then raw := raw + 0.039904618095
+    else if idx = 2 then raw := raw + 0.000208348557
+    else if idx = 3 then raw := raw - 0.000787957166
+    else if idx = 4 then raw := raw - 0.02937170887
+    else if idx = 5 then raw := raw + 0.015402486876
+    else if idx = 6 then raw := raw + 0.015639125904
+    else if idx = 7 then raw := raw - 0.003586155011;
+
+    //--- arvore 37 (profundidade 3) ---
+    idx := 0;
+    if qtd[2] / rngSafe[2] > 1009.27001953125 then idx := idx + 1;   // QuantityNorm_lag2
+    if imbal > -0.19038836658 then idx := idx + 2;   // AggImbalance
+    if qtd[1] / rngSafe[1] > 0.276666671038 then idx := idx + 4;   // QuantityNorm_lag1
+    if idx = 0 then raw := raw - 0.054662184917
+    else if idx = 1 then raw := raw + 0.0
+    else if idx = 2 then raw := raw - 0.005448235867
+    else if idx = 3 then raw := raw + 0.0
+    else if idx = 4 then raw := raw - 0.001955575121
+    else if idx = 5 then raw := raw + 0.096026009847
+    else if idx = 6 then raw := raw - 0.000515961906
+    else if idx = 7 then raw := raw + 0.001678462994;
+
+    //--- arvore 38 (profundidade 3) ---
+    idx := 0;
+    if (agrB + agrS) / rngSafe > 157.236358642578 then idx := idx + 1;   // AggTotalNorm
+    if qtd[1] / rngSafe[1] > 82.790000915527 then idx := idx + 2;   // QuantityNorm_lag1
+    if agrS[1] / rngSafe[1] > 54.025001525879 then idx := idx + 4;   // AggSellNorm_lag1
+    if idx = 0 then raw := raw - 0.00188612925
+    else if idx = 1 then raw := raw + 0.034759691769
+    else if idx = 2 then raw := raw + 0.007523584827
+    else if idx = 3 then raw := raw - 0.002933017478
+    else if idx = 4 then raw := raw - 0.029201007168
+    else if idx = 5 then raw := raw + 0.021334224027
+    else if idx = 6 then raw := raw + 0.002539936389
+    else if idx = 7 then raw := raw - 0.00415245301;
+
+    //--- arvore 39 (profundidade 3) ---
+    idx := 0;
+    if dur[3] - mDur[3] > 3274.02490234375 then idx := idx + 1;   // DurationResidual_lag3
+    if (agrB[2] - agrS[2]) / rngSafe[2] > 90.662239074707 then idx := idx + 2;   // AggBalanceNorm_lag2
+    if agrB[1] / rngSafe[1] > 201.847473144531 then idx := idx + 4;   // AggBuyNorm_lag1
+    if idx = 0 then raw := raw - 0.001937029126
+    else if idx = 1 then raw := raw + 0.03021194732
+    else if idx = 2 then raw := raw - 0.003358364931
+    else if idx = 3 then raw := raw - 0.009992721052
+    else if idx = 4 then raw := raw - 0.002373375911
+    else if idx = 5 then raw := raw + 0.031270189784
+    else if idx = 6 then raw := raw + 0.021355760564
+    else if idx = 7 then raw := raw - 0.041016162131;
+
+
+      if raw >= LimiarRaw then
+      begin
+        if (dirn = 1) and (MostrarCompras = 1) and (barrasC >= MinBarras) then
+        begin
+          cor := RGB(0, 180, 90);
+          if MostrarScore = 1 then
+            PlotText("▲ " + Round(raw * 100), cor, 0, TamFonte, Low - OffsetFrac * mRng)
+          else
+            PlotText("▲", cor, 0, TamFonte, Low - OffsetFrac * mRng);
+          barrasC := 0;
+        end;
+
+        if (dirn = -1) and (MostrarVendas = 1) and (barrasV >= MinBarras) then
+        begin
+          cor := RGB(220, 40, 40);
+          if MostrarScore = 1 then
+            PlotText("▼ " + Round(raw * 100), cor, 2, TamFonte, High + OffsetFrac * mRng)
+          else
+            PlotText("▼", cor, 2, TamFonte, High + OffsetFrac * mRng);
+          barrasV := 0;
+        end;
+      end;
+    end;
+  end;
+end;

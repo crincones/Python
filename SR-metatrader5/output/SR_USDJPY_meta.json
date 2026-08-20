@@ -1,0 +1,22 @@
+{
+  "gerado_em": "2026-08-13T14:51:15",
+  "symbol": "USDJPY",
+  "historico": "C:\\Users\\Carlos\\Dev\\Python\\baixar-ohlc-fx\\USDJPY_M1.csv",
+  "inicio": "2026-05-07 22:51:00",
+  "fim": "2026-08-13 16:57:00",
+  "n_candles": "99845",
+  "tick": "0.001",
+  "digits": "3",
+  "modo": "renko",
+  "box_ticks": "50",
+  "caixa": "0.02",
+  "n_tijolos": "23710",
+  "n_eventos": "6018",
+  "metodo": "dbscan",
+  "banda": "0.006999999999999999",
+  "referencia": "159.287",
+  "separacao": "0.02",
+  "sep_media": "0.21578947368421023",
+  "n_niveis_totais": "339",
+  "n_linhas": "20"
+}

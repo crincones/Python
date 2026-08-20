@@ -1,0 +1,38 @@
+{
+  "p2c2": {
+    "target": "p2c2",
+    "feature_set": "STRUCT+AGG",
+    "n_features": 41,
+    "n_lags": 5,
+    "depth": 4,
+    "learning_rate": 0.02,
+    "l2_leaf_reg": 10.0,
+    "oof_auc": 0.5357204445296033,
+    "oof_pr_auc": 0.4744956847792071,
+    "base_rate": 0.45373665480427045,
+    "auc_fold_mean": 0.5390734511240339,
+    "auc_fold_std": 0.03512469706283244,
+    "auc_fold_min": 0.5052503688275622,
+    "folds_above_05": 6,
+    "n_folds": 6,
+    "stability_score": 0.5215111025926177
+  },
+  "p3c2": {
+    "target": "p3c2",
+    "feature_set": "STRUCT+AGG",
+    "n_features": 41,
+    "n_lags": 5,
+    "depth": 5,
+    "learning_rate": 0.1,
+    "l2_leaf_reg": 10.0,
+    "oof_auc": 0.526751398973904,
+    "oof_pr_auc": 0.4913569792731827,
+    "base_rate": 0.47609427609427607,
+    "auc_fold_mean": 0.5320189869609862,
+    "auc_fold_std": 0.02426412079998057,
+    "auc_fold_min": 0.4887218045112782,
+    "folds_above_05": 5,
+    "n_folds": 6,
+    "stability_score": 0.5198869265609959
+  }
+}

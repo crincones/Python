@@ -1,0 +1,249 @@
+========================================================================
+[2026-08-13 13:30:58] FALHA
+------------------------------------------------------------------------
+Simbolo  : USDJPY M1 | desde 2023-01-01
+Arquivo  : C:\Users\Carlos\Dev\Python\baixar-ohlc\WIN$N_M1_202108120900_202608111824.csv
+Atual    : 0 barras | vazio
+Terminal : MetaTrader 5 build 6090 (C:\Users\Carlos\AppData\Roaming\MetaQuotes\Terminal\Metatrader5FX)
+Conta    : 51386788 @ PepperstoneBS-MT5-Live01 | conectado=True
+
+FALHA: copy_rates_range falhou em 2023-01-01..2023-05-31: (-2, 'Terminal: Invalid params')
+Traceback (most recent call last):
+  File "C:\Users\Carlos\Dev\Python\baixar-ohlc\atualiza-historico.py", line 227, in main
+    novo = baixar(args.symbol, desde, agora, args.chunk_dias, log)
+  File "C:\Users\Carlos\Dev\Python\baixar-ohlc\atualiza-historico.py", line 156, in baixar
+    raise RuntimeError(
+        f"copy_rates_range falhou em {inicio:%Y-%m-%d}..{fim:%Y-%m-%d}: {mt5.last_error()}"
+    )
+RuntimeError: copy_rates_range falhou em 2023-01-01..2023-05-31: (-2, 'Terminal: Invalid params')
+
+========================================================================
+[2026-08-13 13:31:26] FALHA
+------------------------------------------------------------------------
+Simbolo  : PETR4 M1 | desde 2023-01-01
+Arquivo  : C:\Users\Carlos\Dev\Python\baixar-ohlc\WIN$N_M1_202108120900_202608111824.csv
+Atual    : 0 barras | vazio
+Terminal : MetaTrader 5 build 6090 (C:\Users\Carlos\AppData\Roaming\MetaQuotes\Terminal\Metatrader5FX)
+Conta    : 51386788 @ PepperstoneBS-MT5-Live01 | conectado=True
+
+FALHA: simbolo PETR4 nao existe neste terminal
+Traceback (most recent call last):
+  File "C:\Users\Carlos\Dev\Python\baixar-ohlc\atualiza-historico.py", line 227, in main
+    novo = baixar(args.symbol, desde, agora, args.chunk_dias, log)
+  File "C:\Users\Carlos\Dev\Python\baixar-ohlc\atualiza-historico.py", line 145, in baixar
+    raise RuntimeError(f"simbolo {symbol} nao existe neste terminal")
+RuntimeError: simbolo PETR4 nao existe neste terminal
+
+========================================================================
+[2026-08-13 13:31:35] FALHA
+------------------------------------------------------------------------
+Simbolo  : USDJPY M1 | desde 2023-01-01
+Arquivo  : C:\Users\Carlos\Dev\Python\baixar-ohlc\WIN$N_M1_202108120900_202608111824.csv
+Atual    : 0 barras | vazio
+Terminal : MetaTrader 5 build 6090 (C:\Users\Carlos\AppData\Roaming\MetaQuotes\Terminal\Metatrader5FX)
+Conta    : 51386788 @ PepperstoneBS-MT5-Live01 | conectado=True
+
+FALHA: copy_rates_range falhou em 2023-01-01..2023-05-31: (-2, 'Terminal: Invalid params')
+Traceback (most recent call last):
+  File "C:\Users\Carlos\Dev\Python\baixar-ohlc\atualiza-historico.py", line 227, in main
+    novo = baixar(args.symbol, desde, agora, args.chunk_dias, log)
+  File "C:\Users\Carlos\Dev\Python\baixar-ohlc\atualiza-historico.py", line 156, in baixar
+    raise RuntimeError(
+        f"copy_rates_range falhou em {inicio:%Y-%m-%d}..{fim:%Y-%m-%d}: {mt5.last_error()}"
+    )
+RuntimeError: copy_rates_range falhou em 2023-01-01..2023-05-31: (-2, 'Terminal: Invalid params')
+
+========================================================================
+[2026-08-13 13:32:28] FALHA
+------------------------------------------------------------------------
+Simbolo  : USDJPY M1 | desde 2023-01-01
+Arquivo  : C:\Users\Carlos\Dev\Python\baixar-ohlc\WIN$N_M1_202108120900_202608111824.csv
+Atual    : 0 barras | vazio
+Terminal : MetaTrader 5 build 6090 (C:\Users\Carlos\AppData\Roaming\MetaQuotes\Terminal\Metatrader5FX)
+Conta    : 51386788 @ PepperstoneBS-MT5-Live01 | conectado=True
+
+FALHA: copy_rates_range falhou em 2023-01-01..2023-05-31: (-2, 'Terminal: Invalid params')
+Traceback (most recent call last):
+  File "C:\Users\Carlos\Dev\Python\baixar-ohlc\atualiza-historico.py", line 227, in main
+    novo = baixar(args.symbol, desde, agora, args.chunk_dias, log)
+  File "C:\Users\Carlos\Dev\Python\baixar-ohlc\atualiza-historico.py", line 156, in baixar
+    raise RuntimeError(
+        f"copy_rates_range falhou em {inicio:%Y-%m-%d}..{fim:%Y-%m-%d}: {mt5.last_error()}"
+    )
+RuntimeError: copy_rates_range falhou em 2023-01-01..2023-05-31: (-2, 'Terminal: Invalid params')
+
+========================================================================
+[2026-08-13 13:32:42] FALHA
+------------------------------------------------------------------------
+Simbolo  : USDJPY M1 | desde 2021-01-01
+Arquivo  : C:\Users\Carlos\Dev\Python\baixar-ohlc\WIN$N_M1_202108120900_202608111824.csv
+Atual    : 0 barras | vazio
+Terminal : MetaTrader 5 build 6090 (C:\Users\Carlos\AppData\Roaming\MetaQuotes\Terminal\Metatrader5FX)
+Conta    : 51386788 @ PepperstoneBS-MT5-Live01 | conectado=True
+
+FALHA: copy_rates_range falhou em 2021-01-01..2021-05-31: (-2, 'Terminal: Invalid params')
+Traceback (most recent call last):
+  File "C:\Users\Carlos\Dev\Python\baixar-ohlc\atualiza-historico.py", line 227, in main
+    novo = baixar(args.symbol, desde, agora, args.chunk_dias, log)
+  File "C:\Users\Carlos\Dev\Python\baixar-ohlc\atualiza-historico.py", line 156, in baixar
+    raise RuntimeError(
+        f"copy_rates_range falhou em {inicio:%Y-%m-%d}..{fim:%Y-%m-%d}: {mt5.last_error()}"
+    )
+RuntimeError: copy_rates_range falhou em 2021-01-01..2021-05-31: (-2, 'Terminal: Invalid params')
+
+========================================================================
+[2026-08-13 13:34:37] FALHA
+------------------------------------------------------------------------
+Simbolo  : USDJPY M1 | desde 2021-01-01
+Arquivo  : C:\Users\Carlos\Dev\Python\baixar-ohlc\WIN$N_M1_202108120900_202608111824.csv
+Atual    : 0 barras | vazio
+Terminal : MetaTrader 5 build 6090 (C:\Users\Carlos\AppData\Roaming\MetaQuotes\Terminal\Metatrader5FX)
+Conta    : 51386788 @ PepperstoneBS-MT5-Live01 | conectado=True
+
+FALHA: copy_rates_range falhou em 2021-01-01..2021-05-31: (-2, 'Terminal: Invalid params')
+Traceback (most recent call last):
+  File "C:\Users\Carlos\Dev\Python\baixar-ohlc\atualiza-historico.py", line 227, in main
+    novo = baixar(args.symbol, desde, agora, args.chunk_dias, log)
+  File "C:\Users\Carlos\Dev\Python\baixar-ohlc\atualiza-historico.py", line 156, in baixar
+    raise RuntimeError(
+        f"copy_rates_range falhou em {inicio:%Y-%m-%d}..{fim:%Y-%m-%d}: {mt5.last_error()}"
+    )
+RuntimeError: copy_rates_range falhou em 2021-01-01..2021-05-31: (-2, 'Terminal: Invalid params')
+
+========================================================================
+[2026-08-13 13:53:51] DRY-RUN
+------------------------------------------------------------------------
+Simbolo  : USDJPY M1 | desde 2026-05-01
+Arquivo  : C:\Users\Carlos\Dev\Python\baixar-ohlc\USDJPY_M1.csv
+Atual    : 0 barras | vazio
+Terminal : MetaTrader 5 build 6090 (C:\Users\Carlos\AppData\Roaming\MetaQuotes\Terminal\Metatrader5FX)
+Conta    : 51386788 @ PepperstoneBS-MT5-Live01 | conectado=True
+Max bars : 100.000
+Blocos   : 62 dias por requisicao (limitado pelo Max bars do terminal)
+MT5      : 99.841 barras baixadas em 2 blocos
+AVISO    : o terminal so serve M1 de USDJPY a partir de 2026-05-07 22:51 (6 dias depois do --desde pedido).
+           Para ir mais fundo, ponha Ferramentas > Opcoes > Graficos > 'Max. barras no grafico' em Unlimited e rode de novo.
+
+Novas    : 99.841 barras
+           de 2026-05-07 22:51 ate 2026-08-13 16:53
+Corrigidas: 0 barras ja existentes
+Preservadas: 0 barras que o MT5 nao serve mais
+Resultado : 99.841 barras | 2026-05-07 22:51 -> 2026-08-13 16:53
+
+DRY-RUN: nada foi gravado.
+
+========================================================================
+[2026-08-13 13:54:02] SUCESSO
+------------------------------------------------------------------------
+Simbolo  : USDJPY M1 | desde 2026-05-01
+Arquivo  : C:\Users\Carlos\Dev\Python\baixar-ohlc\USDJPY_M1.csv
+Atual    : 0 barras | vazio
+Terminal : MetaTrader 5 build 6090 (C:\Users\Carlos\AppData\Roaming\MetaQuotes\Terminal\Metatrader5FX)
+Conta    : 51386788 @ PepperstoneBS-MT5-Live01 | conectado=True
+Max bars : 100.000
+Blocos   : 62 dias por requisicao (limitado pelo Max bars do terminal)
+MT5      : 99.841 barras baixadas em 2 blocos
+AVISO    : o terminal so serve M1 de USDJPY a partir de 2026-05-07 22:51 (6 dias depois do --desde pedido).
+           Para ir mais fundo, ponha Ferramentas > Opcoes > Graficos > 'Max. barras no grafico' em Unlimited e rode de novo.
+
+Novas    : 99.841 barras
+           de 2026-05-07 22:51 ate 2026-08-13 16:53
+Corrigidas: 0 barras ja existentes
+Preservadas: 0 barras que o MT5 nao serve mais
+Resultado : 99.841 barras | 2026-05-07 22:51 -> 2026-08-13 16:53
+Gravado  : C:\Users\Carlos\Dev\Python\baixar-ohlc\USDJPY_M1.csv (5.7 MB)
+
+SUCESSO.
+
+========================================================================
+[2026-08-13 13:54:09] DRY-RUN
+------------------------------------------------------------------------
+Simbolo  : USDJPY M1 | desde 2026-05-01
+Arquivo  : C:\Users\Carlos\Dev\Python\baixar-ohlc\USDJPY_M1.csv
+Atual    : 99.841 barras | 2026-05-07 22:51 -> 2026-08-13 16:53
+Terminal : MetaTrader 5 build 6090 (C:\Users\Carlos\AppData\Roaming\MetaQuotes\Terminal\Metatrader5FX)
+Conta    : 51386788 @ PepperstoneBS-MT5-Live01 | conectado=True
+Max bars : 100.000
+Blocos   : 62 dias por requisicao (limitado pelo Max bars do terminal)
+MT5      : 99.842 barras baixadas em 2 blocos
+AVISO    : o terminal so serve M1 de USDJPY a partir de 2026-05-07 22:51 (6 dias depois do --desde pedido).
+           Para ir mais fundo, ponha Ferramentas > Opcoes > Graficos > 'Max. barras no grafico' em Unlimited e rode de novo.
+
+Novas    : 1 barras
+           de 2026-08-13 16:54 ate 2026-08-13 16:54
+Corrigidas: 0 barras ja existentes
+Preservadas: 0 barras que o MT5 nao serve mais
+Resultado : 99.842 barras | 2026-05-07 22:51 -> 2026-08-13 16:54
+
+DRY-RUN: nada foi gravado.
+
+========================================================================
+[2026-08-13 13:54:46] DRY-RUN
+------------------------------------------------------------------------
+Simbolo  : USDJPY M1 | desde 2021-01-01
+Arquivo  : C:\Users\Carlos\Dev\Python\baixar-ohlc\USDJPY_M1.csv
+Atual    : 99.841 barras | 2026-05-07 22:51 -> 2026-08-13 16:53
+Terminal : MetaTrader 5 build 6090 (C:\Users\Carlos\AppData\Roaming\MetaQuotes\Terminal\Metatrader5FX)
+Conta    : 51386788 @ PepperstoneBS-MT5-Live01 | conectado=True
+Max bars : 100.000
+Blocos   : 62 dias por requisicao (limitado pelo Max bars do terminal)
+MT5      : 99.842 barras baixadas em 3 blocos
+AVISO    : o terminal so serve M1 de USDJPY a partir de 2026-05-07 22:51 (1952 dias depois do --desde pedido).
+           Para ir mais fundo, ponha Ferramentas > Opcoes > Graficos > 'Max. barras no grafico' em Unlimited e rode de novo.
+
+Novas    : 1 barras
+           de 2026-08-13 16:54 ate 2026-08-13 16:54
+Corrigidas: 0 barras ja existentes
+Preservadas: 0 barras que o MT5 nao serve mais
+Resultado : 99.842 barras | 2026-05-07 22:51 -> 2026-08-13 16:54
+
+DRY-RUN: nada foi gravado.
+
+========================================================================
+[2026-08-13 13:56:59] SUCESSO
+------------------------------------------------------------------------
+Simbolo  : USDJPY M1 | desde 2021-01-01
+Arquivo  : C:\Users\Carlos\Dev\Python\baixar-ohlc\USDJPY_M1.csv
+Atual    : 99.841 barras | 2026-05-07 22:51 -> 2026-08-13 16:53
+Terminal : MetaTrader 5 build 6090 (C:\Users\Carlos\AppData\Roaming\MetaQuotes\Terminal\Metatrader5FX)
+Conta    : 51386788 @ PepperstoneBS-MT5-Live01 | conectado=True
+Max bars : 100.000
+Blocos   : 62 dias por requisicao (limitado pelo Max bars do terminal)
+MT5      : 99.844 barras baixadas em 3 blocos
+AVISO    : o terminal so serve M1 de USDJPY a partir de 2026-05-07 22:51 (1952 dias depois do --desde pedido).
+           Para ir mais fundo, ponha Ferramentas > Opcoes > Graficos > 'Max. barras no grafico' em Unlimited e rode de novo.
+
+Novas    : 3 barras
+           de 2026-08-13 16:54 ate 2026-08-13 16:56
+Corrigidas: 0 barras ja existentes
+Preservadas: 0 barras que o MT5 nao serve mais
+Resultado : 99.844 barras | 2026-05-07 22:51 -> 2026-08-13 16:56
+Backup   : C:\Users\Carlos\Dev\Python\baixar-ohlc\USDJPY_M1.csv.bak
+Gravado  : C:\Users\Carlos\Dev\Python\baixar-ohlc\USDJPY_M1.csv (5.7 MB)
+
+SUCESSO.
+
+========================================================================
+[2026-08-13 13:57:14] SUCESSO
+------------------------------------------------------------------------
+Simbolo  : USDJPY M1 | desde 2021-01-01
+Arquivo  : C:\Users\Carlos\Dev\Python\baixar-ohlc\USDJPY_M1.csv
+Atual    : 99.844 barras | 2026-05-07 22:51 -> 2026-08-13 16:56
+Terminal : MetaTrader 5 build 6090 (C:\Users\Carlos\AppData\Roaming\MetaQuotes\Terminal\Metatrader5FX)
+Conta    : 51386788 @ PepperstoneBS-MT5-Live01 | conectado=True
+Max bars : 100.000
+Blocos   : 62 dias por requisicao (limitado pelo Max bars do terminal)
+MT5      : 99.845 barras baixadas em 3 blocos
+AVISO    : o terminal so serve M1 de USDJPY a partir de 2026-05-07 22:51 (1952 dias depois do --desde pedido).
+           Para ir mais fundo, ponha Ferramentas > Opcoes > Graficos > 'Max. barras no grafico' em Unlimited e rode de novo.
+
+Novas    : 1 barras
+           de 2026-08-13 16:57 ate 2026-08-13 16:57
+Corrigidas: 0 barras ja existentes
+Preservadas: 0 barras que o MT5 nao serve mais
+Resultado : 99.845 barras | 2026-05-07 22:51 -> 2026-08-13 16:57
+Backup   : C:\Users\Carlos\Dev\Python\baixar-ohlc\USDJPY_M1.csv.bak
+Gravado  : C:\Users\Carlos\Dev\Python\baixar-ohlc\USDJPY_M1.csv (5.7 MB)
+
+SUCESSO.
+

@@ -1,0 +1,214 @@
+//------------------------------------------------------------------
+// RenkoViradaR11_Sinal  (v3)  - Renko R11 WINFUT - ProfitChart Pro / NTSL
+//
+// Ponto de virada operavel. So setas: nenhum Plot, nenhuma linha, nenhum
+// PaintBar. Inserir no MESMO painel do grafico de precos.
+//
+// Origem: estudo r11_virada.py / r11_ntsl_v2.py sobre 20.000 bricks R11
+//         (29/06/2026 a 14/08/2026, 35 pregoes). Ver relatorio_r11.md.
+//
+// ISTO NAO E UM DETECTOR DE PIVO
+// ------------------------------
+// Marca ~11 bricks por pregao, de ~570 (2%), e NAO sao os pivos que saltam
+// aos olhos no historico. O brick marcado contraria a sequencia LOCAL mas
+// retoma a direcao dominante do PREGAO: e fim de correcao, nao reversao de
+// tendencia. No topo de uma perna que vira o dia inteiro, dpos e fortemente
+// NEGATIVO e o indicador fica calado por construcao.
+//
+// Isso e o achado, nao uma limitacao: um brick contrario a uma sequencia
+// qualquer acerta 39,25%, contra 40,18% de um brick sorteado ao acaso.
+// Marcar todo pivo perde dinheiro. Ver secao 4.3 do relatorio.
+//
+// MostrarElegiveis(1) desenha um "o" cinza nos ~14% de bricks que passam na
+// pre-condicao. A diferenca entre a nuvem cinza e as poucas setas E a regra.
+//
+// A REGRA
+//   1. brick CONTRARIO a uma sequencia de >= MinSeq bricks na mesma direcao
+//   2. Time >= HoraMinima  (a primeira hora do pregao fica de fora)
+//   3. dpos >= DPosMin, com
+//        dpos = direcao * (Close - meio_do_range_do_dia) / range_do_dia
+//
+// MEDIDO (alvo 150 pts / stop 100 pts, breakeven 40,0%)
+//   treino (24 pregoes) : n=229  acerto 47,60%  +19,0 pts/trade
+//   teste  (11 pregoes) : n=151  acerto 48,34%  +20,9 pts/trade
+//   380 sinais / 35 pregoes = 10,9 por pregao, resolvidos em 3 bricks
+//   Bootstrap por pregao: IC95% [43,6% ; 52,1%], P(<=breakeven) < 0,001
+//   Margem bruta ~19 pts/trade. Custo total acima disso zera a estrategia.
+//
+// SOBRE O DESLOCAMENTO DA SETA (mesma mecanica do PivoReversao_Claude)
+//   A NTSL so escreve texto no candle CORRENTE, entao a seta aparece
+//   "Direita" candles a frente do brick do sinal. O 5o parametro do
+//   PlotText poe a altura no preco certo.
+//     Direita = 1 -> seta um candle a frente, sinal confirmado, NAO REPINTA
+//     Direita = 0 -> seta em cima do brick, mas repinta enquanto ele esta
+//                    aberto: no brick em formacao o Close ainda anda, entao
+//                    a propria DIRECAO do brick troca de sinal e dpos se
+//                    move. Nao use 0 para operar.
+//------------------------------------------------------------------
+
+input
+  MinSeq(3);             // sequencia minima contrariada
+  Direita(1);            // barras de confirmacao (1 = nao repinta)
+  HoraMinima(1000);      // HHMM. Se Time vier em HHMMSS, use 100000.
+  DPosMin(0.25);         // limiar de posicao no range do pregao
+  UsarFiltroDelta(0);    // 1 = exige agressao a favor (secao 7 do relatorio)
+  DeltaMin(0.10);        // limiar de (AgB-AgS)/(AgB+AgS) na direcao do brick
+  MinBarras(0);          // distancia minima entre sinais do mesmo lado
+  CorpoPts(50);          // corpo do brick R11 = 10 ticks x 5 pts
+  MaxBarrasSeq(60);      // teto da varredura da sequencia
+  PeriodoRange(20);      // janela do range medio (afastamento da seta)
+  MostrarElegiveis(0);   // 1 = "o" cinza em todo brick da pre-condicao
+  MostrarScore(0);       // 1 = escreve dpos x 100 junto da seta
+  OffsetFrac(0.60);      // afastamento da seta, em fracao do range medio
+  TamFonte(10);
+
+var
+  p, k, minimo                   : integer;
+  dirB, dirAnt, seq              : integer;
+  barrasC, barrasV               : integer;
+  agrC, agrV, tot, deltaN        : float;
+  dHi, dLo, faixa, dpos          : float;
+  mRng, soma                     : float;
+  parou, reseed                  : boolean;
+  elegivel, sinal                : boolean;
+  cor                            : integer;
+
+begin
+  //--- metricas da barra corrente: viram serie automaticamente -------
+  //  Precisam ser atribuidas em TODA barra para a serie ficar continua,
+  //  senao a indexacao [p] mais abaixo le buraco.
+  agrC := AgressionVolBuy();
+  agrV := AgressionVolSell();
+  tot  := agrC + agrV;
+
+  //  Agressao normalizada pelo volume CLASSIFICADO, nao por Quantity:
+  //  27% do volume do WIN nao carrega agressor (negocio direto / RLP) e
+  //  essa fracao cresce com o tamanho do brick (correlacao +0,55 com
+  //  log Quantity). Dividir por Quantity dilui o delta justamente nos
+  //  bricks grandes -- foi o que inverteu o sinal desta feature no
+  //  estudo MQL5 anterior.
+  if tot > 0 then
+    deltaN := (agrC - agrV) / tot
+  else
+    deltaN := 0;
+
+  p      := Direita;
+  minimo := p + PeriodoRange + MaxBarrasSeq + 5;
+
+  //--- virada de pregao, detectada NA BARRA [p] ----------------------
+  reseed := false;
+  if CurrentBar > p + 1 then
+  begin
+    if Date[p] <> Date[p + 1] then reseed := true;
+  end;
+
+  //--- maxima/minima do pregao --------------------------------------
+  //  Carregada explicitamente da barra anterior (dHi[1]) e estendida com
+  //  a barra [p], que JA FECHOU. Como a barra 0 nunca entra na conta, o
+  //  valor nao se move enquanto o brick corrente se forma -- e por isso
+  //  que a seta nao repinta com Direita = 1.
+  if (CurrentBar <= p + 1) or reseed then
+  begin
+    dHi := High[p];
+    dLo := Low[p];
+  end
+  else
+  begin
+    dHi := dHi[1];
+    dLo := dLo[1];
+    if High[p] > dHi then dHi := High[p];
+    if Low[p]  < dLo then dLo := Low[p];
+  end;
+
+  barrasC := barrasC[1] + 1;
+  barrasV := barrasV[1] + 1;
+
+  if CurrentBar >= minimo then
+  begin
+    //--- range medio, so para posicionar a seta ---------------------
+    soma := 0;
+    for k := p to p + PeriodoRange - 1 do
+      soma := soma + (High[k] - Low[k]);
+    mRng := soma / PeriodoRange;
+    if mRng <= 0 then mRng := CorpoPts;
+
+    //--- geometria do brick avaliado --------------------------------
+    if Close[p] > Open[p] then dirB := 1 else dirB := -1;
+    if Close[p + 1] > Open[p + 1] then dirAnt := 1 else dirAnt := -1;
+
+    //  comprimento da sequencia que o brick [p] contraria
+    seq   := 0;
+    parou := false;
+    for k := p + 1 to p + MaxBarrasSeq do
+    begin
+      if not parou then
+      begin
+        if ((Close[k] > Open[k]) and (dirAnt = 1)) or
+           ((Close[k] < Open[k]) and (dirAnt = -1)) then
+          seq := seq + 1
+        else
+          parou := true;
+      end;
+    end;
+
+    elegivel := (dirB <> dirAnt) and (seq >= MinSeq) and (not reseed);
+
+    //--- contexto do pregao -----------------------------------------
+    faixa := dHi - dLo;
+    if faixa < CorpoPts then faixa := CorpoPts;
+    dpos := dirB * (Close[p] - (dHi + dLo) / 2) / faixa;
+
+    sinal := false;
+    if elegivel then
+    begin
+      sinal := (Time[p] >= HoraMinima) and (dpos >= DPosMin);
+      if (UsarFiltroDelta = 1) and (dirB * deltaN[p] < DeltaMin) then
+        sinal := false;
+    end;
+
+    //================= SINAL DE ALTA =================================
+    if sinal and (dirB = 1) and (barrasC >= MinBarras) then
+    begin
+      if dpos >= DPosMin + 0.15 then
+        cor := RGB(0, 220, 120)
+      else if dpos >= DPosMin + 0.07 then
+        cor := RGB(30, 180, 90)
+      else
+        cor := RGB(70, 140, 100);
+
+      if MostrarScore = 1 then
+        PlotText("▲ " + Round(dpos * 100), cor, 0, TamFonte, Low[p] - OffsetFrac * mRng)
+      else
+        PlotText("▲", cor, 0, TamFonte, Low[p] - OffsetFrac * mRng);
+      barrasC := 0;
+    end;
+
+    //================= SINAL DE BAIXA ================================
+    if sinal and (dirB = -1) and (barrasV >= MinBarras) then
+    begin
+      if dpos >= DPosMin + 0.15 then
+        cor := RGB(255, 40, 0)
+      else if dpos >= DPosMin + 0.07 then
+        cor := RGB(255, 90, 40)
+      else
+        cor := RGB(205, 92, 92);
+
+      if MostrarScore = 1 then
+        PlotText("▼ " + Round(dpos * 100), cor, 2, TamFonte, High[p] + OffsetFrac * mRng)
+      else
+        PlotText("▼", cor, 2, TamFonte, High[p] + OffsetFrac * mRng);
+      barrasV := 0;
+    end;
+
+    //================= DIAGNOSTICO ===================================
+    //  elegivel que NAO virou sinal. Serve para separar na tela
+    //  "a logica esta morta" de "o filtro e estreito".
+    if (MostrarElegiveis = 1) and elegivel and (not sinal) then
+    begin
+      if dirB = 1 then
+        PlotText("o", RGB(110, 110, 110), 0, TamFonte, Low[p] - OffsetFrac * mRng)
+      else
+        PlotText("o", RGB(110, 110, 110), 2, TamFonte, High[p] + OffsetFrac * mRng);
+    end;
+  end;
+end;

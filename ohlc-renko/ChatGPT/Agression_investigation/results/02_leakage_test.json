@@ -1,0 +1,15 @@
+{
+  "n_features_checked": 120,
+  "cuts": [
+    500,
+    2000,
+    7000,
+    13000,
+    19000
+  ],
+  "feature_failures": [],
+  "candidate_mask_failures": [],
+  "target_named_columns_in_features": [],
+  "positive_control_detects_injected_leak": true,
+  "passed": true
+}

@@ -1,0 +1,66 @@
+{
+  "environment": {
+    "timestamp": "2026-08-16T23:54:26",
+    "python": "3.14.4 (tags/v3.14.4:23116f9, Apr  7 2026, 14:10:54) [MSC v.1944 64 bit (AMD64)]",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "seed": 42,
+    "git_rev": "36174606980071059ecee0e026239d170cf5a6f5",
+    "versions": {
+      "pandas": "3.0.3",
+      "numpy": "2.4.6",
+      "scikit-learn": "1.9.0",
+      "catboost": "1.2.10"
+    }
+  },
+  "steps": [
+    {
+      "step": "01",
+      "name": "validacao + dataset",
+      "status": "ok",
+      "seconds": 1.6
+    },
+    {
+      "step": "02",
+      "name": "teste de vazamento",
+      "status": "ok",
+      "seconds": 2.9
+    },
+    {
+      "step": "04",
+      "name": "analise exploratoria",
+      "status": "pulado"
+    },
+    {
+      "step": "05",
+      "name": "baselines por grupo de informacao",
+      "status": "pulado"
+    },
+    {
+      "step": "06",
+      "name": "grid search CatBoost + sensibilidade",
+      "status": "pulado"
+    },
+    {
+      "step": "07",
+      "name": "importancia e estabilidade",
+      "status": "pulado"
+    },
+    {
+      "step": "08",
+      "name": "threshold + teste final out-of-sample",
+      "status": "pulado"
+    },
+    {
+      "step": "09",
+      "name": "robustez + teste nulo",
+      "status": "pulado"
+    },
+    {
+      "step": "12",
+      "name": "export NTSL + auditoria",
+      "status": "ok",
+      "seconds": 4.3
+    }
+  ],
+  "total_seconds": 8.7
+}
