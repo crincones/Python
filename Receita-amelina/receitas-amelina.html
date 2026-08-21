@@ -258,6 +258,35 @@ footer p{font-size:12.5px;color:var(--ink-3);line-height:1.55;margin:0 0 10px;ma
 .reset:hover{background:var(--surface-2)}
 .reset:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 
+/* ---------- backup ---------- */
+.backup{padding:14px}
+.bkrow{display:flex;gap:8px;flex-wrap:wrap}
+.btn{
+  appearance:none;cursor:pointer;
+  font-family:"Public Sans",sans-serif;font-size:13.5px;font-weight:500;
+  color:var(--ink);background:var(--surface-2);
+  border:1px solid var(--line-2);border-radius:9px;padding:9px 14px;
+  transition:background .15s ease;
+}
+.btn:hover{background:var(--ground)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.btn.primary{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-ink)}
+.bkhint{font-size:12px;color:var(--ink-3);margin:11px 0 0;line-height:1.5;max-width:52ch}
+.bkmsg{font-size:12.5px;margin:9px 0 0;line-height:1.45}
+.bkmsg.ok{color:var(--good)}
+.bkmsg.err{color:var(--bad)}
+.bkdet{margin-top:13px;border-top:1px solid var(--line);padding-top:12px}
+.bkdet summary{font-size:12.5px;color:var(--ink-2);cursor:pointer}
+.bkdet summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+textarea{
+  width:100%;min-height:92px;margin-top:10px;
+  font-family:"DM Mono",ui-monospace,monospace;font-size:13px;line-height:1.45;
+  color:var(--ink);background:var(--surface-2);
+  border:1px solid var(--line-2);border-radius:9px;padding:10px;resize:vertical;
+}
+textarea:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.hidden{display:none !important}
+
 @media (prefers-reduced-motion: reduce){*{transition:none !important}}
 @media (max-width:400px){
   h1{font-size:29px}
@@ -308,6 +337,32 @@ footer p{font-size:12.5px;color:var(--ink-3);line-height:1.55;margin:0 0 10px;ma
       <div class="grand" id="grandBox">
         <span class="k">Lucro total das duas receitas</span>
         <span class="v" id="grandVal">—</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sechead">
+      <h2>Backup</h2>
+      <span class="hint">seus valores</span>
+    </div>
+    <div class="card">
+      <div class="backup">
+        <div class="bkrow">
+          <button class="btn primary" id="bkCopiar" type="button">Copiar meus valores</button>
+          <button class="btn hidden" id="bkSalvar" type="button">Salvar como arquivo</button>
+          <button class="btn" id="bkRestaurar" type="button">Restaurar de um arquivo</button>
+        </div>
+        <input type="file" id="bkArquivo" class="hidden" accept=".json,application/json">
+        <p class="bkhint">Seus preços e quantidades ficam guardados só neste aparelho. Toque em <b>Copiar meus valores</b> e cole o texto numa nota ou mande para você mesma no WhatsApp — principalmente antes de trocar de celular ou de limpar os dados do Safari. Para voltar tudo depois, cole esse texto lá embaixo em “restaurar colando o texto copiado”.</p>
+        <p class="bkmsg" id="bkMsg" role="status" aria-live="polite"></p>
+        <details class="bkdet">
+          <summary>Ou restaurar colando o texto copiado</summary>
+          <textarea id="bkTexto" placeholder="Cole aqui o texto que você copiou."></textarea>
+          <div class="bkrow" style="margin-top:9px">
+            <button class="btn" id="bkColar" type="button">Restaurar deste texto</button>
+          </div>
+        </details>
       </div>
     </div>
   </section>
@@ -723,6 +778,89 @@ footer p{font-size:12.5px;color:var(--ink-3);line-height:1.55;margin:0 0 10px;ma
     d = padrao();
     salvar();
     montaReceita(); montaInsumos(); montaProducao(); atualizar();
+  });
+
+  /* ---------- backup ---------- */
+  var bkMsg = document.getElementById("bkMsg");
+  function aviso(texto, tipo){
+    bkMsg.textContent = texto;
+    bkMsg.className = "bkmsg" + (tipo ? " " + tipo : "");
+  }
+
+  function exportar(){
+    return JSON.stringify({app:"receitas-amelina", versao:1, dados:d}, null, 2);
+  }
+  function aplicar(texto){
+    var lido;
+    try{
+      var p = JSON.parse(texto);
+      lido = (p && p.dados) ? p.dados : p;
+    }catch(e){
+      aviso("Esse texto não é um backup válido. Copie de novo pelo botão “Copiar valores”.", "err");
+      return;
+    }
+    if(!lido || !lido.insumos || !lido.receitas || !lido.receitas.cafe || !lido.receitas.capp){
+      aviso("Esse arquivo não parece um backup das receitas.", "err");
+      return;
+    }
+    if(!window.confirm("Substituir os valores atuais pelos do backup?")) return;
+    d = lido;
+    salvar();
+    montaReceita(); montaInsumos(); montaProducao(); atualizar();
+    aviso("Valores restaurados.", "ok");
+  }
+
+  /* salvar arquivo: depende da capability "downloads" do visualizador */
+  var btSalvar = document.getElementById("bkSalvar");
+  if(window.claude && typeof window.claude.use === "function"){
+    window.claude.use("downloads").then(function(downloads){
+      if(!downloads) return;                       /* indisponível: botão continua oculto */
+      btSalvar.classList.remove("hidden");
+      btSalvar.addEventListener("click", function(){
+        var hoje = new Date().toISOString().slice(0,10);
+        downloads.save({filename:"receitas-amelina-" + hoje + ".json", data:exportar()})
+          .then(function(){ aviso("Cópia salva.", "ok"); })
+          .catch(function(erro){
+            var c = erro && erro.code;
+            if(c === "declined") aviso("Salvamento cancelado.");
+            else if(c === "rate_limited") aviso("Espere um instante e toque de novo.", "err");
+            else aviso("Não deu para salvar o arquivo. Use “Copiar valores”.", "err");
+          });
+      });
+    }).catch(function(){});
+  }
+
+  /* restaurar de arquivo */
+  var bkArquivo = document.getElementById("bkArquivo");
+  document.getElementById("bkRestaurar").addEventListener("click", function(){ bkArquivo.click(); });
+  bkArquivo.addEventListener("change", function(){
+    var f = bkArquivo.files && bkArquivo.files[0];
+    if(!f) return;
+    var fr = new FileReader();
+    fr.onload = function(){ aplicar(String(fr.result)); bkArquivo.value = ""; };
+    fr.onerror = function(){ aviso("Não consegui ler esse arquivo.", "err"); bkArquivo.value = ""; };
+    fr.readAsText(f);
+  });
+
+  /* copiar / colar como texto */
+  var bkTexto = document.getElementById("bkTexto");
+  document.getElementById("bkCopiar").addEventListener("click", function(){
+    var txt = exportar();
+    function manual(){
+      bkTexto.parentNode.open = true;
+      bkTexto.value = txt;
+      bkTexto.focus(); bkTexto.select();
+      aviso("Copie o texto selecionado e guarde onde preferir.", "ok");
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt).then(function(){
+        aviso("Valores copiados. Cole numa nota ou mande para você mesma.", "ok");
+      }).catch(manual);
+    }else manual();
+  });
+  document.getElementById("bkColar").addEventListener("click", function(){
+    if(!bkTexto.value.trim()){ aviso("Cole o texto do backup na caixa acima.", "err"); return; }
+    aplicar(bkTexto.value);
   });
 
   montaReceita();
