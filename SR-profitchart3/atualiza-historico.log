@@ -70,3 +70,23 @@ Traceback (most recent call last):
     raise RuntimeError(f"simbolo {symbol} nao existe neste terminal")
 RuntimeError: simbolo NAOEXISTE nao existe neste terminal
 
+========================================================================
+[2026-08-21 13:29:05] SUCESSO
+------------------------------------------------------------------------
+Simbolo  : WIN$N M1 | desde 2021-01-01
+Arquivo  : C:\Users\Carlos\Documents\GitHub\Python\SR-profitchart3\WIN$N_M1_202108120900_202608111824.csv
+Atual    : 691.515 barras | 2021-08-12 09:00 -> 2026-08-12 18:24
+Terminal : MetaTrader 5 build 6090 (C:\Users\Carlos\AppData\Roaming\MetaQuotes\Terminal\Metatrader5B3)
+Conta    : 2191249 @ XPMT5-PRD | conectado=True
+MT5      : 694.096 barras baixadas em 14 blocos
+
+Novas    : 3.651 barras
+           de 2026-08-13 09:03 ate 2026-08-21 13:28
+Corrigidas: 0 barras ja existentes
+Preservadas: 1.070 barras que o MT5 nao serve mais
+Resultado : 695.166 barras | 2021-08-12 09:00 -> 2026-08-21 13:28
+Backup   : C:\Users\Carlos\Documents\GitHub\Python\SR-profitchart3\WIN$N_M1_202108120900_202608111824.csv.bak
+Gravado  : C:\Users\Carlos\Documents\GitHub\Python\SR-profitchart3\WIN$N_M1_202108120900_202608111824.csv (41.2 MB)
+
+SUCESSO.
+

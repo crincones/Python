@@ -247,3 +247,26 @@ Gravado  : C:\Users\Carlos\Dev\Python\baixar-ohlc\USDJPY_M1.csv (5.7 MB)
 
 SUCESSO.
 
+========================================================================
+[2026-08-21 13:50:54] SUCESSO
+------------------------------------------------------------------------
+Simbolo  : XAUUSD M1 | desde 2021-01-01
+Arquivo  : C:\Users\Carlos\Documents\GitHub\Python\baixar-ohlc-fx\XAUUSD_M1.csv
+Atual    : 0 barras | vazio
+Terminal : MetaTrader 5 build 6090 (C:\Users\Carlos\AppData\Roaming\MetaQuotes\Terminal\Metatrader5FX)
+Conta    : 51386788 @ PepperstoneBS-MT5-Live01 | conectado=True
+Max bars : 100.000
+Blocos   : 62 dias por requisicao (limitado pelo Max bars do terminal)
+MT5      : 99.846 barras baixadas em 3 blocos
+AVISO    : o terminal so serve M1 de XAUUSD a partir de 2026-05-12 18:06 (1957 dias depois do --desde pedido).
+           Para ir mais fundo, ponha Ferramentas > Opcoes > Graficos > 'Max. barras no grafico' em Unlimited e rode de novo.
+
+Novas    : 99.846 barras
+           de 2026-05-12 18:06 ate 2026-08-21 16:50
+Corrigidas: 0 barras ja existentes
+Preservadas: 0 barras que o MT5 nao serve mais
+Resultado : 99.846 barras | 2026-05-12 18:06 -> 2026-08-21 16:50
+Gravado  : C:\Users\Carlos\Documents\GitHub\Python\baixar-ohlc-fx\XAUUSD_M1.csv (5.9 MB)
+
+SUCESSO.
+

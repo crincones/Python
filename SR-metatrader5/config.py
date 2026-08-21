@@ -34,7 +34,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 #                  de dados > MQL5 > Files.
 # MQL5_INDICATORS_DIR : destino do SR_Levels.mq5 quando se usa --instalar.
 # ---------------------------------------------------------------------------
-HISTORICO_DIR = r"C:\Users\Carlos\Dev\Python\baixar-ohlc-fx"
+HISTORICO_DIR = r"C:\Users\Carlos\Documents\GitHub\Python\baixar-ohlc-fx"
 MT5_DATA_DIR = r"C:\Users\Carlos\AppData\Roaming\MetaQuotes\Terminal\Metatrader5FX"
 MQL5_FILES_DIR = os.path.join(MT5_DATA_DIR, "MQL5", "Files")
 MQL5_INDICATORS_DIR = os.path.join(MT5_DATA_DIR, "MQL5", "Indicators")

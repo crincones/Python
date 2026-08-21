@@ -1,0 +1,22 @@
+{
+  "gerado_em": "2026-08-21T14:20:40",
+  "symbol": "XAUUSD",
+  "historico": "C:\\Users\\Carlos\\Documents\\GitHub\\Python\\baixar-ohlc-fx\\XAUUSD_M1.csv",
+  "inicio": "2026-05-12 18:06:00",
+  "fim": "2026-08-14 23:54:00",
+  "n_candles": "93384",
+  "tick": "0.01",
+  "digits": "2",
+  "modo": "renko",
+  "box_ticks": "1640",
+  "caixa": "16.4",
+  "n_tijolos": "476",
+  "n_eventos": "148",
+  "metodo": "dbscan",
+  "banda": "5.739999999999999",
+  "referencia": "4612.0",
+  "separacao": "4.0",
+  "sep_media": "24.6",
+  "n_niveis_totais": "31",
+  "n_linhas": "31"
+}
