@@ -1,0 +1,733 @@
+<title>Receitas Amelina</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Public+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap">
+
+<style>
+:root{
+  --ground:#F3F0E9;
+  --surface:#FFFFFF;
+  --surface-2:#FAF7F1;
+  --ink:#241C15;
+  --ink-2:#6E5F51;
+  --ink-3:#9C8B7B;
+  --line:#E2DACD;
+  --line-2:#D2C7B6;
+  --accent:#A96A0C;
+  --accent-ink:#7C4E06;
+  --accent-soft:#FBEED6;
+  --good:#1B6B57;
+  --good-soft:#DCEDE7;
+  --bad:#A63A26;
+  --shadow:0 1px 2px rgba(36,28,21,.06), 0 8px 24px -16px rgba(36,28,21,.35);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#15110D;
+    --surface:#201A15;
+    --surface-2:#1A1510;
+    --ink:#F1E9DE;
+    --ink-2:#AD9B87;
+    --ink-3:#7E6E5E;
+    --line:#332A22;
+    --line-2:#443930;
+    --accent:#E4A542;
+    --accent-ink:#F0BC69;
+    --accent-soft:#382709;
+    --good:#57C1A2;
+    --good-soft:#123028;
+    --bad:#E27C64;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.8);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#15110D;
+  --surface:#201A15;
+  --surface-2:#1A1510;
+  --ink:#F1E9DE;
+  --ink-2:#AD9B87;
+  --ink-3:#7E6E5E;
+  --line:#332A22;
+  --line-2:#443930;
+  --accent:#E4A542;
+  --accent-ink:#F0BC69;
+  --accent-soft:#382709;
+  --good:#57C1A2;
+  --good-soft:#123028;
+  --bad:#E27C64;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.8);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--ground);
+  color:var(--ink);
+  font-family:"Public Sans","Helvetica Neue",Arial,sans-serif;
+  font-size:16px;
+  line-height:1.5;
+  -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:600px;margin:0 auto;padding:0 16px 64px}
+
+/* ---------- cabeçalho ---------- */
+.masthead{padding:28px 0 16px}
+.eyebrow{
+  font-family:"DM Mono",ui-monospace,monospace;
+  font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--accent-ink);margin:0 0 6px;
+}
+h1{
+  font-family:"Bricolage Grotesque","Public Sans",sans-serif;
+  font-weight:800;font-size:34px;line-height:1.02;letter-spacing:-.02em;
+  margin:0;text-wrap:balance;
+}
+.lede{color:var(--ink-2);font-size:14.5px;margin:8px 0 0;max-width:44ch}
+
+/* ---------- barra fixa: abas + resultado ---------- */
+.topbar{
+  position:sticky;top:0;z-index:20;
+  background:var(--ground);
+  padding:8px 0 10px;
+  border-bottom:1px solid var(--line);
+  margin-bottom:20px;
+}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;
+  background:var(--surface-2);border:1px solid var(--line);border-radius:11px;padding:4px}
+.tab{
+  appearance:none;border:0;background:transparent;cursor:pointer;
+  font-family:"Public Sans",sans-serif;font-size:14px;font-weight:600;
+  color:var(--ink-2);padding:9px 6px;border-radius:8px;
+  transition:background .15s ease,color .15s ease;
+}
+.tab[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+
+.readout{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-top:10px}
+.stat{padding:2px 0}
+.stat .k{
+  font-family:"DM Mono",ui-monospace,monospace;
+  font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3);
+  display:block;margin-bottom:1px;
+}
+.stat .v{
+  font-family:"Bricolage Grotesque","Public Sans",sans-serif;font-weight:700;
+  font-size:21px;letter-spacing:-.02em;font-variant-numeric:tabular-nums;display:block;
+}
+.stat.profit .v{color:var(--good)}
+.stat.profit.neg .v{color:var(--bad)}
+.stat.mid{text-align:center}
+.stat.end{text-align:right}
+
+.split{display:flex;height:6px;border-radius:99px;overflow:hidden;background:var(--line);margin-top:9px}
+.split i{display:block;height:100%}
+.split .cost{background:var(--ink-3)}
+.split .gain{background:var(--good)}
+.split .loss{background:var(--bad);flex:1}
+.splitkey{
+  display:flex;justify-content:space-between;margin-top:5px;
+  font-family:"DM Mono",ui-monospace,monospace;font-size:10.5px;color:var(--ink-3);
+}
+
+/* ---------- blocos ---------- */
+section{margin-bottom:22px}
+.sechead{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:0 0 9px}
+h2{
+  font-family:"Bricolage Grotesque","Public Sans",sans-serif;
+  font-weight:700;font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+  margin:0;color:var(--ink-2);
+}
+.sechead .hint{font-size:11.5px;color:var(--ink-3);font-family:"DM Mono",ui-monospace,monospace}
+
+.card{
+  background:var(--surface);border:1px solid var(--line);border-radius:14px;
+  box-shadow:var(--shadow);overflow:hidden;
+}
+.card + .card{margin-top:10px}
+
+/* linha de item: nome / quantidade / custo */
+.row{
+  display:grid;grid-template-columns:1fr auto 84px;align-items:center;gap:10px;
+  padding:11px 14px;border-top:1px solid var(--line);
+}
+.row:first-child{border-top:0}
+.row .name{font-size:14.5px;font-weight:500;line-height:1.25}
+.row .sub{
+  display:block;font-family:"DM Mono",ui-monospace,monospace;
+  font-size:10.5px;color:var(--ink-3);margin-top:2px;
+}
+.row .cost{
+  text-align:right;font-family:"DM Mono",ui-monospace,monospace;
+  font-size:13.5px;font-variant-numeric:tabular-nums;color:var(--ink-2);
+}
+.qty{display:flex;align-items:center;gap:5px}
+.qty .un{font-family:"DM Mono",ui-monospace,monospace;font-size:11.5px;color:var(--ink-3);width:18px}
+
+/* rodapé de soma dentro do card */
+.sum{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:10px 14px;background:var(--surface-2);border-top:1px solid var(--line);
+  font-size:13px;color:var(--ink-2);
+}
+.sum b{font-family:"DM Mono",ui-monospace,monospace;font-size:14px;color:var(--ink);font-weight:500;
+  font-variant-numeric:tabular-nums}
+
+/* ---------- campos editáveis ---------- */
+input{
+  font-family:"DM Mono",ui-monospace,monospace;
+  font-size:16px;               /* 16px evita o zoom automático do iPhone */
+  font-variant-numeric:tabular-nums;
+  color:var(--ink);
+  background:var(--accent-soft);
+  border:1px solid transparent;
+  border-bottom:1.5px solid var(--accent);
+  border-radius:7px 7px 3px 3px;
+  padding:6px 8px;width:74px;text-align:right;
+  -webkit-appearance:none;appearance:none;
+}
+input:focus-visible{outline:2px solid var(--accent);outline-offset:1px;background:var(--surface)}
+input.wide{width:96px}
+
+/* ---------- preço de venda ---------- */
+.pricebox{padding:14px}
+.priceline{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.priceline .lbl{font-size:14.5px;font-weight:500}
+.priceline input{font-size:19px;width:112px;padding:8px 10px}
+.marks{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.mark{
+  appearance:none;cursor:pointer;
+  font-family:"DM Mono",ui-monospace,monospace;font-size:12px;
+  color:var(--accent-ink);background:var(--accent-soft);
+  border:1px solid var(--line-2);border-radius:99px;padding:6px 11px;
+  transition:background .15s ease;
+}
+.mark:hover{background:var(--surface-2)}
+.mark:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.markhint{font-size:11.5px;color:var(--ink-3);margin:9px 0 0;line-height:1.4}
+
+/* ---------- resumo do lote ---------- */
+.lines{padding:4px 0}
+.line{
+  display:flex;justify-content:space-between;align-items:baseline;gap:12px;
+  padding:9px 14px;font-size:14px;
+}
+.line + .line{border-top:1px solid var(--line)}
+.line .v{font-family:"DM Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums;font-size:14px}
+.line.big{background:var(--good-soft)}
+.line.big .k{font-weight:600}
+.line.big .v{font-size:17px;font-weight:500;color:var(--good)}
+.line.big.neg .v{color:var(--bad)}
+
+/* ---------- insumos ---------- */
+.ins{padding:12px 14px;border-top:1px solid var(--line)}
+.ins:first-child{border-top:0}
+.ins-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.ins-name{font-size:14.5px;font-weight:500}
+.ins-unit{font-family:"DM Mono",ui-monospace,monospace;font-size:11.5px;color:var(--ink-3);
+  font-variant-numeric:tabular-nums;white-space:nowrap}
+.ins-fields{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap}
+.ins-fields span{font-size:12.5px;color:var(--ink-2)}
+
+/* ---------- produção ---------- */
+.prod{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.prodcol{padding:12px 14px}
+.prodcol + .prodcol{border-left:1px solid var(--line)}
+.prodcol h3{
+  font-family:"Bricolage Grotesque","Public Sans",sans-serif;font-size:13px;font-weight:700;
+  margin:0 0 8px;letter-spacing:-.01em;
+}
+.prodrow{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;color:var(--ink-2);padding:3px 0}
+.prodrow b{font-family:"DM Mono",ui-monospace,monospace;font-weight:500;color:var(--ink);
+  font-variant-numeric:tabular-nums}
+.grand{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:12px 14px;background:var(--good-soft);border-top:1px solid var(--line);
+}
+.grand .k{font-size:13px;font-weight:600}
+.grand .v{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:22px;
+  color:var(--good);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.grand.neg .v{color:var(--bad)}
+
+/* ---------- rodapé ---------- */
+footer{border-top:1px solid var(--line);margin-top:28px;padding-top:18px}
+footer p{font-size:12.5px;color:var(--ink-3);line-height:1.55;margin:0 0 10px;max-width:52ch}
+.reset{
+  appearance:none;cursor:pointer;font-family:"Public Sans",sans-serif;font-size:13px;
+  color:var(--ink-2);background:transparent;border:1px solid var(--line-2);
+  border-radius:9px;padding:8px 14px;transition:background .15s ease;
+}
+.reset:hover{background:var(--surface-2)}
+.reset:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+
+@media (prefers-reduced-motion: reduce){*{transition:none !important}}
+@media (max-width:400px){
+  h1{font-size:29px}
+  .stat .v{font-size:19px}
+  .row{grid-template-columns:1fr auto 74px;gap:8px}
+}
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="eyebrow">Custo &amp; lucro por pote</p>
+    <h1>Receitas Amelina</h1>
+    <p class="lede">Mude qualquer número em amarelo. Tudo recalcula na hora e fica salvo no seu celular.</p>
+  </header>
+
+  <div class="topbar">
+    <div class="tabs" role="tablist" aria-label="Escolha a receita">
+      <button class="tab" role="tab" id="tab-cafe" aria-selected="true" data-rec="cafe">Café</button>
+      <button class="tab" role="tab" id="tab-capp" aria-selected="false" data-rec="capp">Cappuccino</button>
+    </div>
+    <div class="readout">
+      <div class="stat"><span class="k">Custo/pote</span><span class="v" id="rdCusto">—</span></div>
+      <div class="stat mid"><span class="k">Venda</span><span class="v" id="rdPreco">—</span></div>
+      <div class="stat end profit" id="rdLucroBox"><span class="k">Lucro/pote</span><span class="v" id="rdLucro">—</span></div>
+    </div>
+    <div class="split" id="split" aria-hidden="true"></div>
+    <div class="splitkey"><span id="keyCusto">custo</span><span id="keyLucro">lucro</span></div>
+  </div>
+
+  <main id="recipe"></main>
+
+  <section>
+    <div class="sechead">
+      <h2>Preços de compra</h2>
+      <span class="hint">vale para as duas receitas</span>
+    </div>
+    <div class="card" id="insumos"></div>
+  </section>
+
+  <section>
+    <div class="sechead">
+      <h2>Quanto vou produzir</h2>
+      <span class="hint">em lotes</span>
+    </div>
+    <div class="card">
+      <div class="prod" id="prod"></div>
+      <div class="grand" id="grandBox">
+        <span class="k">Lucro total das duas receitas</span>
+        <span class="v" id="grandVal">—</span>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p><b>Deixe como um app:</b> no Safari toque em Compartilhar → “Adicionar à Tela de Início”. A página abre sem barra de endereço e guarda os seus valores.</p>
+    <p>A água não entra na conta porque não tem custo. Se um dia quiser considerá-la, é só colocar o preço lá em cima.</p>
+    <button class="reset" id="reset" type="button">Voltar aos valores originais</button>
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var CHAVE = "receitas-amelina-v1";
+
+  function padrao(){
+    return {
+      insumos: {
+        cafe:   {nome:"Café solúvel",   preco:11.24, qtd:50,   un:"g"},
+        acucar: {nome:"Açúcar",         preco:7.99,  qtd:2000, un:"g"},
+        cacau:  {nome:"Cacau 50%",      preco:35.00, qtd:200,  un:"g"},
+        canela: {nome:"Canela em pó",   preco:6.99,  qtd:20,   un:"g"},
+        agua:   {nome:"Água",           preco:0,     qtd:1000, un:"ml"},
+        pote:   {nome:"Pote de vidro",  preco:3.45,  qtd:1,    un:"un"},
+        frente: {nome:"Adesivo frente", preco:0.44,  qtd:1,    un:"un"},
+        verso:  {nome:"Adesivo verso",  preco:0.31,  qtd:1,    un:"un"}
+      },
+      receitas: {
+        cafe: {
+          nome:"Café", rend:4, preco:25, lotes:1,
+          ing:[{k:"cafe",q:50},{k:"acucar",q:250},{k:"agua",q:150}],
+          emb:[{k:"pote",q:1},{k:"frente",q:1},{k:"verso",q:1}],
+          extras:[{nome:"Gás / energia",v:0},{nome:"Mão de obra",v:0}]
+        },
+        capp: {
+          nome:"Cappuccino", rend:4, preco:25, lotes:1,
+          ing:[{k:"cafe",q:50},{k:"acucar",q:250},{k:"agua",q:150},{k:"cacau",q:36},{k:"canela",q:2}],
+          emb:[{k:"pote",q:1},{k:"frente",q:1},{k:"verso",q:1}],
+          extras:[{nome:"Gás / energia",v:0},{nome:"Mão de obra",v:0}]
+        }
+      }
+    };
+  }
+
+  var d = padrao(), atual = "cafe";
+  try{
+    var salvo = localStorage.getItem(CHAVE);
+    if(salvo){
+      var p = JSON.parse(salvo);
+      if(p && p.insumos && p.receitas) d = p;
+    }
+  }catch(e){ /* sem armazenamento: segue com os padrões */ }
+
+  function salvar(){
+    try{ localStorage.setItem(CHAVE, JSON.stringify(d)); }catch(e){}
+  }
+
+  /* ---------- formatação ---------- */
+  function num(v){
+    var s = String(v).replace(/[^0-9.,-]/g,"");
+    if(s.indexOf(",") > -1){
+      s = s.replace(/\./g,"").replace(",",".");          /* 1.234,56 -> 1234.56 */
+    }else if(/^-?\d{1,3}(\.\d{3})+$/.test(s)){
+      s = s.replace(/\./g,"");                           /* 2.000 -> 2000 (ponto de milhar) */
+    }
+    var n = parseFloat(s);
+    return isFinite(n) ? n : 0;
+  }
+  function brl(n){ return n.toLocaleString("pt-BR",{style:"currency",currency:"BRL"}); }
+  function brlUn(n){
+    return "R$ " + n.toLocaleString("pt-BR",{minimumFractionDigits:n<1?4:2,maximumFractionDigits:4});
+  }
+  function qtdTxt(n){ return n.toLocaleString("pt-BR",{maximumFractionDigits:3}); }
+  function pct(n){ return (n*100).toLocaleString("pt-BR",{maximumFractionDigits:1}) + "%"; }
+
+  /* ---------- cálculo ---------- */
+  function porUnidade(k){
+    var i = d.insumos[k];
+    if(!i || !i.qtd) return 0;
+    return i.preco / i.qtd;
+  }
+  function conta(id){
+    var r = d.receitas[id], rend = r.rend > 0 ? r.rend : 1, i, s;
+    var ing = 0;
+    for(i=0;i<r.ing.length;i++) ing += r.ing[i].q * porUnidade(r.ing[i].k);
+    var emb = 0;
+    for(i=0;i<r.emb.length;i++) emb += r.emb[i].q * porUnidade(r.emb[i].k) * rend;
+    var ext = 0;
+    for(i=0;i<r.extras.length;i++) ext += r.extras[i].v;
+    var lote = ing + emb + ext;
+    var pote = lote / rend;
+    var lucroPote = r.preco - pote;
+    return {
+      ing:ing, emb:emb, ext:ext, lote:lote, pote:pote, rend:rend,
+      preco:r.preco, lucroPote:lucroPote, lucroLote:lucroPote * rend,
+      faturamento:r.preco * rend,
+      margem: r.preco > 0 ? lucroPote / r.preco : 0,
+      markup: pote > 0 ? r.preco / pote : 0
+    };
+  }
+
+  /* ---------- ajudantes de DOM ---------- */
+  function el(tag, cls, txt){
+    var e = document.createElement(tag);
+    if(cls) e.className = cls;
+    if(txt !== undefined) e.textContent = txt;
+    return e;
+  }
+  function fmtCampo(n, tipo){
+    return tipo === "moeda"
+      ? n.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2,useGrouping:false})
+      : n.toLocaleString("pt-BR",{minimumFractionDigits:0,maximumFractionDigits:3,useGrouping:false});
+  }
+  function campo(valor, tipo, aoMudar){
+    var inp = el("input");
+    inp.type = "text";
+    inp.inputMode = "decimal";
+    inp.value = fmtCampo(valor, tipo);
+    inp.addEventListener("input", function(){ aoMudar(num(inp.value)); });
+    inp.addEventListener("focus", function(){ inp.select(); });
+    inp.addEventListener("blur", function(){ inp.value = fmtCampo(num(inp.value), tipo); });
+    return inp;
+  }
+  function mudou(){ salvar(); atualizar(); }
+
+  /* ---------- receita ---------- */
+  function montaReceita(){
+    var r = d.receitas[atual];
+    var host = document.getElementById("recipe");
+    host.innerHTML = "";
+
+    /* preço de venda */
+    var s1 = el("section");
+    var h1 = el("div","sechead");
+    h1.appendChild(el("h2",null,"Preço de venda"));
+    h1.appendChild(el("span","hint","por pote"));
+    s1.appendChild(h1);
+    var c1 = el("div","card"), box = el("div","pricebox"), pl = el("div","priceline");
+    pl.appendChild(el("span","lbl","Quanto você cobra por pote"));
+    pl.appendChild(campo(r.preco, "moeda", function(v){ r.preco = v; mudou(); }));
+    box.appendChild(pl);
+    var marks = el("div","marks");
+    [2,2.5,3,3.5].forEach(function(m){
+      var b = el("button","mark", m.toLocaleString("pt-BR") + "× o custo");
+      b.type = "button";
+      b.addEventListener("click", function(){
+        var c = conta(atual);
+        r.preco = Math.round(c.pote * m * 2) / 2;
+        salvar(); montaReceita(); atualizar();
+      });
+      marks.appendChild(b);
+    });
+    box.appendChild(marks);
+    box.appendChild(el("p","markhint","Atalhos: definem o preço como um múltiplo do custo, arredondado para os 50 centavos mais próximos."));
+    c1.appendChild(box); s1.appendChild(c1); host.appendChild(s1);
+
+    /* rendimento */
+    var s0 = el("section");
+    var h0 = el("div","sechead");
+    h0.appendChild(el("h2",null,"Rendimento"));
+    h0.appendChild(el("span","hint","potes por receita"));
+    s0.appendChild(h0);
+    var c0 = el("div","card"), rw = el("div","row");
+    var nm = el("div","name","Quantos potes saem de um lote");
+    rw.appendChild(nm);
+    var q0 = el("div","qty");
+    q0.appendChild(campo(r.rend, "qtd", function(v){ r.rend = v; mudou(); }));
+    q0.appendChild(el("span","un","un"));
+    rw.appendChild(q0);
+    rw.appendChild(el("div","cost",""));
+    c0.appendChild(rw); s0.appendChild(c0); host.appendChild(s0);
+
+    /* ingredientes */
+    var s2 = el("section");
+    var h2 = el("div","sechead");
+    h2.appendChild(el("h2",null,"Ingredientes"));
+    h2.appendChild(el("span","hint","para o lote inteiro"));
+    s2.appendChild(h2);
+    var c2 = el("div","card");
+    r.ing.forEach(function(item){
+      c2.appendChild(linhaItem(item, false));
+    });
+    var sum2 = el("div","sum");
+    sum2.appendChild(el("span",null,"Ingredientes do lote"));
+    var b2 = el("b",null,"—"); b2.id = "sumIng"; sum2.appendChild(b2);
+    c2.appendChild(sum2); s2.appendChild(c2); host.appendChild(s2);
+
+    /* embalagem */
+    var s3 = el("section");
+    var h3 = el("div","sechead");
+    h3.appendChild(el("h2",null,"Embalagem"));
+    h3.appendChild(el("span","hint","por pote"));
+    s3.appendChild(h3);
+    var c3 = el("div","card");
+    r.emb.forEach(function(item){
+      c3.appendChild(linhaItem(item, true));
+    });
+    var sum3 = el("div","sum");
+    sum3.appendChild(el("span",null,"Embalagem do lote"));
+    var b3 = el("b",null,"—"); b3.id = "sumEmb"; sum3.appendChild(b3);
+    c3.appendChild(sum3); s3.appendChild(c3); host.appendChild(s3);
+
+    /* outros custos */
+    var s4 = el("section");
+    var h4 = el("div","sechead");
+    h4.appendChild(el("h2",null,"Outros custos"));
+    h4.appendChild(el("span","hint","opcional, por lote"));
+    s4.appendChild(h4);
+    var c4 = el("div","card");
+    r.extras.forEach(function(ex){
+      var row = el("div","row");
+      row.appendChild(el("div","name", ex.nome));
+      var q = el("div","qty");
+      q.appendChild(el("span","un","R$"));
+      q.appendChild(campo(ex.v, "moeda", function(v){ ex.v = v; mudou(); }));
+      row.appendChild(q);
+      row.appendChild(el("div","cost",""));
+      c4.appendChild(row);
+    });
+    s4.appendChild(c4); host.appendChild(s4);
+
+    /* resumo do lote */
+    var s5 = el("section");
+    var h5 = el("div","sechead");
+    h5.appendChild(el("h2",null,"Resumo do lote"));
+    h5.appendChild(el("span","hint","por receita"));
+    s5.appendChild(h5);
+    var c5 = el("div","card"), lines = el("div","lines");
+    [["Custo total do lote","lnLote",""],
+     ["Custo por pote","lnPote",""],
+     ["Faturamento do lote","lnFat",""],
+     ["Margem de lucro","lnMargem",""],
+     ["Markup","lnMarkup",""]].forEach(function(t){
+      var ln = el("div","line");
+      ln.appendChild(el("span","k",t[0]));
+      var v = el("span","v","—"); v.id = t[1];
+      ln.appendChild(v);
+      lines.appendChild(ln);
+    });
+    var big = el("div","line big"); big.id = "lnLucroBox";
+    big.appendChild(el("span","k","Lucro do lote"));
+    var bv = el("span","v","—"); bv.id = "lnLucro";
+    big.appendChild(bv);
+    lines.appendChild(big);
+    c5.appendChild(lines); s5.appendChild(c5); host.appendChild(s5);
+  }
+
+  function linhaItem(item, porPote){
+    var ins = d.insumos[item.k];
+    var row = el("div","row");
+    var nome = el("div");
+    var n = el("div","name", ins.nome);
+    nome.appendChild(n);
+    var sub = el("span","sub","");
+    sub.setAttribute("data-unit", item.k);
+    nome.appendChild(sub);
+    row.appendChild(nome);
+    var q = el("div","qty");
+    q.appendChild(campo(item.q, "qtd", function(v){ item.q = v; mudou(); }));
+    q.appendChild(el("span","un", ins.un));
+    row.appendChild(q);
+    var cost = el("div","cost","—");
+    cost.setAttribute("data-cost", porPote ? "emb" : "ing");
+    cost.setAttribute("data-key", item.k);
+    row.appendChild(cost);
+    return row;
+  }
+
+  /* ---------- insumos ---------- */
+  function montaInsumos(){
+    var host = document.getElementById("insumos");
+    host.innerHTML = "";
+    Object.keys(d.insumos).forEach(function(k){
+      var i = d.insumos[k];
+      var box = el("div","ins");
+      var top = el("div","ins-top");
+      top.appendChild(el("div","ins-name", i.nome));
+      var u = el("div","ins-unit","—"); u.setAttribute("data-unitprice", k);
+      top.appendChild(u);
+      box.appendChild(top);
+      var f = el("div","ins-fields");
+      f.appendChild(el("span",null,"Paguei R$"));
+      f.appendChild(campo(i.preco, "moeda", function(v){ i.preco = v; mudou(); }));
+      f.appendChild(el("span",null,"pela embalagem de"));
+      f.appendChild(campo(i.qtd, "qtd", function(v){ i.qtd = v; mudou(); }));
+      f.appendChild(el("span",null, i.un));
+      box.appendChild(f);
+      host.appendChild(box);
+    });
+  }
+
+  /* ---------- produção ---------- */
+  function montaProducao(){
+    var host = document.getElementById("prod");
+    host.innerHTML = "";
+    ["cafe","capp"].forEach(function(id){
+      var r = d.receitas[id];
+      var col = el("div","prodcol");
+      col.appendChild(el("h3",null, r.nome));
+      var lin = el("div","prodrow");
+      lin.appendChild(el("span",null,"Lotes"));
+      var wrap = el("span");
+      var inp = campo(r.lotes, "qtd", function(v){ r.lotes = v; mudou(); });
+      inp.style.width = "58px";
+      wrap.appendChild(inp);
+      lin.appendChild(wrap);
+      col.appendChild(lin);
+      [["Potes","pPotes"],["Custo","pCusto"],["Faturamento","pFat"],["Lucro","pLucro"]].forEach(function(t){
+        var row = el("div","prodrow");
+        row.appendChild(el("span",null,t[0]));
+        var b = el("b",null,"—"); b.id = t[1] + "-" + id;
+        row.appendChild(b);
+        col.appendChild(row);
+      });
+      host.appendChild(col);
+    });
+  }
+
+  /* ---------- atualizar todos os números ---------- */
+  function txt(id, v){ var e = document.getElementById(id); if(e) e.textContent = v; }
+
+  function atualizar(){
+    var r = d.receitas[atual], c = conta(atual);
+
+    /* barra fixa */
+    txt("rdCusto", brl(c.pote));
+    txt("rdPreco", brl(c.preco));
+    txt("rdLucro", brl(c.lucroPote));
+    var lb = document.getElementById("rdLucroBox");
+    if(lb) lb.className = "stat end profit" + (c.lucroPote < 0 ? " neg" : "");
+
+    var split = document.getElementById("split");
+    split.innerHTML = "";
+    if(c.preco > 0 && c.lucroPote >= 0){
+      var a = el("i","cost"), b = el("i","gain");
+      a.style.width = (c.pote / c.preco * 100) + "%";
+      b.style.flex = "1";
+      split.appendChild(a); split.appendChild(b);
+      txt("keyCusto", "custo " + brl(c.pote));
+      txt("keyLucro", "margem " + pct(c.margem));
+    }else{
+      split.appendChild(el("i","loss"));
+      txt("keyCusto", "custo " + brl(c.pote));
+      txt("keyLucro", "prejuízo de " + brl(Math.abs(c.lucroPote)) + " por pote");
+    }
+
+    /* preço por unidade nos insumos */
+    Object.keys(d.insumos).forEach(function(k){
+      var i = d.insumos[k], u = porUnidade(k);
+      var e = document.querySelector('[data-unitprice="' + k + '"]');
+      if(e) e.textContent = brlUn(u) + " por " + i.un;
+    });
+
+    /* linhas da receita */
+    document.querySelectorAll("[data-unit]").forEach(function(e){
+      var k = e.getAttribute("data-unit");
+      e.textContent = brlUn(porUnidade(k)) + " / " + d.insumos[k].un;
+    });
+    document.querySelectorAll("[data-cost]").forEach(function(e){
+      var k = e.getAttribute("data-key"), tipo = e.getAttribute("data-cost");
+      var lista = tipo === "ing" ? r.ing : r.emb;
+      var item = null;
+      for(var i=0;i<lista.length;i++) if(lista[i].k === k) item = lista[i];
+      if(!item){ e.textContent = ""; return; }
+      var val = item.q * porUnidade(k) * (tipo === "emb" ? c.rend : 1);
+      e.textContent = brl(val);
+    });
+
+    txt("sumIng", brl(c.ing));
+    txt("sumEmb", brl(c.emb));
+    txt("lnLote", brl(c.lote));
+    txt("lnPote", brl(c.pote));
+    txt("lnFat", brl(c.faturamento));
+    txt("lnMargem", c.preco > 0 ? pct(c.margem) : "—");
+    txt("lnMarkup", c.pote > 0 ? c.markup.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2}) + "×" : "—");
+    txt("lnLucro", brl(c.lucroLote));
+    var lbox = document.getElementById("lnLucroBox");
+    if(lbox) lbox.className = "line big" + (c.lucroLote < 0 ? " neg" : "");
+
+    /* produção */
+    var totalLucro = 0;
+    ["cafe","capp"].forEach(function(id){
+      var rr = d.receitas[id], cc = conta(id), n = rr.lotes;
+      txt("pPotes-" + id, qtdTxt(cc.rend * n));
+      txt("pCusto-" + id, brl(cc.lote * n));
+      txt("pFat-" + id, brl(cc.faturamento * n));
+      txt("pLucro-" + id, brl(cc.lucroLote * n));
+      totalLucro += cc.lucroLote * n;
+    });
+    txt("grandVal", brl(totalLucro));
+    document.getElementById("grandBox").className = "grand" + (totalLucro < 0 ? " neg" : "");
+  }
+
+  /* ---------- eventos ---------- */
+  document.querySelectorAll(".tab").forEach(function(t){
+    t.addEventListener("click", function(){
+      atual = t.getAttribute("data-rec");
+      document.querySelectorAll(".tab").forEach(function(o){
+        o.setAttribute("aria-selected", o === t ? "true" : "false");
+      });
+      montaReceita();
+      atualizar();
+      var calmo = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      window.scrollTo({top:0, behavior: calmo ? "auto" : "smooth"});
+    });
+  });
+
+  document.getElementById("reset").addEventListener("click", function(){
+    if(!window.confirm("Voltar todos os valores para os originais? As suas alterações serão perdidas.")) return;
+    d = padrao();
+    salvar();
+    montaReceita(); montaInsumos(); montaProducao(); atualizar();
+  });
+
+  montaReceita();
+  montaInsumos();
+  montaProducao();
+  atualizar();
+})();
+</script>
