@@ -1,0 +1,39 @@
+features base=57  contexto=34  total=91
+
+WALK-FORWARD com contexto S/R + VWAP
+
+[P1+P2]
+  base (57 features)                 n=  8408 AUC=0.5062 PR=0.3253 Brier=0.2153 (const=0.2147)
+  so contexto (S/R + VWAP)           n=  8408 AUC=0.5098 PR=0.3224 Brier=0.2162 (const=0.2147)
+  base + contexto                    n=  8408 AUC=0.5101 PR=0.3265 Brier=0.2153 (const=0.2147)
+
+[P1]
+  base (57 features)                 n=  4272 AUC=0.4951 PR=0.3237 Brier=0.2180 (const=0.2161)
+  so contexto (S/R + VWAP)           n=  4272 AUC=0.5101 PR=0.3227 Brier=0.2185 (const=0.2161)
+  base + contexto                    n=  4272 AUC=0.5097 PR=0.3315 Brier=0.2173 (const=0.2161)
+
+[P2]
+  base (57 features)                 n=  4137 AUC=0.5073 PR=0.3106 Brier=0.2157 (const=0.2135)
+  so contexto (S/R + VWAP)           n=  4137 AUC=0.5107 PR=0.3147 Brier=0.2163 (const=0.2135)
+  base + contexto                    n=  4137 AUC=0.5175 PR=0.3174 Brier=0.2149 (const=0.2135)
+
+============================================================================================
+TESTE FINAL: treino ate 70% das barras, avaliado no periodo reservado
+============================================================================================
+  base             AUC=0.4908  PR=0.3104  Brier=0.2144 (const=0.2129)
+  contexto         AUC=0.5051  PR=0.3071  Brier=0.2140 (const=0.2129)
+  base+contexto    AUC=0.5037  PR=0.3168  Brier=0.2138 (const=0.2129)
+
+  top 12 features (modelo final):
+    chanpos50                3.41  
+    vwap_z_aligned           2.78  [contexto]
+    chanpos20                2.51  
+    disp20                   2.29  
+    sess_pos_aligned         2.20  [contexto]
+    round50_R                2.15  [contexto]
+    ren_behind_R             2.15  [contexto]
+    ren_room_R               2.10  [contexto]
+    dur2                     2.09  
+    ext_room_R               2.09  [contexto]
+    intens0                  2.07  
+    vwap_slope_aligned       1.99  [contexto]

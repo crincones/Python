@@ -1,0 +1,11 @@
+import numpy as np;from lib import load
+df=load()
+d_prev=(df.DT-df.DT.shift(1)).dt.total_seconds()
+d_next=(df.DT.shift(-1)-df.DT).dt.total_seconds()
+m=(d_prev<3600)&(d_next<3600)
+print("corr(SPREAD_s, DT[t]-DT[t-1]) :",np.corrcoef(df.DUR[m],d_prev[m])[0,1])
+print("corr(SPREAD_s, DT[t+1]-DT[t]) :",np.corrcoef(df.DUR[m],d_next[m])[0,1])
+print("\nagressao vs direcao da barra:")
+print(df.groupby("DIR")[["BUY","SELL","AGGD","AGGDN"]].mean())
+print("\nshare AGGD>0 por direcao:")
+print(df.groupby("DIR").apply(lambda g:(g.AGGD>0).mean(),include_groups=False))

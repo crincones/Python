@@ -270,3 +270,168 @@ Gravado  : C:\Users\Carlos\Documents\GitHub\Python\baixar-ohlc-fx\XAUUSD_M1.csv 
 
 SUCESSO.
 
+========================================================================
+[2026-08-22 21:32:42] FALHA
+------------------------------------------------------------------------
+Simbolo  : WIN M1 | desde 2021-01-01
+Arquivo  : C:\Users\Carlos\Documents\GitHub\Python\baixar-ohlc-fx\WIN_M1.csv
+Atual    : 0 barras | vazio
+Terminal : MetaTrader 5 build 6140 (C:\Users\Carlos\AppData\Roaming\MetaQuotes\Terminal\Metatrader5B3)
+Conta    : 2191249 @ XPMT5-PRD | conectado=True
+Max bars : 1.000.000
+
+FALHA: simbolo WIN nao existe neste terminal
+Traceback (most recent call last):
+  File "C:\Users\Carlos\Documents\GitHub\Python\baixar-ohlc-fx\atualiza-historico.py", line 312, in main
+    info = preparar_simbolo(args.symbol)
+  File "C:\Users\Carlos\Documents\GitHub\Python\baixar-ohlc-fx\atualiza-historico.py", line 172, in preparar_simbolo
+    raise RuntimeError(f"simbolo {symbol} nao existe neste terminal")
+RuntimeError: simbolo WIN nao existe neste terminal
+
+========================================================================
+[2026-08-22 21:33:17] FALHA
+------------------------------------------------------------------------
+Simbolo  : WIN M1 | desde 2021-01-01
+Arquivo  : C:\Users\Carlos\Documents\GitHub\Python\baixar-ohlc-fx\WIN_M1.csv
+Atual    : 0 barras | vazio
+Terminal : MetaTrader 5 build 6140 (C:\Users\Carlos\AppData\Roaming\MetaQuotes\Terminal\Metatrader5B3)
+Conta    : 2191249 @ XPMT5-PRD | conectado=True
+Max bars : 1.000.000
+
+FALHA: simbolo WIN nao existe neste terminal
+Traceback (most recent call last):
+  File "C:\Users\Carlos\Documents\GitHub\Python\baixar-ohlc-fx\atualiza-historico.py", line 312, in main
+    info = preparar_simbolo(args.symbol)
+  File "C:\Users\Carlos\Documents\GitHub\Python\baixar-ohlc-fx\atualiza-historico.py", line 172, in preparar_simbolo
+    raise RuntimeError(f"simbolo {symbol} nao existe neste terminal")
+RuntimeError: simbolo WIN nao existe neste terminal
+
+========================================================================
+[2026-08-22 21:33:28] FALHA
+------------------------------------------------------------------------
+Simbolo  : WIN M1 | desde 2021-01-01
+Arquivo  : C:\Users\Carlos\Documents\GitHub\Python\baixar-ohlc-fx\WIN_M1.csv
+Atual    : 0 barras | vazio
+Terminal : MetaTrader 5 build 6140 (C:\Users\Carlos\AppData\Roaming\MetaQuotes\Terminal\Metatrader5B3)
+Conta    : 2191249 @ XPMT5-PRD | conectado=True
+Max bars : 1.000.000
+
+FALHA: simbolo WIN nao existe neste terminal
+Traceback (most recent call last):
+  File "C:\Users\Carlos\Documents\GitHub\Python\baixar-ohlc-fx\atualiza-historico.py", line 312, in main
+    info = preparar_simbolo(args.symbol)
+  File "C:\Users\Carlos\Documents\GitHub\Python\baixar-ohlc-fx\atualiza-historico.py", line 172, in preparar_simbolo
+    raise RuntimeError(f"simbolo {symbol} nao existe neste terminal")
+RuntimeError: simbolo WIN nao existe neste terminal
+
+========================================================================
+[2026-08-22 21:34:49] SUCESSO
+------------------------------------------------------------------------
+Simbolo  : WIN$N M1 | desde 2021-01-01
+Arquivo  : C:\Users\Carlos\Documents\GitHub\Python\baixar-ohlc-fx\WIN$N_M1_202108120900_202608111824.csv
+Atual    : 0 barras | vazio
+Terminal : MetaTrader 5 build 6140 (C:\Users\Carlos\AppData\Roaming\MetaQuotes\Terminal\Metatrader5B3)
+Conta    : 2191249 @ XPMT5-PRD | conectado=True
+Max bars : 1.000.000
+MT5      : 691.718 barras baixadas em 13 blocos
+AVISO    : o terminal so serve M1 de WIN$N a partir de 2021-08-23 09:00 (234 dias depois do --desde pedido).
+           Para ir mais fundo, ponha Ferramentas > Opcoes > Graficos > 'Max. barras no grafico' em Unlimited e rode de novo.
+
+Novas    : 691.718 barras
+           de 2021-08-23 09:00 ate 2026-08-21 18:31
+Corrigidas: 0 barras ja existentes
+Preservadas: 0 barras que o MT5 nao serve mais
+Resultado : 691.718 barras | 2021-08-23 09:00 -> 2026-08-21 18:31
+Gravado  : C:\Users\Carlos\Documents\GitHub\Python\baixar-ohlc-fx\WIN$N_M1_202108120900_202608111824.csv (41.0 MB)
+
+SUCESSO.
+
+========================================================================
+[2026-08-26 22:50:08] SUCESSO
+------------------------------------------------------------------------
+Simbolo  : NAS100 M1 | desde 2021-01-01
+Arquivo  : C:\Users\Carlos\Documents\GitHub\Python\baixar-ohlc-fx\NAS100_M1.csv
+Atual    : 0 barras | vazio
+Terminal : MetaTrader 5 build 6140 (C:\Users\Carlos\AppData\Roaming\MetaQuotes\Terminal\Metatrader5FX)
+Conta    : 51386788 @ PepperstoneBS-MT5-Live01 | conectado=True
+Max bars : 100.000
+Blocos   : 62 dias por requisicao (limitado pelo Max bars do terminal)
+MT5      : 100.158 barras baixadas em 3 blocos
+AVISO    : o terminal so serve M1 de NAS100 a partir de 2026-05-15 20:33 (1960 dias depois do --desde pedido).
+           Para ir mais fundo, ponha Ferramentas > Opcoes > Graficos > 'Max. barras no grafico' em Unlimited e rode de novo.
+
+Novas    : 100.158 barras
+           de 2026-05-15 20:33 ate 2026-08-27 01:50
+Corrigidas: 0 barras ja existentes
+Preservadas: 0 barras que o MT5 nao serve mais
+Resultado : 100.158 barras | 2026-05-15 20:33 -> 2026-08-27 01:50
+Gravado  : C:\Users\Carlos\Documents\GitHub\Python\baixar-ohlc-fx\NAS100_M1.csv (5.9 MB)
+
+SUCESSO.
+
+========================================================================
+[2026-08-26 23:02:21] SUCESSO
+------------------------------------------------------------------------
+Simbolo  : XAUUSD M1 | desde 2021-01-01
+Arquivo  : C:\Users\Carlos\Documents\GitHub\Python\baixar-ohlc-fx\XAUUSD_M1.csv
+Atual    : 99.846 barras | 2026-05-12 18:06 -> 2026-08-21 16:50
+Terminal : MetaTrader 5 build 6140 (C:\Users\Carlos\AppData\Roaming\MetaQuotes\Terminal\Metatrader5FX)
+Conta    : 51386788 @ PepperstoneBS-MT5-Live01 | conectado=True
+Max bars : 100.000
+Blocos   : 62 dias por requisicao (limitado pelo Max bars do terminal)
+MT5      : 100.169 barras baixadas em 3 blocos
+AVISO    : o terminal so serve M1 de XAUUSD a partir de 2026-05-15 20:49 (1960 dias depois do --desde pedido).
+           Para ir mais fundo, ponha Ferramentas > Opcoes > Graficos > 'Max. barras no grafico' em Unlimited e rode de novo.
+
+Novas    : 4.620 barras
+           de 2026-08-21 16:51 ate 2026-08-27 02:02
+Corrigidas: 0 barras ja existentes
+Preservadas: 4.297 barras que o MT5 nao serve mais
+Resultado : 104.466 barras | 2026-05-12 18:06 -> 2026-08-27 02:02
+Backup   : C:\Users\Carlos\Documents\GitHub\Python\baixar-ohlc-fx\XAUUSD_M1.csv.bak
+Gravado  : C:\Users\Carlos\Documents\GitHub\Python\baixar-ohlc-fx\XAUUSD_M1.csv (6.2 MB)
+
+SUCESSO.
+
+========================================================================
+[2026-08-26 23:12:53] FALHA
+------------------------------------------------------------------------
+Simbolo  : WIN$N M1 | desde 2021-01-01
+Arquivo  : C:\Users\Carlos\Documents\GitHub\Python\baixar-ohlc-fx\WIN$N_M1_202108120900_202608111824.csv
+Atual    : 0 barras | vazio
+Terminal : MetaTrader 5 build 6140 (C:\Users\Carlos\AppData\Roaming\MetaQuotes\Terminal\Metatrader5FX)
+Conta    : 51386788 @ PepperstoneBS-MT5-Live01 | conectado=True
+Max bars : 100.000
+
+FALHA: simbolo WIN$N nao existe neste terminal
+Traceback (most recent call last):
+  File "C:\Users\Carlos\Documents\GitHub\Python\baixar-ohlc-fx\atualiza-historico.py", line 312, in main
+    info = preparar_simbolo(args.symbol)
+  File "C:\Users\Carlos\Documents\GitHub\Python\baixar-ohlc-fx\atualiza-historico.py", line 172, in preparar_simbolo
+    raise RuntimeError(f"simbolo {symbol} nao existe neste terminal")
+RuntimeError: simbolo WIN$N nao existe neste terminal
+
+========================================================================
+[2026-08-26 23:21:14] SUCESSO
+------------------------------------------------------------------------
+Simbolo  : NAS100 M1 | desde 2021-01-01
+Arquivo  : C:\Users\Carlos\Documents\GitHub\Python\baixar-ohlc-fx\NAS100_M1.csv
+Atual    : 100.158 barras | 2026-05-15 20:33 -> 2026-08-27 01:50
+Terminal : MetaTrader 5 build 6140 (C:\Users\Carlos\AppData\Roaming\MetaQuotes\Terminal\Metatrader5FX)
+Conta    : 51386788 @ PepperstoneBS-MT5-Live01 | conectado=True
+Max bars : 100.000
+Blocos   : 62 dias por requisicao (limitado pelo Max bars do terminal)
+MT5      : 100.189 barras baixadas em 3 blocos
+AVISO    : o terminal so serve M1 de NAS100 a partir de 2026-05-15 20:33 (1960 dias depois do --desde pedido).
+           Para ir mais fundo, ponha Ferramentas > Opcoes > Graficos > 'Max. barras no grafico' em Unlimited e rode de novo.
+
+Novas    : 31 barras
+           de 2026-08-27 01:51 ate 2026-08-27 02:21
+Corrigidas: 0 barras ja existentes
+Preservadas: 0 barras que o MT5 nao serve mais
+Resultado : 100.189 barras | 2026-05-15 20:33 -> 2026-08-27 02:21
+Backup   : C:\Users\Carlos\Documents\GitHub\Python\baixar-ohlc-fx\NAS100_M1.csv.bak
+Gravado  : C:\Users\Carlos\Documents\GitHub\Python\baixar-ohlc-fx\NAS100_M1.csv (5.9 MB)
+
+SUCESSO.
+

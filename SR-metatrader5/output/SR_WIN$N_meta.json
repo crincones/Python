@@ -1,0 +1,22 @@
+{
+  "gerado_em": "2026-08-26T23:13:01",
+  "symbol": "WIN$N",
+  "historico": "C:\\Users\\Carlos\\Documents\\GitHub\\Python\\baixar-ohlc-fx\\WIN$N_M1.csv",
+  "inicio": "2021-08-23 09:00:00",
+  "fim": "2026-08-21 18:31:00",
+  "n_candles": "691718",
+  "tick": "5.0",
+  "digits": "0",
+  "modo": "renko",
+  "box_ticks": "50",
+  "caixa": "250.0",
+  "n_tijolos": "20186",
+  "n_eventos": "6216",
+  "metodo": "dbscan",
+  "banda": "87.5",
+  "referencia": "177375.0",
+  "separacao": "500.0",
+  "sep_media": "927.0833333333334",
+  "n_niveis_totais": "390",
+  "n_linhas": "73"
+}

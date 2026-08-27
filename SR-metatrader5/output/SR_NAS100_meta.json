@@ -1,0 +1,22 @@
+{
+  "gerado_em": "2026-08-26T23:21:19",
+  "symbol": "NAS100",
+  "historico": "C:\\Users\\Carlos\\Documents\\GitHub\\Python\\baixar-ohlc-fx\\NAS100_M1.csv",
+  "inicio": "2026-05-15 20:33:00",
+  "fim": "2026-08-26 23:58:00",
+  "n_candles": "100107",
+  "tick": "0.1",
+  "digits": "1",
+  "modo": "renko",
+  "box_ticks": "100",
+  "caixa": "10.0",
+  "n_tijolos": "52098",
+  "n_eventos": "15133",
+  "metodo": "dbscan",
+  "banda": "3.5",
+  "referencia": "29477.0",
+  "separacao": "40.0",
+  "sep_media": "48.048780487804876",
+  "n_niveis_totais": "362",
+  "n_linhas": "42"
+}

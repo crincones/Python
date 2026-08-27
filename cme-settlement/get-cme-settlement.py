@@ -13,6 +13,7 @@ PRODUCTS = {
     "ES": 133,     # E-mini S&P 500
     "YM" : 318,    # E-mini Dow
     "NQ": 146,     # E-mini Nasdaq 100
+    "GC": 437,     # NOVO: COMEX Gold (ouro) -> XAUUSD
 }
 
 NUM_DAYS = 5              # Quantos pregões deseja obter
@@ -30,9 +31,10 @@ HEADERS = {
 
 # ----------------------------------------------------
 
-# NOVO: extrai o valor numérico do campo "last", que pode vir como
-# "5900.25", "5,900.25", "5900.25A", "5900.25s", "UNCH", "N/A", etc.
-def parse_last_price(value):
+# Extrai o valor numérico de um campo da CME ("last", "high", "low"...),
+# que pode vir como "5900.25", "5,900.25", "5900.25A", "5900.25s",
+# "UNCH", "N/A", etc.
+def parse_num(value):
     if value is None:
         return None
 
@@ -52,6 +54,53 @@ def parse_last_price(value):
         return float(m.group())
     except ValueError:
         return None
+
+
+# NOVO: posição do ajuste dentro do range (máxima/mínima) do dia, em %:
+#     0% = ajuste exatamente na mínima do dia
+#   100% = ajuste exatamente na máxima do dia
+#    50% = ajuste no meio do range
+# Pode sair da faixa 0..100 quando o settlement da CME cai fora do range
+# efetivamente negociado (acontece eventualmente).
+def calc_pct(settle, high, low):
+    if settle is None or high is None or low is None:
+        return None
+
+    amplitude = high - low
+
+    if amplitude <= 0:
+        return None
+
+    return round((settle - low) / amplitude * 100.0, 4)
+
+
+# NOVO: escolhe o contrato de referência do dia.
+#
+# Não dá para usar simplesmente o primeiro da lista: nos índices (ES/NQ/YM)
+# o primeiro é o mais líquido, mas no ouro (GC) a CME lista todos os meses
+# e o primeiro costuma ser um mês quase sem negócio. Ex.: em 25/08/2026 o
+# primeiro era AUG 26 (volume 321, range de 5,8 pts, com o ajuste FORA do
+# range -> pct de 205%), enquanto o contrato real era DEZ 26 (volume 176.784).
+#
+# Critério: maior volume e, em caso de empate, maior contratos em aberto,
+# considerando só os meses com máxima/mínima válidas.
+def escolhe_contrato(contratos):
+    candidatos = [
+        c for c in contratos
+        if c.get("month") != "Total"
+        and parse_num(c.get("high")) is not None
+        and parse_num(c.get("low")) is not None
+        and parse_num(c.get("settle")) is not None
+    ]
+
+    if not candidatos:
+        return None
+
+    return max(
+        candidatos,
+        key=lambda c: (parse_num(c.get("volume")) or 0.0,
+                       parse_num(c.get("openInterest")) or 0.0)
+    )
 
 
 def consulta_data(product_id, data):
@@ -110,17 +159,22 @@ for SYMBOL, PRODUCT_ID in PRODUCTS.items():
 
                 if contratos:
 
-                    primeiro = contratos[0]
+                    # NOVO: contrato mais líquido do dia, não o primeiro da lista
+                    primeiro = escolhe_contrato(contratos)
 
-                    if primeiro["month"] != "Total":
+                    if primeiro is not None:
 
-                        settle_val = float(primeiro["settle"])
-                        last_num = parse_last_price(primeiro["last"])  # NOVO
+                        settle_val = parse_num(primeiro["settle"])
+                        last_num = parse_num(primeiro["last"])
+                        high_num = parse_num(primeiro["high"])   # NOVO
+                        low_num  = parse_num(primeiro["low"])    # NOVO
 
-                        # NOVO: distância = fechamento (last) - ajuste (settle)
-                        # positivo = fechamento acima do ajuste
-                        # negativo = fechamento abaixo do ajuste
+                        # distância = fechamento (last) - ajuste (settle)
+                        # mantida apenas como diagnóstico/compatibilidade
                         distancia = round(last_num - settle_val, 2) if last_num is not None else None
+
+                        # NOVO: posição do ajuste dentro do range do dia (0..100%)
+                        pct = calc_pct(settle_val, high_num, low_num)
 
                         registro = {
                             "symbol": SYMBOL,
@@ -128,7 +182,8 @@ for SYMBOL, PRODUCT_ID in PRODUCTS.items():
                             "contract": primeiro["month"],
                             "settle": settle_val,
                             "last": primeiro["last"],
-                            "distancia": distancia,   # NOVO
+                            "distancia": distancia,
+                            "pct": pct,               # NOVO
                             "open": primeiro["open"],
                             "high": primeiro["high"],
                             "low": primeiro["low"],
@@ -142,7 +197,8 @@ for SYMBOL, PRODUCT_ID in PRODUCTS.items():
                             f'OK {registro["tradeDate"]} '
                             f'{registro["contract"]} '
                             f'Settle={registro["settle"]} '
-                            f'Dist={registro["distancia"]}'   # NOVO
+                            f'Dist={registro["distancia"]} '
+                            f'Pct={registro["pct"]}'   # NOVO
                         )
 
         except Exception as e:
@@ -203,12 +259,27 @@ novo.sort_values(
 
 novo["tradeDate"] = novo["tradeDate"].dt.strftime("%Y-%m-%d")
 
-# NOVO: recalcula "distancia" retroativamente para TODAS as linhas
-# (inclusive as que já existiam no CSV antes desta coluna existir),
-# usando o "last" e "settle" já armazenados.
-novo["_last_num"] = novo["last"].apply(parse_last_price)
+# NOVO: recalcula "distancia" e "pct" retroativamente para TODAS as linhas
+# (inclusive as que já existiam no CSV antes destas colunas existirem),
+# usando "last", "settle", "high" e "low" já armazenados.
+novo["_last_num"] = novo["last"].apply(parse_num)
+novo["_high_num"] = novo["high"].apply(parse_num)
+novo["_low_num"]  = novo["low"].apply(parse_num)
+
 novo["distancia"] = (novo["_last_num"] - novo["settle"]).round(2)
-novo.drop(columns=["_last_num"], inplace=True)
+
+novo["pct"] = [
+    calc_pct(s, h, l)
+    for s, h, l in zip(novo["settle"], novo["_high_num"], novo["_low_num"])
+]
+
+novo.drop(columns=["_last_num", "_high_num", "_low_num"], inplace=True)
+
+# Ordem estável das colunas
+colunas = ["symbol", "tradeDate", "contract", "settle", "last",
+           "distancia", "pct", "open", "high", "low",
+           "volume", "openInterest"]
+novo = novo[[c for c in colunas if c in novo.columns]]
 
 novo.to_csv(
     arquivo,
@@ -218,7 +289,13 @@ novo.to_csv(
 # ----------------------------------------------------
 # CSV simples (para MT5)
 # ----------------------------------------------------
-df2 = novo[["symbol", "tradeDate", "settle", "distancia"]].copy()
+df2 = novo[["symbol", "tradeDate", "settle", "distancia", "pct"]].copy()
+
+# NOVO: sem "pct" o indicador não consegue projetar o ajuste no ativo cash
+faltando = int(df2["pct"].isna().sum())
+
+if faltando:
+    print(f"\nAviso: {faltando} linha(s) sem 'pct' (range do dia indisponível).")
 
 df2.sort_values(
     ["symbol", "tradeDate"],
@@ -236,16 +313,19 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
-print(f"Target path received: {args.input_path}settlements.csv")
+# NOVO: junta o caminho com "/" do pathlib (funciona no Windows e no Linux)
+destino = args.input_path / "settlements.csv"
+
+print(f"Target path received: {destino}")
 
 if args.input_path.exists():
-    print(f"Saving simple settlements.csv in {args.input_path}\\settlements.csv")
+    print(f"Saving simple settlements.csv in {destino}")
     df2.to_csv(
-    fr"{args.input_path}\settlements.csv",
+    destino,
     index=False
     )
 else:
-    print(f"Error: That path {args.input_path}\\settlements.csv does not exist, saving in execution directory.")
+    print(f"Error: That path {destino} does not exist, saving in execution directory.")
     df2.to_csv(
     "settlements.csv",
     index=False
