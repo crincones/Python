@@ -1,0 +1,364 @@
+<title>Plano Operacional Rincones1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@600;700&family=Libre+Franklin:wght@400;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --paper:#E9E7E1; --card:#FAF9F6; --card-2:#F2F0EA;
+  --ink:#17191A; --ink-2:#55585A; --ink-3:#85888B;
+  --line:#D3D0C8; --line-2:#E3E0D8;
+  --accent:#1D4E3F; --accent-soft:#DFE9E4; --on-accent:#FAF9F6;
+  --caution:#8F5400; --caution-soft:#F4E9D6;
+  --stop:#8E2B20; --stop-soft:#F4E1DE;
+  --shadow:0 1px 2px rgba(23,25,26,.05), 0 10px 28px -16px rgba(23,25,26,.22);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#131412; --card:#1B1D1A; --card-2:#212420;
+    --ink:#EDEBE4; --ink-2:#B0AEA5; --ink-3:#83817A;
+    --line:#33362F; --line-2:#282B25;
+    --accent:#78C3A4; --accent-soft:#1E2C26; --on-accent:#131412;
+    --caution:#E0A649; --caution-soft:#2C2517;
+    --stop:#E0836F; --stop-soft:#2E1D1A;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -16px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#131412; --card:#1B1D1A; --card-2:#212420;
+  --ink:#EDEBE4; --ink-2:#B0AEA5; --ink-3:#83817A;
+  --line:#33362F; --line-2:#282B25;
+  --accent:#78C3A4; --accent-soft:#1E2C26; --on-accent:#131412;
+  --caution:#E0A649; --caution-soft:#2C2517;
+  --stop:#E0836F; --stop-soft:#2E1D1A;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -16px rgba(0,0,0,.7);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"Libre Franklin","Helvetica Neue",Arial,sans-serif;
+  font-size:16px; line-height:1.62; -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:960px; margin:0 auto; padding:0 22px 96px}
+
+/* ---------- cabecalho ---------- */
+header.topo{
+  border-bottom:2px solid var(--ink); margin-bottom:8px;
+  padding:56px 0 22px;
+}
+.eyebrow{
+  font-family:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  font-size:11.5px; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--accent); font-weight:600; margin:0 0 14px;
+}
+h1{
+  font-family:"Archivo Narrow","Arial Narrow",Arial,sans-serif;
+  font-weight:700; font-size:clamp(34px,6vw,58px); line-height:1.02;
+  letter-spacing:-.015em; margin:0 0 16px; text-wrap:balance;
+}
+.dek{font-size:17px; color:var(--ink-2); max-width:62ch; margin:0}
+.chips{display:flex; flex-wrap:wrap; gap:8px; margin:22px 0 0}
+.chip{
+  font-family:"JetBrains Mono",monospace; font-size:12px; font-weight:500;
+  padding:6px 11px; border:1px solid var(--line); border-radius:999px;
+  background:var(--card); color:var(--ink-2);
+}
+.chip b{color:var(--ink); font-weight:600}
+
+/* ---------- secoes com o numero na goteira ---------- */
+section{
+  display:grid; grid-template-columns:64px minmax(0,1fr); gap:0 22px;
+  padding:38px 0 6px; border-bottom:1px solid var(--line-2);
+}
+section:last-of-type{border-bottom:0}
+.gut{
+  font-family:"JetBrains Mono",monospace; font-size:13px; font-weight:600;
+  color:var(--accent); padding-top:9px; letter-spacing:.04em;
+  border-top:2px solid var(--accent); align-self:start; margin-top:8px;
+}
+.gut:empty{border-top-color:var(--line)}
+.corpo{min-width:0}
+h2{
+  font-family:"Archivo Narrow","Arial Narrow",Arial,sans-serif;
+  font-weight:700; font-size:clamp(23px,3.2vw,31px); line-height:1.14;
+  margin:0 0 18px; letter-spacing:-.01em; text-wrap:balance;
+}
+h3{
+  font-family:"Archivo Narrow","Arial Narrow",Arial,sans-serif;
+  font-weight:700; font-size:18px; margin:32px 0 12px;
+  color:var(--accent); letter-spacing:.01em;
+}
+p{margin:0 0 16px; max-width:66ch}
+a{color:var(--accent); text-underline-offset:2px}
+strong{font-weight:600}
+code{
+  font-family:"JetBrains Mono",monospace; font-size:.87em;
+  background:var(--card-2); border:1px solid var(--line-2);
+  padding:1px 5px; border-radius:4px;
+}
+
+/* ---------- listas ---------- */
+ul,ol{margin:0 0 16px; padding-left:22px; max-width:66ch}
+li{margin:0 0 9px}
+li::marker{color:var(--ink-3); font-family:"JetBrains Mono",monospace; font-size:.9em}
+
+/* ---------- blocos de codigo: o fluxo da regra ---------- */
+pre{
+  font-family:"JetBrains Mono",monospace; font-size:13px; line-height:1.75;
+  background:var(--card); border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  padding:16px 18px; border-radius:6px; overflow-x:auto; margin:0 0 20px;
+  color:var(--ink);
+}
+
+/* ---------- tabelas ---------- */
+.scroll{overflow-x:auto; margin:0 0 22px; border-radius:8px;
+  border:1px solid var(--line); background:var(--card); box-shadow:var(--shadow)}
+table{border-collapse:collapse; width:100%; font-size:14.5px}
+th,td{padding:11px 14px; text-align:left; border-bottom:1px solid var(--line-2);
+  vertical-align:top}
+thead th{
+  font-family:"JetBrains Mono",monospace; font-size:11px; font-weight:600;
+  letter-spacing:.08em; text-transform:uppercase; color:var(--ink-3);
+  background:var(--card-2); border-bottom:1px solid var(--line);
+}
+tbody tr:last-child td{border-bottom:0}
+td.num,th.num{
+  font-family:"JetBrains Mono",monospace; font-variant-numeric:tabular-nums;
+  text-align:right; white-space:nowrap;
+}
+tbody tr:hover{background:var(--card-2)}
+.box{
+  font-family:"JetBrains Mono",monospace; font-size:19px; line-height:1;
+  color:var(--accent);
+}
+
+/* ---------- painel de nota ---------- */
+aside.nota{
+  background:var(--accent-soft); border-left:3px solid var(--accent);
+  padding:15px 18px; margin:0 0 22px; border-radius:0 7px 7px 0;
+  font-size:15px; color:var(--ink-2); max-width:70ch;
+}
+aside.nota strong{color:var(--ink)}
+aside.nota.gerado{
+  background:transparent; border-left-color:var(--line);
+  color:var(--ink-3); font-size:13.5px;
+  font-family:"JetBrains Mono",monospace; line-height:1.6;
+}
+
+/* ---------- o cartao de pregao ---------- */
+.cartao{
+  margin:52px 0 0; background:var(--card); border:2px solid var(--ink);
+  border-radius:10px; padding:26px 28px; box-shadow:var(--shadow);
+}
+.cartao h2{margin-top:0}
+.cartao .lab{
+  font-family:"JetBrains Mono",monospace; font-size:11px; font-weight:600;
+  letter-spacing:.16em; text-transform:uppercase; color:var(--ink-3);
+  margin:0 0 6px;
+}
+.grade{display:grid; gap:18px; grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
+  margin:22px 0 0}
+.celula{border-top:2px solid var(--line); padding-top:12px}
+.celula .k{
+  font-family:"JetBrains Mono",monospace; font-size:11px; font-weight:600;
+  letter-spacing:.12em; text-transform:uppercase; color:var(--ink-3);
+}
+.celula .v{
+  font-family:"Archivo Narrow",Arial,sans-serif; font-weight:700;
+  font-size:30px; line-height:1.1; margin:4px 0 2px;
+  font-variant-numeric:tabular-nums;
+}
+.celula .s{font-size:13px; color:var(--ink-2)}
+.celula.go{border-top-color:var(--accent)} .celula.go .v{color:var(--accent)}
+.celula.cau{border-top-color:var(--caution)} .celula.cau .v{color:var(--caution)}
+.celula.par{border-top-color:var(--stop)} .celula.par .v{color:var(--stop)}
+
+.regra-ouro{
+  margin:30px 0 0; padding:20px 22px; border-radius:8px;
+  background:var(--caution-soft); border:1px solid var(--caution);
+  font-family:"Archivo Narrow",Arial,sans-serif; font-weight:700;
+  font-size:clamp(19px,2.6vw,25px); line-height:1.25; color:var(--ink);
+  text-wrap:balance;
+}
+.regra-ouro span{
+  display:block; font-family:"Libre Franklin",sans-serif; font-weight:400;
+  font-size:14.5px; line-height:1.6; color:var(--ink-2); margin-top:10px;
+}
+
+footer{
+  margin-top:60px; padding-top:22px; border-top:1px solid var(--line);
+  font-family:"JetBrains Mono",monospace; font-size:12.5px; color:var(--ink-3);
+}
+footer a{color:var(--ink-3)}
+
+@media (max-width:640px){
+  section{grid-template-columns:1fr; gap:0}
+  .gut{margin-bottom:12px; padding-top:6px; display:inline-block; min-width:44px}
+}
+@media print{
+  body{background:#fff} .scroll{box-shadow:none} section{break-inside:avoid}
+  .cartao{break-before:page}
+}
+</style>
+
+<div class="wrap">
+<header class="topo">
+  <p class="eyebrow">Rincones1 · procedimento operacional</p>
+  <h1>Plano operacional<br>WIN · 10.000 ticks</h1>
+  <p class="dek">O relatório diz o que foi medido. Este documento diz o que eu
+  faço na frente da tela — e como eu avalio se fiz certo, num dia em que o
+  resultado não tem como me dizer isso.</p>
+  <div class="chips"><span class="chip">ativo <b>WIN</b></span><span class="chip">gráfico <b>10.000 ticks</b></span><span class="chip">setup <b>A · tendência</b></span><span class="chip">stop <b>100 pts</b></span><span class="chip">alvo <b>+300 pts</b></span><span class="chip">trades/pregão <b>~2.2</b></span><span class="chip">pregões positivos <b>61%</b></span></div>
+</header>
+
+<aside class="nota gerado"><strong>Este arquivo é gerado.</strong> Rode <code>python rodar.py &amp;&amp; python plano.py</code>. Os números saem de <code>saida/resumo.json</code>, os mesmos do <a href="relatorio.html">relatorio.html</a>. O texto do procedimento é fixo; se você mudar uma regra, mude aqui <strong>e</strong> em <a href="ESTRATEGIA.md">ESTRATEGIA.md</a>.</aside>
+<p>Companheiro operacional de <a href="RESULTADOS.md">RESULTADOS.md</a>. O relatório diz <strong>o que foi medido</strong>; este arquivo diz <strong>o que eu faço na frente da tela</strong>.</p>
+<section><div class="gut">0</div><div class="corpo"><h2>O contrato</h2>
+<p>Eu opero <strong>um</strong> setup, com <strong>um</strong> tamanho de risco, seguindo as regras 1 a 6 deste arquivo. As regras não mudam durante o pregão. Não mudam depois de uma perda. Não mudam depois de um ganho. Mudam apenas na <strong>revisão mensal</strong> da § 10, com os dados na mão.</p>
+<p>A única coisa que eu avalio ao fim do dia é <strong>se segui o plano</strong> — não quanto ganhei. A § 7 explica por que, com os números que tornam isso não uma frase bonita, mas a leitura correta dos dados.</p>
+<p>Assinado: ____________________   Data: __ / __ / ____</p>
+</section>
+<section><div class="gut">1</div><div class="corpo"><h2>O que eu opero — e o que eu não opero</h2>
+<div class="scroll"><table><tbody><tr><td><strong>Ativo</strong></td><td>WIN (mini índice)</td></tr><tr><td><strong>Gráfico</strong></td><td>candle de <strong>10.000 ticks</strong></td></tr><tr><td><strong>Setup</strong></td><td><strong>A — tendência (pullback na média)</strong>, e só ele</td></tr><tr><td><strong>Direção</strong></td><td>pelo empilhamento das EMAs 21 / 42 / 72</td></tr><tr><td><strong>Lado</strong></td><td>compra e venda</td></tr><tr><td><strong>Posições</strong></td><td><strong>uma por vez</strong>. Sinal que chega com posição aberta é ignorado</td></tr></tbody></table></div>
+<p><strong>O que eu NÃO opero:</strong></p>
+<ul><li><strong>Setup C (reversão em consolidação).</strong> Mede negativo nas duas bases, em toda configuração testada. Não está no plano e não entra por exceção.</li><li><strong>Setup B (reversão no afastamento).</strong> É positivo, mas mais fraco e com o dobro de rebaixamento. Fica <strong>fora</strong> até uma revisão decidir promovê-lo. Se eu quiser operá-lo, é uma decisão de revisão mensal, não de pregão.</li><li><strong>Qualquer coisa que o indicador não marcou.</strong> Se não saiu a seta A, não existe trade — por mais óbvio que o gráfico pareça.</li></ul>
+<aside class="nota">Por que só o A: ele é o melhor dos três nas duas bases, em <strong>todas</strong> as colunas — valor esperado, <code>t</code>, fator de lucro e rebaixamento. E a 2.2 trades por pregão ele é operável à mão sem pressa.</aside>
+</section>
+<section><div class="gut">2</div><div class="corpo"><h2>O gatilho — quando existe trade</h2>
+<p>O indicador faz a conta; eu confiro o contexto. <strong>Todos os seis</strong> têm de estar verdadeiros. Um único "não" e não há trade.</p>
+<div class="scroll"><table><thead><tr><th>#</th><th>Verificação</th><th></th></tr></thead><tbody><tr><td class="num">1</td><td>As três médias estão <strong>empilhadas na ordem</strong> (21 acima de 42 acima de 72, ou o inverso)</td><td><span class="box">☐</span></td></tr><tr><td class="num">2</td><td>O leque entre elas está <strong>aberto</strong> — não emboladas</td><td><span class="box">☐</span></td></tr><tr><td class="num">3</td><td>A barra do gatilho <strong>toca</strong> uma das três médias</td><td><span class="box">☐</span></td></tr><tr><td class="num">4</td><td>O indicador marcou a seta do <strong>setup A</strong></td><td><span class="box">☐</span></td></tr><tr><td class="num">5</td><td>A seta aponta <strong>a favor</strong> do empilhamento</td><td><span class="box">☐</span></td></tr><tr><td class="num">6</td><td>Estou dentro do horário e <strong>sem posição aberta</strong></td><td><span class="box">☐</span></td></tr></tbody></table></div>
+<p>Os itens 4 e 5 já embutem o que o indicador mede e eu não preciso conferir a olho: índice de esforço ≥ 0,8, corpo ≤ 50% do range, meio do corpo do lado certo, e o eixo do deslocamento não sendo o dominante.</p>
+<p><strong>A leitura econômica, em uma frase:</strong> o preço voltou para a média, alguém agrediu contra a tendência exatamente ali, e <strong>falhou</strong>. Eu entro do lado de quem não falhou.</p>
+</section>
+<section><div class="gut">3</div><div class="corpo"><h2>A entrada — a regra da barra seguinte</h2>
+<pre>barra t      o gatilho fecha. Eu envio a limitada no MEIO do candle,
+             (máxima + mínima) / 2, arredondado ao tick.
+barra t+1    ou ela preenche AQUI, ou eu CANCELO.
+barra t+2    não existe. O sinal morreu.</pre>
+<p><strong>Não preencheu, acabou.</strong> Não persigo o preço, não entro a mercado "para não perder", não deixo a ordem no livro para ver no que dá. Cancelo e volto a esperar.</p>
+<p>Cerca de <strong>12% dos sinais serão abortados</strong> — no WINV26, 5 de 36 sinais do setup A; no WINFUT, 9 de 83. Isso não é falha de execução: é <strong>o plano funcionando</strong>. Um sinal abortado entra no diário como *aderência cumprida*, exatamente como um trade vencedor.</p>
+<aside class="nota"><strong>Por que esta regra existe.</strong> Medida, ela quase não muda o resultado — melhora uma base, piora a outra, pouco dos dois lados. Ela existe pelo que impede: que eu fique com uma ordem esquecida no livro, e que eu negocie um sinal de dez minutos atrás como se fosse de agora. Ela é uma <strong>regra de disciplina que custa quase nada</strong> — o melhor tipo de regra que existe.</aside>
+</section>
+<section><div class="gut">4</div><div class="corpo"><h2>A gestão — decidida antes, executada sem opinião</h2>
+<div class="scroll"><table><tbody><tr><td><strong>Stop inicial</strong></td><td><strong>100 pontos</strong> da entrada</td></tr><tr><td><strong>Parcial</strong></td><td><strong>50% da posição em +100 pontos</strong></td></tr><tr><td><strong>No momento da parcial</strong></td><td>o stop do restante vai para a <strong>entrada</strong> (zero a zero)</td></tr><tr><td><strong>Alvo do restante</strong></td><td><strong>+300 pontos</strong></td></tr><tr><td><strong>Saída forçada</strong></td><td>fechamento do pregão</td></tr></tbody></table></div>
+<p>Resultado por trade, por contrato de lote cheio:</p>
+<div class="scroll"><table><thead><tr><th>desfecho</th><th>pontos</th><th>R$</th><th>frequência medida</th></tr></thead><tbody><tr><td>stop antes da parcial</td><td class="num">−100</td><td class="num">−20,00</td><td class="num">37%</td></tr><tr><td>parcial e depois zero a zero</td><td class="num">+50</td><td class="num">+10,00</td><td class="num">32%</td></tr><tr><td>parcial e depois alvo</td><td class="num">+200</td><td class="num">+40,00</td><td class="num">32%</td></tr></tbody></table></div>
+<p><strong>O stop nunca se afasta.</strong> Ele anda <strong>uma vez</strong>, para o zero a zero, e só depois que a parcial saiu. Mover o stop para longe é o erro que transforma uma perda planejada de 100 pontos numa perda que não estava no plano.</p>
+<p><strong>A parcial não é opcional.</strong> Ela é o que compra o direito de deixar o resto correr até +300 sem risco. Sem ela o plano é outro, e os números são outros.</p>
+</section>
+<section><div class="gut">5</div><div class="corpo"><h2>Tamanho e limites do dia</h2>
+<p><strong>Risco por trade</strong> = 100 pontos = <strong>R$ 20,00 por contrato</strong>.</p>
+<p>Regra de dimensionamento:</p>
+<pre>contratos = (risco máximo por trade em R$) / R$ 20,00
+
+com risco máximo por trade = 1% do capital da conta</pre>
+<p><strong>Limites rígidos do pregão</strong> — atingiu, o dia acabou, sem discussão:</p>
+<div class="scroll"><table><thead><tr><th>limite</th><th>valor</th><th>por quê</th></tr></thead><tbody><tr><td><strong>3 stops no dia</strong></td><td>−300 pts (R$ 60,00 / contrato)</td><td>o pior pregão medido foi -210 pts</td></tr><tr><td><strong>1 violação de regra</strong></td><td>—</td><td>erro de processo fecha o dia, mesmo no lucro</td></tr></tbody></table></div>
+<p>O segundo limite é o mais importante e o mais fácil de ignorar. Um erro de processo num dia de lucro é <strong>mais perigoso</strong> que um num dia de prejuízo, porque o resultado o recompensa.</p>
+</section>
+<section><div class="gut">6</div><div class="corpo"><h2>A rotina do pregão</h2>
+<p><strong>Antes de abrir (5 minutos)</strong></p>
+<ul><li>Gráfico em 10.000 ticks, indicadores da família carregados, EMAs 21 / 42 / 72 visíveis</li><li>Anotar no diário: o regime de ontem, e onde as médias estão hoje</li><li>Reler as regras 1 a 4 deste arquivo. Sim, todo dia.</li><li>Definir o número de contratos <strong>antes</strong> do primeiro sinal</li></ul>
+<p><strong>Durante</strong></p>
+<ul><li>Só existe ação quando a seta A imprime. O resto do tempo eu <strong>espero</strong>.</li><li>Em ~2.2 trades por pregão, a maior parte do dia é espera. Isso é o trabalho, não uma pausa dele.</li><li>Enviada a ordem: uma barra. Preencheu ou cancelou.</li><li>Aberta a posição: stop, parcial e alvo já estão definidos. Nada a decidir.</li></ul>
+<p><strong>Depois</strong></p>
+<ul><li>Preencher o diário da § 9, <strong>incluindo os sinais abortados</strong></li><li>Calcular a <strong>nota de aderência</strong> do dia (§ 7)</li><li>Não olhar o resultado acumulado. Ele é olhado uma vez por mês, na revisão.</li></ul>
+</section>
+<section><div class="gut">7</div><div class="corpo"><h2>Como eu meço sucesso: aderência, não resultado</h2>
+<h3>7.1 A razão, com os números</h3>
+<p>Estes são os números do setup A, stop 100, <strong>descontando 5 pontos de custo por trade</strong> — a leitura honesta, não a bruta:</p>
+<div class="scroll"><table><thead><tr><th></th><th>WINV26</th><th>WINFUT</th></tr></thead><tbody><tr><td>acerto por trade</td><td class="num">73%</td><td class="num">63%</td></tr><tr><td>valor esperado por trade</td><td>+65,0 pts</td><td>+36,8 pts</td></tr><tr><td><strong>desvio</strong> por trade</td><td>123 pts</td><td>125 pts</td></tr><tr><td>pregões positivos</td><td class="num">83%</td><td class="num">61%</td></tr><tr><td>pior pregão</td><td>-105 pts</td><td>-210 pts</td></tr><tr><td>maior sequência de pregões negativos</td><td class="num">1</td><td class="num">4</td></tr><tr><td>chance de uma <strong>semana</strong> fechar negativa</td><td class="num">1%</td><td class="num">13%</td></tr><tr><td>rebaixamento máximo</td><td>225 pts (R$ 45,00)</td><td>510 pts (R$ 102,00)</td></tr></tbody></table></div>
+<p>Olhe a linha do <strong>desvio</strong>: 125 pontos por trade, contra um valor esperado de +36,8. O ruído é <strong>três vezes maior que o sinal</strong> em cada operação isolada. Isso não é um defeito da estratégia — é como toda vantagem pequena se parece de perto.</p>
+<p>As consequências, que eu preciso ter aceitado <strong>antes</strong> de elas acontecerem:</p>
+<ul><li><strong>39% dos pregões fecham no vermelho.</strong> Um dia negativo é o caso comum, não um sinal de nada.</li><li><strong>4 pregões negativos seguidos já aconteceram</strong> na amostra medida. Vão acontecer de novo.</li><li><strong>13% de chance de uma semana inteira fechar negativa</strong>, com a vantagem totalmente intacta.</li><li>Duas perdas seguidas: 14% de chance. Três: 5%. Não é raro.</li></ul>
+<p><strong>Conclusão operacional:</strong> o resultado de um dia, e mesmo de uma semana, <strong>não contém informação</strong> sobre se eu operei bem. Julgar o processo pelo resultado diário é ler ruído como se fosse mensagem — e a reação a esse ruído é o que destrói planos que funcionavam.</p>
+<p>A aderência, ao contrário, eu <strong>observo diretamente</strong>, todo dia, sem erro de medição. É a única coisa que eu controlo. Então é a única coisa que eu meço.</p>
+<h3>7.2 A nota de aderência</h3>
+<p><strong>Por trade</strong> — seis itens, cada um vale 1:</p>
+<div class="scroll"><table><thead><tr><th>#</th><th>item</th></tr></thead><tbody><tr><td class="num">1</td><td>O contexto tinha as seis marcas da § 2, todas</td></tr><tr><td class="num">2</td><td>Entrei pela limitada no meio do candle, no preço certo</td></tr><tr><td class="num">3</td><td>A ordem valeu <strong>uma barra</strong>, e eu cancelei quando não preencheu</td></tr><tr><td class="num">4</td><td>O stop entrou a 100 pontos, imediatamente</td></tr><tr><td class="num">5</td><td>A parcial saiu a +100 e o stop foi para o zero a zero</td></tr><tr><td class="num">6</td><td>Não mexi em nada depois disso</td></tr></tbody></table></div>
+<p><strong>Por pregão</strong> — quatro itens, cada um vale 1:</p>
+<div class="scroll"><table><thead><tr><th>#</th><th>item</th></tr></thead><tbody><tr><td class="num">7</td><td>Não operei nenhum sinal fora do setup A</td></tr><tr><td class="num">8</td><td>Respeitei o limite de perda do dia</td></tr><tr><td class="num">9</td><td>Registrei tudo no diário, inclusive os abortados</td></tr><tr><td class="num">10</td><td>Não mudei o tamanho da posição no meio do pregão</td></tr></tbody></table></div>
+<pre>nota do dia = (pontos obtidos) / (pontos possíveis) × 100</pre>
+<p><strong>A regra que dá sentido a tudo isto:</strong></p>
+<aside class="nota"><strong>Um trade vencedor tomado fora das regras conta como FALHA.</strong> Ele vale 0 na nota, e vale um registro em vermelho no diário.</aside>
+<p>Se essa regra não valer, a nota de aderência vira um enfeite: o resultado volta a mandar, e o plano deixa de existir nos dias em que ele mais importa.</p>
+<p><strong>Metas:</strong></p>
+<ul><li><strong>≥ 95% na semana</strong> — é o padrão de operação</li><li><strong>&lt; 90% na semana</strong> — parar de operar e reler o plano; o problema é de execução, e mexer em parâmetro nesse estado só troca um problema por dois</li><li><strong>100% num dia de prejuízo</strong> — isso é um <strong>dia bem-sucedido</strong>. Anotar como tal.</li></ul>
+</section>
+<section><div class="gut">8</div><div class="corpo"><h2>Os cinco erros que este plano existe para impedir</h2>
+<p><strong>1. Perseguir o sinal abortado.</strong> "Ele foi embora sem mim." Vai acontecer com 12% dos sinais, todo mês. A regra da barra seguinte existe exatamente para tirar essa decisão da minha mão no momento em que eu estou menos apto a tomá-la.</p>
+<p><strong>2. Afastar o stop.</strong> É o erro que muda a distribuição inteira: troca uma perda de 100 pontos, que estava no plano, por uma perda de tamanho desconhecido. Todos os números deste arquivo deixam de valer no instante em que isso acontece uma vez.</p>
+<p><strong>3. "Este aqui é diferente."</strong> Setup C, sinal contra a tendência, entrada sem gatilho. O setup C foi medido e perde nas duas bases; a intuição de que *este* é diferente não tem como ser distinguida, no momento, do desejo de operar.</p>
+<p><strong>4. Mexer no lote pelo resultado.</strong> Dobrar depois de perder é tentar recuperar num trade o que a distribuição devolve em vinte. Aumentar depois de ganhar é a mesma aposta, com o disfarce de confiança. O lote é definido antes do pregão e não muda dentro dele.</p>
+<p><strong>5. Operar por tédio.</strong> São ~2.2 trades por pregão. A maior parte do dia é espera, e o tédio é uma sensação — não um sinal. Se eu não consigo esperar, o problema não é a estratégia.</p>
+</section>
+<section><div class="gut">9</div><div class="corpo"><h2>O diário</h2>
+<p>Uma linha por <strong>sinal</strong> — inclusive os abortados.</p>
+<div class="scroll"><table><thead><tr><th>campo</th><th>o que anotar</th></tr></thead><tbody><tr><td>data / hora</td><td>do fechamento da barra do gatilho</td></tr><tr><td>lado</td><td>compra ou venda</td></tr><tr><td>preço da limitada</td><td>o meio do candle, arredondado</td></tr><tr><td>preencheu?</td><td>sim / <strong>abortado</strong></td></tr><tr><td>desfecho</td><td>alvo / zero a zero / stop / fim de pregão</td></tr><tr><td>pontos</td><td>resultado, em pontos</td></tr><tr><td><strong>nota de aderência</strong></td><td>0 a 6</td></tr><tr><td><strong>o que eu senti</strong></td><td>uma linha, honesta</td></tr></tbody></table></div>
+<p>A última coluna é a que descobre os padrões. "Entrei com pressa porque o anterior tinha stopado" é a informação que nenhuma métrica de desempenho captura, e é onde estão os erros repetidos.</p>
+<p>No fim do mês: contar quantos trades tiveram <strong>nota 6</strong>. Essa contagem é o placar do mês. O resultado em reais é uma consequência, e será olhado depois dela.</p>
+</section>
+<section><div class="gut">10</div><div class="corpo"><h2>Revisão e disjuntores</h2>
+<p><strong>A revisão é mensal, em data marcada.</strong> Nunca no meio de uma sequência ruim, nunca no meio de uma boa. Na revisão eu olho, nesta ordem:</p>
+<ol><li>A <strong>nota de aderência</strong> média do mês</li><li>Quantos sinais foram abortados, e se isso ficou perto de 12%</li><li>O resultado, em pontos, contra o valor esperado de +36,8 por trade</li><li>O <strong>custo real</strong> cobrado pela corretora, comparado com os 5 pontos por trade que os números desta página já descontam</li></ol>
+<p><strong>Disjuntores</strong> — automáticos, não opinativos:</p>
+<div class="scroll"><table><thead><tr><th>gatilho</th><th>ação</th></tr></thead><tbody><tr><td>rebaixamento de <strong>510 pts</strong> (R$ 102,00)</td><td>reduzir o lote à metade</td></tr><tr><td>rebaixamento de <strong>1020 pts</strong> (R$ 204,00)</td><td>parar de operar e reabrir o backtest</td></tr><tr><td>aderência &lt; 90%% na semana</td><td>parar de operar; treinar em simulador</td></tr><tr><td>5 pregões negativos seguidos</td><td>parar por um dia e reler este arquivo</td></tr></tbody></table></div>
+<p>O primeiro disjuntor está no <strong>pior rebaixamento já medido</strong>. Chegar nele é normal. O segundo é o dobro dele: chegar lá já é evidência de que alguma coisa mudou — no mercado ou em mim — e merece medição, não persistência.</p>
+<p>O último é sobre estado mental, não sobre estatística: 4 pregões negativos seguidos já aconteceram na amostra, então 5 não prova nada. Mas depois de 5 eu não sou a mesma pessoa na frente da tela, e é essa pessoa que o disjuntor protege.</p>
+</section>
+<section><div class="gut">11</div><div class="corpo"><h2>O que este plano herda de incerto</h2>
+<p>Ler antes de dimensionar posição. Está tudo em <a href="RESULTADOS.md">RESULTADOS.md § 9</a>.</p>
+<ul><li><strong>Amostra pequena.</strong> 12 e 33 pregões com trade. Os <code>t</code> medidos são bons, mas sobre poucas observações.</li><li><strong>As duas bases não são independentes</strong> — o WINFUT contém o WINV26 inteiro. Concordarem é menos confirmação do que parece.</li><li><strong>Os parâmetros foram varridos nas mesmas bases</strong> em que são avaliados. Há sobreajuste embutido, e o desempenho real tende a ser pior que o medido.</li><li><strong>A ordem limitada é dada por preenchida assim que o preço toca o nível.</strong> Na prática existe fila, e nem todo toque preenche — este é o otimismo que mais pesa contra os números acima.</li><li><strong>Sem filtro de horário, rolagem ou vencimento.</strong></li></ul>
+<p>Nada disso é motivo para não operar o plano. É motivo para operá-lo <strong>pequeno</strong> até que os seus próprios registros, e não os meus, digam que ele funciona.</p>
+</section>
+
+
+<div class="cartao">
+  <p class="lab">Cartão de pregão</p>
+  <h2>O que eu levo para a tela</h2>
+  <p>Se eu só puder olhar uma coisa antes da abertura, é isto.</p>
+
+  <div class="grade">
+    <div class="celula go">
+      <div class="k">Setup</div><div class="v">A</div>
+      <div class="s">tendência, pullback na média. Só ele.</div>
+    </div>
+    <div class="celula go">
+      <div class="k">Entrada</div><div class="v">1 barra</div>
+      <div class="s">limitada no meio do candle. Não preencheu, cancela.</div>
+    </div>
+    <div class="celula cau">
+      <div class="k">Stop</div><div class="v">100</div>
+      <div class="s">pontos · R$ 20,00 por contrato. Nunca se afasta.</div>
+    </div>
+    <div class="celula go">
+      <div class="k">Parcial</div><div class="v">+100</div>
+      <div class="s">50% da posição, e o resto vai a zero a zero.</div>
+    </div>
+    <div class="celula go">
+      <div class="k">Alvo</div><div class="v">+300</div>
+      <div class="s">pontos, no restante da posição.</div>
+    </div>
+    <div class="celula par">
+      <div class="k">Fim do dia</div><div class="v">3 stops</div>
+      <div class="s">ou 1 violação de regra. O que vier primeiro.</div>
+    </div>
+  </div>
+
+  <div class="regra-ouro">
+    Um trade vencedor tomado fora das regras conta como falha.
+    <span>Ele vale zero na nota de aderência e entra em vermelho no diário.
+    Sem esta regra a nota vira enfeite, e o resultado volta a mandar
+    justamente nos dias em que o plano mais importa.</span>
+  </div>
+</div>
+
+
+<footer>
+  Gerado por <code>plano.py</code> a partir de <code>saida/resumo.json</code> —
+  os mesmos números de <code>relatorio.html</code>.
+  Companheiro de <code>RESULTADOS.md</code> e <code>ESTRATEGIA.md</code>.
+  Números descontando 5 pontos de custo por trade.
+</footer>
+</div>

@@ -1,0 +1,658 @@
+<title>Reversão ao Ajuste</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+:root{
+  --ground:#EAEDEE; --surface:#FCFCFB; --surface-2:#F2F5F5;
+  --ink:#161E22; --ink-2:#5A686E; --ink-3:#86959A;
+  --rule:#D2D9DB; --rule-2:#E2E7E8;
+  --ajuste:#B4761F; --neg:#B0343F; --pos:#2E6A9E;
+  --neg-wash:rgba(176,52,63,.10); --pos-wash:rgba(46,106,158,.10);
+  --ajuste-wash:rgba(180,118,31,.12);
+  --shadow:0 1px 2px rgba(22,30,34,.06),0 8px 24px -12px rgba(22,30,34,.14);
+  --serif:"Zilla Slab",Georgia,serif;
+  --sans:"Source Sans 3",-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#121514; --surface:#1A1A19; --surface-2:#212322;
+    --ink:#E6EAEA; --ink-2:#98A5A8; --ink-3:#6E7C80;
+    --rule:#2C3335; --rule-2:#232828;
+    --ajuste:#BB861F; --neg:#CF5566; --pos:#3F8BC4;
+    --neg-wash:rgba(207,85,102,.14); --pos-wash:rgba(63,139,196,.14);
+    --ajuste-wash:rgba(187,134,31,.16);
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#121514; --surface:#1A1A19; --surface-2:#212322;
+  --ink:#E6EAEA; --ink-2:#98A5A8; --ink-3:#6E7C80;
+  --rule:#2C3335; --rule-2:#232828;
+  --ajuste:#BB861F; --neg:#CF5566; --pos:#3F8BC4;
+  --neg-wash:rgba(207,85,102,.14); --pos-wash:rgba(63,139,196,.14);
+  --ajuste-wash:rgba(187,134,31,.16);
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.6);
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--ground); color:var(--ink);
+  font-family:var(--sans); font-size:16.5px; line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1140px;margin:0 auto;padding:0 28px 96px}
+.col{max-width:68ch}
+
+/* ---------- masthead ---------- */
+.mast{border-bottom:2px solid var(--ink);margin-bottom:0;padding:56px 0 22px}
+.eyebrow{
+  font-family:var(--mono); font-size:11.5px; font-weight:500;
+  letter-spacing:.16em; text-transform:uppercase; color:var(--ink-2);
+}
+.mast h1{
+  font-family:var(--serif); font-weight:700; font-size:clamp(40px,6.4vw,68px);
+  line-height:1.02; letter-spacing:-.015em; margin:14px 0 0; text-wrap:balance;
+}
+.mast .sub{
+  font-size:19px; color:var(--ink-2); margin:14px 0 0; max-width:60ch;
+  text-wrap:pretty;
+}
+.meta{
+  display:flex; flex-wrap:wrap; gap:0 34px; margin-top:26px;
+  font-family:var(--mono); font-size:12.5px; color:var(--ink-2);
+}
+.meta b{color:var(--ink);font-weight:500}
+
+/* ---------- verdict ---------- */
+.verdict{
+  border-bottom:1px solid var(--rule); padding:34px 0 40px;
+  display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.05fr); gap:48px;
+}
+.verdict h2{
+  font-family:var(--serif); font-size:clamp(26px,3.4vw,36px); line-height:1.14;
+  font-weight:600; margin:0 0 14px; letter-spacing:-.01em; text-wrap:balance;
+}
+.verdict p{margin:0 0 12px;color:var(--ink-2)}
+.verdict p strong{color:var(--ink);font-weight:600}
+
+/* ---------- sections ---------- */
+section{padding:44px 0 8px;border-top:1px solid var(--rule)}
+section:first-of-type{border-top:none}
+h3{
+  font-family:var(--serif); font-size:27px; font-weight:600; line-height:1.18;
+  margin:10px 0 8px; letter-spacing:-.008em; text-wrap:balance;
+}
+h4{
+  font-family:var(--sans); font-size:15px; font-weight:600; margin:30px 0 8px;
+  letter-spacing:.005em;
+}
+p{margin:0 0 15px;text-wrap:pretty}
+.lede{font-size:18px;color:var(--ink-2);max-width:64ch}
+ul{margin:0 0 16px;padding-left:20px}
+li{margin:0 0 9px}
+strong{font-weight:600}
+em{font-style:italic}
+code,.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+code{font-size:.88em;background:var(--surface-2);padding:1px 5px;border-radius:3px}
+.neg{color:var(--neg)} .pos{color:var(--pos)} .aj{color:var(--ajuste)}
+
+/* ---------- ajuste rule motif ---------- */
+.ajuste-rule{
+  height:0;border-top:2px dashed var(--ajuste);opacity:.55;margin:0;
+}
+
+/* ---------- stat tiles ---------- */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:1px;
+  background:var(--rule);border:1px solid var(--rule);border-radius:4px;overflow:hidden;margin:26px 0}
+.tile{background:var(--surface);padding:20px 20px 18px}
+.tile .k{font-family:var(--mono);font-size:11px;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--ink-2);display:block;margin-bottom:9px}
+.tile .v{font-family:var(--serif);font-size:38px;font-weight:600;line-height:1;
+  font-variant-numeric:tabular-nums;letter-spacing:-.02em;display:block}
+.tile .d{font-size:13.5px;color:var(--ink-2);margin-top:8px;display:block;line-height:1.45}
+
+/* hero stat */
+.hero-stat{
+  display:grid;grid-template-columns:auto minmax(0,1fr);gap:40px;align-items:center;
+  background:var(--surface);border:1px solid var(--rule);border-left:3px solid var(--ajuste);
+  border-radius:4px;padding:32px 34px;margin:28px 0;box-shadow:var(--shadow)
+}
+.hero-stat .big{
+  font-family:var(--serif);font-size:clamp(64px,10vw,104px);font-weight:700;line-height:.9;
+  letter-spacing:-.035em;font-variant-numeric:tabular-nums;color:var(--ajuste)
+}
+.hero-stat .big small{display:block;font-family:var(--mono);font-size:12px;font-weight:500;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2);margin-top:14px}
+.hero-stat p{margin:0 0 10px}
+.hero-stat p:last-child{margin:0}
+
+/* ---------- tables ---------- */
+.tbl-wrap{overflow-x:auto;margin:22px 0 8px;border:1px solid var(--rule);border-radius:4px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+caption{text-align:left;font-family:var(--mono);font-size:11px;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--ink-2);padding:14px 16px 0}
+th,td{padding:9px 14px;text-align:right;border-bottom:1px solid var(--rule-2);white-space:nowrap}
+th{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-2);border-bottom:1px solid var(--rule)}
+th:first-child,td:first-child{text-align:left}
+td{font-variant-numeric:tabular-nums;font-family:var(--mono);font-size:13.5px}
+td:first-child{font-family:var(--sans);font-size:14.5px}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--surface-2)}
+tr.hl td{background:var(--ajuste-wash);font-weight:600}
+.mark{font-family:var(--mono);font-size:12px;font-weight:500;padding:1px 6px;border-radius:3px;
+  background:var(--surface-2);color:var(--ink-2);border:1px solid var(--rule)}
+
+/* ---------- bar chart ---------- */
+figure{margin:24px 0 10px;background:var(--surface);border:1px solid var(--rule);
+  border-radius:4px;padding:22px 24px 18px}
+figcaption{font-family:var(--mono);font-size:11px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--ink-2);margin-bottom:20px}
+.chart{display:grid;gap:9px}
+.row{display:grid;grid-template-columns:132px minmax(0,1fr) 92px;gap:14px;align-items:center;
+  font-size:13.5px}
+.row .lbl{color:var(--ink-2);font-size:13.5px;line-height:1.25;text-align:right}
+.row .val{font-family:var(--mono);font-size:13px;font-variant-numeric:tabular-nums;
+  text-align:left;font-weight:500}
+.track{position:relative;height:22px}
+.track::before{content:"";position:absolute;top:-4px;bottom:-4px;width:1px;background:var(--rule);
+  left:var(--zero)}
+.bar{position:absolute;top:0;height:22px;border-radius:0;transition:filter .12s}
+.bar.n{background:var(--neg);border-radius:3px 0 0 3px}
+.bar.p{background:var(--pos);border-radius:0 3px 3px 0}
+.bar:hover{filter:brightness(1.15)}
+.axis{display:grid;grid-template-columns:132px minmax(0,1fr) 92px;gap:14px;margin-top:12px;
+  padding-top:9px;border-top:1px solid var(--rule-2)}
+.axis .ticks{position:relative;height:14px;font-family:var(--mono);font-size:10.5px;color:var(--ink-3)}
+.axis .ticks span{position:absolute;transform:translateX(-50%);white-space:nowrap}
+.legend{display:flex;gap:18px;margin-top:16px;font-size:12.5px;color:var(--ink-2);flex-wrap:wrap}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:7px;
+  vertical-align:-1px}
+
+/* ---------- ladder diagram ---------- */
+.ladder{background:var(--surface);border:1px solid var(--rule);border-radius:4px;
+  padding:24px;margin:26px 0}
+.ladder svg{display:block;width:100%;height:auto}
+
+/* ---------- callouts ---------- */
+.calc{
+  background:var(--surface);border:1px solid var(--rule);border-left:3px solid var(--ink);
+  border-radius:4px;padding:22px 26px;margin:24px 0;font-family:var(--mono);font-size:14px;
+  font-variant-numeric:tabular-nums;line-height:2
+}
+.calc .r{display:flex;justify-content:space-between;gap:24px;border-bottom:1px dotted var(--rule);
+  padding-bottom:2px}
+.calc .r:last-child{border-bottom:none;margin-top:8px;padding-top:8px;border-top:1px solid var(--rule);
+  font-weight:600;font-size:15px}
+.calc .lb{color:var(--ink-2)}
+
+.note{background:var(--surface-2);border:1px solid var(--rule);border-radius:4px;
+  padding:16px 20px;margin:22px 0;font-size:14.5px;color:var(--ink-2)}
+.note b{color:var(--ink)}
+
+.finding{
+  display:grid;grid-template-columns:auto minmax(0,1fr);gap:20px;align-items:baseline;
+  padding:18px 0;border-bottom:1px solid var(--rule-2)
+}
+.finding:last-child{border-bottom:none}
+.finding .n{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--ajuste);
+  letter-spacing:.08em;padding-top:4px}
+.finding h4{margin:0 0 5px}
+.finding p{margin:0;color:var(--ink-2);font-size:15px}
+
+.setups{display:grid;grid-template-columns:repeat(auto-fit,minmax(238px,1fr));gap:14px;margin:24px 0}
+.setup{background:var(--surface);border:1px solid var(--rule);border-radius:4px;padding:18px 20px}
+.setup .tag{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.1em;
+  color:var(--surface);background:var(--ink);padding:2px 7px;border-radius:3px;display:inline-block}
+.setup h4{margin:12px 0 6px;font-size:15.5px}
+.setup p{font-size:13.8px;color:var(--ink-2);margin:0 0 10px;line-height:1.5}
+.setup .res{font-family:var(--mono);font-size:13px;font-variant-numeric:tabular-nums;
+  padding-top:10px;border-top:1px solid var(--rule-2);display:flex;justify-content:space-between}
+
+footer{border-top:2px solid var(--ink);margin-top:56px;padding-top:22px;
+  font-size:13.5px;color:var(--ink-2)}
+footer .files{font-family:var(--mono);font-size:12.5px;margin-top:12px;line-height:1.9}
+
+#tip{position:fixed;pointer-events:none;opacity:0;transition:opacity .1s;z-index:50;
+  background:var(--ink);color:var(--ground);font-family:var(--mono);font-size:12px;
+  padding:7px 10px;border-radius:4px;line-height:1.45;white-space:nowrap;
+  font-variant-numeric:tabular-nums;box-shadow:0 6px 20px -8px rgba(0,0,0,.5)}
+#tip b{color:var(--ground);font-weight:600}
+
+a{color:var(--ink);text-decoration-color:var(--ajuste);text-underline-offset:2px}
+a:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--ajuste);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@media (max-width:880px){
+  .verdict{grid-template-columns:1fr;gap:26px}
+  .hero-stat{grid-template-columns:1fr;gap:20px}
+  .row,.axis{grid-template-columns:96px minmax(0,1fr) 78px;gap:10px}
+  .row .lbl{font-size:12.5px}
+}
+</style>
+
+<div class="wrap">
+
+<header class="mast">
+  <span class="eyebrow">Backtest · WINFUT · 1 205 pregões · spec revisado</span>
+  <h1>Reversão ao Ajuste</h1>
+  <p class="sub">Com a parcial de 45 pontos, o backtest deixou de ter uma resposta:
+     o mesmo setup vale −4 189 ou +55 104 pontos conforme uma convenção que barra
+     de 1 minuto não consegue resolver.</p>
+  <div class="meta">
+    <span>Base <b>WIN$N M1</b></span>
+    <span>Período <b>23/08/2021 – 21/08/2026</b></span>
+    <span>Stop <b>100 pts</b></span>
+    <span>Parcial <b>2/3 em +45</b></span>
+    <span>Resultados <b>brutos, 1 contrato</b></span>
+  </div>
+</header>
+
+<div class="verdict">
+  <div>
+    <h2>A conclusão não mudou. O grau de confiança nela, sim.</h2>
+    <p>Sob a convenção defensável, <strong>nenhum dos cinco setups tem borda</strong> —
+       o melhor deles, os pivôs, fica em −4 189 pontos em cinco anos, antes de custos.</p>
+    <p>Mas a saída parcial em +45 pontos introduziu um problema novo: <strong>92,6% das
+       parciais são atingidas na mesma barra de 1 minuto da entrada</strong>, numa barra
+       cuja amplitude mediana é de 160 pontos. Se você credita essas saídas, o mesmo
+       setup vira +34 880. Se não credita, −4 189.</p>
+    <p>A 1 minuto não há como saber qual dos dois é verdade. <strong>Isso não é um
+       resultado ruim — é a ausência de um resultado</strong>, e resolver exige dado de tick.</p>
+  </div>
+  <figure style="margin:0">
+    <figcaption>Setup C (pivôs) — o mesmo backtest sob três convenções intrabarra</figcaption>
+    <div class="chart" id="c-conv"></div>
+    <div class="axis"><span></span><div class="ticks" id="a-conv"></div><span></span></div>
+    <div class="legend">
+      <span><i style="background:var(--neg)"></i>prejuízo</span>
+      <span><i style="background:var(--pos)"></i>lucro</span>
+    </div>
+  </figure>
+</div>
+
+<section>
+  <span class="eyebrow">O achado</span>
+  <h3>Por que 45 pontos é pequeno demais para uma barra de 1 minuto</h3>
+
+  <div class="hero-stat">
+    <div class="big">92,6%<small>das parciais na barra de entrada</small></div>
+    <div>
+      <p>Das 1 361 entradas do setup CD, <strong>1 260 atingem o +45 dentro da mesma barra
+         em que entraram</strong>. A barra de entrada tem amplitude mediana de
+         <strong>160 pontos</strong> — cabem três parciais e meia dentro dela.</p>
+      <p>E, pela regra do primeiro toque, a entrada é sempre num <strong>extremo novo do
+         dia</strong>: o nível é tocado exatamente na ponta do movimento.</p>
+    </div>
+  </div>
+
+  <div class="col">
+    <p>Creditar a parcial nessa barra exige que <em>duas</em> coisas não observáveis sejam
+      verdade ao mesmo tempo: que a ordem limite tenha sido preenchida no tick extremo de
+      uma barra de 160 pontos, e que a reversão de 45 pontos tenha vindo
+      <em>depois</em> do preenchimento.</p>
+    <p>A segunda é ainda mais frágil que a primeira. Quando o preço só encosta no nível e
+      volta, sua ordem tipicamente <strong>não</strong> é preenchida — falta alguém
+      negociando através do seu preço. Os trades que “funcionam” na versão otimista são
+      desproporcionalmente aqueles em que você não teria entrado.</p>
+  </div>
+
+  <div class="ladder">
+    <svg viewBox="0 0 900 250" role="img" aria-label="Diagrama: a barra de entrada de 160 pontos contém o nível, o stop de 100 e a parcial de 45.">
+      <!-- barra de entrada -->
+      <rect x="120" y="40" width="34" height="150" fill="var(--surface-2)" stroke="var(--ink-2)" stroke-width="1.5"/>
+      <line x1="137" y1="24" x2="137" y2="206" stroke="var(--ink-2)" stroke-width="1.5"/>
+      <text x="100" y="20" font-family="var(--mono)" font-size="10.5" fill="var(--ink-2)" text-anchor="middle">barra de entrada</text>
+      <text x="100" y="34" font-family="var(--mono)" font-size="10.5" fill="var(--ink-2)" text-anchor="middle">160 pts (mediana)</text>
+
+      <!-- nivel / entrada -->
+      <line x1="60" y1="190" x2="840" y2="190" stroke="var(--ink)" stroke-width="2"/>
+      <text x="850" y="194" font-family="var(--mono)" font-size="11" fill="var(--ink)" text-anchor="end" dy="16">nível — entrada, na mínima do dia</text>
+      <!-- parcial -->
+      <line x1="60" y1="148" x2="840" y2="148" stroke="var(--pos)" stroke-width="2" stroke-dasharray="7 4"/>
+      <text x="848" y="144" font-family="var(--mono)" font-size="11" fill="var(--pos)" text-anchor="end">+45 · sai 2/3</text>
+      <!-- stop -->
+      <line x1="60" y1="222" x2="840" y2="222" stroke="var(--neg)" stroke-width="2" stroke-dasharray="7 4"/>
+      <text x="848" y="218" font-family="var(--mono)" font-size="11" fill="var(--neg)" text-anchor="end">−100 · stop</text>
+
+      <!-- chave de amplitude -->
+      <line x1="180" y1="40" x2="180" y2="190" stroke="var(--ajuste)" stroke-width="1.5"/>
+      <path d="M175 40 h10 M175 190 h10" stroke="var(--ajuste)" stroke-width="1.5"/>
+      <text x="192" y="118" font-family="var(--mono)" font-size="11" fill="var(--ajuste)">
+        a barra já cobre o +45 sozinha
+      </text>
+
+      <text x="300" y="70" font-family="var(--sans)" font-size="13" fill="var(--ink-2)">
+        A ordem em que o preço percorreu esses 160 pontos
+      </text>
+      <text x="300" y="90" font-family="var(--sans)" font-size="13" fill="var(--ink-2)">
+        não está no dado. É ela que decide o sinal do resultado.
+      </text>
+    </svg>
+  </div>
+
+  <div class="note">
+    <b>Um segundo sinal de que é artefato.</b> Na versão que credita a barra de entrada, o
+    setup C é positivo em <em>todos os seis anos</em>: +3 173, +7 858, +7 835, +7 564,
+    +7 130, +1 320. Borda de mercado varia com o regime; artefato de preenchimento, não.
+  </div>
+</section>
+
+<section>
+  <span class="eyebrow">Resultado</span>
+  <h3>Sob a convenção defensável, tudo continua perdendo</h3>
+  <div class="tbl-wrap">
+    <table>
+      <caption>Configuração principal — stop 100, parcial 2/3 em +45, regime exclusivo, alvo no ajuste</caption>
+      <thead><tr><th>Setup</th><th>Trades</th><th>Pontos</th><th>R$/contrato</th><th>Acerto</th><th>PF</th><th>Drawdown</th></tr></thead>
+      <tbody>
+        <tr><td>A — retorno à abertura</td><td>1 189</td><td class="neg">−47 572</td><td class="neg">−9 514</td><td>32,0%</td><td>0,41</td><td class="neg">−47 668</td></tr>
+        <tr><td>B — seco no ajuste</td><td>894</td><td class="neg">−50 920</td><td class="neg">−10 184</td><td>26,2%</td><td>0,23</td><td class="neg">−50 965</td></tr>
+        <tr class="hl"><td>C — pivôs</td><td>1 368</td><td class="neg">−4 189</td><td class="neg">−838</td><td>61,1%</td><td>0,92</td><td class="neg">−6 199</td></tr>
+        <tr><td>D — bolas</td><td>726</td><td class="neg">−9 947</td><td class="neg">−1 989</td><td>53,9%</td><td>0,70</td><td class="neg">−11 480</td></tr>
+        <tr><td>CD — pivôs + bolas</td><td>1 361</td><td class="neg">−10 417</td><td class="neg">−2 083</td><td>56,4%</td><td>0,82</td><td class="neg">−11 776</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="col">A parcial elevou o acerto de ~10% para ~56%, exatamente como se espera de
+    uma saída rápida. E não salvou nenhum setup: ela troca os alvos grandes por muitos
+    +45 e mantém os −100 intactos.</p>
+</section>
+
+<section>
+  <span class="eyebrow">Mudanças do spec</span>
+  <h3>O que cada regra nova fez com o resultado</h3>
+
+  <h4>A parcial piora o resultado — e 2/3 é a pior fração testada</h4>
+  <div class="tbl-wrap" style="max-width:700px">
+    <table>
+      <caption>Setup CD, variando a saída parcial</caption>
+      <thead><tr><th>Configuração</th><th>Pontos</th><th>Pts/trade</th><th>Acerto</th></tr></thead>
+      <tbody>
+        <tr><td>Sem parcial (spec anterior)</td><td class="neg">−9 233</td><td class="neg">−6,8</td><td>10,2%</td></tr>
+        <tr><td>50% em +45, stop → +45</td><td class="neg">−3 207</td><td class="neg">−2,4</td><td>56,4%</td></tr>
+        <tr class="hl"><td>2/3 em +45, stop → +45 (spec)</td><td class="neg">−10 417</td><td class="neg">−7,7</td><td>56,4%</td></tr>
+        <tr><td>2/3 em +45, stop → zero a zero</td><td class="neg">−13 105</td><td class="neg">−9,6</td><td>56,4%</td></tr>
+        <tr><td>75% em +45, stop → +45</td><td class="neg">−14 021</td><td class="neg">−10,3</td><td>56,4%</td></tr>
+        <tr><td>2/3 em <strong>+100</strong>, stop → +100</td><td class="neg">−2 773</td><td class="neg">−2,0</td><td>45,3%</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="col">Quanto maior a fração que sai em +45, pior — a parcial financia o acerto
+    alto vendendo justamente a cauda que pagaria os stops. A fração de 2/3, que é a que
+    produz o <span class="num">2:1</span> do enunciado, é pior que 1/2. E mover a parcial
+    para +100 já melhora o resultado em 4×.</p>
+
+  <h4>O regime exclusivo funciona</h4>
+  <div class="tbl-wrap" style="max-width:560px">
+    <table>
+      <caption>Ao cruzar o ajuste em 600 pts, desligar o lado inicial</caption>
+      <thead><tr><th></th><th>C</th><th>D</th><th>CD</th></tr></thead>
+      <tbody>
+        <tr class="hl"><td>Exclusivo (spec novo)</td><td class="neg">−4 189</td><td class="neg">−9 947</td><td class="neg">−10 417</td></tr>
+        <tr><td>Os dois lados ativos</td><td class="neg">−5 637</td><td class="neg">−10 522</td><td class="neg">−12 152</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="col">Ganho de 1 448 pontos em C e 1 735 em CD, cortando ~3% dos trades. É uma
+    regra boa; só não é suficiente.</p>
+
+  <h4>A premissa das médias de 21 não se confirma</h4>
+  <div class="col">
+    <p>Testada nas duas metades em que o enunciado a coloca — a EMA21 de M5 como alvo, e a
+      distância da EMA21 de M60 como contexto.</p>
+  </div>
+  <figure>
+    <figcaption>Setup CD por distância da EMA21 de M60 na entrada — pontos</figcaption>
+    <div class="chart" id="c-ema"></div>
+    <div class="axis"><span></span><div class="ticks" id="a-ema"></div><span></span></div>
+    <div class="legend"><span><i style="background:var(--neg)"></i>prejuízo</span>
+      <span style="color:var(--ink-3)">a premissa prevê melhora com a distância; os dados fazem o contrário</span></div>
+  </figure>
+  <p class="col">A faixa mais distante da média é <strong>a pior de todas</strong>
+    (−12,4 pts/trade). Não há relação monotônica: o melhor pedaço é o meio da
+    distribuição, que é a assinatura de ruído. Como alvo, a EMA21 de M5 também é pior que
+    o ajuste em 4 dos 5 setups — ela fica perto demais do preço, e o alvo vem cedo e
+    pequeno demais para cobrir os stops.</p>
+
+  <h4>Setup A com alvo no ajuste é pior que com 500 fixos</h4>
+  <p class="col">−51 899 contra −47 572. O ajuste fica em média mais longe que 500 pontos
+    da abertura, então o alvo raramente vem e mais trades morrem no stop movido.</p>
+</section>
+
+<section>
+  <span class="eyebrow">Dados</span>
+  <h3>A validação do ajuste passa — com a janela certa</h3>
+  <div class="col">
+    <p>A regra proposta era que o ajuste caísse no range das <span class="num">17:00–17:15</span>
+      do dia anterior. Essa janela é estreita demais:</p>
+  </div>
+  <div class="tbl-wrap" style="max-width:620px">
+    <table>
+      <caption>Ajuste dentro do range do call de fechamento do dia anterior</caption>
+      <thead><tr><th>Janela</th><th>Cai dentro</th><th>Fora</th><th>Desvio mediano das falhas</th></tr></thead>
+      <tbody>
+        <tr><td>17:00 – 17:15</td><td>78,9% (984)</td><td>263</td><td>136 pts</td></tr>
+        <tr><td>17:00 – 17:30</td><td>84,2% (1 050)</td><td>197</td><td>115 pts</td></tr>
+        <tr class="hl"><td>17:00 – 18:00</td><td>96,7% (1 206)</td><td>41</td><td>30 pts</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="col">Com a janela correta restam 41 dias fora, <strong>40 deles por ≤ 124
+    pontos</strong> — folga normal de um ajuste que é média ponderada do call, não um
+    negócio único. O único desvio material (616 pts) já era dia de vencimento. A coluna de
+    <em>Prior Cote Ajuste</em> está consistente, e o filtro não removeu nenhum dia além
+    dos 43 já descartados.</p>
+</section>
+
+<section>
+  <span class="eyebrow">Dissecação</span>
+  <h3>As bolas continuam sendo o lastro morto</h3>
+  <figure>
+    <figcaption>Resultado por tipo de nível — setup CD, pontos</figcaption>
+    <div class="chart" id="c-tipos"></div>
+    <div class="axis"><span></span><div class="ticks" id="a-tipos"></div><span></span></div>
+    <div class="legend">
+      <span><i style="background:var(--neg)"></i>prejuízo</span>
+      <span><i style="background:var(--pos)"></i>lucro</span>
+      <span style="color:var(--ink-3)">passe o cursor para ver o número de trades</span>
+    </div>
+  </figure>
+  <p class="col">As bolas respondem por <strong>74% de todo o prejuízo do CD com 36% dos
+    trades</strong>. Os oito pivôs somados dão −2 698 pontos — praticamente zero,
+    espalhado. Múltiplo de 1 000 não é suporte nem resistência no WIN.</p>
+
+  <div class="tbl-wrap" style="max-width:660px">
+    <table>
+      <caption>Setup CD por distância do nível ao ajuste</caption>
+      <thead><tr><th>Faixa</th><th>Trades</th><th>Pontos</th><th>Pts/trade</th><th>Acerto</th></tr></thead>
+      <tbody>
+        <tr><td>600 – 900</td><td>402</td><td class="neg">−4 875</td><td class="neg">−12,1</td><td>56,0%</td></tr>
+        <tr><td>900 – 1 200</td><td>302</td><td class="neg">−2 547</td><td class="neg">−8,4</td><td>54,0%</td></tr>
+        <tr><td>1 200 – 1 600</td><td>262</td><td class="neg">−125</td><td class="neg">−0,5</td><td>58,4%</td></tr>
+        <tr><td>1 600 – 2 200</td><td>230</td><td class="pos">+788</td><td class="pos">+3,4</td><td>64,3%</td></tr>
+        <tr><td>2 200 +</td><td>165</td><td class="neg">−3 656</td><td class="neg">−22,2</td><td>47,3%</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="col">O bolsão positivo de 900–1 600 que aparecia na rodada anterior
+    desapareceu com a parcial. Sobrou uma faixa marginal em 1 600–2 200, a +3,4 pts/trade
+    — abaixo do custo operacional.</p>
+</section>
+
+<section>
+  <span class="eyebrow">Estabilidade</span>
+  <h3>Nenhum sinal persiste</h3>
+  <div class="tbl-wrap">
+    <table>
+      <caption>Resultado anual por setup, em pontos — configuração principal</caption>
+      <thead><tr><th>Setup</th><th>2021*</th><th>2022</th><th>2023</th><th>2024</th><th>2025</th><th>2026*</th></tr></thead>
+      <tbody>
+        <tr><td>A — retorno à abertura</td><td class="neg">−2 585</td><td class="neg">−9 275</td><td class="neg">−8 185</td><td class="neg">−6 937</td><td class="neg">−11 148</td><td class="neg">−9 442</td></tr>
+        <tr><td>B — seco no ajuste</td><td class="neg">−2 912</td><td class="neg">−9 357</td><td class="neg">−10 443</td><td class="neg">−7 823</td><td class="neg">−11 973</td><td class="neg">−8 412</td></tr>
+        <tr><td>C — pivôs</td><td class="neg">−17</td><td class="neg">−302</td><td class="pos">+1 564</td><td class="neg">−1 252</td><td class="neg">−309</td><td class="neg">−3 872</td></tr>
+        <tr><td>D — bolas</td><td class="neg">−745</td><td class="pos">+1 170</td><td class="neg">−346</td><td class="neg">−1 893</td><td class="neg">−1 742</td><td class="neg">−6 390</td></tr>
+        <tr><td>CD — pivôs + bolas</td><td class="neg">−1 082</td><td class="neg">−254</td><td class="pos">+259</td><td class="neg">−2 575</td><td class="neg">−176</td><td class="neg">−6 588</td></tr>
+        <tr><td style="color:var(--ink-2)">pregões válidos</td><td>84</td><td>244</td><td>240</td><td>244</td><td>239</td><td>154</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="col" style="color:var(--ink-2);font-size:14.5px">* anos parciais. C e CD
+    oscilam em torno de zero até 2025 e desabam em 2026.</p>
+</section>
+
+<section>
+  <span class="eyebrow">O que fica de pé</span>
+  <h3>Duas regras boas e quatro caminhos</h3>
+
+  <div class="finding"><span class="n">✓</span><div>
+    <h4>O regime exclusivo</h4>
+    <p>Desligar o lado inicial ao cruzar o ajuste em 600 pontos vale +1 448 pts em C e
+       +1 735 em CD. Guardar para outras estratégias.</p></div></div>
+
+  <div class="finding"><span class="n">✓</span><div>
+    <h4>A invalidação por retração de 500 pontos</h4>
+    <p>Contra não filtrar nada, corta 814 trades (37%) e melhora o agregado em 5 326
+       pontos. Segue sendo a melhor ideia do conjunto.</p></div></div>
+
+  <div class="finding"><span class="n">01</span><div>
+    <h4>Dado de tick</h4>
+    <p>É o único jeito de fechar o intervalo em que a estratégia inteira está indefinida.
+       Sem isso, nenhum número com alvo de 45 pontos significa alguma coisa.</p></div></div>
+
+  <div class="finding"><span class="n">02</span><div>
+    <h4>Alvo maior que 45</h4>
+    <p>A variante 2/3 em +100 já é 4× melhor (−2 773 contra −10 417) e sofre muito menos do
+       artefato intrabarra. Vale varrer de 100 a 300.</p></div></div>
+
+  <div class="finding"><span class="n">03</span><div>
+    <h4>Abandonar as bolas</h4>
+    <p>74% do prejuízo do CD com 36% dos trades. A regra de fusão de 300 pts, ao preferir o
+       nível mais afastado, ainda troca pivôs bons por bolas ruins.</p></div></div>
+
+  <div class="finding"><span class="n">04</span><div>
+    <h4>Filtro de contexto na abertura</h4>
+    <p>Segue sendo o problema de origem: o setup entra em todo dia de tendência forte
+       contra o ajuste, e é aí que ele morre.</p></div></div>
+</section>
+
+<section>
+  <span class="eyebrow">Ressalvas</span>
+  <h3>O que este backtest não diz</h3>
+  <div class="col">
+    <ul>
+      <li><strong>Custos não estão incluídos.</strong> O round-trip do WIN custa de 5 a 10
+        pontos. Em 1 361 trades são 7 000 a 14 000 pontos.</li>
+      <li><strong>Sem slippage</strong>, e assumindo preenchimento integral da ordem limite
+        no toque exato do nível — a premissa que esta rodada mostrou ser o ponto mais
+        frágil de todo o estudo.</li>
+      <li><strong>Resolução de 1 minuto.</strong> É a limitação central desta rodada.</li>
+      <li><strong>27 dias de vencimento excluídos</strong>, porque o WIN$N não é ajustado
+        por rolagem e o ajuste referencia o contrato velho. Dias de gap genuíno foram
+        mantidos.</li>
+      <li><strong>Um contrato fixo</strong>, sem dimensionamento de posição.</li>
+    </ul>
+    <p style="color:var(--ink-2);font-size:14.5px">As duas bases foram validadas uma contra
+      a outra antes de qualquer simulação: o OHLC diário agregado do M1 bate com o arquivo
+      de ajustes em <strong>1 248 de 1 248 dias, diferença máxima de 0 pontos</strong>.</p>
+  </div>
+</section>
+
+<footer>
+  <div>Backtest-Igor-Monteiro · engine própria, sem bibliotecas de terceiros ·
+       resultados reproduzíveis a partir dos arquivos do repositório.</div>
+  <div class="files">
+    ESTRATEGIA.md — especificação formal das regras<br>
+    RESULTADOS.md — resultados completos e todas as grades de sensibilidade<br>
+    engine.py · rodar.py · auditoria.py · valida_dados.py<br>
+    saida/ — resumo.json e trades_*.csv, operação a operação
+  </div>
+</footer>
+
+</div>
+<div id="tip" role="status" aria-live="polite"></div>
+
+<script>
+const CH = {
+  "c-conv":{axis:"a-conv",rows:[
+    {l:"Conservadora",         v:-4189,  n:1368, e:"a barra do toque só resolve o stop"},
+    {l:"Credita a entrada",    v:34880,  n:1368, e:"93% das parciais caem aqui"},
+    {l:"Teto absoluto",        v:55104,  n:1368, e:"+ alvo ganha todo empate"}]},
+  "c-ema":{axis:"a-ema",rows:[
+    {l:"0 – 300",       v:-1073, n:136, e:"56,6% acerto"},
+    {l:"300 – 600",     v:-3034, n:154, e:"51,3% acerto"},
+    {l:"600 – 1 000",   v:-70,   n:268, e:"58,6% acerto"},
+    {l:"1 000 – 1 500", v:-579,  n:345, e:"60,3% acerto"},
+    {l:"1 500 +",       v:-5659, n:458, e:"53,7% acerto — a mais distante é a pior"}]},
+  "c-tipos":{axis:"a-tipos",rows:[
+    {l:"Bolas (×1000)", v:-7718, n:488},
+    {l:"Pivô R1", v:885,   n:127},
+    {l:"Pivô R2", v:-298,  n:139},
+    {l:"Pivô R3", v:-988,  n:84},
+    {l:"Pivô R4", v:-1315, n:88},
+    {l:"Pivô S1", v:-3056, n:104},
+    {l:"Pivô S2", v:699,   n:144},
+    {l:"Pivô S3", v:531,   n:83},
+    {l:"Pivô S4", v:844,   n:104}]}
+};
+
+const fmt = v => (v>0?"+":"−") + Math.abs(v).toLocaleString("pt-BR");
+const tip = document.getElementById("tip");
+
+function showTip(e, html){
+  tip.innerHTML = html;
+  tip.style.opacity = 1;
+  const r = tip.getBoundingClientRect();
+  let x = e.clientX + 14, y = e.clientY - r.height - 10;
+  if (x + r.width > innerWidth - 8) x = e.clientX - r.width - 14;
+  if (y < 8) y = e.clientY + 18;
+  tip.style.left = x + "px";
+  tip.style.top  = y + "px";
+}
+const hideTip = () => { tip.style.opacity = 0; };
+
+for (const [id, cfg] of Object.entries(CH)){
+  const host = document.getElementById(id);
+  const vals = cfg.rows.map(r => r.v);
+  const lo = Math.min(0, ...vals), hi = Math.max(0, ...vals);
+  const span = (hi - lo) || 1;
+  const zero = ((0 - lo) / span) * 100;
+
+  for (const r of cfg.rows){
+    const row = document.createElement("div");
+    row.className = "row";
+    const w = (Math.abs(r.v) / span) * 100;
+    const left = r.v < 0 ? zero - w : zero;
+    row.innerHTML =
+      `<span class="lbl">${r.l}</span>` +
+      `<span class="track" style="--zero:${zero}%">` +
+        `<span class="bar ${r.v<0?"n":"p"}" style="left:${left}%;width:${w}%" tabindex="0"
+           role="img" aria-label="${r.l}: ${fmt(r.v)} pontos, ${r.n} trades"></span>` +
+      `</span>` +
+      `<span class="val ${r.v<0?"neg":"pos"}">${fmt(r.v)}</span>`;
+    host.appendChild(row);
+
+    const bar = row.querySelector(".bar");
+    const html = `<b>${r.l}</b><br>${fmt(r.v)} pts · ${r.n.toLocaleString("pt-BR")} trades` +
+                 (r.e ? `<br>${r.e}` : "");
+    bar.addEventListener("mousemove", e => showTip(e, html));
+    bar.addEventListener("mouseleave", hideTip);
+    bar.addEventListener("focus", () => {
+      const b = bar.getBoundingClientRect();
+      showTip({clientX:b.left+b.width/2, clientY:b.top}, html);
+    });
+    bar.addEventListener("blur", hideTip);
+  }
+
+  const ax = document.getElementById(cfg.axis);
+  const ticks = [lo, 0, hi].filter((v,i,a) => a.indexOf(v) === i);
+  for (const t of ticks){
+    const s = document.createElement("span");
+    s.style.left = (((t - lo) / span) * 100) + "%";
+    s.textContent = t === 0 ? "0" : Math.round(t/1000) + "k";
+    ax.appendChild(s);
+  }
+}
+</script>

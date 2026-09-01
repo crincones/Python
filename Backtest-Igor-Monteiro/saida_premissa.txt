@@ -1,0 +1,27 @@
+==========================================================================================
+PREMISSA: o preco volta ao ajuste depois de tocar o nivel? (setup CD, SEM stop)
+==========================================================================================
+  entradas ............................ 1361
+  chegaram ao ajuste no mesmo pregao .. 341 (25.1%)
+  MAE (quanto anda contra antes disso):
+     p25     261 pts
+     p50     600 pts
+     p75    1198 pts
+     p90    1930 pts
+     p95    2498 pts
+     stop de  100 pts seria acionado em  89.3% das entradas
+     stop de  150 pts seria acionado em  85.2% das entradas
+     stop de  200 pts seria acionado em  80.5% das entradas
+     stop de  300 pts seria acionado em  71.5% das entradas
+     stop de  500 pts seria acionado em  55.9% das entradas
+     stop de  800 pts seria acionado em  39.2% das entradas
+  tempo ate o ajuste (minutos): mediana 96 | p75 189 | p90 314
+
+  Resultado do setup CD por stop, alvo sempre no ajuste (pts totais):
+     stop  100 ->     -9233 pts em 1361 trades (-6.8 pts/trade)
+     stop  150 ->    -29036 pts em 1361 trades (-21.3 pts/trade)
+     stop  200 ->    -36368 pts em 1361 trades (-26.7 pts/trade)
+     stop  300 ->    -28573 pts em 1361 trades (-21.0 pts/trade)
+     stop  500 ->    -25629 pts em 1361 trades (-18.8 pts/trade)
+     stop  800 ->    -43729 pts em 1361 trades (-32.1 pts/trade)
+     stop 1200 ->    -73342 pts em 1361 trades (-53.9 pts/trade)

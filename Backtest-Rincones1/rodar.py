@@ -1,0 +1,302 @@
+# -*- coding: utf-8 -*-
+"""
+Roda o backtest Rincones1 e grava saida/.
+
+    python rodar.py
+
+Gera:
+    saida/resumo.json   TUDO que o relatorio precisa -- e a unica fonte
+                        de numeros. relatorio.py le daqui, entao numero
+                        no relatorio nunca fica defasado.
+    saida/trades_*.csv  operacao a operacao, da configuracao padrao
+    saida/console.txt   o mesmo que sai na tela
+
+Depois rode `python relatorio.py` para regerar o relatorio.html.
+"""
+import contextlib
+import io
+import json
+import os
+
+import numpy as np
+import pandas as pd
+
+import engine as E
+
+BASE = os.path.dirname(os.path.abspath(__file__))
+SAIDA = os.path.join(BASE, 'saida')
+BASES = ('WINV26', 'WINFUT')
+REGIMES = ('ema3', 'kama', 'hma', 't3', 'jma')
+STOPS = (150, 100)
+
+ROT_SETUP = {'A': 'tendencia (pullback na media)',
+             'B': 'reversao rapida no afastamento',
+             'C': 'reversao em consolidacao'}
+
+_CACHE = {}
+
+
+def _ind(nome):
+    if nome not in _CACHE:
+        _CACHE[nome] = E.indicador(E.carrega(E.ARQUIVOS[nome]))
+    return _CACHE[nome]
+
+
+def cenario(nome, regime, stop):
+    """Um (base, media, stop): os tres setups isolados e as carteiras."""
+    E.aplica_ma(regime)
+    E.STOP = float(stop)
+    d = E.contexto(_ind(nome), regime)
+    sig = E.gatilho(d)
+    mk3 = E.setups(d, sig, ativos=('A', 'B', 'C'))
+
+    r = {'tend': round(100 * float(d.tendencia.mean()), 1),
+         'cons': round(100 * float(d.consolida.mean()), 1),
+         'gatilhos': int((sig != 0).sum())}
+    for su in ('A', 'B', 'C'):
+        r['setup_' + su] = E.metricas(E.roda(d, mk3, sig, carteira=False, setup=su))
+        # quantos sinais o setup deu, contra quantos viraram trade. A
+        # diferenca sao os ABORTADOS pela regra da barra seguinte -- o
+        # numero que o operador manual precisa esperar na tela.
+        r['sinais_' + su] = int((mk3 == su).sum())
+    for ativos, rot in ((('A',), 'cA'), (('A', 'B'), 'cAB'), (('A', 'B', 'C'), 'cABC')):
+        mk = E.setups(d, sig, ativos=ativos)
+        r[rot] = E.metricas(E.roda(d, mk, sig, carteira=True))
+    return r, d, sig
+
+
+def detalhe(nome, d, sig, stop):
+    """Aprofundamento da configuracao padrao: entrada, grade, custo, mes."""
+    E.STOP = float(stop)
+    mk = E.setups(d, sig, ativos=('A', 'B'))
+    r = {}
+
+    for modo in ('meio', 'fecha'):
+        r['entrada_' + modo] = E.metricas(E.roda(d, mk, sig, entrada=modo, carteira=True))
+
+    # A REGRA DA BARRA SEGUINTE, lado a lado com a limitada valida ate o
+    # fim do pregao. Nao e uma variante que se possa escolher no dia a dia:
+    # e a medicao do que a regra custa. Ver ESTRATEGIA.md 5.
+    mkA = E.setups(d, sig, ativos=('A',))
+    for mf, rot in ((E.MAX_BARRAS_FILL, 'regra'), (99999, 'livre')):
+        r['fill_%s_A' % rot] = E.metricas(
+            E.roda(d, mkA, sig, carteira=True, max_fill=mf))
+        r['fill_%s_AB' % rot] = E.metricas(
+            E.roda(d, mk, sig, carteira=True, max_fill=mf))
+
+    grade = {}
+    st0, al0 = E.STOP, E.ALVO
+    for st in (100, 150, 200):
+        for al in (200, 300, 400, 500):
+            E.STOP, E.ALVO = float(st), float(al)
+            m = E.metricas(E.roda(d, mk, sig, carteira=True))
+            grade['%d_%d' % (st, al)] = None if not m else round(m['ev'], 1)
+    E.STOP, E.ALVO = st0, al0
+    r['grade'] = grade
+
+    c0 = E.CUSTO_PTS
+    for c in (0, 5, 10, 20):
+        E.CUSTO_PTS = float(c)
+        r['custo_%d' % c] = E.metricas(E.roda(d, mk, sig, carteira=True))
+    E.CUSTO_PTS = c0
+
+    # o bloco do plano manual: a FORMA do desempenho, nao o desempenho
+    r['psico'] = {}
+    for stop in (100, 150):
+        r['psico'][str(stop)] = {
+            'A': psicologia(d, sig, stop, ('A',)),
+            'AB': psicologia(d, sig, stop, ('A', 'B')),
+            # a mesma coisa descontando 5 pontos por trade. E o numero
+            # que vale para o plano: o de custo zero e piso otimista.
+            'A_c5': psicologia(d, sig, stop, ('A',), custo=5.0),
+        }
+
+    tr = E.roda(d, mk, sig, carteira=True)
+    if len(tr):
+        tt = tr.copy()
+        tt['mes'] = pd.to_datetime(tt.dia).dt.to_period('M').astype(str)
+        r['mes'] = [dict(mes=k, n=len(g), ev=round(g.pnl.mean(), 1),
+                         total=round(float(g.pnl.sum())),
+                         acerto=round(100 * float((g.pnl > 0).mean()), 1))
+                    for k, g in tt.groupby('mes')]
+        r['equity'] = [round(x) for x in tr.pnl.cumsum().tolist()]
+        r['equity_setup'] = tr.setup.tolist()
+    return r, tr
+
+
+
+def psicologia(d, sig, stop, ativos=('A',), custo=0.0):
+    """O que o operador MANUAL precisa saber e o relatorio nao media.
+
+    Nao e desempenho: e a FORMA do desempenho. Quantos pregoes negativos
+    esperar, qual a maior sequencia ruim que ja aconteceu, e qual a chance
+    de uma semana fechar no vermelho mesmo com a vantagem intacta. Sem
+    isso o operador confunde variancia normal com estrategia quebrada.
+    """
+    st0, c0 = E.STOP, E.CUSTO_PTS
+    E.STOP, E.CUSTO_PTS = float(stop), float(custo)
+    mk = E.setups(d, sig, ativos=ativos)
+    tr = E.roda(d, mk, sig, carteira=True)
+    E.STOP, E.CUSTO_PTS = st0, c0
+    if not len(tr):
+        return None
+
+    g = tr.groupby('dia').pnl.sum()
+    dia = g.to_numpy(float)
+
+    def maior_seq(mask):
+        b = c = 0
+        for v in mask:
+            c = c + 1 if v else 0
+            b = max(b, c)
+        return int(b)
+
+    # chance de uma semana (5 pregoes) fechar negativa, reamostrando os
+    # pregoes medidos com reposicao. Nao e previsao -- e a forma do ruido.
+    rng = np.random.default_rng(20260830)
+    if len(dia) >= 3:
+        am = rng.choice(dia, size=(20000, 5), replace=True).sum(axis=1)
+        p_sem_neg = float((am < 0).mean())
+        am4 = rng.choice(dia, size=(20000, 20), replace=True).sum(axis=1)
+        p_mes_neg = float((am4 < 0).mean())
+    else:
+        p_sem_neg = p_mes_neg = None
+
+    q = 1.0 - float((tr.pnl > 0).mean())
+    return dict(
+        custo=float(custo),
+        n=int(len(tr)), pregoes=int(len(g)),
+        por_pregao=round(len(tr) / len(g), 1),
+        acerto=round(100 * float((tr.pnl > 0).mean()), 1),
+        ev=round(float(tr.pnl.mean()), 1),
+        sd_trade=round(float(tr.pnl.std()), 1),
+        media_dia=round(float(g.mean()), 1),
+        sd_dia=round(float(g.std()), 1),
+        dias_pos=round(100 * float((g > 0).mean()), 0),
+        pior_dia=round(float(g.min())), melhor_dia=round(float(g.max())),
+        seq_trades=maior_seq(tr.pnl.to_numpy() <= 0),
+        seq_dias=maior_seq(dia < 0),
+        p_alvo=round(100 * float((tr.res == 'alvo').mean()), 1),
+        p_stop=round(100 * float((tr.res == 'stop').mean()), 1),
+        p_zero=round(100 * float((tr.res == 'zero').mean()), 1),
+        p_fim=round(100 * float((tr.res == 'fim').mean()), 1),
+        p3=round(100 * q ** 3, 1), p4=round(100 * q ** 4, 1), p5=round(100 * q ** 5, 1),
+        p_semana_neg=None if p_sem_neg is None else round(100 * p_sem_neg),
+        p_mes_neg=None if p_mes_neg is None else round(100 * p_mes_neg),
+        dd=round(float((np.maximum.accumulate(tr.pnl.cumsum().to_numpy())
+                        - tr.pnl.cumsum().to_numpy()).max())),
+    )
+
+
+def _l(rot, m, larg=30):
+    if not m:
+        return '  %-*s  sem trades' % (larg, rot)
+    return ('  %-*s %4d %5.1f %+8.1f %+9.0f %5.1f%% %+6.2f %4.0f%% %5.2f %6.0f'
+            % (larg, rot, m['n'], m['por_pregao'], m['ev'], m['total'],
+               m['acerto'], m['t'], m['dias_pos'], m['pf'], m['dd']))
+
+
+def _cab(larg=30):
+    return ('  %-*s %4s %5s %8s %9s %6s %6s %5s %5s %6s'
+            % (larg, '', 'n', '/preg', 'EV', 'total', 'acerto', 't',
+               'dias+', 'PF', 'DD'))
+
+
+def principal():
+    resumo = {'parametros': {k: getattr(E, k) for k in (
+        'PARCIAL_EM', 'FRAC_PARCIAL', 'ALVO', 'CUSTO_PTS', 'NIVEL_MIN',
+        'CORTE_POSICAO', 'CORPO_MAX', 'DESCARTA_E2', 'PERIODO_REF',
+        'EMA_R', 'EMA_M', 'EMA_L', 'PERIODO_RANGE', 'LEQUE_MIN', 'TOL_TOQUE',
+        'CONSOL_MAX', 'AFAST_MIN_B', 'AFAST_MIN_C', 'VEL_MIN_B', 'ENTRADA',
+        'MA_SLOPE', 'MAX_BARRAS_FILL')},
+        'params_ma': E.PARAMS_MA, 'regimes': list(REGIMES), 'stops': list(STOPS),
+        'variantes': {}, 'bases': {}}
+
+    print('=' * 104)
+    print('BACKTEST RINCONES1  -  WIN, barras de 10.000 ticks')
+    print('gestao: parcial %.0f%% em +%.0f (zera o risco) | alvo %.0f | stop: %s'
+          % (100 * E.FRAC_PARCIAL, E.PARCIAL_EM, E.ALVO,
+             ' e '.join(str(s) for s in STOPS)))
+    print('entrada: ordem limitada no meio do candle, valida por %d barra(s) '
+          '| custo: %.1f pts' % (E.MAX_BARRAS_FILL, E.CUSTO_PTS))
+    print('=' * 104)
+
+    for base in BASES:
+        resumo['variantes'][base] = {}
+        print('\n' + '#' * 104)
+        print('# %s' % base)
+        print('#' * 104)
+
+        for regime in REGIMES:
+            resumo['variantes'][base][regime] = {}
+            for stop in STOPS:
+                r, d, sig = cenario(base, regime, stop)
+                resumo['variantes'][base][regime][str(stop)] = r
+                if regime == 'ema3' and stop == STOPS[0]:
+                    d_pad, sig_pad = d, sig
+
+        # --- tabela de variantes na tela
+        for stop in STOPS:
+            print('\n  MEDIA DE REGIME x DESEMPENHO  (stop %d)' % stop)
+            print('    %-6s %6s | %-21s %-21s' %
+                  ('media', '%tend', 'setup A isolado', 'carteira so A'))
+            for regime in REGIMES:
+                v = resumo['variantes'][base][regime][str(stop)]
+                a, ca = v['setup_A'], v['cA']
+                f = lambda m: ('n=%-4d %+6.1f t%+5.2f' % (m['n'], m['ev'], m['t'])
+                               if m else 'sem trades')
+                print('    %-6s %5.0f%% | %-21s %-21s'
+                      % (regime, v['tend'], f(a), f(ca)))
+
+        # --- detalhe da configuracao padrao
+        E.aplica_ma('ema3')
+        det, tr_out = detalhe(base, d_pad, sig_pad, STOPS[0])
+        v_pad = resumo['variantes'][base]['ema3']
+        det['gatilhos'] = v_pad[str(STOPS[0])]['gatilhos']
+        det['barras'] = int(len(d_pad))
+        det['pregoes'] = int(d_pad.dia.nunique())
+        det['ini'] = str(d_pad.Data.min().date())
+        det['fim'] = str(d_pad.Data.max().date())
+        resumo['bases'][base] = det
+
+        print('\n  CONFIGURACAO PADRAO (ema3, stop %d) -- carteira A + B' % STOPS[0])
+        print(_cab())
+        for stop in STOPS:
+            for rot, ch in (('so A', 'cA'), ('A + B', 'cAB'), ('A + B + C', 'cABC')):
+                print(_l('stop %d · %s' % (stop, rot),
+                         resumo['variantes'][base]['ema3'][str(stop)][ch]))
+        print('\n  entrada limitada x a mercado (stop %d)' % STOPS[0])
+        print(_l('limitada no meio do candle', det['entrada_meio']))
+        print(_l('a mercado no fechamento', det['entrada_fecha']))
+        print('\n  custo por trade (stop %d)' % STOPS[0])
+        for c in (0, 5, 10, 20):
+            print(_l('custo de %d pts' % c, det['custo_%d' % c]))
+
+        if len(tr_out):
+            tt = tr_out.copy()
+            tt['data'] = d_pad.Data.to_numpy()[tt.i.to_numpy()]
+            tt['lado'] = np.where(tt.s == 1, 'compra', 'venda')
+            tt['pnl_rs'] = tt.pnl * E.VAL_PONTO
+            tt[['data', 'dia', 'setup', 'lado', 'ent', 'res', 'pnl',
+                'pnl_rs', 'barras']].to_csv(
+                os.path.join(SAIDA, 'trades_%s.csv' % base),
+                index=False, sep=';', decimal=',')
+
+    print('\n' + '=' * 104)
+    print('Rode `python relatorio.py` para regerar o relatorio.html a partir '
+          'destes numeros.')
+    print('=' * 104)
+    return resumo
+
+
+if __name__ == '__main__':
+    os.makedirs(SAIDA, exist_ok=True)
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        resumo = principal()
+    texto = buf.getvalue()
+    print(texto)
+    with open(os.path.join(SAIDA, 'console.txt'), 'w', encoding='utf-8') as f:
+        f.write(texto)
+    with open(os.path.join(SAIDA, 'resumo.json'), 'w', encoding='utf-8') as f:
+        json.dump(resumo, f, indent=1, default=str, ensure_ascii=False)
