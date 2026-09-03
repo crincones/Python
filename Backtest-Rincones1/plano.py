@@ -9,8 +9,15 @@ Como o relatorio, nenhum numero e escrito a mao: tudo sai de
 saida/resumo.json. O plano cita poucos numeros de proposito -- ele e um
 procedimento, nao um relatorio -- mas os que cita sao os medidos.
 
-A configuracao que o plano descreve e a recomendada em RESULTADOS.md 10:
-so o setup A, stop 100, entrada limitada valida por UMA barra.
+A configuracao que o plano descreve e a recomendada em RESULTADOS.md 11:
+so o setup A, entrada limitada valida por UMA barra.
+
+O STOP nao e mais escrito a mao. Ele e ESCOLHIDO PELA MEDICAO, entre os
+stops que rodar.py mediu, pelo criterio abaixo -- do contrario o plano
+fica dizendo 100 depois de uma rodada em que 150 passou a medir melhor,
+que foi exatamente o que aconteceu quando o eixo [E2] do gatilho mudou.
+Para fixar um stop a mao (por gestao de risco, nao por medicao), ponha o
+valor em STOP_FIXO.
 """
 import io
 import json
@@ -22,7 +29,7 @@ SAIDA = os.path.join(BASE, 'saida')
 DEST_MD = os.path.join(BASE, 'PLANO.md')
 DEST_HTML = os.path.join(BASE, 'plano.html')
 
-STOP_PLANO = '100'          # o stop recomendado
+STOP_FIXO = None            # None = escolhe pela medicao | 100, 150... = fixa
 CFG = 'A_c5'                # so A, descontando 5 pts de custo por trade
 VAL_PONTO = 0.20            # R$ por ponto, 1 contrato WIN
 
@@ -45,9 +52,31 @@ def rs(pontos):
 
 
 # ------------------------------------------------------------ os numeros
+def escolhe_stop(R):
+    """Qual stop o plano descreve.
+
+    Criterio: na configuracao do PLANO (carteira so A, com custo), o stop
+    com a maior media diaria SOMADA nas duas bases. Media diaria, e nao
+    EV por trade, porque o plano e um procedimento de pregao; somada, e
+    nao "vence nas duas", porque as duas bases nao concordam mais desde a
+    troca do eixo [E2] -- e quando elas discordam quem manda e a base
+    maior, que e o WINFUT.
+    """
+    if STOP_FIXO is not None:
+        return str(STOP_FIXO), None
+    pontos = {}
+    for st in R['stops']:
+        pontos[str(st)] = sum(R['bases'][b]['psico'][str(st)][CFG]['media_dia']
+                              for b in ('WINV26', 'WINFUT'))
+    melhor = max(pontos, key=pontos.get)
+    outro = [k for k in pontos if k != melhor]
+    return melhor, (outro[0] if outro else None)
+
+
 def contexto():
     R = json.load(io.open(os.path.join(SAIDA, 'resumo.json'), encoding='utf-8'))
     P = R['parametros']
+    STOP_PLANO, STOP_OUTRO = escolhe_stop(R)
     fu = R['bases']['WINFUT']['psico'][STOP_PLANO][CFG]
     v26 = R['bases']['WINV26']['psico'][STOP_PLANO][CFG]
     # sem custo, para mostrar a diferenca que o custo faz
@@ -64,7 +93,9 @@ def contexto():
 
     return dict(
         R=R, fu=fu, v26=v26, fu0=fu0,
-        stop=int(STOP_PLANO), parcial=int(P['PARCIAL_EM']), alvo=int(P['ALVO']),
+        stop=int(STOP_PLANO), stop_outro=(int(STOP_OUTRO) if STOP_OUTRO else None),
+        stop_fixo=(STOP_FIXO is not None),
+        parcial=int(P['PARCIAL_EM'] or STOP_PLANO), alvo=int(P['ALVO']),
         frac=int(100 * P['FRAC_PARCIAL']),
         nivel=P['NIVEL_MIN'], corpo=int(P['CORPO_MAX']),
         emas='%d / %d / %d' % (P['EMA_R'], P['EMA_M'], P['EMA_L']),
@@ -173,8 +204,11 @@ def markdown(C):
     A('| | |')
     A('|---|---|')
     A('| **Stop inicial** | **%d pontos** da entrada |' % C['stop'])
-    A('| **Parcial** | **%d%% da posição em +%d pontos** |' % (C['frac'], C['parcial']))
-    A('| **No momento da parcial** | o stop do restante vai para a **entrada** (zero a zero) |')
+    A('| **Parcial** | **%d%% da posição em +%d pontos** — a mesma distância do stop |'
+      % (C['frac'], C['parcial']))
+    A('| **No momento da parcial** | **nada a fazer.** O stop já está na média da '
+      'operação: com meia posição realizada a +%d, o stop de −%d é o zero a zero |'
+      % (C['parcial'], C['stop']))
     A('| **Alvo do restante** | **+%d pontos** |' % C['alvo'])
     A('| **Saída forçada** | fechamento do pregão |\n')
     A('Resultado por trade, por contrato de lote cheio:\n')
@@ -182,16 +216,28 @@ def markdown(C):
     A('|---|---|---|---|')
     A('| stop antes da parcial | −%d | −%s | %s |'
       % (C['stop'], rs(C['stop']).replace('R$ ', ''), p0(fu['p_stop'])))
-    A('| parcial e depois zero a zero | +%d | +%s | %s |'
-      % (C['parcial'] * C['frac'] // 100, rs(C['parcial'] * C['frac'] / 100).replace('R$ ', ''),
-         p0(fu['p_zero'])))
+    zero_pts = (C['frac'] * C['parcial'] - (100 - C['frac']) * C['stop']) / 100.0
+    alvo_pts = (C['frac'] * C['parcial'] + (100 - C['frac']) * C['alvo']) / 100.0
+    A('| parcial e depois o stop | %s%d | %s | %s |'
+      % ('+' if zero_pts > 0 else '', round(zero_pts),
+         rs(zero_pts).replace('R$ ', ''), p0(fu['p_zero'])))
     A('| parcial e depois alvo | +%d | +%s | %s |'
-      % (C['parcial'] * C['frac'] // 100 + C['alvo'] * (100 - C['frac']) // 100,
-         rs(C['parcial'] * C['frac'] / 100 + C['alvo'] * (100 - C['frac']) / 100).replace('R$ ', ''),
-         p0(fu['p_alvo'])))
-    A('\n**O stop nunca se afasta.** Ele anda **uma vez**, para o zero a zero, e só')
-    A('depois que a parcial saiu. Mover o stop para longe é o erro que transforma')
-    A('uma perda planejada de %d pontos numa perda que não estava no plano.\n' % C['stop'])
+      % (round(alvo_pts), rs(alvo_pts).replace('R$ ', ''), p0(fu['p_alvo'])))
+    if C.get('stop_outro') and not C.get('stop_fixo'):
+        A('\n> **De onde vem esse stop.** Ele não é escolhido, é medido: entre %d e %d, o'
+          % (C['stop'], C['stop_outro']))
+        A('> de **%d** é o que dá a maior média diária somada nas duas bases nesta'
+          % C['stop'])
+        A('> configuração (só o setup A, com custo). Ele **mudou** na rodada em que o eixo')
+        A('> do deslocamento do gatilho virou vaivém — antes dela o stop curto media melhor')
+        A('> em tudo, e agora não mede mais. Se você preferir fixar um stop por gestão de')
+        A('> risco em vez de por medição, é `STOP_FIXO` em `plano.py`.\n')
+    A('\n**O stop não anda — nunca.** Ele entra a %d pontos e fica lá até o trade' % C['stop'])
+    A('acabar. Isso não é descuido: com a parcial saindo na **mesma distância**, o stop')
+    A('inicial **já é** a média da operação, e o trade que volta depois da parcial morre')
+    A('em zero. Não há nada para arrastar, e arrastar seria estragar. Mover o stop para')
+    A('longe continua sendo o erro que transforma uma perda planejada numa perda que não')
+    A('estava no plano.\n')
     A('**A parcial não é opcional.** Ela é o que compra o direito de deixar o resto')
     A('correr até +%d sem risco. Sem ela o plano é outro, e os números são outros.\n'
       % C['alvo'])
@@ -292,7 +338,7 @@ def markdown(C):
     A('| 2 | Entrei pela limitada no meio do candle, no preço certo |')
     A('| 3 | A ordem valeu **uma barra**, e eu cancelei quando não preencheu |')
     A('| 4 | O stop entrou a %d pontos, imediatamente |' % C['stop'])
-    A('| 5 | A parcial saiu a +%d e o stop foi para o zero a zero |' % C['parcial'])
+    A('| 5 | A parcial saiu a +%d (e o stop ficou onde estava) |' % C['parcial'])
     A('| 6 | Não mexi em nada depois disso |\n')
     A('**Por pregão** — quatro itens, cada um vale 1:\n')
     A('| # | item |')
@@ -389,7 +435,7 @@ def markdown(C):
 
     # ---------------------------------------------------------------- 11
     A('---\n\n## 11. O que este plano herda de incerto\n')
-    A('Ler antes de dimensionar posição. Está tudo em [RESULTADOS.md § 9](RESULTADOS.md).\n')
+    A('Ler antes de dimensionar posição. Está tudo em [RESULTADOS.md § 10](RESULTADOS.md).\n')
     A('- **Amostra pequena.** %d e %d pregões com trade. Os `t` medidos são bons, mas'
       % (v26['pregoes'], fu['pregoes']))
     A('  sobre poucas observações.')

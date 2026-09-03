@@ -209,7 +209,7 @@ footer a{color:var(--ink-3)}
   <p class="dek">O relatório diz o que foi medido. Este documento diz o que eu
   faço na frente da tela — e como eu avalio se fiz certo, num dia em que o
   resultado não tem como me dizer isso.</p>
-  <div class="chips"><span class="chip">ativo <b>WIN</b></span><span class="chip">gráfico <b>10.000 ticks</b></span><span class="chip">setup <b>A · tendência</b></span><span class="chip">stop <b>100 pts</b></span><span class="chip">alvo <b>+300 pts</b></span><span class="chip">trades/pregão <b>~2.2</b></span><span class="chip">pregões positivos <b>61%</b></span></div>
+  <div class="chips"><span class="chip">ativo <b>WIN</b></span><span class="chip">gráfico <b>10.000 ticks</b></span><span class="chip">setup <b>A · tendência</b></span><span class="chip">stop <b>150 pts</b></span><span class="chip">alvo <b>+300 pts</b></span><span class="chip">trades/pregão <b>~1.7</b></span><span class="chip">pregões positivos <b>69%</b></span></div>
 </header>
 
 <aside class="nota gerado"><strong>Este arquivo é gerado.</strong> Rode <code>python rodar.py &amp;&amp; python plano.py</code>. Os números saem de <code>saida/resumo.json</code>, os mesmos do <a href="relatorio.html">relatorio.html</a>. O texto do procedimento é fixo; se você mudar uma regra, mude aqui <strong>e</strong> em <a href="ESTRATEGIA.md">ESTRATEGIA.md</a>.</aside>
@@ -223,7 +223,7 @@ footer a{color:var(--ink-3)}
 <div class="scroll"><table><tbody><tr><td><strong>Ativo</strong></td><td>WIN (mini índice)</td></tr><tr><td><strong>Gráfico</strong></td><td>candle de <strong>10.000 ticks</strong></td></tr><tr><td><strong>Setup</strong></td><td><strong>A — tendência (pullback na média)</strong>, e só ele</td></tr><tr><td><strong>Direção</strong></td><td>pelo empilhamento das EMAs 21 / 42 / 72</td></tr><tr><td><strong>Lado</strong></td><td>compra e venda</td></tr><tr><td><strong>Posições</strong></td><td><strong>uma por vez</strong>. Sinal que chega com posição aberta é ignorado</td></tr></tbody></table></div>
 <p><strong>O que eu NÃO opero:</strong></p>
 <ul><li><strong>Setup C (reversão em consolidação).</strong> Mede negativo nas duas bases, em toda configuração testada. Não está no plano e não entra por exceção.</li><li><strong>Setup B (reversão no afastamento).</strong> É positivo, mas mais fraco e com o dobro de rebaixamento. Fica <strong>fora</strong> até uma revisão decidir promovê-lo. Se eu quiser operá-lo, é uma decisão de revisão mensal, não de pregão.</li><li><strong>Qualquer coisa que o indicador não marcou.</strong> Se não saiu a seta A, não existe trade — por mais óbvio que o gráfico pareça.</li></ul>
-<aside class="nota">Por que só o A: ele é o melhor dos três nas duas bases, em <strong>todas</strong> as colunas — valor esperado, <code>t</code>, fator de lucro e rebaixamento. E a 2.2 trades por pregão ele é operável à mão sem pressa.</aside>
+<aside class="nota">Por que só o A: ele é o melhor dos três nas duas bases, em <strong>todas</strong> as colunas — valor esperado, <code>t</code>, fator de lucro e rebaixamento. E a 1.7 trades por pregão ele é operável à mão sem pressa.</aside>
 </section>
 <section><div class="gut">2</div><div class="corpo"><h2>O gatilho — quando existe trade</h2>
 <p>O indicador faz a conta; eu confiro o contexto. <strong>Todos os seis</strong> têm de estar verdadeiros. Um único "não" e não há trade.</p>
@@ -237,46 +237,47 @@ footer a{color:var(--ink-3)}
 barra t+1    ou ela preenche AQUI, ou eu CANCELO.
 barra t+2    não existe. O sinal morreu.</pre>
 <p><strong>Não preencheu, acabou.</strong> Não persigo o preço, não entro a mercado "para não perder", não deixo a ordem no livro para ver no que dá. Cancelo e volto a esperar.</p>
-<p>Cerca de <strong>12% dos sinais serão abortados</strong> — no WINV26, 5 de 36 sinais do setup A; no WINFUT, 9 de 83. Isso não é falha de execução: é <strong>o plano funcionando</strong>. Um sinal abortado entra no diário como *aderência cumprida*, exatamente como um trade vencedor.</p>
+<p>Cerca de <strong>10% dos sinais serão abortados</strong> — no WINV26, 3 de 29 sinais do setup A; no WINFUT, 6 de 60. Isso não é falha de execução: é <strong>o plano funcionando</strong>. Um sinal abortado entra no diário como *aderência cumprida*, exatamente como um trade vencedor.</p>
 <aside class="nota"><strong>Por que esta regra existe.</strong> Medida, ela quase não muda o resultado — melhora uma base, piora a outra, pouco dos dois lados. Ela existe pelo que impede: que eu fique com uma ordem esquecida no livro, e que eu negocie um sinal de dez minutos atrás como se fosse de agora. Ela é uma <strong>regra de disciplina que custa quase nada</strong> — o melhor tipo de regra que existe.</aside>
 </section>
 <section><div class="gut">4</div><div class="corpo"><h2>A gestão — decidida antes, executada sem opinião</h2>
-<div class="scroll"><table><tbody><tr><td><strong>Stop inicial</strong></td><td><strong>100 pontos</strong> da entrada</td></tr><tr><td><strong>Parcial</strong></td><td><strong>50% da posição em +100 pontos</strong></td></tr><tr><td><strong>No momento da parcial</strong></td><td>o stop do restante vai para a <strong>entrada</strong> (zero a zero)</td></tr><tr><td><strong>Alvo do restante</strong></td><td><strong>+300 pontos</strong></td></tr><tr><td><strong>Saída forçada</strong></td><td>fechamento do pregão</td></tr></tbody></table></div>
+<div class="scroll"><table><tbody><tr><td><strong>Stop inicial</strong></td><td><strong>150 pontos</strong> da entrada</td></tr><tr><td><strong>Parcial</strong></td><td><strong>50% da posição em +150 pontos</strong> — a mesma distância do stop</td></tr><tr><td><strong>No momento da parcial</strong></td><td><strong>nada a fazer.</strong> O stop já está na média da operação: com meia posição realizada a +150, o stop de −150 é o zero a zero</td></tr><tr><td><strong>Alvo do restante</strong></td><td><strong>+300 pontos</strong></td></tr><tr><td><strong>Saída forçada</strong></td><td>fechamento do pregão</td></tr></tbody></table></div>
 <p>Resultado por trade, por contrato de lote cheio:</p>
-<div class="scroll"><table><thead><tr><th>desfecho</th><th>pontos</th><th>R$</th><th>frequência medida</th></tr></thead><tbody><tr><td>stop antes da parcial</td><td class="num">−100</td><td class="num">−20,00</td><td class="num">37%</td></tr><tr><td>parcial e depois zero a zero</td><td class="num">+50</td><td class="num">+10,00</td><td class="num">32%</td></tr><tr><td>parcial e depois alvo</td><td class="num">+200</td><td class="num">+40,00</td><td class="num">32%</td></tr></tbody></table></div>
-<p><strong>O stop nunca se afasta.</strong> Ele anda <strong>uma vez</strong>, para o zero a zero, e só depois que a parcial saiu. Mover o stop para longe é o erro que transforma uma perda planejada de 100 pontos numa perda que não estava no plano.</p>
+<div class="scroll"><table><thead><tr><th>desfecho</th><th>pontos</th><th>R$</th><th>frequência medida</th></tr></thead><tbody><tr><td>stop antes da parcial</td><td class="num">−150</td><td class="num">−30,00</td><td class="num">36%</td></tr><tr><td>parcial e depois o stop</td><td class="num">0</td><td class="num">0,00</td><td class="num">6%</td></tr><tr><td>parcial e depois alvo</td><td class="num">+225</td><td class="num">+45,00</td><td class="num">58%</td></tr></tbody></table></div>
+<aside class="nota"><strong>De onde vem esse stop.</strong> Ele não é escolhido, é medido: entre 150 e 100, o de <strong>150</strong> é o que dá a maior média diária somada nas duas bases nesta configuração (só o setup A, com custo). Ele <strong>mudou</strong> na rodada em que o eixo do deslocamento do gatilho virou vaivém — antes dela o stop curto media melhor em tudo, e agora não mede mais. Se você preferir fixar um stop por gestão de risco em vez de por medição, é <code>STOP_FIXO</code> em <code>plano.py</code>.</aside>
+<p><strong>O stop não anda — nunca.</strong> Ele entra a 150 pontos e fica lá até o trade acabar. Isso não é descuido: com a parcial saindo na <strong>mesma distância</strong>, o stop inicial <strong>já é</strong> a média da operação, e o trade que volta depois da parcial morre em zero. Não há nada para arrastar, e arrastar seria estragar. Mover o stop para longe continua sendo o erro que transforma uma perda planejada numa perda que não estava no plano.</p>
 <p><strong>A parcial não é opcional.</strong> Ela é o que compra o direito de deixar o resto correr até +300 sem risco. Sem ela o plano é outro, e os números são outros.</p>
 </section>
 <section><div class="gut">5</div><div class="corpo"><h2>Tamanho e limites do dia</h2>
-<p><strong>Risco por trade</strong> = 100 pontos = <strong>R$ 20,00 por contrato</strong>.</p>
+<p><strong>Risco por trade</strong> = 150 pontos = <strong>R$ 30,00 por contrato</strong>.</p>
 <p>Regra de dimensionamento:</p>
-<pre>contratos = (risco máximo por trade em R$) / R$ 20,00
+<pre>contratos = (risco máximo por trade em R$) / R$ 30,00
 
 com risco máximo por trade = 1% do capital da conta</pre>
 <p><strong>Limites rígidos do pregão</strong> — atingiu, o dia acabou, sem discussão:</p>
-<div class="scroll"><table><thead><tr><th>limite</th><th>valor</th><th>por quê</th></tr></thead><tbody><tr><td><strong>3 stops no dia</strong></td><td>−300 pts (R$ 60,00 / contrato)</td><td>o pior pregão medido foi -210 pts</td></tr><tr><td><strong>1 violação de regra</strong></td><td>—</td><td>erro de processo fecha o dia, mesmo no lucro</td></tr></tbody></table></div>
+<div class="scroll"><table><thead><tr><th>limite</th><th>valor</th><th>por quê</th></tr></thead><tbody><tr><td><strong>3 stops no dia</strong></td><td>−450 pts (R$ 90,00 / contrato)</td><td>o pior pregão medido foi -310 pts</td></tr><tr><td><strong>1 violação de regra</strong></td><td>—</td><td>erro de processo fecha o dia, mesmo no lucro</td></tr></tbody></table></div>
 <p>O segundo limite é o mais importante e o mais fácil de ignorar. Um erro de processo num dia de lucro é <strong>mais perigoso</strong> que um num dia de prejuízo, porque o resultado o recompensa.</p>
 </section>
 <section><div class="gut">6</div><div class="corpo"><h2>A rotina do pregão</h2>
 <p><strong>Antes de abrir (5 minutos)</strong></p>
 <ul><li>Gráfico em 10.000 ticks, indicadores da família carregados, EMAs 21 / 42 / 72 visíveis</li><li>Anotar no diário: o regime de ontem, e onde as médias estão hoje</li><li>Reler as regras 1 a 4 deste arquivo. Sim, todo dia.</li><li>Definir o número de contratos <strong>antes</strong> do primeiro sinal</li></ul>
 <p><strong>Durante</strong></p>
-<ul><li>Só existe ação quando a seta A imprime. O resto do tempo eu <strong>espero</strong>.</li><li>Em ~2.2 trades por pregão, a maior parte do dia é espera. Isso é o trabalho, não uma pausa dele.</li><li>Enviada a ordem: uma barra. Preencheu ou cancelou.</li><li>Aberta a posição: stop, parcial e alvo já estão definidos. Nada a decidir.</li></ul>
+<ul><li>Só existe ação quando a seta A imprime. O resto do tempo eu <strong>espero</strong>.</li><li>Em ~1.7 trades por pregão, a maior parte do dia é espera. Isso é o trabalho, não uma pausa dele.</li><li>Enviada a ordem: uma barra. Preencheu ou cancelou.</li><li>Aberta a posição: stop, parcial e alvo já estão definidos. Nada a decidir.</li></ul>
 <p><strong>Depois</strong></p>
 <ul><li>Preencher o diário da § 9, <strong>incluindo os sinais abortados</strong></li><li>Calcular a <strong>nota de aderência</strong> do dia (§ 7)</li><li>Não olhar o resultado acumulado. Ele é olhado uma vez por mês, na revisão.</li></ul>
 </section>
 <section><div class="gut">7</div><div class="corpo"><h2>Como eu meço sucesso: aderência, não resultado</h2>
 <h3>7.1 A razão, com os números</h3>
-<p>Estes são os números do setup A, stop 100, <strong>descontando 5 pontos de custo por trade</strong> — a leitura honesta, não a bruta:</p>
-<div class="scroll"><table><thead><tr><th></th><th>WINV26</th><th>WINFUT</th></tr></thead><tbody><tr><td>acerto por trade</td><td class="num">73%</td><td class="num">63%</td></tr><tr><td>valor esperado por trade</td><td>+65,0 pts</td><td>+36,8 pts</td></tr><tr><td><strong>desvio</strong> por trade</td><td>123 pts</td><td>125 pts</td></tr><tr><td>pregões positivos</td><td class="num">83%</td><td class="num">61%</td></tr><tr><td>pior pregão</td><td>-105 pts</td><td>-210 pts</td></tr><tr><td>maior sequência de pregões negativos</td><td class="num">1</td><td class="num">4</td></tr><tr><td>chance de uma <strong>semana</strong> fechar negativa</td><td class="num">1%</td><td class="num">13%</td></tr><tr><td>rebaixamento máximo</td><td>225 pts (R$ 45,00)</td><td>510 pts (R$ 102,00)</td></tr></tbody></table></div>
-<p>Olhe a linha do <strong>desvio</strong>: 125 pontos por trade, contra um valor esperado de +36,8. O ruído é <strong>três vezes maior que o sinal</strong> em cada operação isolada. Isso não é um defeito da estratégia — é como toda vantagem pequena se parece de perto.</p>
+<p>Estes são os números do setup A, stop 150, <strong>descontando 5 pontos de custo por trade</strong> — a leitura honesta, não a bruta:</p>
+<div class="scroll"><table><thead><tr><th></th><th>WINV26</th><th>WINFUT</th></tr></thead><tbody><tr><td>acerto por trade</td><td class="num">60%</td><td class="num">58%</td></tr><tr><td>valor esperado por trade</td><td>+76,0 pts</td><td>+72,8 pts</td></tr><tr><td><strong>desvio</strong> por trade</td><td>182 pts</td><td>180 pts</td></tr><tr><td>pregões positivos</td><td class="num">83%</td><td class="num">69%</td></tr><tr><td>pior pregão</td><td>-310 pts</td><td>-310 pts</td></tr><tr><td>maior sequência de pregões negativos</td><td class="num">1</td><td class="num">3</td></tr><tr><td>chance de uma <strong>semana</strong> fechar negativa</td><td class="num">9%</td><td class="num">13%</td></tr><tr><td>rebaixamento máximo</td><td>310 pts (R$ 62,00)</td><td>335 pts (R$ 67,00)</td></tr></tbody></table></div>
+<p>Olhe a linha do <strong>desvio</strong>: 180 pontos por trade, contra um valor esperado de +72,8. O ruído é <strong>três vezes maior que o sinal</strong> em cada operação isolada. Isso não é um defeito da estratégia — é como toda vantagem pequena se parece de perto.</p>
 <p>As consequências, que eu preciso ter aceitado <strong>antes</strong> de elas acontecerem:</p>
-<ul><li><strong>39% dos pregões fecham no vermelho.</strong> Um dia negativo é o caso comum, não um sinal de nada.</li><li><strong>4 pregões negativos seguidos já aconteceram</strong> na amostra medida. Vão acontecer de novo.</li><li><strong>13% de chance de uma semana inteira fechar negativa</strong>, com a vantagem totalmente intacta.</li><li>Duas perdas seguidas: 14% de chance. Três: 5%. Não é raro.</li></ul>
+<ul><li><strong>31% dos pregões fecham no vermelho.</strong> Um dia negativo é o caso comum, não um sinal de nada.</li><li><strong>3 pregões negativos seguidos já aconteceram</strong> na amostra medida. Vão acontecer de novo.</li><li><strong>13% de chance de uma semana inteira fechar negativa</strong>, com a vantagem totalmente intacta.</li><li>Duas perdas seguidas: 17% de chance. Três: 7%. Não é raro.</li></ul>
 <p><strong>Conclusão operacional:</strong> o resultado de um dia, e mesmo de uma semana, <strong>não contém informação</strong> sobre se eu operei bem. Julgar o processo pelo resultado diário é ler ruído como se fosse mensagem — e a reação a esse ruído é o que destrói planos que funcionavam.</p>
 <p>A aderência, ao contrário, eu <strong>observo diretamente</strong>, todo dia, sem erro de medição. É a única coisa que eu controlo. Então é a única coisa que eu meço.</p>
 <h3>7.2 A nota de aderência</h3>
 <p><strong>Por trade</strong> — seis itens, cada um vale 1:</p>
-<div class="scroll"><table><thead><tr><th>#</th><th>item</th></tr></thead><tbody><tr><td class="num">1</td><td>O contexto tinha as seis marcas da § 2, todas</td></tr><tr><td class="num">2</td><td>Entrei pela limitada no meio do candle, no preço certo</td></tr><tr><td class="num">3</td><td>A ordem valeu <strong>uma barra</strong>, e eu cancelei quando não preencheu</td></tr><tr><td class="num">4</td><td>O stop entrou a 100 pontos, imediatamente</td></tr><tr><td class="num">5</td><td>A parcial saiu a +100 e o stop foi para o zero a zero</td></tr><tr><td class="num">6</td><td>Não mexi em nada depois disso</td></tr></tbody></table></div>
+<div class="scroll"><table><thead><tr><th>#</th><th>item</th></tr></thead><tbody><tr><td class="num">1</td><td>O contexto tinha as seis marcas da § 2, todas</td></tr><tr><td class="num">2</td><td>Entrei pela limitada no meio do candle, no preço certo</td></tr><tr><td class="num">3</td><td>A ordem valeu <strong>uma barra</strong>, e eu cancelei quando não preencheu</td></tr><tr><td class="num">4</td><td>O stop entrou a 150 pontos, imediatamente</td></tr><tr><td class="num">5</td><td>A parcial saiu a +150 (e o stop ficou onde estava)</td></tr><tr><td class="num">6</td><td>Não mexi em nada depois disso</td></tr></tbody></table></div>
 <p><strong>Por pregão</strong> — quatro itens, cada um vale 1:</p>
 <div class="scroll"><table><thead><tr><th>#</th><th>item</th></tr></thead><tbody><tr><td class="num">7</td><td>Não operei nenhum sinal fora do setup A</td></tr><tr><td class="num">8</td><td>Respeitei o limite de perda do dia</td></tr><tr><td class="num">9</td><td>Registrei tudo no diário, inclusive os abortados</td></tr><tr><td class="num">10</td><td>Não mudei o tamanho da posição no meio do pregão</td></tr></tbody></table></div>
 <pre>nota do dia = (pontos obtidos) / (pontos possíveis) × 100</pre>
@@ -287,11 +288,11 @@ com risco máximo por trade = 1% do capital da conta</pre>
 <ul><li><strong>≥ 95% na semana</strong> — é o padrão de operação</li><li><strong>&lt; 90% na semana</strong> — parar de operar e reler o plano; o problema é de execução, e mexer em parâmetro nesse estado só troca um problema por dois</li><li><strong>100% num dia de prejuízo</strong> — isso é um <strong>dia bem-sucedido</strong>. Anotar como tal.</li></ul>
 </section>
 <section><div class="gut">8</div><div class="corpo"><h2>Os cinco erros que este plano existe para impedir</h2>
-<p><strong>1. Perseguir o sinal abortado.</strong> "Ele foi embora sem mim." Vai acontecer com 12% dos sinais, todo mês. A regra da barra seguinte existe exatamente para tirar essa decisão da minha mão no momento em que eu estou menos apto a tomá-la.</p>
-<p><strong>2. Afastar o stop.</strong> É o erro que muda a distribuição inteira: troca uma perda de 100 pontos, que estava no plano, por uma perda de tamanho desconhecido. Todos os números deste arquivo deixam de valer no instante em que isso acontece uma vez.</p>
+<p><strong>1. Perseguir o sinal abortado.</strong> "Ele foi embora sem mim." Vai acontecer com 10% dos sinais, todo mês. A regra da barra seguinte existe exatamente para tirar essa decisão da minha mão no momento em que eu estou menos apto a tomá-la.</p>
+<p><strong>2. Afastar o stop.</strong> É o erro que muda a distribuição inteira: troca uma perda de 150 pontos, que estava no plano, por uma perda de tamanho desconhecido. Todos os números deste arquivo deixam de valer no instante em que isso acontece uma vez.</p>
 <p><strong>3. "Este aqui é diferente."</strong> Setup C, sinal contra a tendência, entrada sem gatilho. O setup C foi medido e perde nas duas bases; a intuição de que *este* é diferente não tem como ser distinguida, no momento, do desejo de operar.</p>
 <p><strong>4. Mexer no lote pelo resultado.</strong> Dobrar depois de perder é tentar recuperar num trade o que a distribuição devolve em vinte. Aumentar depois de ganhar é a mesma aposta, com o disfarce de confiança. O lote é definido antes do pregão e não muda dentro dele.</p>
-<p><strong>5. Operar por tédio.</strong> São ~2.2 trades por pregão. A maior parte do dia é espera, e o tédio é uma sensação — não um sinal. Se eu não consigo esperar, o problema não é a estratégia.</p>
+<p><strong>5. Operar por tédio.</strong> São ~1.7 trades por pregão. A maior parte do dia é espera, e o tédio é uma sensação — não um sinal. Se eu não consigo esperar, o problema não é a estratégia.</p>
 </section>
 <section><div class="gut">9</div><div class="corpo"><h2>O diário</h2>
 <p>Uma linha por <strong>sinal</strong> — inclusive os abortados.</p>
@@ -301,15 +302,15 @@ com risco máximo por trade = 1% do capital da conta</pre>
 </section>
 <section><div class="gut">10</div><div class="corpo"><h2>Revisão e disjuntores</h2>
 <p><strong>A revisão é mensal, em data marcada.</strong> Nunca no meio de uma sequência ruim, nunca no meio de uma boa. Na revisão eu olho, nesta ordem:</p>
-<ol><li>A <strong>nota de aderência</strong> média do mês</li><li>Quantos sinais foram abortados, e se isso ficou perto de 12%</li><li>O resultado, em pontos, contra o valor esperado de +36,8 por trade</li><li>O <strong>custo real</strong> cobrado pela corretora, comparado com os 5 pontos por trade que os números desta página já descontam</li></ol>
+<ol><li>A <strong>nota de aderência</strong> média do mês</li><li>Quantos sinais foram abortados, e se isso ficou perto de 10%</li><li>O resultado, em pontos, contra o valor esperado de +72,8 por trade</li><li>O <strong>custo real</strong> cobrado pela corretora, comparado com os 5 pontos por trade que os números desta página já descontam</li></ol>
 <p><strong>Disjuntores</strong> — automáticos, não opinativos:</p>
-<div class="scroll"><table><thead><tr><th>gatilho</th><th>ação</th></tr></thead><tbody><tr><td>rebaixamento de <strong>510 pts</strong> (R$ 102,00)</td><td>reduzir o lote à metade</td></tr><tr><td>rebaixamento de <strong>1020 pts</strong> (R$ 204,00)</td><td>parar de operar e reabrir o backtest</td></tr><tr><td>aderência &lt; 90%% na semana</td><td>parar de operar; treinar em simulador</td></tr><tr><td>5 pregões negativos seguidos</td><td>parar por um dia e reler este arquivo</td></tr></tbody></table></div>
+<div class="scroll"><table><thead><tr><th>gatilho</th><th>ação</th></tr></thead><tbody><tr><td>rebaixamento de <strong>335 pts</strong> (R$ 67,00)</td><td>reduzir o lote à metade</td></tr><tr><td>rebaixamento de <strong>670 pts</strong> (R$ 134,00)</td><td>parar de operar e reabrir o backtest</td></tr><tr><td>aderência &lt; 90%% na semana</td><td>parar de operar; treinar em simulador</td></tr><tr><td>5 pregões negativos seguidos</td><td>parar por um dia e reler este arquivo</td></tr></tbody></table></div>
 <p>O primeiro disjuntor está no <strong>pior rebaixamento já medido</strong>. Chegar nele é normal. O segundo é o dobro dele: chegar lá já é evidência de que alguma coisa mudou — no mercado ou em mim — e merece medição, não persistência.</p>
-<p>O último é sobre estado mental, não sobre estatística: 4 pregões negativos seguidos já aconteceram na amostra, então 5 não prova nada. Mas depois de 5 eu não sou a mesma pessoa na frente da tela, e é essa pessoa que o disjuntor protege.</p>
+<p>O último é sobre estado mental, não sobre estatística: 3 pregões negativos seguidos já aconteceram na amostra, então 5 não prova nada. Mas depois de 5 eu não sou a mesma pessoa na frente da tela, e é essa pessoa que o disjuntor protege.</p>
 </section>
 <section><div class="gut">11</div><div class="corpo"><h2>O que este plano herda de incerto</h2>
-<p>Ler antes de dimensionar posição. Está tudo em <a href="RESULTADOS.md">RESULTADOS.md § 9</a>.</p>
-<ul><li><strong>Amostra pequena.</strong> 12 e 33 pregões com trade. Os <code>t</code> medidos são bons, mas sobre poucas observações.</li><li><strong>As duas bases não são independentes</strong> — o WINFUT contém o WINV26 inteiro. Concordarem é menos confirmação do que parece.</li><li><strong>Os parâmetros foram varridos nas mesmas bases</strong> em que são avaliados. Há sobreajuste embutido, e o desempenho real tende a ser pior que o medido.</li><li><strong>A ordem limitada é dada por preenchida assim que o preço toca o nível.</strong> Na prática existe fila, e nem todo toque preenche — este é o otimismo que mais pesa contra os números acima.</li><li><strong>Sem filtro de horário, rolagem ou vencimento.</strong></li></ul>
+<p>Ler antes de dimensionar posição. Está tudo em <a href="RESULTADOS.md">RESULTADOS.md § 10</a>.</p>
+<ul><li><strong>Amostra pequena.</strong> 12 e 32 pregões com trade. Os <code>t</code> medidos são bons, mas sobre poucas observações.</li><li><strong>As duas bases não são independentes</strong> — o WINFUT contém o WINV26 inteiro. Concordarem é menos confirmação do que parece.</li><li><strong>Os parâmetros foram varridos nas mesmas bases</strong> em que são avaliados. Há sobreajuste embutido, e o desempenho real tende a ser pior que o medido.</li><li><strong>A ordem limitada é dada por preenchida assim que o preço toca o nível.</strong> Na prática existe fila, e nem todo toque preenche — este é o otimismo que mais pesa contra os números acima.</li><li><strong>Sem filtro de horário, rolagem ou vencimento.</strong></li></ul>
 <p>Nada disso é motivo para não operar o plano. É motivo para operá-lo <strong>pequeno</strong> até que os seus próprios registros, e não os meus, digam que ele funciona.</p>
 </section>
 
@@ -329,11 +330,11 @@ com risco máximo por trade = 1% do capital da conta</pre>
       <div class="s">limitada no meio do candle. Não preencheu, cancela.</div>
     </div>
     <div class="celula cau">
-      <div class="k">Stop</div><div class="v">100</div>
-      <div class="s">pontos · R$ 20,00 por contrato. Nunca se afasta.</div>
+      <div class="k">Stop</div><div class="v">150</div>
+      <div class="s">pontos · R$ 30,00 por contrato. Nunca se afasta.</div>
     </div>
     <div class="celula go">
-      <div class="k">Parcial</div><div class="v">+100</div>
+      <div class="k">Parcial</div><div class="v">+150</div>
       <div class="s">50% da posição, e o resto vai a zero a zero.</div>
     </div>
     <div class="celula go">

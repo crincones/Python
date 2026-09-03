@@ -33,13 +33,127 @@ ROT_SETUP = {'A': 'tendencia (pullback na media)',
              'B': 'reversao rapida no afastamento',
              'C': 'reversao em consolidacao'}
 
+# o eixo [E2] antigo e o novo, para a comparacao da secao "o eixo [E2]"
+METRICAS_E2 = (0, 2)
+ROT_E2 = {0: 'v1 · |delta| / |Close-Open|',
+          1: 'v1 · esforço / range',
+          2: 'v2 · (|delta|/esforço) × volta',
+          3: 'v2 · |delta| × volta',
+          4: 'volta pura'}
+
 _CACHE = {}
 
 
 def _ind(nome):
-    if nome not in _CACHE:
-        _CACHE[nome] = E.indicador(E.carrega(E.ARQUIVOS[nome]))
-    return _CACHE[nome]
+    # a chave inclui METRICA_E2: o indicador MUDA com ela
+    chave = (nome, E.METRICA_E2)
+    if chave not in _CACHE:
+        _CACHE[chave] = E.indicador(E.carrega(E.ARQUIVOS[nome]))
+    return _CACHE[chave]
+
+
+def comparativo_e2():
+    """O eixo [E2] antigo contra o novo, com TODO o resto congelado.
+
+    Mesma media (ema3), mesmos setups, mesma gestao, mesma janela: a
+    unica coisa que muda e a formula que alimenta pD. E a medicao que
+    responde "trocar o indicador melhorou o backtest?".
+
+    Mede tambem se o filtro DESCARTA_E2 -- que joga fora o sinal quando
+    [E2] e o maior dos tres eixos -- continua valendo com a formula
+    nova. Ele existia porque a formula antiga media negativo quando
+    mandava; nao era obvio que sobreviveria a troca.
+    """
+    E.aplica_ma('ema3')
+    met0, desc0, stop0 = E.METRICA_E2, E.DESCARTA_E2, E.STOP
+    out = {'rotulos': {str(k): ROT_E2[k] for k in METRICAS_E2},
+           'metricas': [str(m) for m in METRICAS_E2],
+           'atual': str(met0), 'grid': {}, 'filtro': {}}
+    for base in BASES:
+        bruto = E.carrega(E.ARQUIVOS[base])
+        out['grid'][base], out['filtro'][base] = {}, {}
+        for met in METRICAS_E2:
+            E.METRICA_E2 = met
+            d = E.contexto(E.indicador(bruto), 'ema3')
+
+            E.DESCARTA_E2 = True
+            sig = E.gatilho(d)
+            g = {'gatilhos': int((sig != 0).sum())}
+            mk3 = E.setups(d, sig, ativos=('A', 'B', 'C'))
+            for stop in STOPS:
+                E.STOP = float(stop)
+                g[str(stop)] = {}
+                for rot, ativos in (('cA', ('A',)), ('cAB', ('A', 'B'))):
+                    mk = E.setups(d, sig, ativos=ativos)
+                    g[str(stop)][rot] = E.metricas(E.roda(d, mk, sig, carteira=True))
+                # os setups ISOLADOS: e neles que da para ver ONDE a formula
+                # nova muda alguma coisa -- ela mede exaustao, e exaustao e o
+                # que o setup de reversao procura.
+                for su in ('A', 'B'):
+                    g[str(stop)]['setup_' + su] = E.metricas(
+                        E.roda(d, mk3, sig, carteira=False, setup=su))
+            out['grid'][base][str(met)] = g
+
+            E.DESCARTA_E2 = False
+            sig2 = E.gatilho(d)
+            E.STOP = float(STOPS[0])
+            mk2 = E.setups(d, sig2, ativos=('A', 'B'))
+            out['filtro'][base][str(met)] = {
+                'com': g[str(STOPS[0])]['cAB'],
+                'sem': E.metricas(E.roda(d, mk2, sig2, carteira=True)),
+                'gatilhos_com': g['gatilhos'],
+                'gatilhos_sem': int((sig2 != 0).sum())}
+            E.DESCARTA_E2 = True
+    E.METRICA_E2, E.DESCARTA_E2, E.STOP = met0, desc0, stop0
+    return out
+
+
+def comparativo_gestao():
+    """As regras possiveis para a parcial e para o stop depois dela.
+
+    O backtest antigo punha o stop do restante na ENTRADA e tirava a
+    parcial em +100 com stop de 150. Isso e otimista de um jeito que nao
+    aparece no nome: o desfecho chamado "zero a zero" pagava +50 pontos.
+
+    A regra certa -- a que o Carlos opera -- e a parcial na MESMA
+    distancia do stop e o stop do restante na MEDIA DA OPERACAO, que com
+    meia posicao cai exatamente em cima do stop inicial. Ai "zero a zero"
+    e zero de verdade, e o stop nunca precisa andar.
+
+    As tres linhas medem: a regra certa, a regra certa com a parcial mais
+    perto, e o modelo antigo.
+    """
+    E.aplica_ma('ema3')
+    st0, pa0, ap0 = E.STOP, E.PARCIAL_EM, E.STOP_APOS_PARCIAL
+    REGRAS = (
+        ('media_stop', 'media', None,
+         'parcial na distância do stop · stop na média da operação'),
+        ('media_100', 'media', 100.0,
+         'parcial em +100 · stop na média da operação'),
+        ('entrada_100', 'entrada', 100.0,
+         'parcial em +100 · stop na entrada (o modelo antigo)'),
+    )
+    out = {'rotulos': {k: rot for k, _, _, rot in REGRAS},
+           'ordem': [k for k, _, _, _ in REGRAS],
+           'atual': 'media_stop' if E.PARCIAL_EM is None else None,
+           'grid': {}}
+    for base in BASES:
+        d = E.contexto(_ind(base), 'ema3')
+        sig = E.gatilho(d)
+        out['grid'][base] = {}
+        for chave, apos, parc, _rot in REGRAS:
+            E.STOP_APOS_PARCIAL, E.PARCIAL_EM = apos, parc
+            g = {}
+            for stop in STOPS:
+                E.STOP = float(stop)
+                g[str(stop)] = {}
+                for rot, ativos in (('cA', ('A',)), ('cAB', ('A', 'B'))):
+                    mk = E.setups(d, sig, ativos=ativos)
+                    g[str(stop)][rot] = E.metricas(E.roda(d, mk, sig, carteira=True))
+                g[str(stop)]['parcial'] = float(stop if parc is None else parc)
+            out['grid'][base][chave] = g
+    E.STOP, E.PARCIAL_EM, E.STOP_APOS_PARCIAL = st0, pa0, ap0
+    return out
 
 
 def cenario(nome, regime, stop):
@@ -204,22 +318,52 @@ def _cab(larg=30):
 
 def principal():
     resumo = {'parametros': {k: getattr(E, k) for k in (
-        'PARCIAL_EM', 'FRAC_PARCIAL', 'ALVO', 'CUSTO_PTS', 'NIVEL_MIN',
+        'PARCIAL_EM', 'STOP_APOS_PARCIAL', 'FRAC_PARCIAL', 'ALVO', 'CUSTO_PTS',
+        'NIVEL_MIN',
         'CORTE_POSICAO', 'CORPO_MAX', 'DESCARTA_E2', 'PERIODO_REF',
         'EMA_R', 'EMA_M', 'EMA_L', 'PERIODO_RANGE', 'LEQUE_MIN', 'TOL_TOQUE',
         'CONSOL_MAX', 'AFAST_MIN_B', 'AFAST_MIN_C', 'VEL_MIN_B', 'ENTRADA',
-        'MA_SLOPE', 'MAX_BARRAS_FILL')},
+        'MA_SLOPE', 'MAX_BARRAS_FILL', 'METRICA_E2')},
         'params_ma': E.PARAMS_MA, 'regimes': list(REGIMES), 'stops': list(STOPS),
         'variantes': {}, 'bases': {}}
 
     print('=' * 104)
     print('BACKTEST RINCONES1  -  WIN, barras de 10.000 ticks')
-    print('gestao: parcial %.0f%% em +%.0f (zera o risco) | alvo %.0f | stop: %s'
-          % (100 * E.FRAC_PARCIAL, E.PARCIAL_EM, E.ALVO,
-             ' e '.join(str(s) for s in STOPS)))
+    print('gestao: parcial %.0f%% %s | stop apos a parcial: %s | alvo %.0f | stop: %s'
+          % (100 * E.FRAC_PARCIAL,
+             ('na distancia do stop' if E.PARCIAL_EM is None
+              else 'em +%.0f' % E.PARCIAL_EM),
+             E.STOP_APOS_PARCIAL, E.ALVO, ' e '.join(str(s) for s in STOPS)))
     print('entrada: ordem limitada no meio do candle, valida por %d barra(s) '
           '| custo: %.1f pts' % (E.MAX_BARRAS_FILL, E.CUSTO_PTS))
     print('=' * 104)
+
+    resumo['gestao'] = comparativo_gestao()
+    print('')
+    print('  A REGRA DA PARCIAL  (ema3, carteira A + B)')
+    for base in BASES:
+        for chave in resumo['gestao']['ordem']:
+            g = resumo['gestao']['grid'][base][chave]
+            print('    %-7s %-52s | %s'
+                  % (base, resumo['gestao']['rotulos'][chave],
+                     ' | '.join('stop %d: EV %+6.1f t%+5.2f'
+                                % (st, g[str(st)]['cAB']['ev'], g[str(st)]['cAB']['t'])
+                                for st in STOPS)))
+
+    resumo['e2'] = comparativo_e2()
+    print('')
+    print('  O EIXO [E2]: FORMULA ANTIGA x NOVA  (ema3, carteira A + B)')
+    for base in BASES:
+        for met in METRICAS_E2:
+            g = resumo['e2']['grid'][base][str(met)]
+            print('    %-7s %-32s gatilhos=%5d | %s'
+                  % (base, ROT_E2[met], g['gatilhos'],
+                     ' | '.join('stop %d: %s' % (st, (
+                         'EV %+6.1f t%+5.2f n=%3d' % (g[str(st)]['cAB']['ev'],
+                                                      g[str(st)]['cAB']['t'],
+                                                      g[str(st)]['cAB']['n'])
+                         if g[str(st)]['cAB'] else 'sem trades'))
+                         for st in STOPS)))
 
     for base in BASES:
         resumo['variantes'][base] = {}

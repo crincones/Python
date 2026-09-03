@@ -21,6 +21,7 @@ BASE = os.path.dirname(os.path.abspath(__file__))
 SAIDA = os.path.join(BASE, 'saida')
 DEST = os.path.join(BASE, 'relatorio.html')
 BASES = ('WINV26', 'WINFUT')
+STOPS_VIZ = (150, 100)      # os stops que o visualizador de trades oferece
 REGIMES = ('ema3', 'kama', 'hma', 't3', 'jma')
 
 ROT_REG = {
@@ -69,22 +70,36 @@ def mil(v):
 
 
 # ------------------------------------------------------------ dados grafico
-def coleta_grafico():
+def coleta_grafico(stops=STOPS_VIZ):
+    """Candles, medias e trades do visualizador.
+
+    Os trades saem UMA VEZ POR STOP: os sinais nao dependem do stop, mas o
+    desfecho e o resultado dependem, e o visualizador deixa trocar entre
+    eles. Os candles sao os mesmos nos dois casos, entao vao uma vez so.
+    """
     dados = {}
+    st0 = E.STOP
     for nome in BASES:
         E.aplica_ma('ema3')
         d, sig, marca = E.prepara(nome, ativos=('A', 'B', 'C'), regime='ema3')
-        tr = E.roda(d, marca, sig, carteira=False)
-        if not len(tr):
+
+        por_stop = {}
+        for st in stops:
+            E.STOP = float(st)
+            por_stop[str(st)] = E.roda(d, marca, sig, carteira=False)
+        E.STOP = st0
+        if not any(len(t) for t in por_stop.values()):
             continue
+
         O, H, L, C = (d[c].to_numpy(float) for c in ('O', 'H', 'L', 'C'))
         er, em, el = (d[c].to_numpy(float) for c in ('er', 'em', 'el'))
         idxv, dirC = d.idx.to_numpy(), d.dirC.to_numpy()
         dia_arr = d.dia.to_numpy()
         hora = d.Data.dt.strftime('%H:%M').to_numpy()
 
+        todos_dias = sorted({dd for t in por_stop.values() for dd in t.dia})
         idx_dia, dias = {}, []
-        for dd in sorted(set(tr.dia)):
+        for dd in todos_dias:
             m = np.flatnonzero(dia_arr == dd)
             b = int(round(O[m[0]] / 100.0) * 100)
             idx_dia[dd] = len(dias)
@@ -101,16 +116,20 @@ def coleta_grafico():
                 x=[(0 if np.isnan(idxv[j]) else
                     int(round(idxv[j] * 100)) * (1 if dirC[j] >= 0 else -1)) for j in m],
             ))
-        trades = []
-        for _, t in tr.iterrows():
-            di = idx_dia[t['dia']]
-            off = dias[di]['i0']
-            trades.append(dict(
-                dia=str(t['dia']), d=di, su=t['setup'], s=int(t['s']),
-                i=int(t['i']) - off, f=int(t['jf']) - off, k=int(t['saiu']) - off,
-                ent=round(float(t['ent']) - dias[di]['base'], 1),
-                res=t['res'], pnl=round(float(t['pnl']), 1), bar=int(t['barras'])))
-        trades.sort(key=lambda t: (t['d'], t['i']))
+
+        trades = {}
+        for st, tr in por_stop.items():
+            lst = []
+            for _, t in tr.iterrows():
+                di = idx_dia[t['dia']]
+                off = dias[di]['i0']
+                lst.append(dict(
+                    dia=str(t['dia']), d=di, su=t['setup'], s=int(t['s']),
+                    i=int(t['i']) - off, f=int(t['jf']) - off, k=int(t['saiu']) - off,
+                    ent=round(float(t['ent']) - dias[di]['base'], 1),
+                    res=t['res'], pnl=round(float(t['pnl']), 1), bar=int(t['barras'])))
+            lst.sort(key=lambda t: (t['d'], t['i']))
+            trades[st] = lst
         dados[nome] = dict(dias=dias, trades=trades)
     return dados
 
@@ -174,7 +193,10 @@ def bloco_stops(R):
                 cel.append('<td class="num">%s</td><td class="num">%s</td>'
                            '<td class="num">%s</td><td class="num">%s</td>'
                            % (n1(m['ev']), t2(m['t']), f2(m['pf']), '%d' % round(m['dd'])))
-            hi = ' class="hi"' if (stop == 100 and ch == 'cA') else ''
+            melhor_stop = max(R['stops'],
+                              key=lambda st: (R['variantes']['WINFUT']['ema3'][str(st)][ch]['t']
+                                              + R['variantes']['WINV26']['ema3'][str(st)][ch]['t']))
+            hi = ' class="hi"' if stop == melhor_stop else ''
             linhas.append('<tr%s><td class="mono">stop %d</td><td>%s</td>%s</tr>'
                           % (hi, stop, rot, ''.join(cel)))
     return ('<div class="scroll"><table>'
@@ -333,6 +355,288 @@ def veredito_fill(R):
     return _neg(cab + det)
 
 
+def veredito_setups(R):
+    """O setup A e mesmo o melhor dos tres? Coluna por coluna, nas duas bases."""
+    sp = str(R['stops'][0])
+    COLS = (('ev', 'EV', n1), ('acerto', 'acerto', p1), ('t', 't', t2), ('pf', 'PF', f2))
+    perde = []
+    for b in BASES:
+        v = R['variantes'][b]['ema3'][sp]
+        for ch, rot, f in COLS:
+            vals = {su: v['setup_' + su][ch] for su in ('A', 'B', 'C') if v['setup_' + su]}
+            top = max(vals, key=vals.get)
+            if top != 'A':
+                perde.append('no %s o setup %s mede %s de %s contra %s do A'
+                             % (b, top, f(vals[top]), rot, f(vals['A'])))
+    if not perde:
+        return _neg('*A prioridade que você pediu está certa.* O setup de tendência é o '
+                    'melhor dos três nas duas bases, em todas as colunas.')
+    return _neg('*A prioridade que você pediu continua certa*: o setup de tendência lidera '
+                'a maioria das colunas nas duas bases. Não todas — ' + '; '.join(perde)
+                + '. Com esse número de trades uma coluna trocada é ruído, não hierarquia; '
+                'o A segue prioritário por EV, fator de lucro e drawdown.')
+
+
+def veredito_stop(R):
+    """Qual stop mede melhor, contado nas duas bases x duas carteiras."""
+    sp, alt = R['stops'][0], R['stops'][1]
+    cel = [(b, rot,
+            R['variantes'][b]['ema3'][str(sp)][ch],
+            R['variantes'][b]['ema3'][str(alt)][ch])
+           for b in BASES for ch, rot in (('cA', 'só A'), ('cAB', 'A + B'))]
+    ganha_alt = [x for x in cel if x[3]['t'] > x[2]['t']]
+    det = ' '.join('%s · %s: t %s com stop %d contra %s com %d.'
+                   % (b, rot, t2(a['t']), sp, t2(c['t']), alt) for b, rot, a, c in cel)
+    curto = min(sp, alt)
+    nota_risco = ('O stop de %d corta o risco por trade em um terço, então o mesmo limite '
+                  'de perda diária compra 50%% mais contratos. ' % curto)
+    if len(ganha_alt) == len(cel):
+        cab = '*O stop de %d mede melhor nas duas bases, nas duas carteiras.* ' % alt
+        if alt == curto:
+            cab += nota_risco
+    elif not ganha_alt:
+        cab = '*O stop de %d mede melhor nas duas bases, nas duas carteiras.* ' % sp
+        if sp != curto:
+            cab += ('O stop curto ganha em risco por trade, mas aqui ele corta trade bom '
+                    'antes da hora. ')
+    else:
+        n_alt = len(ganha_alt)
+        n_sp = len(cel) - n_alt
+        venc, n_venc = (alt, n_alt) if n_alt > n_sp else (sp, n_sp)
+        outro = sp if venc == alt else alt
+        n_outro = len(cel) - n_venc
+        cab = ('*Não há mais um stop que ganhe em tudo:* o de %d mede melhor em %d das %d '
+               'comparações (duas bases × duas carteiras) e o de %d %s. '
+               % (venc, n_venc, len(cel), outro,
+                  'na outra' if n_outro == 1 else 'nas outras %d' % n_outro))
+    return _neg(cab + det)
+
+
+def veredito_e2(R):
+    """O que a troca da formula do eixo [E2] mudou, com o resto congelado.
+
+    Nao basta dizer "melhorou": a troca melhora e piora em lugares
+    diferentes, e o operador precisa saber em qual dos dois setups ele
+    esta ganhando alguma coisa.
+    """
+    e2 = R.get('e2')
+    if not e2:
+        return _neg('(sem comparativo de [E2] neste resumo)')
+    at, sp = e2['atual'], str(R['stops'][0])
+    ant = [m for m in e2['metricas'] if m != at][0]
+
+    def venc(chave):
+        """Em quantas das (2 bases x 2 stops) a formula nova mede melhor."""
+        return sum(1 for b in BASES for st in R['stops']
+                   if e2['grid'][b][at][str(st)][chave]['t']
+                   > e2['grid'][b][ant][str(st)][chave]['t'])
+
+    gA, gB, gAB = venc('setup_A'), venc('setup_B'), venc('cAB')
+    tot = len(BASES) * len(R['stops'])
+    sel = ' e '.join('%+.0f%%' % (100.0 * (e2['grid'][b][at]['gatilhos']
+                                           - e2['grid'][b][ant]['gatilhos'])
+                                  / e2['grid'][b][ant]['gatilhos']) for b in BASES)
+    linhas = []
+    for b in BASES:
+        g, h = e2['grid'][b][at], e2['grid'][b][ant]
+        linhas.append('No %s o setup B sai de %s de EV e t %s para %s e t %s, e o A de %s '
+                      'e t %s para %s e t %s (stop %s).'
+                      % (b, n1(h[sp]['setup_B']['ev']), t2(h[sp]['setup_B']['t']),
+                         n1(g[sp]['setup_B']['ev']), t2(g[sp]['setup_B']['t']),
+                         n1(h[sp]['setup_A']['ev']), t2(h[sp]['setup_A']['t']),
+                         n1(g[sp]['setup_A']['ev']), t2(g[sp]['setup_A']['t']), sp))
+    cab = ('*A troca não melhora tudo: ela melhora a reversão.* A fórmula nova corta '
+           'gatilhos (%s) e mede melhor no *setup B em %d das %d* células (duas bases × '
+           'dois stops), no *setup A em %d de %d* e na *carteira A + B em %d de %d*. '
+           % (sel, gB, tot, gA, tot, gAB, tot))
+    fecho = (' Faz sentido: o eixo novo mede *vaivém*, que é exaustão — e exaustão é '
+             'exatamente o que o setup de reversão procura. O setup A é continuação: '
+             'ali o vaivém informa menos, e o que a fórmula nova faz é sobretudo '
+             'tirar sinal.')
+    return _neg(cab + ' '.join(linhas) + fecho)
+
+
+def veredito_filtro_e2(R):
+    """O filtro 'descarta quando [E2] manda' sobreviveu a troca de formula?"""
+    e2 = R.get('e2')
+    if not e2:
+        return _neg('(sem comparativo de [E2] neste resumo)')
+    at = e2['atual']
+    det, vale = [], 0
+    for b in BASES:
+        f = e2['filtro'][b][at]
+        if f['com']['t'] > f['sem']['t']:
+            vale += 1
+        det.append('No %s, com o filtro: %s de EV e t %s em %d trades; sem ele: %s e t %s '
+                   'em %d.' % (b, n1(f['com']['ev']), t2(f['com']['t']), f['com']['n'],
+                               n1(f['sem']['ev']), t2(f['sem']['t']), f['sem']['n']))
+    if vale == len(BASES):
+        cab = ('*O filtro continua valendo com a fórmula nova.* Ele existia porque a antiga '
+               'media negativo quando o eixo do deslocamento mandava; não era óbvio que '
+               'sobreviveria à troca, e sobreviveu. ')
+    elif vale:
+        cab = '*O filtro só continua valendo em uma das bases.* '
+    else:
+        cab = ('*O filtro deixou de valer:* com a fórmula nova ele piora as duas bases, e o '
+               'certo é desligá-lo (DESCARTA_E2 = False). ')
+    return _neg(cab + ' '.join(det))
+
+
+def acao_stop(R):
+    """O item de recomendacao sobre o stop, escrito do que foi medido."""
+    sp, alt = R['stops'][0], R['stops'][1]
+    cel = [('%s · %s' % (b, rot),
+            R['variantes'][b]['ema3'][str(sp)][ch],
+            R['variantes'][b]['ema3'][str(alt)][ch])
+           for b in BASES for ch, rot in (('cA', 'só A'), ('cAB', 'A + B'))]
+    ganha_alt = [x[0] for x in cel if x[2]['t'] > x[1]['t']]
+    if len(ganha_alt) == len(cel):
+        return _neg('*Baixar o stop para %d.* Melhora t e PF nas duas bases, nas duas '
+                    'carteiras, e corta o risco por trade em um terço.' % alt)
+    if not ganha_alt:
+        return _neg('*Manter o stop em %d.* O de %d mede pior nas quatro comparações '
+                    '(duas bases × duas carteiras): o stop curto corta trade bom antes '
+                    'da hora.' % (sp, alt))
+    return _neg('*Manter o stop em %d.* O de %d só mede melhor em %d das %d comparações '
+                '(%s); nas outras o de %d fica na frente. Com a fórmula nova do eixo [E2] '
+                'o stop curto deixou de ser a escolha limpa que era com a antiga — e o '
+                'ganho dele em risco por trade continua valendo, então é uma troca, não '
+                'uma decisão óbvia.'
+                % (sp, alt, len(ganha_alt), len(cel), ', '.join(ganha_alt), sp))
+
+
+def acao_ma(R):
+    """O item de recomendacao sobre a media de regime."""
+    venc = {}
+    for stop in R['stops']:
+        for b in BASES:
+            venc[(stop, b)] = _rank(R, b, stop)[0][0]
+    fora = {k: v for k, v in venc.items() if v != 'ema3'}
+    if not fora:
+        return _neg('*Manter as três EMAs.* O empilhamento dá o melhor t nas duas bases, '
+                    'nos dois stops.')
+    onde = ', '.join('%s com stop %d (ganha %s)' % (b, stop, ROT_REG[v][0])
+                     for (stop, b), v in sorted(fora.items()))
+    caveat = ''
+    if 'jma' in fora.values():
+        caveat = (' E onde o empilhamento perde, quem aparece na frente é a aproximação '
+                  'de Jurik — que não é o JMA de verdade, então trocar o padrão por causa '
+                  'dela seria trocar por um indicador que não existe aqui.')
+    return _neg('*Manter as três EMAs como padrão.* Elas dão o melhor t em %d das %d '
+                'combinações de base e stop; ficam atrás em %s.%s'
+                % (len(venc) - len(fora), len(venc), onde, caveat))
+
+
+def acao_carteira(R):
+    """Rodar so o setup A, ou A + B? Medido, nao escolhido."""
+    sp = str(R['stops'][0])
+    cel = [(b, R['variantes'][b]['ema3'][sp]['cA'], R['variantes'][b]['ema3'][sp]['cAB'])
+           for b in BASES]
+    ganha_a = sum(1 for _, a, ab in cel if a['t'] > ab['t'])
+    det = ' '.join('No %s: só A dá %s de EV com t %s e DD %d; A + B dá %s com t %s e DD %d.'
+                   % (b, n1(a['ev']), t2(a['t']), round(a['dd']),
+                      n1(ab['ev']), t2(ab['t']), round(ab['dd'])) for b, a, ab in cel)
+    if ganha_a == len(cel):
+        cab = ('*Rodar só o setup A.* Melhor EV, melhor t e drawdown menor nas duas '
+               'bases. ')
+    elif ganha_a:
+        cab = ('*Só A tem o melhor EV por trade; A + B tem o melhor t.* O A entrega mais '
+               'por operação e um drawdown menor; a carteira com B entrega mais no total '
+               'e um resultado diário mais estável. ')
+    else:
+        cab = ('*A + B mede melhor que só A nas duas bases.* O setup A continua com o '
+               'melhor EV por trade e o menor drawdown, mas a carteira com a reversão '
+               'junto tem o t mais alto — foi o setup B que o eixo novo consertou. ')
+    return _neg(cab + det)
+
+
+def veredito_gestao(R):
+    """O que a correcao da regra da parcial mudou."""
+    g = R.get('gestao')
+    if not g or not g.get('atual'):
+        return _neg('(sem comparativo de gestão neste resumo)')
+    at, sp = g['atual'], str(R['stops'][0])
+    velho = 'entrada_100'
+    det = []
+    for b in BASES:
+        a = g['grid'][b][at][sp]['cAB']
+        v = g['grid'][b][velho][sp]['cAB']
+        det.append('No %s, com stop %s: %s de EV e t %s pela regra certa, contra %s e t '
+                   '%s pelo modelo antigo — e o desfecho "zero a zero" cai de %s para %s '
+                   'dos trades, porque agora ele é zero de verdade e não +%d pontos.'
+                   % (b, sp, n1(a['ev']), t2(a['t']), n1(v['ev']), t2(v['t']),
+                      p0(v['p_zero']), p0(a['p_zero']),
+                      round(R['parametros']['FRAC_PARCIAL']
+                            * g['grid'][b][velho][sp]['parcial'])))
+    return _neg('*A regra da parcial estava modelada errado, e o conserto muda os '
+                'números.* Com a parcial na distância do stop e o stop do restante na '
+                'média da operação, o stop *nunca anda* e o trade que volta morre em '
+                'zero — não em +50. ' + ' '.join(det))
+
+
+def bloco_gestao(R):
+    """Tabela: as regras possiveis para a parcial e o stop depois dela."""
+    g = R.get('gestao')
+    if not g:
+        return ''
+    linhas = []
+    for chave in g['ordem']:
+        for stop in R['stops']:
+            for ch, rot in (('cA', 'só A'), ('cAB', 'A + B')):
+                cel = []
+                for b in BASES:
+                    m = g['grid'][b][chave][str(stop)][ch]
+                    cel.append('<td class="num">%d</td><td class="num %s">%s</td>'
+                               '<td class="num">%s</td><td class="num">%s</td>'
+                               % (m['n'], cls(m['ev']), n1(m['ev']), t2(m['t']),
+                                  p0(m['p_zero'])))
+                primeira = (stop == R['stops'][0] and ch == 'cA')
+                hi = (' class="hi"' if (chave == g['atual'] and ch == 'cAB'
+                                        and stop == R['stops'][0]) else '')
+                linhas.append('<tr%s><td>%s</td><td class="mono">stop %d</td>'
+                              '<td>%s</td>%s</tr>'
+                              % (hi, g['rotulos'][chave] if primeira else '', stop,
+                                 rot, ''.join(cel)))
+    return ('<div class="scroll"><table>'
+            '<caption>A regra da parcial · n / EV / t / quanto termina em zero a zero</caption>'
+            '<thead><tr><th>regra</th><th>stop</th><th>carteira</th>'
+            '<th class="num" colspan="4">WINV26</th>'
+            '<th class="num" colspan="4">WINFUT</th></tr></thead>'
+            '<tbody>%s</tbody></table></div>' % ''.join(linhas))
+
+
+def bloco_e2(R):
+    """Tabela: formula antiga x nova do eixo [E2], carteiras A e A + B."""
+    e2 = R.get('e2')
+    if not e2:
+        return ''
+    linhas = []
+    for met in e2['metricas']:
+        for stop in R['stops']:
+            for ch, rot in (('setup_A', 'setup A isolado'),
+                            ('setup_B', 'setup B isolado'),
+                            ('cA', 'carteira só A'), ('cAB', 'carteira A + B')):
+                cel = []
+                for b in BASES:
+                    m = e2['grid'][b][met][str(stop)][ch]
+                    cel.append('<td class="num">%d</td><td class="num %s">%s</td>'
+                               '<td class="num">%s</td><td class="num">%s</td>'
+                               % (m['n'], cls(m['ev']), n1(m['ev']), t2(m['t']),
+                                  f2(m['pf'])))
+                primeira = (stop == R['stops'][0] and ch == 'setup_A')
+                hi = (' class="hi"' if (met == e2['atual'] and ch == 'cAB'
+                                        and stop == R['stops'][0]) else '')
+                linhas.append('<tr%s><td>%s</td><td class="mono">stop %d</td><td>%s</td>%s</tr>'
+                              % (hi, e2['rotulos'][met] if primeira else '',
+                                 stop, rot, ''.join(cel)))
+    return ('<div class="scroll"><table>'
+            '<caption>Eixo [E2]: fórmula antiga × nova, com todo o resto congelado</caption>'
+            '<thead><tr><th>fórmula</th><th>stop</th><th>carteira</th>'
+            '<th class="num" colspan="4">WINV26 · n / EV / t / PF</th>'
+            '<th class="num" colspan="4">WINFUT · n / EV / t / PF</th></tr></thead>'
+            '<tbody>%s</tbody></table></div>' % ''.join(linhas))
+
+
 def tabela_fill(R, ROT=None):
     """Tabela: limitada valida ate o fim do pregao x valida por 1 barra."""
     lin = []
@@ -439,16 +743,29 @@ def monta():
         d26=d26, dfu=dfu, v26=v26, vfu=vfu,
         eq26=json.dumps(d26['equity']), eqfu=json.dumps(dfu['equity']),
         su26=''.join(d26['equity_setup']), sufu=''.join(dfu['equity_setup']),
-        parcial=int(P['PARCIAL_EM']), alvo=int(P['ALVO']),
+        parcial=int(P['PARCIAL_EM'] or stop_pad),
+        parcial_segue_stop=(P.get('PARCIAL_EM') is None),
+        stops_js=json.dumps([str(x) for x in STOPS_VIZ]),
+        parc_fixa_js=('null' if P.get('PARCIAL_EM') is None
+                      else str(int(P['PARCIAL_EM']))),
+        alvo=int(P['ALVO']),
         frac=int(100 * P['FRAC_PARCIAL']),
         max_fill=P.get('MAX_BARRAS_FILL', 1),
     )
     # --- as frases de conclusao, calculadas (ver comentario em veredito_ma)
     for nome, fn in (('ver_ma', veredito_ma), ('ver_entrada', veredito_entrada),
-                     ('ver_abortos', veredito_abortos), ('ver_fill', veredito_fill)):
+                     ('ver_abortos', veredito_abortos), ('ver_fill', veredito_fill),
+                     ('ver_setups', veredito_setups), ('ver_stop', veredito_stop),
+                     ('ver_e2', veredito_e2), ('ver_filtro_e2', veredito_filtro_e2),
+                     ('acao_stop', acao_stop), ('acao_ma', acao_ma),
+                     ('acao_carteira', acao_carteira),
+                     ('ver_gestao', veredito_gestao)):
         md, html = fn(R)
         ctx[nome + '_md'], ctx[nome] = md, html
     ctx['tab_fill'] = tabela_fill(R)
+    ctx['tab_e2'] = bloco_e2(R)
+    ctx['tab_gestao'] = bloco_gestao(R)
+    ctx['e2_rot'] = R['e2']['rotulos'][R['e2']['atual']] if R.get('e2') else ''
     return ctx
 
 

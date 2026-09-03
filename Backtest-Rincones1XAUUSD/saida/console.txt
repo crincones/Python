@@ -1,0 +1,220 @@
+==============================================================================================================
+BACKTEST RINCONES1 XAUUSD  -  ouro, barras de 521 ticks
+gestao: parcial 50% na distancia do stop | stop apos a parcial: media | alvo 10.50 | stop: 7.00 e 3.50
+gatilho: indice [E4] >= 0.90 | direcao do candle | geometria inversa (pos 60) | corpo <= 50%
+entrada: fecha | custo: 0.00 USD | 1 USD de movimento = 100 USD por lote
+==============================================================================================================
+
+  DE QUE EIXO E O INDICE  (carteira completa, stop 7.00)
+    COMPLETO  E4 (nível 0.90)                                      | n=571  EV +1.202 t +3.89 PF 1.42
+    COMPLETO  E2+E3+E4 (nível 0.80)                                | n=579  EV +0.507 t +1.80 PF 1.16
+    COMPLETO  E2+E4 (nível 0.85)                                   | n=504  EV +0.268 t +0.77 PF 1.08
+    COMPLETO  E3+E4 (nível 0.85)                                   | n=582  EV +0.427 t +1.63 PF 1.13
+    COMPLETO  E2+E3 (nível 0.80)                                   | n=1114 EV +0.336 t +1.28 PF 1.10
+    METADE_1  E4 (nível 0.90)                                      | n=281  EV +0.993 t +2.15 PF 1.33
+    METADE_1  E2+E3+E4 (nível 0.80)                                | n=290  EV +0.242 t +0.58 PF 1.07
+    METADE_1  E2+E4 (nível 0.85)                                   | n=245  EV -0.320 t -0.68 PF 0.91
+    METADE_1  E3+E4 (nível 0.85)                                   | n=299  EV +0.437 t +1.24 PF 1.14
+    METADE_1  E2+E3 (nível 0.80)                                   | n=570  EV -0.103 t -0.24 PF 0.97
+    METADE_2  E4 (nível 0.90)                                      | n=290  EV +1.404 t +3.38 PF 1.51
+    METADE_2  E2+E3+E4 (nível 0.80)                                | n=289  EV +0.772 t +2.06 PF 1.25
+    METADE_2  E2+E4 (nível 0.85)                                   | n=259  EV +0.824 t +1.64 PF 1.27
+    METADE_2  E3+E4 (nível 0.85)                                   | n=283  EV +0.417 t +1.06 PF 1.13
+    METADE_2  E2+E3 (nível 0.80)                                   | n=544  EV +0.795 t +2.73 PF 1.25
+
+  A DIRECAO E DO CANDLE OU DO DELTA?  (carteira completa, stop 7.00)
+    COMPLETO  direção do próprio candle                            | n=571  EV +1.202 t +3.89 PF 1.42
+    COMPLETO  direção do delta (tick rule)                         | n=701  EV +0.483 t +1.81 PF 1.15
+    METADE_1  direção do próprio candle                            | n=281  EV +0.993 t +2.15 PF 1.33
+    METADE_1  direção do delta (tick rule)                         | n=343  EV +0.444 t +1.36 PF 1.14
+    METADE_2  direção do próprio candle                            | n=290  EV +1.404 t +3.38 PF 1.51
+    METADE_2  direção do delta (tick rule)                         | n=357  EV +0.541 t +1.28 PF 1.17
+
+  O FILTRO DE FORMA DA BARRA  (carteira completa, stop 7.00)
+    COMPLETO  sem filtro de forma                                  | n=2550 EV -0.041 t -0.31 PF 0.99
+    COMPLETO  só corpo pequeno                                     | n=1347 EV +0.390 t +1.73 PF 1.12
+    COMPLETO  clássica (corpo do lado da rejeição) — a regra do WI | n=743  EV -0.075 t -0.32 PF 0.98
+    COMPLETO  inversa (corpo do lado oposto)                       | n=571  EV +1.202 t +3.89 PF 1.42
+    METADE_1  sem filtro de forma                                  | n=1383 EV -0.141 t -0.84 PF 0.96
+    METADE_1  só corpo pequeno                                     | n=672  EV +0.180 t +0.58 PF 1.05
+    METADE_1  clássica (corpo do lado da rejeição) — a regra do WI | n=342  EV +0.453 t +1.42 PF 1.14
+    METADE_1  inversa (corpo do lado oposto)                       | n=281  EV +0.993 t +2.15 PF 1.33
+    METADE_2  sem filtro de forma                                  | n=1166 EV +0.058 t +0.27 PF 1.02
+    METADE_2  só corpo pequeno                                     | n=674  EV +0.586 t +1.78 PF 1.18
+    METADE_2  clássica (corpo do lado da rejeição) — a regra do WI | n=400  EV -0.549 t -1.68 PF 0.85
+    METADE_2  inversa (corpo do lado oposto)                       | n=290  EV +1.404 t +3.38 PF 1.51
+
+  A ENTRADA  (carteira completa, stop 7.00)
+    COMPLETO  a mercado no fechamento do candle                    | n=571  EV +1.202 t +3.89 PF 1.42
+    COMPLETO  limitada no meio do candle, válida por 1 barra       | n=577  EV -0.649 t -2.10 PF 0.83
+    METADE_1  a mercado no fechamento do candle                    | n=281  EV +0.993 t +2.15 PF 1.33
+    METADE_1  limitada no meio do candle, válida por 1 barra       | n=284  EV -0.638 t -1.39 PF 0.83
+    METADE_2  a mercado no fechamento do candle                    | n=290  EV +1.404 t +3.38 PF 1.51
+    METADE_2  limitada no meio do candle, válida por 1 barra       | n=293  EV -0.661 t -1.57 PF 0.83
+
+  O EIXO [E2]: FORMULA ANTIGA x NOVA  (carteira completa, stop 7.00)
+    COMPLETO  v1 · |delta| / |Close-Open|                          | n=419  EV +0.017 t +0.05 PF 1.00
+    COMPLETO  v2 · (|delta|/esforço) × volta                       | n=579  EV +0.507 t +1.80 PF 1.16
+    METADE_1  v1 · |delta| / |Close-Open|                          | n=238  EV -0.507 t -1.13 PF 0.86
+    METADE_1  v2 · (|delta|/esforço) × volta                       | n=290  EV +0.242 t +0.58 PF 1.07
+    METADE_2  v1 · |delta| / |Close-Open|                          | n=181  EV +0.705 t +1.51 PF 1.23
+    METADE_2  v2 · (|delta|/esforço) × volta                       | n=289  EV +0.772 t +2.06 PF 1.25
+
+  A REGRA DA PARCIAL  (carteira completa, stop 7.00)
+    COMPLETO  parcial na distância do stop · stop na média da oper | n=571  EV +1.202 t +3.89 PF 1.42
+    COMPLETO  parcial em metade do stop · stop na média da operaçã | n=594  EV +0.834 t +3.63 PF 1.44
+    COMPLETO  parcial em metade do stop · stop na entrada (o model | n=615  EV +0.792 t +3.99 PF 1.42
+    METADE_1  parcial na distância do stop · stop na média da oper | n=281  EV +0.993 t +2.15 PF 1.33
+    METADE_1  parcial em metade do stop · stop na média da operaçã | n=290  EV +0.811 t +2.18 PF 1.42
+    METADE_1  parcial em metade do stop · stop na entrada (o model | n=298  EV +0.789 t +2.43 PF 1.41
+    METADE_2  parcial na distância do stop · stop na média da oper | n=290  EV +1.404 t +3.38 PF 1.51
+    METADE_2  parcial em metade do stop · stop na média da operaçã | n=304  EV +0.857 t +3.05 PF 1.47
+    METADE_2  parcial em metade do stop · stop na entrada (o model | n=317  EV +0.796 t +3.31 PF 1.43
+
+  ESTABILIDADE  nivel do indice x corte de posicao do corpo (stop 7.00, EV)
+    base      nivel  pos50 pos55 pos60 pos65 pos70
+    COMPLETO  0.80    +0.26  +0.27  +0.37  +0.53  +0.21
+    COMPLETO  0.85    +0.51  +0.46  +0.59  +0.69  +0.40
+    COMPLETO  0.90    +0.81  +0.89  +1.20  +1.14  +0.91
+    COMPLETO  0.95    +0.57  +0.56  +0.73  +0.70  +0.66
+    METADE_1  0.80    +0.14  +0.24  +0.44  +0.67  +0.53
+    METADE_1  0.85    +0.27  +0.36  +0.53  +0.59  +0.35
+    METADE_1  0.90    +0.28  +0.56  +0.99  +0.94  +0.87
+    METADE_1  0.95    -0.26  +0.04  +0.29  +0.19  +0.14
+    METADE_2  0.80    +0.38  +0.29  +0.28  +0.36  -0.13
+    METADE_2  0.85    +0.76  +0.57  +0.66  +0.79  +0.46
+    METADE_2  0.90    +1.34  +1.22  +1.40  +1.33  +0.94
+    METADE_2  0.95    +1.39  +1.06  +1.14  +1.16  +1.17
+
+##############################################################################################################
+# COMPLETO  (amostra inteira)
+##############################################################################################################
+
+  MEDIA DE REGIME x DESEMPENHO  (stop 7.00)
+    media   %tend | setup A isolado          carteira A+B+C+L        
+    ema3      80% | n=190   +0.515 t+1.05    n=571   +1.202 t+3.89   
+    kama      46% | n=123   +1.851 t+2.77    n=571   +1.202 t+3.89   
+    hma       95% | n=339   +1.276 t+3.15    n=571   +1.202 t+3.89   
+    t3        90% | n=214   +0.856 t+1.67    n=571   +1.202 t+3.89   
+    jma       92% | n=295   +1.486 t+3.27    n=571   +1.202 t+3.89   
+
+  MEDIA DE REGIME x DESEMPENHO  (stop 3.50)
+    media   %tend | setup A isolado          carteira A+B+C+L        
+    ema3      80% | n=190   +0.382 t+1.25    n=625   +0.425 t+2.48   
+    kama      46% | n=123   +1.148 t+3.06    n=625   +0.425 t+2.48   
+    hma       95% | n=339   +0.782 t+3.04    n=625   +0.425 t+2.48   
+    t3        90% | n=214   +0.442 t+1.66    n=625   +0.425 t+2.48   
+    jma       92% | n=295   +0.920 t+3.50    n=625   +0.425 t+2.48   
+
+  CONFIGURACAO PADRAO (ema3) -- por carteira
+                                      n /preg       EV     total acerto      t dias+    PF     DD
+  stop 7.00 · só A                  180   2.5   +0.539     +97.0  45.0%  +1.09   54%  1.17   68.2
+  stop 7.00 · A + B                 291   3.5   +0.837    +243.5  46.7%  +1.92   65%  1.27   98.5
+  stop 7.00 · A + B + C             327   3.8   +0.806    +263.4  46.5%  +1.97   62%  1.26   80.7
+  stop 7.00 · tudo (A+B+C+L)        571   6.7   +1.202    +686.1  48.3%  +3.89   65%  1.42   73.6
+  stop 3.50 · só A                  181   2.5   +0.329     +59.5  29.8%  +1.07   43%  1.20   28.0
+  stop 3.50 · A + B                 297   3.5   +0.270     +80.3  29.3%  +1.12   45%  1.16   42.0
+  stop 3.50 · A + B + C             336   4.0   +0.235     +78.8  28.9%  +1.05   46%  1.14   42.0
+  stop 3.50 · tudo (A+B+C+L)        625   7.4   +0.425    +265.7  30.2%  +2.48   54%  1.27   48.2
+
+  SETUPS ISOLADOS (stop 7.00)
+  A · tendência (pullback na média)  190   2.6   +0.515     +97.8  44.7%  +1.05   56%  1.16   74.2
+  B · reversão rápida no afastamento  133   2.0   +1.125    +149.7  48.9%  +1.64   54%  1.38   99.2
+  C · reversão em consolidação       43   1.2   +0.713     +30.7  44.2%  +0.62   49%  1.23   59.5
+  L · livre (nenhum regime reivindicou)  342   4.1   +1.499    +512.7  49.1%  +3.27   63%  1.56   74.8
+
+  CUSTO POR TRADE (stop 7.00, carteira completa)
+  custo de 0.00 USD                 571   6.7   +1.202    +686.1  48.3%  +3.89   65%  1.42   73.6
+  custo de 0.10 USD                 571   6.7   +1.102    +629.0  48.2%  +3.56   64%  1.38   75.9
+  custo de 0.20 USD                 571   6.7   +1.002    +571.9  47.8%  +3.23   64%  1.34   78.2
+  custo de 0.50 USD                 571   6.7   +0.702    +400.6  47.6%  +2.25   62%  1.22   85.1
+
+##############################################################################################################
+# METADE_1  (1ª metade)
+##############################################################################################################
+
+  MEDIA DE REGIME x DESEMPENHO  (stop 7.00)
+    media   %tend | setup A isolado          carteira A+B+C+L        
+    ema3      80% | n=84    +0.096 t+0.13    n=281   +0.993 t+2.15   
+    kama      45% | n=52    +1.467 t+1.29    n=281   +0.993 t+2.15   
+    hma       94% | n=153   +1.115 t+1.92    n=281   +0.993 t+2.15   
+    t3        90% | n=100   +0.520 t+0.65    n=281   +0.993 t+2.15   
+    jma       92% | n=128   +1.231 t+1.83    n=281   +0.993 t+2.15   
+
+  MEDIA DE REGIME x DESEMPENHO  (stop 3.50)
+    media   %tend | setup A isolado          carteira A+B+C+L        
+    ema3      80% | n=84    +0.387 t+0.88    n=304   +0.419 t+1.63   
+    kama      45% | n=52    +0.895 t+1.60    n=304   +0.419 t+1.63   
+    hma       94% | n=153   +0.601 t+1.71    n=304   +0.419 t+1.63   
+    t3        90% | n=100   +0.147 t+0.34    n=304   +0.419 t+1.63   
+    jma       92% | n=128   +0.746 t+1.83    n=304   +0.419 t+1.63   
+
+  CONFIGURACAO PADRAO (ema3) -- por carteira
+                                      n /preg       EV     total acerto      t dias+    PF     DD
+  stop 7.00 · só A                   79   2.3   +0.136     +10.8  43.0%  +0.18   50%  1.04   68.2
+  stop 7.00 · A + B                 146   3.5   -0.043      -6.3  41.8%  -0.07   55%  0.99   98.5
+  stop 7.00 · A + B + C             165   3.9   +0.188     +31.0  43.0%  +0.31   52%  1.06   80.7
+  stop 7.00 · tudo (A+B+C+L)        281   6.7   +0.993    +278.9  47.3%  +2.15   57%  1.33   60.2
+  stop 3.50 · só A                   80   2.4   +0.331     +26.5  28.7%  +0.79   41%  1.20   19.0
+  stop 3.50 · A + B                 149   3.5   +0.176     +26.2  28.2%  +0.56   43%  1.10   41.1
+  stop 3.50 · A + B + C             169   4.0   +0.271     +45.8  29.0%  +0.92   45%  1.16   37.6
+  stop 3.50 · tudo (A+B+C+L)        304   7.2   +0.419    +127.3  30.3%  +1.63   55%  1.26   48.2
+
+  SETUPS ISOLADOS (stop 7.00)
+  A · tendência (pullback na média)   84   2.5   +0.096      +8.0  42.9%  +0.13   53%  1.03   74.2
+  B · reversão rápida no afastamento   74   2.1   -0.061      -4.5  41.9%  -0.06   42%  0.98   99.2
+  C · reversão em consolidação       22   1.2   +2.030     +44.7  50.0%  +1.53   61%  1.87   15.5
+  L · livre (nenhum regime reivindicou)  157   3.7   +1.670    +262.1  49.7%  +2.39   62%  1.65   43.2
+
+  CUSTO POR TRADE (stop 7.00, carteira completa)
+  custo de 0.00 USD                 281   6.7   +0.993    +278.9  47.3%  +2.15   57%  1.33   60.2
+  custo de 0.10 USD                 281   6.7   +0.893    +250.8  47.0%  +1.93   57%  1.29   63.5
+  custo de 0.20 USD                 281   6.7   +0.793    +222.7  47.0%  +1.71   57%  1.26   66.8
+  custo de 0.50 USD                 281   6.7   +0.493    +138.4  46.6%  +1.06   55%  1.15   76.7
+
+##############################################################################################################
+# METADE_2  (2ª metade)
+##############################################################################################################
+
+  MEDIA DE REGIME x DESEMPENHO  (stop 7.00)
+    media   %tend | setup A isolado          carteira A+B+C+L        
+    ema3      81% | n=106   +0.847 t+1.31    n=290   +1.404 t+3.38   
+    kama      46% | n=71    +2.133 t+2.63    n=290   +1.404 t+3.38   
+    hma       95% | n=186   +1.409 t+2.48    n=290   +1.404 t+3.38   
+    t3        91% | n=114   +1.152 t+1.74    n=290   +1.404 t+3.38   
+    jma       92% | n=167   +1.682 t+2.72    n=290   +1.404 t+3.38   
+
+  MEDIA DE REGIME x DESEMPENHO  (stop 3.50)
+    media   %tend | setup A isolado          carteira A+B+C+L        
+    ema3      81% | n=106   +0.378 t+0.88    n=321   +0.431 t+1.86   
+    kama      46% | n=71    +1.334 t+2.62    n=321   +0.431 t+1.86   
+    hma       95% | n=186   +0.932 t+2.52    n=321   +0.431 t+1.86   
+    t3        91% | n=114   +0.701 t+2.19    n=321   +0.431 t+1.86   
+    jma       92% | n=167   +1.054 t+3.08    n=321   +0.431 t+1.86   
+
+  CONFIGURACAO PADRAO (ema3) -- por carteira
+                                      n /preg       EV     total acerto      t dias+    PF     DD
+  stop 7.00 · só A                  101   2.7   +0.854     +86.2  46.5%  +1.33   58%  1.28   49.1
+  stop 7.00 · A + B                 145   3.5   +1.723    +249.9  51.7%  +3.23   76%  1.64   32.6
+  stop 7.00 · A + B + C             162   3.8   +1.434    +232.4  50.0%  +2.68   72%  1.50   46.6
+  stop 7.00 · tudo (A+B+C+L)        290   6.7   +1.404    +407.1  49.3%  +3.38   72%  1.51   73.6
+  stop 3.50 · só A                  101   2.7   +0.327     +33.0  30.7%  +0.73   45%  1.19   28.0
+  stop 3.50 · A + B                 148   3.5   +0.365     +54.0  30.4%  +0.98   48%  1.22   42.0
+  stop 3.50 · A + B + C             167   3.9   +0.198     +33.0  28.7%  +0.59   47%  1.11   38.5
+  stop 3.50 · tudo (A+B+C+L)        321   7.5   +0.431    +138.3  30.2%  +1.86   53%  1.27   42.5
+
+  SETUPS ISOLADOS (stop 7.00)
+  A · tendência (pullback na média)  106   2.8   +0.847     +89.8  46.2%  +1.31   58%  1.28   40.4
+  B · reversão rápida no afastamento   59   1.8   +2.614    +154.2  57.6%  +2.83   69%  2.08   22.2
+  C · reversão em consolidação       21   1.1   -0.667     -14.0  38.1%  -0.36   37%  0.83   59.5
+  L · livre (nenhum regime reivindicou)  185   4.4   +1.355    +250.6  48.6%  +2.21   64%  1.49   73.0
+
+  CUSTO POR TRADE (stop 7.00, carteira completa)
+  custo de 0.00 USD                 290   6.7   +1.404    +407.1  49.3%  +3.38   72%  1.51   73.6
+  custo de 0.10 USD                 290   6.7   +1.304    +378.1  49.3%  +3.14   70%  1.46   75.9
+  custo de 0.20 USD                 290   6.7   +1.204    +349.1  48.6%  +2.89   70%  1.42   78.2
+  custo de 0.50 USD                 290   6.7   +0.904    +262.1  48.6%  +2.16   70%  1.30   85.1
+
+==============================================================================================================
+Rode `python relatorio.py` e `python plano.py` para regerar os documentos a partir destes numeros.
+==============================================================================================================

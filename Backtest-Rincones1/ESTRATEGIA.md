@@ -16,15 +16,17 @@ O gatilho sozinho não sabe distinguir "pullback numa tendência" de "esticada b
 
 ## 2. O gatilho de esforço
 
-Reimplementação exata do indicador já validado em `ProfitChart/Indicadores/Grafico-Ticks/Ticks_Esforco_Reversao.ntsl` (aquele arquivo tem o histórico completo de como cada peça foi medida).
+Reimplementação exata do indicador já validado em `ProfitChart/Indicadores/Grafico-Ticks/Ticks_Esforco_Reversao.ntsl`, com o eixo **E2 na versão nova** — a de `Ticks_Esforco_Hist_v2.ntsl`. Aqueles dois arquivos têm o histórico completo de como cada peça foi medida.
 
 Em barra de tick o **número de negócios é constante** — toda barra tem 10.000. Então "esforço" não pode ser contagem de negócio. O que varia são três coisas, medidas **separadamente** e convertidas cada uma em **percentil das 20 barras válidas anteriores**:
 
 | eixo | fórmula | o que captura |
 |---|---|---|
 | **E1 volume** | `AgrBuy + AgrSell` | tamanho médio do lote atravessando o livro |
-| **E2 deslocamento** | `\|delta\| / \|Close−Open\|` | agressão líquida gasta por ponto andado |
+| **E2 vaivém** | `(\|delta\|/esforço) × volta`, com `volta = 1 − \|Close−Open\|/percurso` e `percurso = 2·(High−Low) − \|Close−Open\|` | agressão de um lado só que terminou desfeita — o quanto do caminho andado dentro da barra foi refeito de volta |
 | **E3 tempo** | `1 / BarDurationF()` | velocidade: quão rápido os 10.000 negócios saíram |
+
+> **O eixo E2 mudou.** Ele era `|delta| / |Close−Open|`: agressão por ponto de *saldo*. Saldo não é caminho — uma barra que sobe 60, cai 65 e fecha 30 acima da abertura tem o mesmo `|Close−Open|` de uma que sobe 30 em linha reta. `percurso` é o menor caminho compatível com o OHLC, e `volta` é a fração dele que foi desfeita. As duas peças entram como **produto de frações entre 0 e 1, não como razão**: razão entre peças de dispersão muito diferente mede só a mais volátil das duas (é por isso que `|delta| / percurso`, a troca óbvia, não serve — vira `|delta|` disfarçado, ρ +0,93). Derivação e medição em `Ticks_Esforco_Hist_v2.ntsl`; o efeito no backtest está em [RESULTADOS.md § 2](RESULTADOS.md).
 
 > `BarDurationF()` devolve **minutos**, não milissegundos. A coluna `BarDurationF*1000` do CSV exportado é milésimo de minuto. Conferido contra o relógio do pregão: razão 1,0032.
 
@@ -47,7 +49,7 @@ E2 NÃO é o eixo dominante   (descarta se pD ≥ pV e pD ≥ pT)
 Duas condições merecem nota porque foram medidas, não escolhidas:
 
 - **`corpo ≤ 50%`** é obrigatório com entrada por ordem limitada. Sem ele, a distância entre o fechamento do sinal e o meio do candle sobe de ~20 para ~35 pontos, e você só é preenchido nos sinais que primeiro andaram contra — seleção adversa mecânica.
-- **`E2 não dominante`** vem de uma medição independente: quando o eixo do deslocamento é o maior dos três, a leitura do indicador falha (mede negativo nos dois arquivos). É o filtro de maior ganho isolado.
+- **`E2 não dominante`** vem de uma medição independente: quando o eixo do deslocamento é o maior dos três, a leitura do indicador falha (mede negativo nos dois arquivos). É o filtro de maior ganho isolado. **Ele foi remedido com a fórmula nova de E2 e continua valendo** — ver [RESULTADOS.md § 2](RESULTADOS.md).
 
 ---
 
@@ -168,8 +170,13 @@ Alternativa disponível: `ENTRADA = 'fecha'` (a mercado no fechamento da barra d
 
 ```
 stop inicial      150 pontos (padrao) ou 100 (variante medida)
-parcial           50% da posição em +100 pontos
-                  → nesse momento o stop do restante vai para a ENTRADA (zero a zero)
+parcial           50% da posição na MESMA DISTÂNCIA DO STOP (+150 com stop 150)
+                  → o stop do restante vai para a MÉDIA DA OPERAÇÃO: o preço em que
+                    o já realizado cancela a perda do resto. Com meia posição e a
+                    parcial na distância do stop, esse preço É o stop inicial —
+                    o stop NÃO ANDA, e o desfecho "zero a zero" é zero de verdade.
+                  → o stop nunca se AFASTA: se a média cair mais longe que o stop
+                    inicial, vale o stop inicial
 alvo do restante  300 pontos
 saída forçada     fechamento da última barra do pregão
 ```
@@ -179,8 +186,8 @@ Resultado por trade, em pontos, para 1 unidade de posição:
 | desfecho | P&L |
 |---|---|
 | stop antes da parcial | **−150** |
-| parcial e depois zero a zero | **+50** |
-| parcial e depois alvo | **+50 + 150 = +200** |
+| parcial e depois o stop | **+75 − 75 = 0** |
+| parcial e depois alvo | **+75 + 150 = +225** |
 | fim de pregão | parcial (se houve) + marcação a mercado do restante |
 
 ### Regras da simulação (o que evita enganar a si mesmo)
@@ -199,13 +206,14 @@ Todos no topo de `engine.py`.
 
 | grupo | parâmetro | valor | origem |
 |---|---|---|---|
-| gestão | `STOP` / `PARCIAL_EM` / `ALVO` | 150 / 100 / 300 | **pedido pelo Carlos**; stop 100 medido lado a lado |
+| gestão | `STOP` / `PARCIAL_EM` / `ALVO` | 150 / 100 / 300 | **pedido pelo Carlos**; stop 100 medido lado a lado — com o E2 novo o de 150 passou a medir melhor, ver § 6 |
 | execução | `MAX_BARRAS_FILL` | 1 | **pedido pelo Carlos** — a regra da barra seguinte; custo medido em § 5 |
 | | `FRAC_PARCIAL` | 0,50 | pedido |
 | gatilho | `NIVEL_MIN` | 0,80 | medido (platô de 0,75 a 0,85) |
 | | `CORTE_POSICAO` | 50 | do indicador original |
 | | `CORPO_MAX` | 50 | medido — obrigatório com limitada |
-| | `DESCARTA_E2` | True | medido |
+| gatilho | `METRICA_E2` | 2 | medido — a fórmula do eixo E2; 0 é a antiga |
+| | `DESCARTA_E2` | True | medido, e remedido com a fórmula nova |
 | | `PERIODO_REF` | 20 | medido (melhor nos dois) |
 | regime | `REGIME_MA` | `ema3` | medido contra kama / hma / t3 / jma |
 | médias | `EMA_R/M/L` | 21 / 42 / 72 | herdado do repositório |

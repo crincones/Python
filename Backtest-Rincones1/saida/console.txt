@@ -1,8 +1,22 @@
 ========================================================================================================
 BACKTEST RINCONES1  -  WIN, barras de 10.000 ticks
-gestao: parcial 50% em +100 (zera o risco) | alvo 300 | stop: 150 e 100
+gestao: parcial 50% na distancia do stop | stop apos a parcial: media | alvo 300 | stop: 150 e 100
 entrada: ordem limitada no meio do candle, valida por 1 barra(s) | custo: 0.0 pts
 ========================================================================================================
+
+  A REGRA DA PARCIAL  (ema3, carteira A + B)
+    WINV26  parcial na distância do stop · stop na média da operação | stop 150: EV  +77.5 t+3.39 | stop 100: EV  +51.7 t+2.73
+    WINV26  parcial em +100 · stop na média da operação          | stop 150: EV  +65.3 t+3.25 | stop 100: EV  +51.7 t+2.73
+    WINV26  parcial em +100 · stop na entrada (o modelo antigo)  | stop 150: EV  +48.3 t+2.48 | stop 100: EV  +40.0 t+2.33
+    WINFUT  parcial na distância do stop · stop na média da operação | stop 150: EV  +43.0 t+2.84 | stop 100: EV  +28.2 t+2.27
+    WINFUT  parcial em +100 · stop na média da operação          | stop 150: EV  +41.1 t+3.21 | stop 100: EV  +28.2 t+2.27
+    WINFUT  parcial em +100 · stop na entrada (o modelo antigo)  | stop 150: EV  +36.5 t+2.89 | stop 100: EV  +26.0 t+2.33
+
+  O EIXO [E2]: FORMULA ANTIGA x NOVA  (ema3, carteira A + B)
+    WINV26  v1 · |delta| / |Close-Open|      gatilhos=  106 | stop 150: EV  +44.0 t+1.81 n= 63 | stop 100: EV  +53.1 t+2.79 n= 64
+    WINV26  v2 · (|delta|/esforço) × volta   gatilhos=   94 | stop 150: EV  +77.5 t+3.39 n= 59 | stop 100: EV  +51.7 t+2.73 n= 60
+    WINFUT  v1 · |delta| / |Close-Open|      gatilhos=  295 | stop 150: EV  +28.8 t+2.14 n=184 | stop 100: EV  +28.8 t+2.75 n=185
+    WINFUT  v2 · (|delta|/esforço) × volta   gatilhos=  246 | stop 150: EV  +43.0 t+2.84 n=148 | stop 100: EV  +28.2 t+2.27 n=149
 
 ########################################################################################################
 # WINV26
@@ -10,38 +24,38 @@ entrada: ordem limitada no meio do candle, valida por 1 barra(s) | custo: 0.0 pt
 
   MEDIA DE REGIME x DESEMPENHO  (stop 150)
     media   %tend | setup A isolado       carteira so A        
-    ema3      81% | n=31    +61.3 t+2.66  n=30    +56.7 t+2.68 
-    kama      48% | n=15    +53.3 t+1.78  n=15    +53.3 t+1.78 
-    hma       95% | n=27    +57.4 t+1.48  n=27    +57.4 t+1.48 
-    t3        92% | n=21    +57.1 t+2.17  n=21    +57.1 t+2.17 
-    jma       93% | n=26    +46.2 t+1.43  n=26    +46.2 t+1.43 
+    ema3      81% | n=26    +86.5 t+2.42  n=25    +81.0 t+2.18 
+    kama      48% | n=14    +64.3 t+1.00  n=14    +64.3 t+1.00 
+    hma       95% | n=22    +10.2 t+0.19  n=22    +10.2 t+0.19 
+    t3        92% | n=23    +45.7 t+1.01  n=23    +45.7 t+1.01 
+    jma       93% | n=24    +43.8 t+0.88  n=24    +43.8 t+0.88 
 
   MEDIA DE REGIME x DESEMPENHO  (stop 100)
     media   %tend | setup A isolado       carteira so A        
-    ema3      81% | n=31    +74.2 t+3.32  n=30    +70.0 t+3.49 
-    kama      48% | n=15    +70.0 t+2.60  n=15    +70.0 t+2.60 
-    hma       95% | n=27    +61.1 t+2.13  n=27    +61.1 t+2.13 
-    t3        92% | n=21    +64.3 t+2.83  n=21    +64.3 t+2.83 
-    jma       93% | n=26    +55.8 t+1.94  n=26    +55.8 t+1.94 
+    ema3      81% | n=26    +73.1 t+2.66  n=25    +68.0 t+2.43 
+    kama      48% | n=14    +64.3 t+1.38  n=14    +64.3 t+1.38 
+    hma       95% | n=22    +22.7 t+0.63  n=22    +22.7 t+0.63 
+    t3        92% | n=23    +43.5 t+1.39  n=23    +43.5 t+1.39 
+    jma       93% | n=24    +45.8 t+1.40  n=24    +45.8 t+1.40 
 
   CONFIGURACAO PADRAO (ema3, stop 150) -- carteira A + B
                                     n /preg       EV     total acerto      t dias+    PF     DD
-  stop 150 · so A                  30   2.5    +56.7     +1700  73.3%  +2.68   83%  2.42    350
-  stop 150 · A + B                 64   4.9    +26.6     +1700  67.2%  +1.33   69%  1.54    850
-  stop 150 · A + B + C             71   5.5    +20.4     +1450  66.2%  +1.03   69%  1.40    900
-  stop 100 · so A                  30   2.5    +70.0     +2100  73.3%  +3.49   83%  3.62    200
-  stop 100 · A + B                 65   5.0    +43.1     +2800  66.2%  +2.32   77%  2.27    650
-  stop 100 · A + B + C             72   5.5    +37.5     +2700  65.3%  +2.11   69%  2.08    700
+  stop 150 · so A                  25   2.1    +81.0     +2025  60.0%  +2.18   83%  2.50    300
+  stop 150 · A + B                 59   4.5    +77.5     +4575  55.9%  +3.39   85%  2.61    450
+  stop 150 · A + B + C             65   5.0    +62.3     +4050  52.3%  +2.87   85%  2.12    450
+  stop 100 · so A                  25   2.1    +68.0     +1700  52.0%  +2.43   75%  2.89    200
+  stop 100 · A + B                 60   4.6    +51.7     +3100  45.0%  +2.73   77%  2.35    300
+  stop 100 · A + B + C             66   5.1    +42.4     +2800  42.4%  +2.36   77%  2.00    500
 
   entrada limitada x a mercado (stop 150)
-  limitada no meio do candle       64   4.9    +26.6     +1700  67.2%  +1.33   69%  1.54    850
-  a mercado no fechamento          73   4.9    +30.1     +2200  68.5%  +1.82   73%  1.64    850
+  limitada no meio do candle       59   4.5    +77.5     +4575  55.9%  +3.39   85%  2.61    450
+  a mercado no fechamento          66   4.7    +56.8     +3750  48.5%  +2.57   71%  2.09    450
 
   custo por trade (stop 150)
-  custo de 0 pts                   64   4.9    +26.6     +1700  67.2%  +1.33   69%  1.54    850
-  custo de 5 pts                   64   4.9    +21.6     +1380  67.2%  +1.10   69%  1.42    885
-  custo de 10 pts                  64   4.9    +16.6     +1060  67.2%  +0.86   62%  1.32    920
-  custo de 20 pts                  64   4.9     +6.6      +420  67.2%  +0.35   62%  1.12   1030
+  custo de 0 pts                   59   4.5    +77.5     +4575  55.9%  +3.39   85%  2.61    450
+  custo de 5 pts                   59   4.5    +72.5     +4280  55.9%  +3.21   85%  2.44    470
+  custo de 10 pts                  59   4.5    +67.5     +3985  55.9%  +3.02   85%  2.28    490
+  custo de 20 pts                  59   4.5    +57.5     +3395  55.9%  +2.63   77%  2.01    530
 
 ########################################################################################################
 # WINFUT
@@ -49,38 +63,38 @@ entrada: ordem limitada no meio do candle, valida por 1 barra(s) | custo: 0.0 pt
 
   MEDIA DE REGIME x DESEMPENHO  (stop 150)
     media   %tend | setup A isolado       carteira so A        
-    ema3      80% | n=74    +48.0 t+3.16  n=73    +45.9 t+3.14 
-    kama      48% | n=32    +70.3 t+3.25  n=32    +70.3 t+3.25 
-    hma       95% | n=71    +50.7 t+2.87  n=69    +53.6 t+2.94 
-    t3        92% | n=62    +36.3 t+2.04  n=62    +36.3 t+2.04 
-    jma       93% | n=68    +43.4 t+2.52  n=68    +43.4 t+2.52 
+    ema3      80% | n=54    +80.6 t+3.11  n=53    +77.8 t+2.97 
+    kama      48% | n=30    +55.0 t+1.39  n=30    +55.0 t+1.39 
+    hma       95% | n=57    +21.1 t+0.85  n=56    +24.1 t+0.97 
+    t3        92% | n=52    +38.9 t+1.52  n=51    +42.6 t+1.62 
+    jma       93% | n=57    +64.5 t+2.50  n=56    +68.3 t+2.64 
 
   MEDIA DE REGIME x DESEMPENHO  (stop 100)
     media   %tend | setup A isolado       carteira so A        
-    ema3      80% | n=74    +43.9 t+3.03  n=73    +41.8 t+3.04 
-    kama      48% | n=32    +45.3 t+2.33  n=32    +45.3 t+2.33 
-    hma       95% | n=71    +41.5 t+2.84  n=70    +43.6 t+2.94 
-    t3        92% | n=62    +28.2 t+1.66  n=62    +28.2 t+1.66 
-    jma       93% | n=68    +30.1 t+1.78  n=68    +30.1 t+1.78 
+    ema3      80% | n=54    +46.3 t+2.21  n=53    +43.4 t+2.08 
+    kama      48% | n=30    +33.3 t+1.19  n=30    +33.3 t+1.19 
+    hma       95% | n=57    +22.8 t+1.34  n=56    +25.0 t+1.45 
+    t3        92% | n=52    +23.1 t+1.22  n=51    +25.5 t+1.31 
+    jma       93% | n=57    +42.1 t+2.19  n=56    +44.6 t+2.31 
 
   CONFIGURACAO PADRAO (ema3, stop 150) -- carteira A + B
                                     n /preg       EV     total acerto      t dias+    PF     DD
-  stop 150 · so A                  73   2.2    +45.9     +3350  71.2%  +3.14   70%  2.06    450
-  stop 150 · A + B                185   4.3    +27.2     +5031  67.6%  +2.64   63%  1.56   1100
-  stop 150 · A + B + C            202   4.6    +20.2     +4081  65.8%  +2.11   61%  1.39   1450
-  stop 100 · so A                  73   2.2    +41.8     +3050  63.0%  +3.04   61%  2.13    450
-  stop 100 · A + B                186   4.3    +28.2     +5250  59.1%  +2.86   63%  1.69   1300
-  stop 100 · A + B + C            203   4.6    +24.1     +4900  58.6%  +2.62   59%  1.58   1400
+  stop 150 · so A                  53   1.7    +77.8     +4125  58.5%  +2.97   69%  2.45    300
+  stop 150 · A + B                148   3.6    +43.0     +6365  46.6%  +2.84   66%  1.71   1575
+  stop 150 · A + B + C            163   3.8    +32.6     +5315  43.6%  +2.34   63%  1.51   1941
+  stop 100 · so A                  53   1.7    +43.4     +2300  43.4%  +2.08   50%  2.00    400
+  stop 100 · A + B                149   3.6    +28.2     +4200  35.6%  +2.27   59%  1.66   1500
+  stop 100 · A + B + C            164   3.8    +23.2     +3800  33.5%  +2.02   56%  1.53   1600
 
   entrada limitada x a mercado (stop 150)
-  limitada no meio do candle      185   4.3    +27.2     +5031  67.6%  +2.64   63%  1.56   1100
-  a mercado no fechamento         204   4.7    +26.5     +5400  67.6%  +3.54   70%  1.55   1000
+  limitada no meio do candle      148   3.6    +43.0     +6365  46.6%  +2.84   66%  1.71   1575
+  a mercado no fechamento         168   4.0    +36.7     +6158  44.0%  +2.72   64%  1.59   1500
 
   custo por trade (stop 150)
-  custo de 0 pts                  185   4.3    +27.2     +5031  67.6%  +2.64   63%  1.56   1100
-  custo de 5 pts                  185   4.3    +22.2     +4106  67.6%  +2.17   63%  1.44   1305
-  custo de 10 pts                 185   4.3    +17.2     +3181  67.6%  +1.69   58%  1.33   1580
-  custo de 20 pts                 185   4.3     +7.2     +1331  67.6%  +0.71   58%  1.13   2200
+  custo de 0 pts                  148   3.6    +43.0     +6365  46.6%  +2.84   66%  1.71   1575
+  custo de 5 pts                  148   3.6    +38.0     +5625  46.6%  +2.53   66%  1.60   1675
+  custo de 10 pts                 148   3.6    +33.0     +4885  46.6%  +2.22   66%  1.50   1775
+  custo de 20 pts                 148   3.6    +23.0     +3405  46.6%  +1.57   63%  1.32   2031
 
 ========================================================================================================
 Rode `python relatorio.py` para regerar o relatorio.html a partir destes numeros.

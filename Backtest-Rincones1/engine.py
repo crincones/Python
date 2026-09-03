@@ -40,14 +40,40 @@ VAL_PONTO = 0.20       # R$ por ponto, 1 contrato WIN
 
 # --- gestao (o que o Carlos pediu)
 STOP = 150.0           # stop inicial, em pontos
-PARCIAL_EM = 100.0     # onde sai a parcial e o stop vai para o zero a zero
+PARCIAL_EM = None      # onde sai a parcial | None = na MESMA distancia do stop
 FRAC_PARCIAL = 0.50    # fracao da posicao vendida na parcial
 ALVO = 300.0           # alvo do restante
 CUSTO_PTS = 0.0        # custo de ida e volta em pontos (0 = bruto)
 
+# Onde fica o stop do RESTANTE depois que a parcial sai.
+#
+#   'media'    na MEDIA DA OPERACAO: o preco em que o que ja foi realizado
+#              na parcial cancela exatamente a perda do restante. Com meia
+#              posicao e a parcial a P pontos, isso e P pontos ABAIXO da
+#              entrada (numa compra) -- e se a parcial sai na mesma
+#              distancia do stop, esse preco E o stop inicial: o stop nao
+#              anda, a operacao e que passou a valer zero ali.
+#              Desfecho 'zero' = 0 pontos, de verdade.
+#
+#   'entrada'  no preco de ENTRADA. Era o que este backtest fazia antes, e
+#              e otimista: o desfecho 'zero' pagava FRAC_PARCIAL x PARCIAL
+#              (+50 pontos com a parcial em 100) e mesmo assim aparecia
+#              como "zero a zero". Fica disponivel so para reproduzir os
+#              numeros antigos.
+#
+# O stop NUNCA se afasta: se a media da operacao ficar mais longe que o
+# stop inicial, vale o stop inicial.
+STOP_APOS_PARCIAL = 'media'
+
 # --- gatilho de esforco (identico ao .ntsl validado)
 PERIODO_REF = 20       # janela do percentil, em barras validas
 PISO_DUR = 0.001       # minuto: duracao zero vira velocidade maxima
+METRICA_E2 = 2         # qual formula alimenta o eixo [E2]:
+                       #   2 = (|delta|/esforco) * (1 - |C-O|/percurso)  <- v2
+                       #   0 = |delta| / |C-O|                           <- v1
+                       #   1 = esforco / range                           <- v1 variante
+                       #   3 = |delta| * volta   |  4 = volta pura
+                       # ver Ticks_Esforco_Hist_v2.ntsl
 NIVEL_MIN = 0.80       # indice minimo
 CORTE_POSICAO = 50.0   # posMediaCorpo <= isto (delta comprador)
 CORPO_MAX = 50.0       # corpo/range maximo, em %  -- exigido pela entrada limitada
@@ -116,16 +142,36 @@ def indicador(df):
     adl[adl < 1] = 1.0
     res = np.abs(df.C - df.O).to_numpy(float) / TICK
     res[res < 1] = 1.0
+    rng_t = (df.H - df.L).to_numpy(float) / TICK
+    rng_t[rng_t < 1] = 1.0
     dur = df.Dur.to_numpy(float).copy()
     dur[dur < PISO_DUR] = PISO_DUR
 
+    # PERCURSO MINIMO compativel com o OHLC: a ida E a volta.
+    # |C-O| e o saldo e H-L e a maior distancia alcancada; nenhum dos dois
+    # ve o caminho. 2*range - corpo e o menor caminho que passa pelos dois
+    # extremos e termina no fechamento.  Piso em res: com H=L nao houve
+    # caminho, entao nao houve vaivem.
+    perc = (2.0 * (df.H - df.L).to_numpy(float)
+            - np.abs(df.C - df.O).to_numpy(float)) / TICK
+    perc = np.maximum(perc, res)
+    volta = 1.0 - res / perc                      # fracao do caminho desfeita
+    desq = np.where(esf < 1, 0.0, adl / np.maximum(esf, 1e-12))
+
+    m_e2 = {0: adl / res,                         # v1
+            1: esf / rng_t,                       # v1, variante
+            2: desq * volta,                      # v2  <- default
+            3: adl * volta,
+            4: volta}[METRICA_E2]
+
     pV = _pct_rank(esf, PERIODO_REF)              # [E1] volume
-    pD = _pct_rank(adl / res, PERIODO_REF)        # [E2] deslocamento
+    pD = _pct_rank(m_e2, PERIODO_REF)             # [E2] vaivem (ver METRICA_E2)
     pT = _pct_rank(1.0 / dur, PERIODO_REF)        # [E3] tempo
     idx = (pV + pD + pT) / 3.0
 
     d = df.copy()
     d['pV'], d['pD'], d['pT'], d['idx'] = pV, pD, pT, idx
+    d['volta'] = volta
     d['dlt'] = dlt
     d['dirC'] = np.where(dlt > 0, 1, np.where(dlt < 0, -1, 0))
     d['e2Manda'] = (pD >= pV) & (pD >= pT)
@@ -349,6 +395,32 @@ def setups(d, sig, ativos=None):
 
 
 # ================================================================== execucao
+def parcial_pts():
+    """A distancia da parcial, em pontos.
+
+    PARCIAL_EM = None significa "na mesma distancia do stop". E o caso
+    normal: com meia posicao, so quando a parcial sai na distancia do
+    stop e que a media da operacao cai exatamente em cima do stop
+    inicial, e a operacao fica em zero a zero de verdade se o stop pegar
+    depois. Com a parcial mais perto que o stop, o stop tem de andar para
+    dentro para chegar no zero a zero -- e ai a proteccao vem mais cedo,
+    mas o trade morre mais vezes antes do alvo.
+    """
+    return float(STOP if PARCIAL_EM is None else PARCIAL_EM)
+
+
+def stop_pos_parcial(ent, s, parcial, stop_ini):
+    """Onde vai o stop do restante depois da parcial. Ver STOP_APOS_PARCIAL."""
+    if STOP_APOS_PARCIAL == 'entrada':
+        alvo_stop = ent
+    else:
+        # media da operacao: FRAC x parcial ja realizado tem de cancelar
+        # (1 - FRAC) x (perda do restante)
+        alvo_stop = ent - s * (FRAC_PARCIAL * parcial) / (1.0 - FRAC_PARCIAL)
+    # o stop nunca se AFASTA
+    return max(stop_ini, alvo_stop) if s == 1 else min(stop_ini, alvo_stop)
+
+
 def _simula_trade(H, L, C, dia, n, i, s, entrada, max_fill):
     """Um trade. Devolve dict ou None se a ordem nao foi preenchida.
 
@@ -372,8 +444,10 @@ def _simula_trade(H, L, C, dia, n, i, s, entrada, max_fill):
         if jf < 0:
             return None
 
-    stop_p = ent - s * STOP
-    parc_p = ent + s * PARCIAL_EM
+    parcial = parcial_pts()
+    stop_ini = ent - s * STOP
+    stop_p = stop_ini
+    parc_p = ent + s * parcial
     alvo_p = ent + s * ALVO
 
     fase = 1          # 1 = posicao cheia | 2 = depois da parcial, stop no zero a zero
@@ -396,9 +470,9 @@ def _simula_trade(H, L, C, dia, n, i, s, entrada, max_fill):
                 res = 'stop'
                 break
             if hit_p:
-                pnl = FRAC_PARCIAL * PARCIAL_EM
+                pnl = FRAC_PARCIAL * parcial
                 fase = 2
-                stop_p = ent                           # zero a zero
+                stop_p = stop_pos_parcial(ent, s, parcial, stop_ini)
                 hit_a = (H[k] >= alvo_p) if s == 1 else (L[k] <= alvo_p)
                 if hit_a:
                     pnl += (1 - FRAC_PARCIAL) * ALVO
@@ -407,7 +481,8 @@ def _simula_trade(H, L, C, dia, n, i, s, entrada, max_fill):
                 continue
         else:
             hit_a = (H[k] >= alvo_p) if s == 1 else (L[k] <= alvo_p)
-            if hit_s:                                  # zero a zero
+            if hit_s:                                  # media da operacao
+                pnl += (1 - FRAC_PARCIAL) * s * (stop_p - ent)
                 res = 'zero'
                 break
             if hit_a:

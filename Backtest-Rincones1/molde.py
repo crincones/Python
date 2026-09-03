@@ -222,8 +222,8 @@ footer{margin-top:72px;padding-top:24px;border-top:1px solid var(--line);
     <p class="lede">Um gatilho de esforço decide <em>quando</em>. Uma média decide <em>que tipo</em> de coisa aconteceu — e portanto se o trade vai a favor ou contra o movimento.</p>
     <div class="spec">
       <span class="chip">stop <b>{{stop_pad}}</b> ou <b>100</b></span>
-      <span class="chip">parcial <b>{{frac}}%</b> em <b>+{{parcial}}</b></span>
-      <span class="chip">zera o risco</span>
+      <span class="chip">parcial <b>{{frac}}%</b> na distância do stop</span>
+      <span class="chip">stop na média da operação</span>
       <span class="chip">alvo <b>{{alvo}}</b></span>
       <span class="chip">entrada limitada no meio do candle</span>
       <span class="chip">jun–ago/2026</span>
@@ -247,13 +247,34 @@ footer{margin-top:72px;padding-top:24px;border-top:1px solid var(--line);
   </div>
 
   <div class="note">
-    <div class="lab">As três respostas deste relatório</div>
-    <p><strong>O setup de tendência</strong> que você mandou priorizar é o melhor dos três nas duas bases, em todas as colunas. <strong>O stop de 100</strong> mede melhor que o de 150 em quase tudo — e é o único stop em que as três EMAs ganham de <strong>todas</strong> as adaptativas nas duas bases. E <strong>a regra da barra seguinte</strong> custa pouco: aborta cerca de um sinal em dez e melhora o WINFUT.</p>
+    <div class="lab">As respostas deste relatório</div>
+    <p>{{ver_setups}}</p>
+    <p>{{ver_stop}}</p>
+    <p>E <strong>a regra da barra seguinte</strong> custa pouco: aborta cerca de um sinal em dez. O gatilho desta rodada é o <strong>novo</strong> — o eixo do deslocamento passou a medir o vaivém do preço dentro da barra. A seção 02 mede o que isso mudou.</p>
   </div>
 </section>
 
 <section>
-  <h2><span class="n">02</span> A regra da barra seguinte</h2>
+  <h2><span class="n">02</span> O eixo [E2]</h2>
+  <h3>O gatilho mudou: o deslocamento virou vaivém</h3>
+  <p>O índice de esforço tem três eixos — volume, deslocamento e tempo. O eixo do <strong>deslocamento</strong> era <code>|delta| / |Close−Open|</code>: agressão por ponto de <em>saldo</em>. Saldo não é caminho. Uma barra que sobe 60, cai 65 e fecha 30 acima da abertura tem o mesmo <code>|Close−Open|</code> de uma que sobe 30 em linha reta — e as duas contavam igual.</p>
+  <p class="sub">O eixo novo é <code>{{e2_rot}}</code>, com <code>percurso = 2·(High−Low) − |Close−Open|</code>, o menor caminho compatível com o OHLC, e <code>volta = 1 − |Close−Open|/percurso</code>, a fração dele que foi desfeita. Produto de duas frações entre 0 e 1, não razão — razão entre peças de dispersão muito diferente mede só a mais volátil das duas. Derivação e medição em <code>Ticks_Esforco_Hist_v2.ntsl</code>.</p>
+
+  {{tab_e2}}
+
+  <div class="note">
+    <div class="lab">O que a troca mudou</div>
+    <p>{{ver_e2}}</p>
+  </div>
+
+  <div class="note">
+    <div class="lab">O filtro “E2 não dominante” sobreviveu?</div>
+    <p>{{ver_filtro_e2}}</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">03</span> A regra da barra seguinte</h2>
   <h3>Ou preenche na barra seguinte, ou o trade morre</h3>
   <p class="sub">A ordem limitada no meio do candle do gatilho vale por <strong>uma barra</strong>. Não preencheu, o trade é <strong>abortado</strong> — não se persegue o preço, não se deixa ordem esquecida no livro. <strong>Todo número deste relatório já está sob essa regra.</strong></p>
 
@@ -268,7 +289,7 @@ footer{margin-top:72px;padding-top:24px;border-top:1px solid var(--line);
 </section>
 
 <section>
-  <h2><span class="n">03</span> Os três setups</h2>
+  <h2><span class="n">04</span> Os três setups</h2>
   <h3>Mesmo gatilho, regimes diferentes</h3>
   <p class="sub">Cada setup medido isolado — todo sinal vira trade, sem competir com os outros. É a comparação limpa entre eles. Valores: <strong>EV em pontos</strong>, <code>t</code> e fator de lucro, com stop {{stop_pad}}.</p>
   <div class="setups">{{cards}}</div>
@@ -281,7 +302,7 @@ footer{margin-top:72px;padding-top:24px;border-top:1px solid var(--line);
 </section>
 
 <section>
-  <h2><span class="n">04</span> A média que dá a direção</h2>
+  <h2><span class="n">05</span> A média que dá a direção</h2>
   <h3>Trocar as três EMAs por uma adaptativa ajuda?</h3>
   <p>Você perguntou se uma <strong>KAMA</strong>, <strong>Hull</strong>, <strong>T3</strong> ou <strong>Jurik</strong> não faria melhor que o empilhamento de três exponenciais. Testei as quatro. Com média única, a direção passa a ser o <strong>sinal da inclinação</strong> dela nas últimas {{ma_slope}} barras, normalizada pelo range médio, e o “toque” passa a ser encostar nessa única linha.</p>
   <p class="sub">Carteira <strong>só A</strong> — o setup que carrega a estratégia. Cada família teve período e corte de inclinação varridos, e o valor escolhido foi o que mede bem <strong>nas duas bases</strong>, não o pico de uma.</p>
@@ -304,23 +325,31 @@ footer{margin-top:72px;padding-top:24px;border-top:1px solid var(--line);
 </section>
 
 <section>
-  <h2><span class="n">05</span> O stop</h2>
-  <h3>100 mede melhor que 150 em quase tudo</h3>
-  <p>Você opera com 150. Medido lado a lado, com o resto igual (parcial de {{frac}}% em +{{parcial}}, alvo {{alvo}}):</p>
+  <h2><span class="n">06</span> O stop</h2>
+  <h3>100 contra 150, lado a lado</h3>
+  <p>Você opera com 150. Medido lado a lado, com o resto igual (parcial de {{frac}}% na distância do stop, alvo {{alvo}}). Trocar o stop troca as duas linhas: com 150 a parcial sai em +150 e o alvo cheio paga +225 por contrato; com 100, +100 e +200.</p>
   {{stops}}
-  <p><strong>O stop de 100 melhora o <code>t</code> e o fator de lucro nas duas bases, nas duas carteiras</strong> — e no WINV26 a diferença é grande. Ele também corta o risco por trade em um terço, o que significa que o mesmo limite de perda diária compra 50% mais contratos.</p>
+  <p>{{ver_stop}}</p>
+
+  <h3>A regra da parcial</h3>
+  <p class="sub">Quando a parcial sai, o stop do restante vai para a <strong>média da operação</strong> — o preço em que o que já foi realizado cancela exatamente a perda do resto. Com meia posição e a parcial na distância do stop, esse preço <strong>é o stop inicial</strong>: o stop não anda, e o trade que volta morre em <strong>zero de verdade</strong>. A coluna “zero” é a fração dos trades que termina assim.</p>
+  {{tab_gestao}}
+  <div class="note risk">
+    <div class="lab">O que estava errado antes</div>
+    <p>{{ver_gestao}}</p>
+  </div>
   <p class="sub">O preço é acerto: com stop mais curto você é parado mais vezes. No WINFUT, carteira só A, o acerto cai de {{ac_a_fu_150}} para {{ac_a_fu_100}} — mas cada perda é menor, e o saldo melhora.</p>
 </section>
 
 <section>
-  <h2><span class="n">06</span> Curva de capital</h2>
+  <h2><span class="n">07</span> Curva de capital</h2>
   <h3>Trade a trade, carteira A + B</h3>
   <p class="sub">Pontos acumulados, stop {{stop_pad}}. Passe o mouse para ver cada operação. As duas bases se sobrepõem no tempo — não são amostras independentes.</p>
   <div class="charts" id="charts"></div>
 </section>
 
 <section>
-  <h2><span class="n">07</span> Qualidade contra volume</h2>
+  <h2><span class="n">08</span> Qualidade contra volume</h2>
   <h3>A escolha real da carteira</h3>
   <p>Uma posição por vez, prioridade A &gt; B &gt; C, stop {{stop_pad}}. Adicionar o setup B <strong>soma mais pontos no total</strong> e <strong>dobra o drawdown</strong>. Adicionar C piora tudo nas duas bases.</p>
   {{cart26}}
@@ -329,9 +358,9 @@ footer{margin-top:72px;padding-top:24px;border-top:1px solid var(--line);
 </section>
 
 <section>
-  <h2><span class="n">08</span> Alvo e parcial</h2>
+  <h2><span class="n">09</span> Alvo e parcial</h2>
   <h3>O alvo de 300 está no ponto</h3>
-  <p>EV em pontos, carteira A + B, com a parcial fixa em +{{parcial}}. A célula em destaque de cada linha é a melhor daquela linha.</p>
+  <p>EV em pontos, carteira A + B, com a <strong>parcial acompanhando o stop de cada linha</strong>. A célula em destaque de cada linha é a melhor daquela linha.</p>
   <div class="charts">{{grade26}}{{gradefu}}</div>
   <p><strong>O alvo de {{alvo}} é o melhor da linha em todas as seis linhas das duas tabelas.</strong> Não é um pico isolado: 200 é pior, 400 e 500 são piores.</p>
 
@@ -345,7 +374,7 @@ footer{margin-top:72px;padding-top:24px;border-top:1px solid var(--line);
 </section>
 
 <section>
-  <h2><span class="n">09</span> Fora da amostra</h2>
+  <h2><span class="n">10</span> Fora da amostra</h2>
   <h3>Julho é o único mês que não foi visto</h3>
   <p>As duas bases se sobrepõem — o WINFUT contém a janela inteira do WINV26 e mais julho. O único corte quase-independente é o calendário.</p>
   <div class="scroll"><table>
@@ -357,7 +386,7 @@ footer{margin-top:72px;padding-top:24px;border-top:1px solid var(--line);
 </section>
 
 <section>
-  <h2><span class="n">10</span> Custos</h2>
+  <h2><span class="n">11</span> Custos</h2>
   <h3>Leia antes de comemorar</h3>
   <div class="scroll"><table>
     <caption>Carteira A + B · stop {{stop_pad}} · custo de ida e volta, em pontos</caption>
@@ -369,12 +398,13 @@ footer{margin-top:72px;padding-top:24px;border-top:1px solid var(--line);
 </section>
 
 <section>
-  <h2><span class="n">11</span> Os trades, um a um</h2>
+  <h2><span class="n">12</span> Os trades, um a um</h2>
   <h3>Candles, médias, gatilho e desfecho</h3>
-  <p class="sub">Todos os sinais de cada setup, medidos isoladamente — inclusive os do setup C desligado, para ver por que ele falha. Navegue com ← → ou clique na lista. Regime das 3 EMAs, stop {{stop_pad}}.</p>
+  <p class="sub">Todos os sinais de cada setup, medidos isoladamente — inclusive os do setup C desligado, para ver por que ele falha. Navegue com ← → ou clique na lista. Regime das 3 EMAs. O botão <strong>stop</strong> troca a variante: os sinais são os mesmos, o que muda é onde o trade morre — e a parcial acompanha o stop, então trocar o stop move as duas linhas.</p>
 
   <div class="bar">
     <div class="grp"><span class="lab">base</span><span id="gBase"></span></div>
+    <div class="grp"><span class="lab">stop</span><span id="gStop"></span></div>
     <div class="grp"><span class="lab">setup</span><span id="gSetup"></span></div>
     <div class="grp"><span class="lab">desfecho</span><span id="gRes"></span></div>
     <div class="grp"><span class="lab">janela</span>
@@ -411,20 +441,20 @@ footer{margin-top:72px;padding-top:24px;border-top:1px solid var(--line);
     <span><i class="sw l" style="background:var(--accent)"></i>EMA 21</span>
     <span><i class="sw l" style="background:var(--ink-3)"></i>EMA 42 / 72</span>
     <span><i class="sw" style="background:var(--neg)"></i>stop</span>
-    <span><i class="sw" style="background:var(--warn)"></i>parcial (+{{parcial}}, zera o risco)</span>
+    <span><i class="sw" style="background:var(--warn)"></i>parcial (na distância do stop)</span>
     <span><i class="sw" style="background:var(--pos)"></i>alvo</span>
   </div>
 </section>
 
 <section>
-  <h2><span class="n">12</span> Ressalvas</h2>
+  <h2><span class="n">13</span> Ressalvas</h2>
   <h3>O que enfraquece tudo acima</h3>
   <div class="note risk"><div class="lab">Amostra pequena</div>
     <p>{{pregfu}} pregões no WINFUT, {{preg26tr}} com trade no WINV26. Vários <code>t</code> ficam entre +1 e +2, que não é evidência forte. O setup C tem 7 e 19 trades — a conclusão sobre ele é “não há evidência a favor”, não “está provado que perde”.</p></div>
   <div class="note risk"><div class="lab">As bases não são independentes</div>
     <p>WINFUT contém WINV26. Quando as duas concordam, isso vale menos do que parece.</p></div>
   <div class="note risk"><div class="lab">Parâmetros varridos nas mesmas bases</div>
-    <p>Os cortes de regime — e agora também o período e a inclinação de cada média adaptativa — foram escolhidos olhando os dois arquivos. Há sobreajuste embutido; o corte de julho é o que existe contra isso, e é fraco. Isso vale <em>especialmente</em> para a comparação de médias da seção 03: cada família ganhou uma varredura própria.</p></div>
+    <p>Os cortes de regime — e agora também o período e a inclinação de cada média adaptativa — foram escolhidos olhando os dois arquivos. Há sobreajuste embutido; o corte de julho é o que existe contra isso, e é fraco. Isso vale <em>especialmente</em> para a comparação de médias da seção 05: cada família ganhou uma varredura própria.</p></div>
   <div class="note risk"><div class="lab">Duas condições do regime ajudam menos do que parecem</div>
     <p>O leque mínimo mede melhor quanto <strong>menor</strong> — exigir leque aberto piora. E o toque na média é quase indiferente: sem exigir toque nenhum, o setup A mede praticamente igual. O que carrega o A é <strong>o alinhamento das médias mais o gatilho a favor</strong>, não a geometria fina do pullback.</p></div>
   <div class="note risk"><div class="lab">O filtro de “movimento rápido” é inerte</div>
@@ -434,15 +464,15 @@ footer{margin-top:72px;padding-top:24px;border-top:1px solid var(--line);
 </section>
 
 <section>
-  <h2><span class="n">13</span> O que eu faria</h2>
+  <h2><span class="n">14</span> O que eu faria</h2>
   <h3>Em ordem</h3>
   <ol class="acoes">
-    <li><strong>Baixar o stop para 100.</strong> Melhora <code>t</code> e fator de lucro nas duas bases, nas duas carteiras, e corta o risco por trade em um terço. É a mudança com mais apoio nos dados.</li>
-    <li><strong>Rodar só o setup A por um tempo.</strong> Melhor EV, melhor <code>t</code>, melhor PF e drawdown bem menor. ~2,5 trades por pregão é operável à mão.</li>
-    <li><strong>Manter as três EMAs, com stop 100.</strong> É a única configuração em que o empilhamento ganha nas duas bases. Com stop 150 a KAMA passa à frente no WINFUT — mais um motivo para o stop curto ser o padrão.</li>
+    <li>{{acao_stop}}</li>
+    <li>{{acao_carteira}}</li>
+    <li>{{acao_ma}}</li>
     <li><strong>Manter o alvo em {{alvo}}.</strong> Melhor da linha nas seis linhas das duas grades.</li>
     <li><strong>Não ligar o setup C.</strong></li>
-    <li><strong>Medir o custo real da sua corretora</strong> e refazer a seção 09 com o número verdadeiro antes de dimensionar posição.</li>
+    <li><strong>Medir o custo real da sua corretora</strong> e refazer a seção 11 com o número verdadeiro antes de dimensionar posição.</li>
   </ol>
 </section>
 
@@ -519,8 +549,10 @@ const alvoEl=document.getElementById('charts');
 /* ================= visualizador de trades ================= */
 const RES_ROT={alvo:'alvo',stop:'stop',zero:'zero a zero',fim:'fim do pregão'};
 const SU_ROT={A:'A · tendência',B:'B · reversão rápida',C:'C · consolidação'};
-const STOP_V={{stop_pad}}, PARC_V={{parcial}}, ALVO_V={{alvo}};
-let vBase=Object.keys(D)[0], fSetup='todos', fRes='todos', janela=50, cur=0;
+const ALVO_V={{alvo}}, STOPS_V={{stops_js}}, PARC_FIXA={{parc_fixa_js}};
+let vBase=Object.keys(D)[0], vStop=String({{stop_pad}}), fSetup='todos', fRes='todos', janela=50, cur=0;
+if(!STOPS_V.includes(vStop)) vStop=STOPS_V[0];
+const stopPts=()=>+vStop, parcPts=()=>PARC_FIXA===null?+vStop:PARC_FIXA;
 
 function grupo(el,opcoes,valor,onda){
   el.innerHTML='';
@@ -530,8 +562,9 @@ function grupo(el,opcoes,valor,onda){
     b.onclick=()=>onda(v); el.appendChild(b);
   });
 }
+function lista_trades(){ return D[vBase].trades[vStop]||[]; }
 function filtrados(){
-  return D[vBase].trades.filter(t=>(fSetup==='todos'||t.su===fSetup)&&(fRes==='todos'||t.res===fRes));
+  return lista_trades().filter(t=>(fSetup==='todos'||t.su===fSetup)&&(fRes==='todos'||t.res===fRes));
 }
 function desenha(){
   const lst=filtrados(), quadro=document.getElementById('quadro'), ficha=document.getElementById('ficha');
@@ -553,7 +586,7 @@ function desenha(){
     lo=Math.min(lo,dia.l[i],dia.e1[i],dia.e2[i],dia.e3[i]);
     hi=Math.max(hi,dia.h[i],dia.e1[i],dia.e2[i],dia.e3[i]);
   }
-  const stopP=t.ent-t.s*STOP_V, alvoP=t.ent+t.s*ALVO_V, parcP=t.ent+t.s*PARC_V;
+  const stopP=t.ent-t.s*stopPts(), alvoP=t.ent+t.s*ALVO_V, parcP=t.ent+t.s*parcPts();
   [stopP,alvoP,parcP,t.ent].forEach(v=>{lo=Math.min(lo,v);hi=Math.max(hi,v);});
   const pad=(hi-lo)*0.06||20; lo-=pad; hi+=pad;
   const X=i=>ML+(i-a+0.5)*bw, Y=v=>MT+HP-(v-lo)/(hi-lo)*HP;
@@ -643,7 +676,9 @@ function desenha(){
 function montaControles(){
   grupo(document.getElementById('gBase'),Object.keys(D).map(k=>[k,k]),vBase,
         v=>{vBase=v;cur=0;montaControles();desenha();});
-  const sus=['todos',...[...new Set(D[vBase].trades.map(t=>t.su))].sort()];
+  grupo(document.getElementById('gStop'),STOPS_V.map(v=>[v,'stop '+v]),vStop,
+        v=>{vStop=v;cur=0;montaControles();desenha();});
+  const sus=['todos',...[...new Set(lista_trades().map(t=>t.su))].sort()];
   grupo(document.getElementById('gSetup'),sus.map(v=>[v,v]),fSetup,
         v=>{fSetup=v;cur=0;montaControles();desenha();});
   grupo(document.getElementById('gRes'),
