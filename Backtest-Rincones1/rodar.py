@@ -108,6 +108,107 @@ def comparativo_e2():
     return out
 
 
+def comparativo_leque():
+    """A VARIANTE DO LEQUE: so vale o gatilho que TOCA ou fica ATRAS das medias.
+
+    O gatilho de esforco nao olha onde o preco esta -- ele so mede que
+    alguem agrediu e falhou. A restricao aqui diz ONDE isso conta: a barra
+    tem de estar encostada no leque ou do lado de TRAS dele. O gatilho que
+    dispara com o preco esticado NA FRENTE do leque, fora da tolerancia do
+    toque, e descartado.
+
+    O setup A nao muda -- ele ja exige o toque, entao ja esta inteiro
+    dentro da restricao. Quem sente e o B, que e por construcao um setup
+    de afastamento: sobra dele so a parte que se afastou para TRAS, ou que
+    ainda encosta em alguma das tres.
+
+    Mede tambem a distribuicao das posicoes (toca / atras / na frente),
+    porque sem ela nao da para saber se a restricao corta pouco ou corta
+    quase tudo, e o efeito nos cinco regimes de media -- 'leque' e um
+    conceito das TRES EMAs, e com media unica ele degenera.
+    """
+    fl0, stop0 = E.FILTRO_LEQUE, E.STOP
+    out = {'rotulos': {'livre': 'sem restrição — qualquer posição em relação às médias',
+                       'leque': 'só gatilho que toca ou fica atrás do leque'},
+           'ordem': ['livre', 'leque'],
+           'atual': 'leque' if fl0 else 'livre',
+           'decomp_rot': {'toca': 'só o toque no leque',
+                          'atras': 'só o que fica atrás do leque',
+                          'leque': 'os dois — a variante'},
+           'decomp_ordem': ['toca', 'atras', 'leque'],
+           'posicao': {}, 'grid': {}, 'decomp': {}, 'regimes': {}}
+
+    for base in BASES:
+        E.aplica_ma('ema3')
+        d = E.contexto(_ind(base), 'ema3')
+
+        # --- onde as barras (e os gatilhos) ficam em relacao ao leque
+        E.FILTRO_LEQUE = False
+        sig_livre = E.gatilho(d)
+        ok = ~np.isnan(d.mrng.to_numpy())
+        g = sig_livre != 0
+        pos = {}
+        for rot, col in (('toca', 'toca_leque'), ('atras', 'atras_leque'),
+                         ('frente', 'frente_leque')):
+            m = d[col].to_numpy(bool)
+            pos[rot] = {'barras': round(100 * float(m[ok].mean()), 1),
+                        'gatilhos': round(100 * float(m[g].mean()), 1),
+                        'n': int(m[g].sum())}
+        out['posicao'][base] = pos
+
+        out['grid'][base] = {}
+        for chave in out['ordem']:
+            E.FILTRO_LEQUE = (chave == 'leque')
+            sig = E.gatilho(d)
+            mk3 = E.setups(d, sig, ativos=('A', 'B', 'C'))
+            r = {'gatilhos': int((sig != 0).sum())}
+            for stop in STOPS:
+                E.STOP = float(stop)
+                r[str(stop)] = {}
+                for rot, ativos in (('cA', ('A',)), ('cAB', ('A', 'B'))):
+                    mk = E.setups(d, sig, ativos=ativos)
+                    r[str(stop)][rot] = E.metricas(E.roda(d, mk, sig, carteira=True))
+                for su in ('A', 'B', 'C'):
+                    r[str(stop)]['setup_' + su] = E.metricas(
+                        E.roda(d, mk3, sig, carteira=False, setup=su))
+                    r[str(stop)]['sinais_' + su] = int((mk3 == su).sum())
+            out['grid'][base][chave] = r
+
+        # --- as DUAS METADES da restricao, separadas. A tabela de posicoes
+        #     mostra que "atras e fora da tolerancia" e um punhado de barras;
+        #     esta e a medicao de se esse punhado paga o proprio lugar.
+        out['decomp'][base] = {}
+        for chave in out['decomp_ordem']:
+            E.FILTRO_LEQUE = True if chave == 'leque' else chave
+            sig = E.gatilho(d)
+            mk = E.setups(d, sig, ativos=('A', 'B'))
+            g = {'gatilhos': int((sig != 0).sum())}
+            for stop in STOPS:
+                E.STOP = float(stop)
+                g[str(stop)] = E.metricas(E.roda(d, mk, sig, carteira=True))
+            out['decomp'][base][chave] = g
+
+        # --- a restricao nos cinco regimes de media
+        E.STOP = float(STOPS[0])
+        out['regimes'][base] = {}
+        for regime in REGIMES:
+            E.aplica_ma(regime)
+            dr = E.contexto(_ind(base), regime)
+            okr = ~np.isnan(dr.mrng.to_numpy())
+            g_reg = {'toca': round(100 * float(dr.toca.to_numpy()[okr].mean()), 1)}
+            for chave in out['ordem']:
+                E.FILTRO_LEQUE = (chave == 'leque')
+                sig = E.gatilho(dr)
+                mk = E.setups(dr, sig, ativos=('A', 'B'))
+                g_reg[chave] = E.metricas(E.roda(dr, mk, sig, carteira=True))
+                g_reg['gatilhos_' + chave] = int((sig != 0).sum())
+            out['regimes'][base][regime] = g_reg
+        E.aplica_ma('ema3')
+
+    E.FILTRO_LEQUE, E.STOP = fl0, stop0
+    return out
+
+
 def comparativo_gestao():
     """As regras possiveis para a parcial e para o stop depois dela.
 
@@ -320,7 +421,7 @@ def principal():
     resumo = {'parametros': {k: getattr(E, k) for k in (
         'PARCIAL_EM', 'STOP_APOS_PARCIAL', 'FRAC_PARCIAL', 'ALVO', 'CUSTO_PTS',
         'NIVEL_MIN',
-        'CORTE_POSICAO', 'CORPO_MAX', 'DESCARTA_E2', 'PERIODO_REF',
+        'CORTE_POSICAO', 'CORPO_MAX', 'DESCARTA_E2', 'FILTRO_LEQUE', 'PERIODO_REF',
         'EMA_R', 'EMA_M', 'EMA_L', 'PERIODO_RANGE', 'LEQUE_MIN', 'TOL_TOQUE',
         'CONSOL_MAX', 'AFAST_MIN_B', 'AFAST_MIN_C', 'VEL_MIN_B', 'ENTRADA',
         'MA_SLOPE', 'MAX_BARRAS_FILL', 'METRICA_E2')},
@@ -349,6 +450,46 @@ def principal():
                      ' | '.join('stop %d: EV %+6.1f t%+5.2f'
                                 % (st, g[str(st)]['cAB']['ev'], g[str(st)]['cAB']['t'])
                                 for st in STOPS)))
+
+    resumo['leque'] = comparativo_leque()
+    print('')
+    print('  A VARIANTE DO LEQUE: so gatilho que TOCA ou fica ATRAS das medias')
+    for base in BASES:
+        p = resumo['leque']['posicao'][base]
+        print('    %-7s posicao dos gatilhos: toca %4.1f%% · atras %4.1f%% · '
+              'na frente %4.1f%%'
+              % (base, p['toca']['gatilhos'], p['atras']['gatilhos'],
+                 p['frente']['gatilhos']))
+        for chave in resumo['leque']['ordem']:
+            g = resumo['leque']['grid'][base][chave]
+            print('    %-7s %-46s gatilhos=%4d | %s'
+                  % (base, resumo['leque']['rotulos'][chave], g['gatilhos'],
+                     ' | '.join('stop %d: EV %+6.1f t%+5.2f n=%3d DD %4.0f'
+                                % (st, g[str(st)]['cAB']['ev'], g[str(st)]['cAB']['t'],
+                                   g[str(st)]['cAB']['n'], g[str(st)]['cAB']['dd'])
+                                for st in STOPS)))
+        b = resumo['leque']['grid'][base]
+        print('    %-7s setup B isolado (stop %d): livre %s -> leque %s'
+              % (base, STOPS[0],
+                 'n=%3d EV %+6.1f t%+5.2f' % (b['livre'][str(STOPS[0])]['setup_B']['n'],
+                                              b['livre'][str(STOPS[0])]['setup_B']['ev'],
+                                              b['livre'][str(STOPS[0])]['setup_B']['t']),
+                 'n=%3d EV %+6.1f t%+5.2f' % (b['leque'][str(STOPS[0])]['setup_B']['n'],
+                                              b['leque'][str(STOPS[0])]['setup_B']['ev'],
+                                              b['leque'][str(STOPS[0])]['setup_B']['t'])))
+        for chave in resumo['leque']['decomp_ordem']:
+            g = resumo['leque']['decomp'][base][chave]
+            print('    %-7s %-32s gatilhos=%4d | %s'
+                  % (base, resumo['leque']['decomp_rot'][chave], g['gatilhos'],
+                     ' | '.join('stop %d: EV %+6.1f t%+5.2f n=%3d'
+                                % (st, g[str(st)]['ev'], g[str(st)]['t'],
+                                   g[str(st)]['n']) for st in STOPS)))
+        for regime in REGIMES:
+            rg = resumo['leque']['regimes'][base][regime]
+            fm = lambda m: ('sem trades' if not m else
+                            'n=%3d EV %+6.1f t%+5.2f' % (m['n'], m['ev'], m['t']))
+            print('      %-5s toca %4.1f%% das barras | livre %-24s | leque %-24s'
+                  % (regime, rg['toca'], fm(rg['livre']), fm(rg['leque'])))
 
     resumo['e2'] = comparativo_e2()
     print('')

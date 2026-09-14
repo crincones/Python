@@ -34,7 +34,7 @@ def roda(barras, ctx, validos, ema=None, **kw):
     otim = kw.get('otimista', False)
     stop = kw.get('stop', E.STOP)
     alvo_fixo = kw.get('alvo_fixo', E.ALVO_FIXO)
-    alvo_ajuste = kw.get('alvo_ajuste', True)
+    alvo_ajuste = kw.get('alvo_ajuste', E.ALVO_NO_AJUSTE)
     a_alvo_ajuste = kw.get('a_alvo_ajuste', False)
     uma = kw.get('uma_posicao', False)
     dist_min = kw.get('dist_min', E.DIST_MIN)
@@ -140,8 +140,11 @@ def main():
     cont = collections.Counter(m.split(' (')[0] for _, m in desc)
     for k, v in cont.most_common():
         print('   descarte: %-45s %d' % (k, v))
-    print('Gestao ............ stop %.0f | parcial %.0f%% em +%.0f | stop do resto +%.0f | alvo AJUSTE'
-          % (E.STOP, 100 * E.PARCIAL_FRAC, E.PARCIAL_PTS, E.PARCIAL_STOP))
+    print('Lote .............. %d contratos (pts por contrato; R$ do lote)' % E.CONTRATOS)
+    print('Gestao ............ stop %.0f | parcial %d de %d em +%.0f | stop do resto %s (%+.0f) | alvo %s'
+          % (E.STOP, E.contratos_parcial(), E.CONTRATOS, E.PARCIAL_PTS,
+             'no MEDIO da operacao' if E.PARCIAL_STOP == 'medio' else 'fixo', E.stop_resto(),
+             'AJUSTE (C/D/CD)' if E.ALVO_NO_AJUSTE else '%.0f fixos' % E.ALVO_FIXO))
     print('                    ganho maximo = %.0f%%x%.0f + %.0f%%x500 = %.1f pts -> %.2f:1 vs stop %.0f'
           % (100 * E.PARCIAL_FRAC, E.PARCIAL_PTS, 100 * (1 - E.PARCIAL_FRAC),
              E.PARCIAL_FRAC * E.PARCIAL_PTS + (1 - E.PARCIAL_FRAC) * 500,
@@ -187,7 +190,8 @@ def main():
 
     # ------------------------------------------------------------- rodadas
     base = roda(barras, ctx, validos, ema)
-    tabela(base, nd, 'PRINCIPAL - spec vigente: stop 100 + parcial 2/3 em +45, regime exclusivo, alvo no ajuste')
+    tabela(base, nd, 'PRINCIPAL - spec vigente: stop 100 + parcial 2/3 em +45 com stop do resto no medio,'
+                     ' regime exclusivo, alvo 500 fixo')
 
     fav = roda(barras, ctx, validos, ema, favoravel_na_entrada=True)
     tabela(fav, nd, 'CREDITANDO A BARRA DE ENTRADA - parcial/alvo podem sair na propria barra do toque'
@@ -199,6 +203,15 @@ def main():
     semp = roda(barras, ctx, validos, ema, parcial=False)
     tabela(semp, nd, 'SEM A PARCIAL - stop 100 seco ate o alvo (spec anterior, para medir o efeito da parcial)')
 
+    frac_orig = E.PARCIAL_FRAC
+    E.PARCIAL_FRAC = 0.5
+    try:
+        p50 = roda(barras, ctx, validos, ema)
+        tabela(p50, nd, 'PARCIAL DE 50%% (%d de %d contratos) em +%.0f, stop do resto no medio (%+.0f)'
+               % (E.contratos_parcial(), E.CONTRATOS, E.PARCIAL_PTS, E.stop_resto()))
+    finally:
+        E.PARCIAL_FRAC = frac_orig
+
     ambos = roda(barras, ctx, validos, ema, regime_exclusivo=False)
     tabela(ambos, nd, 'REGIME NAO EXCLUSIVO - os dois lados seguem ativos apos cruzar o ajuste')
 
@@ -209,10 +222,10 @@ def main():
     print(E.linha_metricas(NOMES['A'], E.metricas(aaj['A'], nd)))
 
     ema5 = roda(barras, ctx, validos, ema, alvo_ema5=True)
-    tabela(ema5, nd, 'PREMISSA DAS MEDIAS - alvo na EMA21 de M5 em vez do ajuste (ESTRATEGIA.md 1)')
+    tabela(ema5, nd, 'PREMISSA DAS MEDIAS - alvo na EMA21 de M5 em vez do alvo fixo (ESTRATEGIA.md 1)')
 
-    fix = roda(barras, ctx, validos, ema, alvo_ajuste=False, alvo_fixo=500.0)
-    tabela(fix, nd, 'ALVO FIXO 500 PTS EM TODOS OS SETUPS')
+    aju = roda(barras, ctx, validos, ema, alvo_ajuste=True)
+    tabela(aju, nd, 'ALVO NO AJUSTE PARA C/D/CD (spec anterior; A e B seguem com 500 fixos)')
 
     uma = roda(barras, ctx, validos, ema, uma_posicao=True)
     tabela(uma, nd, 'UMA POSICAO POR VEZ (sem sobreposicao de trades no mesmo dia)')
@@ -285,7 +298,7 @@ def main():
     # ---- sensibilidades
     print('')
     print('=' * LARG)
-    print('SENSIBILIDADE DO STOP (alvo no ajuste para C/D/CD, 500 fixo para A/B)')
+    print('SENSIBILIDADE DO STOP (alvo 500 fixo, stop do resto no medio)')
     print('=' * LARG)
     stops = [100, 150, 200, 300, 500]
     sens = {k: [] for k in CHAVES}
@@ -300,20 +313,27 @@ def main():
 
     print('')
     print('=' * LARG)
-    print('SENSIBILIDADE DA PARCIAL (setup CD, stop 100, alvo no ajuste)')
+    print('SENSIBILIDADE DA PARCIAL (setup CD, stop 100, alvo 500 fixo)')
     print('=' * LARG)
-    print('%-24s %8s %10s %10s %9s' % ('PARCIAL', 'TRADES', 'PTS', 'PTS/TRADE', 'ACERTO'))
+    print('%-34s %8s %10s %10s %9s' % ('PARCIAL', 'TRADES', 'PTS', 'PTS/TRADE', 'ACERTO'))
     orig = (E.USA_PARCIAL, E.PARCIAL_FRAC, E.PARCIAL_PTS, E.PARCIAL_STOP)
-    cfgs = [(False, 0, 0, 0), (True, 0.5, 45, 45), (True, 2.0 / 3, 45, 45),
-            (True, 2.0 / 3, 45, 0), (True, 0.75, 45, 45), (True, 2.0 / 3, 100, 100)]
+    # so fracoes realizaveis no lote de CONTRATOS (1/2 e 2/3 com 6)
+    cfgs = [(False, 2.0 / 3, 45, 'medio'), (True, 0.5, 45, 'medio'), (True, 2.0 / 3, 45, 'medio'),
+            (True, 2.0 / 3, 45, 0), (True, 2.0 / 3, 45, 45), (True, 0.5, 100, 'medio'),
+            (True, 2.0 / 3, 100, 'medio')]
     sens_p = []
     for usa, fr, pt, ps in cfgs:
         E.USA_PARCIAL, E.PARCIAL_FRAC, E.PARCIAL_PTS, E.PARCIAL_STOP = usa, fr, pt, ps
         r = roda(barras, ctx, validos, ema, setups=('CD',))
         m = E.metricas(r['CD'], nd)
-        rot = 'sem parcial' if not usa else '%.0f%% em +%.0f, stop +%.0f' % (100 * fr, pt, ps)
+        if not usa:
+            rot = 'sem parcial'
+        else:
+            rot = '%d/%d em +%.0f, stop %s (%+.0f)' % (
+                E.contratos_parcial(), E.CONTRATOS, pt, 'no medio' if ps == 'medio' else 'fixo',
+                E.stop_resto())
         sens_p.append([rot, m['n'], m['total'], m['acerto']])
-        print('%-24s %8d %+10.0f %+10.1f %8.1f%%' % (rot, m['n'], m['total'], m['media'], m['acerto']))
+        print('%-34s %8d %+10.0f %+10.1f %8.1f%%' % (rot, m['n'], m['total'], m['media'], m['acerto']))
     E.USA_PARCIAL, E.PARCIAL_FRAC, E.PARCIAL_PTS, E.PARCIAL_STOP = orig
 
     print('')
@@ -336,9 +356,11 @@ def main():
         principal={k: E.metricas(base.get(k, []), nd) for k in CHAVES},
         otimista={k: E.metricas(otm.get(k, []), nd) for k in CHAVES},
         sem_parcial={k: E.metricas(semp.get(k, []), nd) for k in CHAVES},
+        parcial_50={k: E.metricas(p50.get(k, []), nd) for k in CHAVES},
+        contratos=E.CONTRATOS,
         regime_ambos={k: E.metricas(ambos.get(k, []), nd) for k in CHAVES},
         alvo_ema5={k: E.metricas(ema5.get(k, []), nd) for k in CHAVES},
-        alvo_fixo={k: E.metricas(fix.get(k, []), nd) for k in CHAVES},
+        alvo_ajuste={k: E.metricas(aju.get(k, []), nd) for k in CHAVES},
         uma_posicao={k: E.metricas(uma.get(k, []), nd) for k in CHAVES},
         a_alvo_ajuste=E.metricas(aaj['A'], nd),
         por_ano={k: {a: por_ano(base.get(k, []))[a] for a in anos} for k in CHAVES},

@@ -1,0 +1,134 @@
+//------------------------------------------------------------------
+// PavioContra_Magenta  -  Grafico PI 20 (WINFUT)  -  NTSL
+//
+// Versao SIMPLES, sem Hull e sem EMA. Marca o candle CONTRA que aparece
+// depois de 2 a 4 candles no mesmo sentido, desde que ele tenha o pavio
+// do lado de onde veio o movimento anterior.
+//
+//   ▼ magenta acima da maxima   = VENDA
+//                                 (2-4 altas, depois uma baixa com
+//                                  pavio SUPERIOR de 25% a 90% do corpo)
+//   ▲ magenta abaixo da minima  = COMPRA
+//                                 (2-4 baixas, depois uma alta com
+//                                  pavio INFERIOR de 25% a 90% do corpo)
+//
+// Magenta para nao confundir com o MomentumPI_OuroPrata (ambar/prata).
+// Inserir no MESMO painel do grafico de precos.
+//
+//==================================================================
+// A REGRA  (venda; compra e o espelho exato)
+//==================================================================
+// Lida na barra CONTRA, a atual:
+//
+//   1. a barra atual fecha em BAIXA
+//   2. imediatamente antes dela, de BarrasMin a BarrasMax (2 a 4)
+//      barras seguidas fecharam em ALTA -- 5 ou mais nao vale
+//   3. todas no mesmo pregao (ChecarDia)
+//   4. pavio SUPERIOR da barra contra entre PavioMinPct e PavioMaxPct
+//      POR CENTO do corpo dela:
+//
+//          pavio superior = High - max(Open, Close)
+//          corpo          = |Close - Open|
+//          PavioMinPct/100 * corpo  <=  pavio  <=  PavioMaxPct/100 * corpo
+//
+//      Na compra, o INFERIOR:  min(Open, Close) - Low
+//
+//      Comparado por multiplicacao, sem divisao: nao ha risco de dividir
+//      por zero, e a barra contra nunca tem corpo zero (fecha em alta ou
+//      em baixa por definicao).
+//
+// Os cortes 25% / 90% vem do estudo anterior, onde eram 25 e 90 PONTOS de
+// pavio TOTAL do candle de continuacao. No PI 20 o corpo e sempre 100
+// pts, entao ali % e pontos coincidem. Aqui sao aplicados so ao pavio do
+// lado exigido, da barra contra -- nao e o mesmo filtro medido la. Em %
+// o indicador vale tambem para outros tamanhos de PI / Renko.
+//
+// Contagem na base WINFUT/WINFUT_20PI.csv (10.000 barras, 26 pregoes):
+//   690 vendas + 662 compras
+//
+// NAO FOI BACKTESTADO. E so o desenho do padrao.
+//
+// REPINTURA: enquanto a barra nao fecha, o lado dela e o pavio mudam.
+// Em barra fechada a seta e definitiva.
+//
+// Licoes herdadas do MomentumPI_OuroPrata (ver secao 5 dele):
+//   . Date e funcao sem parametros: capturada em `dataBarra` e o
+//     historico e lido da variavel, nunca como Date[j].
+//   . PlotText so usa o parametro Price com Position = 3.
+//------------------------------------------------------------------
+
+input
+  BarrasMin       (2);     // barras no mesmo sentido antes da contra
+  BarrasMax       (4);
+  PavioMinPct     (25);    // pavio do lado exigido, em % do CORPO
+  PavioMaxPct     (90);
+  OperarCompra    (1);
+  OperarVenda     (1);
+  TamSeta         (12);
+  SeparacaoPts    (40);    // afastamento da seta, em pontos do ativo
+  Colorir         (1);     // 1 = pinta a barra contra de magenta
+  ChecarDia       (1);     // 1 = sequencia inteira no mesmo pregao
+
+var
+  j, k                 : integer;
+  dataBarra            : float;
+  pavio, corpo         : float;
+  venda, compra        : boolean;
+  contando             : boolean;
+  magenta              : integer;
+
+begin
+  dataBarra := Date;
+  magenta   := RGB(255, 0, 255);
+
+  if CurrentBar >= BarrasMax + 2 then
+  begin
+    //  barra contra: em baixa -> venda | em alta -> compra
+    venda  := (OperarVenda = 1)  and (Close < Open);
+    compra := (OperarCompra = 1) and (Close > Open);
+
+    if venda or compra then
+    begin
+      //--- barras no sentido anterior, seguidas, terminando em [1] -----
+      k := 0;
+      contando := true;
+      for j := 1 to BarrasMax + 1 do
+      begin
+        if contando then
+        begin
+          if (ChecarDia = 1) and (dataBarra[j] <> dataBarra) then
+            contando := false
+          else if venda and (Close[j] > Open[j]) then
+            k := j
+          else if compra and (Close[j] < Open[j]) then
+            k := j
+          else
+            contando := false;
+        end;
+      end;
+
+      //--- pavio do lado de onde veio o movimento ---------------------
+      if venda then
+        pavio := High - Open      // barra de baixa: max(Open,Close) = Open
+      else
+        pavio := Open - Low;      // barra de alta:  min(Open,Close) = Open
+
+      corpo := Close - Open;
+      if corpo < 0 then corpo := -corpo;
+
+      //--- desenho ------------------------------------------------------
+      if (k >= BarrasMin) and (k <= BarrasMax)
+         and (pavio * 100 >= PavioMinPct * corpo)
+         and (pavio * 100 <= PavioMaxPct * corpo) then
+      begin
+        if venda then
+          PlotText("▼", magenta, 3, TamSeta, High + SeparacaoPts)
+        else
+          PlotText("▲", magenta, 3, TamSeta, Low - SeparacaoPts);
+
+        if Colorir = 1 then
+          PaintBar(magenta);
+      end;
+    end;
+  end;
+end;

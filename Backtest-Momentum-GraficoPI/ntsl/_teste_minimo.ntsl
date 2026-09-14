@@ -1,0 +1,37 @@
+//------------------------------------------------------------------
+// _teste_minimo  -  10 segundos para saber onde esta o problema
+//
+// Nao tem regra nenhuma: escreve uma seta embaixo de CADA barra e
+// outra em cima. Serve para separar "a regra nao acha nada" de "o
+// indicador nao esta desenhando".
+//
+// COMO USAR
+//   1. Insira ESTE arquivo no grafico de PI.
+//   2. Olhe a tela:
+//
+//      APARECEM setas em todas as barras
+//        -> painel e insercao OK, PlotText funciona. O problema esta
+//           na regra do MomentumPI_OuroPrata.ntsl: abra ele e ligue
+//           Diagnostico(1).
+//
+//      NAO APARECE NADA
+//        -> o indicador nao esta desenhando no painel de precos.
+//           Arraste-o para cima do grafico (ou insira com "no mesmo
+//           painel" / "sobre o grafico").
+//
+//      APARECE ERRO ao salvar ou compilar
+//        -> COPIE A MENSAGEM. E a informacao que esta faltando.
+//
+// Position = 3 em PlotText e o unico modo em que o parametro Price e
+// usado; nos modos 0/1/2 o texto vai para baixo/centro/cima do candle
+// e o preco passado e ignorado (Manual NTSL, secao 19.22).
+//------------------------------------------------------------------
+
+input
+  TamFonte(12);
+  Separacao(40);   // em pontos do ativo
+
+begin
+  PlotText("▲", RGB(255, 190, 0), 3, TamFonte, Low - Separacao);
+  PlotText("▼", RGB(168, 180, 196), 3, TamFonte, High + Separacao);
+end;

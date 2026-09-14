@@ -1,0 +1,244 @@
+//==================================================================
+// LOGCANDLES_CONSOLE  -  ProfitChart / NTSL  -  ESTRATEGIA (so log)
+//
+// Nao envia ordem nenhuma. Para cada candle dentro do periodo pedido
+// registra: data/hora de abertura, abertura, maxima, minima,
+// fechamento, agressao compradora, agressao vendedora e duracao.
+//
+// Decodificar a exportacao do console:
+//     python Robo-NTSL/decodifica_log.py <arquivo exportado>
+//   gera <arquivo>_decod.csv e diz se alguma linha chegou cortada.
+//
+//==================================================================
+// MODOS
+//==================================================================
+// Modo(2) COMPACTO -- varios candles por linha de console (padrao)
+//   A exportacao anterior parou em ~2.000 linhas. Empilhando
+//   RegistrosPorLinha candles em cada ConsoleLog, o mesmo limite de
+//   linhas carrega muito mais candles.
+//
+//   L7;B140;N20|D1260310|1513,186890,75,115,-100,11365,19501,133|...|E7
+//
+//   L7         numero sequencial da linha (1, 2, 3...)
+//   B140       CurrentBar do primeiro candle da linha
+//   N20        quantos candles a linha carrega
+//   D1260310   data no formato de Date(), 1AAMMDD. Aparece no inicio
+//              de toda linha e sempre que o dia muda
+//   um candle: HHMM, abertura, maxima-abertura, abertura-minima,
+//              fechamento-abertura, agressao compra, agressao venda,
+//              BarDurationF*1000
+//   E7         fim da linha 7. Linha sem "E" ou com N diferente do
+//              numero de candles = linha cortada, e o decodificador avisa
+//
+//   Os candles de uma linha sao barras CONSECUTIVAS a partir de B.
+//   Precos em inteiro e maxima/minima/fechamento como diferenca da
+//   abertura: um candle ocupa ~40 caracteres.
+//
+// Modo(1) CSV, um candle por linha:
+//   Data;Hora;Abertura;Maxima;Minima;Fechamento;AgrCompra;AgrVenda;DuracaoMin;Barra
+// Modo(0) LEGIVEL, um candle por linha:
+//   11/09/2026 14:15 | A 189260 | Max 189265 | Min 189180 | F 189220 | AgrC 6941 | AgrV 8739 | Dur 5,550 min | barra 9998
+//
+//==================================================================
+// QUANTOS CANDLES POR LINHA?
+//==================================================================
+// O manual nao documenta limite de tamanho do texto de ConsoleLog.
+// Suba aos poucos: rode com RegistrosPorLinha(25), exporte, decodifique.
+// Sem aviso de linha cortada, dobre (50, 100, 200...). Quando o
+// decodificador acusar corte, volte ao ultimo valor que passou.
+//
+//==================================================================
+// QUANDO A LINHA E ESCRITA
+//==================================================================
+//   . ao juntar RegistrosPorLinha candles;
+//   . no ULTIMO candle fechado do grafico (MaxBarsForward = 1), com o
+//     que tiver acumulado;
+//   . no primeiro candle depois da data final, se UsarDataFinal.
+// Na automacao ao vivo so os dois primeiros valem: a linha sai quando
+// enche. Para ao vivo, prefira Modo(0) ou Modo(1).
+//
+// O modo compacto depende de a variavel de texto `buffer` manter o
+// valor de uma barra para a outra, como toda variavel NTSL. Se isso
+// falhar na sua versao, o decodificador vai acusar N diferente do
+// numero de candles em toda linha.
+//
+//==================================================================
+// OUTROS DETALHES
+//==================================================================
+//   . "BarTimeF" nao existe no Manual NTSL; a duracao vem de
+//     BarDurationF() (16.3), em minutos. No compacto vai *1000 em
+//     inteiro -- o mesmo da coluna "BarDurationF*1000" das exportacoes
+//     do Profit, e sem virgula decimal no meio do texto.
+//   . AgressionVolBuy/Sell so existem no Pro, Ultra ou modulo Scalper.
+//   . Date() = 1AAMMDD; Time() = hora de ABERTURA do candle, HHMM,
+//     sem segundos.
+//   . Periodo: DiaIni/MesIni/AnoIni inclusive; UsarDataFinal(false) =
+//     sem data final.
+//==================================================================
+
+input
+  //--- periodo ------------------------------------------------------------
+  DiaIni              (1);
+  MesIni              (1);
+  AnoIni              (2026);
+  UsarDataFinal       (false);  // false = sem data final
+  DiaFim              (31);
+  MesFim              (12);
+  AnoFim              (2026);
+
+  //--- formato -----------------------------------------------------------
+  Modo                (2);      // 2 = compacto | 1 = CSV | 0 = legivel
+  RegistrosPorLinha   (25);     // so no modo 2: candles por ConsoleLog
+  CasasDuracao        (3);      // modos 0 e 1: casas da duracao em minutos
+  ColorirPorSentido   (true);   // modos 0 e 1: verde alta, vermelho baixa
+  ExigirBarraFechada  (true);   // true = so registra barra fechada
+
+var
+  fO, fH, fL, fC           : Float;
+  fAgrC, fAgrV, fDur       : Float;
+  nO, nC, nDur             : Integer;
+  dataInt, horaInt         : Integer;
+  dataIni, dataFim         : Integer;
+  dia, mes, ano, hh, mm    : Integer;
+  sDia, sMes, sHh, sMm     : String;
+  sTexto, sRec             : String;
+  cor                      : Integer;
+  noPeriodo, depoisDoFim   : Boolean;
+  barraValida, ultimaBarra : Boolean;
+
+  //--- estado entre barras
+  ultimaLogada             : Integer;
+  cabecalhoFeito           : Boolean;
+  buffer                   : String;
+  nRec, nLinha             : Integer;
+  barraIniLinha            : Integer;
+  dataUltimaRec            : Integer;
+
+begin
+  //--- leituras antes de qualquer if (Manual 4.5) ----------------------
+  fO    := Open;
+  fH    := High;
+  fL    := Low;
+  fC    := Close;
+  fAgrC := AgressionVolBuy;
+  fAgrV := AgressionVolSell;
+  fDur  := BarDurationF;
+  dataInt := Date;
+  horaInt := Time;
+
+  //--- periodo, no formato de Date(): 1AAMMDD ----------------------------
+  dataIni := (AnoIni - 1900) * 10000 + MesIni * 100 + DiaIni;
+  dataFim := (AnoFim - 1900) * 10000 + MesFim * 100 + DiaFim;
+  noPeriodo   := (dataInt >= dataIni) and ((not UsarDataFinal) or (dataInt <= dataFim));
+  depoisDoFim := UsarDataFinal and (dataInt > dataFim);
+
+  barraValida := (CurrentBar <> ultimaLogada) or (CurrentBar = 0);
+  if ExigirBarraFechada then
+    barraValida := barraValida and (MaxBarsForward > 0);
+  ultimaBarra := (MaxBarsForward = 1);
+
+  nO   := Round(fO);
+  nC   := Round(fC);
+  nDur := Round(fDur * 1000);
+
+  //==================================================================
+  // MODO 2 -- COMPACTO
+  //==================================================================
+  if Modo = 2 then
+  begin
+    //--- o periodo acabou com linha pela metade: escreve ---------------
+    if barraValida and depoisDoFim and (nRec > 0) then
+    begin
+      nLinha := nLinha + 1;
+      ConsoleLog("L" + nLinha + ";B" + barraIniLinha + ";N" + nRec + buffer + "|E" + nLinha,
+                 RGB(200, 200, 200));
+      buffer := "";
+      nRec   := 0;
+    end;
+
+    if barraValida and noPeriodo then
+    begin
+      //--- primeiro candle da linha: guarda a barra e forca a data
+      if nRec = 0 then
+      begin
+        buffer        := "";
+        barraIniLinha := CurrentBar;
+        dataUltimaRec := 0;
+      end;
+
+      if dataInt <> dataUltimaRec then
+      begin
+        buffer        := buffer + "|D" + dataInt;
+        dataUltimaRec := dataInt;
+      end;
+
+      sRec := "" + horaInt + "," + nO
+              + "," + (Round(fH) - nO)
+              + "," + (nO - Round(fL))
+              + "," + (nC - nO)
+              + "," + Round(fAgrC)
+              + "," + Round(fAgrV)
+              + "," + nDur;
+      buffer := buffer + "|" + sRec;
+      nRec   := nRec + 1;
+      ultimaLogada := CurrentBar;
+
+      if (nRec >= RegistrosPorLinha) or ultimaBarra then
+      begin
+        nLinha := nLinha + 1;
+        ConsoleLog("L" + nLinha + ";B" + barraIniLinha + ";N" + nRec + buffer + "|E" + nLinha,
+                   RGB(200, 200, 200));
+        buffer := "";
+        nRec   := 0;
+      end;
+    end;
+  end
+
+  //==================================================================
+  // MODOS 0 E 1 -- UM CANDLE POR LINHA
+  //==================================================================
+  else if barraValida and noPeriodo then
+  begin
+    dia := Mod(dataInt, 100);
+    mes := Mod(Round(IntPortion(dataInt / 100)), 100);
+    ano := 1900 + Round(IntPortion(dataInt / 10000));
+    hh  := Round(IntPortion(horaInt / 100));
+    mm  := Mod(horaInt, 100);
+    if dia < 10 then sDia := "0" + dia else sDia := "" + dia;
+    if mes < 10 then sMes := "0" + mes else sMes := "" + mes;
+    if hh  < 10 then sHh  := "0" + hh  else sHh  := "" + hh;
+    if mm  < 10 then sMm  := "0" + mm  else sMm  := "" + mm;
+
+    if Modo = 1 then
+    begin
+      if not cabecalhoFeito then
+      begin
+        ConsoleLog("Data;Hora;Abertura;Maxima;Minima;Fechamento;AgrCompra;AgrVenda;DuracaoMin;Barra",
+                   RGB(200, 200, 200));
+        cabecalhoFeito := true;
+      end;
+      sTexto := sDia + "/" + sMes + "/" + ano + ";" + sHh + ":" + sMm
+                + ";" + nO + ";" + Round(fH) + ";" + Round(fL) + ";" + nC
+                + ";" + Round(fAgrC) + ";" + Round(fAgrV)
+                + ";" + FloatToString(fDur, CasasDuracao) + ";" + CurrentBar;
+    end
+    else
+      sTexto := sDia + "/" + sMes + "/" + ano + " " + sHh + ":" + sMm
+                + " | A " + nO + " | Max " + Round(fH) + " | Min " + Round(fL)
+                + " | F " + nC + " | AgrC " + Round(fAgrC) + " | AgrV " + Round(fAgrV)
+                + " | Dur " + FloatToString(fDur, CasasDuracao) + " min"
+                + " | barra " + CurrentBar;
+
+    if not ColorirPorSentido then
+      cor := RGB(200, 200, 200)
+    else if fC > fO then
+      cor := RGB(0, 170, 80)
+    else if fC < fO then
+      cor := RGB(220, 60, 60)
+    else
+      cor := RGB(150, 150, 150);
+
+    ConsoleLog(sTexto, cor);
+    ultimaLogada := CurrentBar;
+  end;
+end;

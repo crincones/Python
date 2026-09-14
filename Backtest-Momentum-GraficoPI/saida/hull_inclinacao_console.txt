@@ -1,0 +1,206 @@
+==========================================================================
+A INCLINACAO DA HULL 50 SERVE DE FILTRO?
+==========================================================================
+sinais Hull a favor + 2-4: 922   candidato (2-3 + fech<=10%): 707
+  incl1      quintis: 7.00  14.32  22.97  35.89
+  incl5      quintis: 11.32  19.47  28.84  41.65
+  incl1_atr  quintis: 0.05  0.10  0.15  0.24
+  correlacao incl1 x incl5: 0.93   incl1 x incl1_atr: 0.90   incl1 x barras antes: -0.09
+
+--- HULL A FAVOR + 2-4 | Inclinacao em 1 barra (pts) | fechamento ------------------
+    limites dos quintis: 7.00  14.32  22.97  35.89
+  [1:3 com parcial]
+    Q1 (mais plana)      n= 185  EV  +14.6  acerto 30.8%  tercos  +36.8 /   -1.7 /  +15.7  C   +2.2 V  +26.9  pct  64
+    Q2                   n= 184  EV   +9.2  acerto 27.7%  tercos   -5.1 /   +1.5 /  +22.5  C  +21.7 V   -3.3  pct  39
+    Q3                   n= 184  EV   +6.0  acerto 25.5%  tercos   +0.0 /  +10.9 /   +4.7  C   +3.1 V   +9.2  pct  24
+    Q4                   n= 184  EV  +17.4  acerto 30.4%  tercos  +23.7 /   +4.8 /  +23.8  C  +27.0 V   +8.4  pct  76
+    Q5 (mais inclinada)  n= 185  EV   +9.7  acerto 27.6%  tercos  +22.0 /  +18.0 /   -2.4  C  +26.3 V   -7.8  pct  41
+  [1:3 sem parcial]
+    Q1 (mais plana)      n= 185  EV  +22.7  acerto 30.8%  tercos  +47.4 /   +3.4 /  +24.7  C   +9.8 V  +35.5  pct  78
+    Q2                   n= 184  EV  +10.9  acerto 27.7%  tercos   +2.6 /   +4.6 /  +20.0  C  +30.4 V   -8.7  pct  40
+    Q3                   n= 184  EV   +2.2  acerto 25.5%  tercos   +2.9 /   +6.2 /   -1.2  C   -1.0 V   +5.7  pct  16
+    Q4                   n= 184  EV  +20.7  acerto 30.4%  tercos  +26.3 /   +6.5 /  +28.6  C  +34.8 V   +7.4  pct  73
+    Q5 (mais inclinada)  n= 185  EV  +10.8  acerto 27.6%  tercos  +29.3 /  +18.0 /   -3.6  C  +31.6 V  -11.1  pct  41
+  [1:2 sem parcial]
+    Q1 (mais plana)      n= 185  EV   +8.6  acerto 36.2%  tercos  +26.3 /   -1.7 /   +7.9  C   -7.6 V  +24.7  pct  50
+    Q2                   n= 184  EV   +9.2  acerto 36.4%  tercos   +0.0 /  +10.8 /  +12.5  C  +20.7 V   -2.2  pct  52
+    Q3                   n= 184  EV   -2.2  acerto 32.6%  tercos  -14.3 /   +7.8 /   -4.7  C  -13.4 V  +10.3  pct  12
+    Q4                   n= 184  EV  +18.5  acerto 39.7%  tercos  +18.4 /   +4.8 /  +28.6  C  +31.5 V   +6.3  pct  85
+    Q5 (mais inclinada)  n= 185  EV   +7.6  acerto 35.7%  tercos  +34.1 /  +13.1 /   -9.6  C  +27.4 V  -13.3  pct  47
+  [1:1 sem parcial]
+    Q1 (mais plana)      n= 185  EV   +6.5  acerto 53.0%  tercos  +26.3 /   -6.9 /   +6.7  C   -5.4 V  +18.3  pct  33
+    Q2                   n= 184  EV   +7.6  acerto 53.8%  tercos  -12.8 /   -1.5 /  +25.0  C  +13.0 V   +2.2  pct  37
+    Q3                   n= 184  EV   +9.8  acerto 54.9%  tercos   -2.9 /  +15.6 /  +10.6  C   +7.2 V  +12.6  pct  52
+    Q4                   n= 184  EV  +14.1  acerto 57.1%  tercos  +21.1 /   +3.2 /  +19.0  C  +19.1 V   +9.5  pct  76
+    Q5 (mais inclinada)  n= 185  EV   +8.6  acerto 54.1%  tercos  +14.6 /  +18.0 /   -1.2  C  +21.1 V   -4.4  pct  45
+  [limitada, 1:3 com parcial]
+    Q1 (mais plana)      n= 109  EV  -21.1  acerto 21.1%  tercos  -10.0 /  -20.0 /  -26.5
+    Q2                   n= 123  EV   +7.7  acerto 30.1%  tercos  -29.6 /  +12.2 /  +22.4
+    Q3                   n= 127  EV   +3.0  acerto 28.3%  tercos   +0.0 /   -2.5 /   +7.8
+    Q4                   n= 114  EV  +20.6  acerto 35.1%  tercos  -55.6 /  +43.6 /  +26.5
+    Q5 (mais inclinada)  n= 126  EV  +13.9  acerto 31.0%  tercos   +8.3 /  +11.5 /  +17.5
+
+--- HULL A FAVOR + 2-4 | Inclinacao media em 5 barras (pts/barra) | fechamento ------------------
+    limites dos quintis: 11.32  19.47  28.84  41.65
+  [1:3 com parcial]
+    Q1 (mais plana)      n= 185  EV   +3.8  acerto 26.5%  tercos   +0.0 /   -9.4 /  +14.6  C   -3.1 V  +11.4  pct  18
+    Q2                   n= 184  EV  +20.7  acerto 32.1%  tercos  +51.3 /   -3.2 /  +24.1  C  +21.1 V  +20.2  pct  87
+    Q3                   n= 184  EV  +12.5  acerto 28.8%  tercos  -19.5 /  +22.6 /  +21.0  C  +14.3 V  +10.8  pct  55
+    Q4                   n= 184  EV   +8.7  acerto 27.7%  tercos  +30.3 /   +4.7 /   +3.4  C  +20.5 V   -2.1  pct  36
+    Q5 (mais inclinada)  n= 185  EV  +11.4  acerto 27.0%  tercos  +17.4 /  +20.7 /   +1.2  C  +27.7 V   -5.5  pct  49
+  [1:3 sem parcial]
+    Q1 (mais plana)      n= 185  EV   +5.4  acerto 26.5%  tercos  +12.5 /   -6.2 /  +11.2  C   +0.0 V  +11.4  pct  25
+    Q2                   n= 184  EV  +28.3  acerto 32.1%  tercos  +74.4 /   -9.7 /  +34.9  C  +30.5 V  +25.8  pct  89
+    Q3                   n= 184  EV  +14.1  acerto 28.8%  tercos  -22.0 /  +19.4 /  +28.4  C  +18.7 V   +9.7  pct  52
+    Q4                   n= 184  EV  +11.4  acerto 27.7%  tercos  +36.4 /  +12.5 /   +1.1  C  +28.4 V   -4.2  pct  43
+    Q5 (mais inclinada)  n= 185  EV   +8.1  acerto 27.0%  tercos  +13.0 /  +24.1 /   -6.2  C  +27.7 V  -12.1  pct  32
+  [1:2 sem parcial]
+    Q1 (mais plana)      n= 185  EV   -4.3  acerto 31.9%  tercos   -6.2 /   -1.6 /   -5.6  C  -12.4 V   +4.5  pct   8
+    Q2                   n= 184  EV  +22.3  acerto 40.8%  tercos  +53.8 /   +1.6 /  +22.9  C  +20.0 V  +24.7  pct  93
+    Q3                   n= 184  EV  +10.3  acerto 37.0%  tercos  -26.8 /  +14.5 /  +25.9  C   +5.5 V  +15.1  pct  57
+    Q4                   n= 184  EV   +1.6  acerto 33.7%  tercos  +12.1 /   +3.1 /   -3.4  C  +10.2 V   -6.2  pct  23
+    Q5 (mais inclinada)  n= 185  EV  +11.9  acerto 37.3%  tercos  +30.4 /  +19.0 /   -3.7  C  +34.0 V  -11.0  pct  64
+  [1:1 sem parcial]
+    Q1 (mais plana)      n= 185  EV   +2.2  acerto 50.8%  tercos  -12.5 /  -12.5 /  +18.0  C   -6.2 V  +11.4  pct  14
+    Q2                   n= 184  EV  +13.0  acerto 56.5%  tercos  +28.2 /   +3.2 /  +13.3  C  +11.6 V  +14.6  pct  70
+    Q3                   n= 184  EV  +10.9  acerto 55.4%  tercos  -17.1 /  +25.8 /  +13.6  C   +9.9 V  +11.8  pct  59
+    Q4                   n= 184  EV   +6.0  acerto 52.7%  tercos  +24.2 /   -3.1 /   +5.7  C  +12.5 V   +0.0  pct  29
+    Q5 (mais inclinada)  n= 185  EV  +14.6  acerto 57.3%  tercos  +21.7 /  +17.2 /   +8.6  C  +27.7 V   +1.1  pct  78
+  [limitada, 1:3 com parcial]
+    Q1 (mais plana)      n= 114  EV  -24.3  acerto 19.3%  tercos  -68.4 /  -20.9 /  -11.1
+    Q2                   n= 119  EV  +19.3  acerto 36.1%  tercos  +26.1 /  +21.9 /  +14.7
+    Q3                   n= 123  EV  +15.0  acerto 32.5%  tercos  -29.0 /   +4.3 /  +45.6
+    Q4                   n= 120  EV   +0.0  acerto 25.8%  tercos   +0.0 /  +26.5 /  -23.6
+    Q5 (mais inclinada)  n= 123  EV  +14.2  acerto 31.7%  tercos   -7.7 /  +17.1 /  +22.0
+
+--- HULL A FAVOR + 2-4 | Inclinacao em 1 barra / ATR 21 | fechamento ------------------
+    limites dos quintis: 0.05  0.10  0.15  0.24
+  [1:3 com parcial]
+    Q1 (mais plana)      n= 185  EV  +18.4  acerto 32.4%  tercos  +32.4 /   +0.0 /  +25.0  C   +7.7 V  +28.7  pct  80
+    Q2                   n= 184  EV   +6.5  acerto 26.6%  tercos   -2.4 /   +1.6 /  +15.2  C  +15.2 V   -2.2  pct  26
+    Q3                   n= 184  EV   +5.4  acerto 25.0%  tercos   +3.3 /  +14.9 /   -1.1  C   +8.1 V   +2.4  pct  22
+    Q4                   n= 184  EV  +10.3  acerto 28.3%  tercos  +25.0 /   -8.8 /  +16.1  C  +24.2 V   -3.2  pct  44
+    Q5 (mais inclinada)  n= 185  EV  +16.2  acerto 29.7%  tercos  +18.6 /  +24.2 /   +8.8  C  +25.0 V   +7.5  pct  71
+  [1:3 sem parcial]
+    Q1 (mais plana)      n= 185  EV  +29.2  acerto 32.4%  tercos  +40.5 /   +6.7 /  +39.8  C  +19.8 V  +38.3  pct  91
+    Q2                   n= 184  EV   +6.5  acerto 26.6%  tercos   +7.3 /   +0.0 /  +11.4  C  +21.7 V   -8.7  pct  26
+    Q3                   n= 184  EV   +0.0  acerto 25.0%  tercos   +6.7 /  +13.4 /  -12.6  C   +1.0 V   -1.2  pct  12
+    Q4                   n= 184  EV  +12.0  acerto 28.3%  tercos  +30.0 /  -12.3 /  +19.5  C  +31.9 V   -7.5  pct  44
+    Q5 (mais inclinada)  n= 185  EV  +19.5  acerto 29.7%  tercos  +23.3 /  +29.0 /  +10.0  C  +31.5 V   +7.5  pct  69
+  [1:2 sem parcial]
+    Q1 (mais plana)      n= 185  EV  +11.9  acerto 37.3%  tercos  +21.6 /   +0.0 /  +15.9  C   -3.3 V  +26.6  pct  64
+    Q2                   n= 184  EV   +9.2  acerto 36.4%  tercos   +2.4 /  +12.5 /  +10.1  C  +17.4 V   +1.1  pct  52
+    Q3                   n= 184  EV   -3.8  acerto 32.1%  tercos  -10.0 /  +16.4 /  -17.2  C   -9.1 V   +2.4  pct   8
+    Q4                   n= 184  EV  +10.3  acerto 37.0%  tercos  +20.0 /  -17.5 /  +24.1  C  +25.3 V   -4.3  pct  57
+    Q5 (mais inclinada)  n= 185  EV  +14.1  acerto 37.8%  tercos  +27.9 /  +21.0 /   +1.2  C  +28.3 V   +0.0  pct  72
+  [1:1 sem parcial]
+    Q1 (mais plana)      n= 185  EV   +7.6  acerto 53.5%  tercos  +24.3 /   -6.7 /  +10.2  C   -4.4 V  +19.1  pct  39
+    Q2                   n= 184  EV   +6.5  acerto 53.3%  tercos  -12.2 /   +3.1 /  +19.0  C   +8.7 V   +4.3  pct  31
+    Q3                   n= 184  EV  +10.9  acerto 55.4%  tercos   +0.0 /  +16.4 /  +10.3  C  +15.2 V   +5.9  pct  59
+    Q4                   n= 184  EV   +8.7  acerto 54.3%  tercos  +20.0 /   -5.3 /  +12.6  C  +16.5 V   +1.1  pct  45
+    Q5 (mais inclinada)  n= 185  EV  +13.0  acerto 56.2%  tercos  +14.0 /  +19.4 /   +7.5  C  +18.5 V   +7.5  pct  71
+  [limitada, 1:3 com parcial]
+    Q1 (mais plana)      n= 108  EV  -19.4  acerto 21.3%  tercos  -21.1 /  -19.5 /  -18.8
+    Q2                   n= 123  EV   +3.9  acerto 29.3%  tercos  -24.1 /   +9.9 /  +14.3
+    Q3                   n= 126  EV  +17.9  acerto 33.3%  tercos  +13.0 /  +19.5 /  +18.5
+    Q4                   n= 120  EV   +4.6  acerto 29.2%  tercos  -55.0 /  +19.3 /  +14.3
+    Q5 (mais inclinada)  n= 122  EV  +16.0  acerto 32.0%  tercos   +4.2 /  +20.7 /  +17.5
+
+--- CANDIDATO h23f10 | Inclinacao em 1 barra (pts) | fechamento ------------------
+    limites dos quintis: 7.14  14.32  22.66  35.79
+  [1:3 com parcial]
+    Q1 (mais plana)      n= 142  EV  +15.5  acerto 30.3%  tercos  +35.7 /  -12.2 /  +23.3  C   +8.7 V  +21.9  pct  45
+    Q2                   n= 141  EV  +17.0  acerto 31.2%  tercos   +7.1 /  +17.4 /  +20.9  C  +36.6 V   -2.9  pct  50
+    Q3                   n= 141  EV  +12.1  acerto 27.7%  tercos   -7.4 /  +20.0 /  +14.1  C   +3.9 V  +21.9  pct  30
+    Q4                   n= 141  EV  +22.0  acerto 33.3%  tercos  +40.0 /  +12.8 /  +20.3  C  +29.2 V  +14.5  pct  70
+    Q5 (mais inclinada)  n= 142  EV  +16.9  acerto 30.3%  tercos  +30.0 /  +16.3 /  +11.1  C  +32.4 V   +2.7  pct  50
+  [1:3 sem parcial]
+    Q1 (mais plana)      n= 142  EV  +20.4  acerto 30.3%  tercos  +42.9 /  -12.2 /  +30.1  C  +11.6 V  +28.8  pct  46
+    Q2                   n= 141  EV  +24.8  acerto 31.2%  tercos  +28.6 /  +30.4 /  +19.4  C  +57.7 V   -8.6  pct  57
+    Q3                   n= 141  EV  +10.6  acerto 27.7%  tercos  -11.1 /  +20.0 /  +12.5  C   +3.9 V  +18.8  pct  20
+    Q4                   n= 141  EV  +31.9  acerto 33.3%  tercos  +60.0 /  +23.4 /  +25.0  C  +44.4 V  +18.8  pct  77
+    Q5 (mais inclinada)  n= 142  EV  +21.8  acerto 30.3%  tercos  +36.7 /  +14.3 /  +20.6  C  +42.6 V   +2.7  pct  50
+  [1:2 sem parcial]
+    Q1 (mais plana)      n= 142  EV  +12.0  acerto 37.3%  tercos  +28.6 /   -4.9 /  +15.1  C   +1.4 V  +21.9  pct  39
+    Q2                   n= 141  EV  +12.8  acerto 37.6%  tercos  +17.9 /  +17.4 /   +7.5  C  +31.0 V   -5.7  pct  42
+    Q3                   n= 141  EV   +6.4  acerto 35.5%  tercos  -22.2 /  +14.0 /  +12.5  C   -6.5 V  +21.9  pct  21
+    Q4                   n= 141  EV  +24.8  acerto 41.8%  tercos  +30.0 /  +12.8 /  +31.2  C  +33.3 V  +15.9  pct  82
+    Q5 (mais inclinada)  n= 142  EV  +16.9  acerto 38.7%  tercos  +53.3 /  +16.3 /   +0.0  C  +38.2 V   -2.7  pct  59
+  [1:1 sem parcial]
+    Q1 (mais plana)      n= 142  EV  +10.6  acerto 54.9%  tercos  +28.6 /  -12.2 /  +16.4  C   +5.8 V  +15.1  pct  44
+    Q2                   n= 141  EV   +9.2  acerto 54.6%  tercos  -14.3 /   +4.3 /  +22.4  C  +15.5 V   +2.9  pct  36
+    Q3                   n= 141  EV  +13.5  acerto 56.7%  tercos   -3.7 /  +20.0 /  +15.6  C   +3.9 V  +25.0  pct  58
+    Q4                   n= 141  EV  +12.1  acerto 56.0%  tercos  +20.0 /   +2.1 /  +15.6  C  +13.9 V  +10.1  pct  50
+    Q5 (mais inclinada)  n= 142  EV  +12.0  acerto 55.6%  tercos  +23.3 /  +18.4 /   +1.6  C  +22.1 V   +2.7  pct  52
+  [limitada, 1:3 com parcial]
+    Q1 (mais plana)      n=  84  EV  -15.5  acerto 22.6%  tercos  +12.5 /  -26.7 /  -18.4
+    Q2                   n=  99  EV  +18.7  acerto 34.3%  tercos  -14.3 /  +38.4 /  +21.5
+    Q3                   n=  95  EV  +10.5  acerto 30.5%  tercos   +0.0 /   +0.0 /  +21.3
+    Q4                   n=  89  EV  +32.0  acerto 39.3%  tercos  -50.0 /  +58.6 /  +37.5
+    Q5 (mais inclinada)  n=  95  EV  +18.4  acerto 32.6%  tercos   +6.2 /  +10.3 /  +28.9
+
+--- CANDIDATO h23f10 | Inclinacao media em 5 barras (pts/barra) | fechamento ------------------
+    limites dos quintis: 10.14  18.28  27.92  40.97
+  [1:3 com parcial]
+    Q1 (mais plana)      n= 142  EV   +8.5  acerto 28.2%  tercos   -4.0 /   -8.9 /  +23.6  C   +0.0 V  +16.0  pct  19
+    Q2                   n= 141  EV  +14.9  acerto 29.8%  tercos  +44.4 /   -8.5 /  +19.4  C  +22.0 V   +5.1  pct  42
+    Q3                   n= 141  EV  +24.8  acerto 34.0%  tercos   +0.0 /  +39.5 /  +26.9  C  +33.3 V  +16.7  pct  79
+    Q4                   n= 141  EV  +13.5  acerto 29.1%  tercos  +29.2 /  +17.3 /   +4.6  C  +20.0 V   +7.0  pct  36
+    Q5 (mais inclinada)  n= 142  EV  +21.8  acerto 31.7%  tercos  +36.1 /  +19.6 /  +15.0  C  +33.3 V  +11.0  pct  70
+  [1:3 sem parcial]
+    Q1 (mais plana)      n= 142  EV  +11.3  acerto 28.2%  tercos  +12.0 /  -11.1 /  +25.0  C   +1.5 V  +20.0  pct  21
+    Q2                   n= 141  EV  +19.9  acerto 29.8%  tercos  +63.0 /   -6.4 /  +20.9  C  +32.9 V   +1.7  pct  45
+    Q3                   n= 141  EV  +34.8  acerto 34.0%  tercos   +3.2 /  +44.2 /  +43.3  C  +50.7 V  +19.4  pct  82
+    Q4                   n= 141  EV  +17.0  acerto 29.1%  tercos  +37.5 /  +30.8 /   -1.5  C  +32.9 V   +1.4  pct  37
+    Q5 (mais inclinada)  n= 142  EV  +26.8  acerto 31.7%  tercos  +44.4 /  +21.7 /  +20.0  C  +39.1 V  +15.1  pct  64
+  [1:2 sem parcial]
+    Q1 (mais plana)      n= 142  EV   +0.7  acerto 33.8%  tercos   -4.0 /   +0.0 /   +2.8  C  -10.4 V  +10.7  pct   9
+    Q2                   n= 141  EV  +17.7  acerto 39.0%  tercos  +44.4 /   +2.1 /  +17.9  C  +22.0 V  +11.9  pct  62
+    Q3                   n= 141  EV  +22.7  acerto 41.1%  tercos   -3.2 /  +16.3 /  +38.8  C  +26.1 V  +19.4  pct  76
+    Q4                   n= 141  EV   +5.0  acerto 34.8%  tercos   +4.2 /  +15.4 /   -3.1  C   +8.6 V   +1.4  pct  18
+    Q5 (mais inclinada)  n= 142  EV  +26.8  acerto 42.3%  tercos  +58.3 /  +23.9 /  +10.0  C  +47.8 V   +6.8  pct  87
+  [1:1 sem parcial]
+    Q1 (mais plana)      n= 142  EV   +5.6  acerto 52.8%  tercos  -20.0 /   -6.7 /  +22.2  C   -1.5 V  +12.0  pct  20
+    Q2                   n= 141  EV   +9.9  acerto 54.6%  tercos  +25.9 /  -10.6 /  +17.9  C  +11.0 V   +8.5  pct  41
+    Q3                   n= 141  EV  +14.9  acerto 57.4%  tercos   -3.2 /  +34.9 /  +10.4  C  +15.9 V  +13.9  pct  65
+    Q4                   n= 141  EV   +9.9  acerto 54.6%  tercos  +20.8 /   +3.8 /  +10.8  C   +7.1 V  +12.7  pct  41
+    Q5 (mais inclinada)  n= 142  EV  +16.9  acerto 58.5%  tercos  +27.8 /  +17.4 /  +10.0  C  +27.5 V   +6.8  pct  75
+  [limitada, 1:3 com parcial]
+    Q1 (mais plana)      n=  86  EV  -33.7  acerto 15.1%  tercos  -62.5 /  -20.0 /  -32.5
+    Q2                   n=  98  EV  +34.2  acerto 40.8%  tercos  +35.3 /  +22.8 /  +42.0
+    Q3                   n=  92  EV  +27.7  acerto 39.1%  tercos   -4.2 /   +2.6 /  +53.1
+    Q4                   n=  91  EV   +0.0  acerto 25.3%  tercos  -27.3 /  +33.3 /  -24.4
+    Q5 (mais inclinada)  n=  95  EV  +33.2  acerto 37.9%  tercos   +5.3 /  +34.8 /  +44.2
+
+--- CANDIDATO h23f10 | Inclinacao em 1 barra / ATR 21 | fechamento ------------------
+    limites dos quintis: 0.05  0.10  0.15  0.24
+  [1:3 com parcial]
+    Q1 (mais plana)      n= 142  EV  +16.9  acerto 31.0%  tercos  +29.6 /   -9.3 /  +27.8  C  +16.2 V  +17.6  pct  50
+    Q2                   n= 141  EV  +13.5  acerto 30.5%  tercos  +10.0 /  +15.6 /  +13.6  C  +28.6 V   -1.4  pct  36
+    Q3                   n= 141  EV  +14.9  acerto 28.4%  tercos   +0.0 /  +21.6 /  +15.2  C   +9.0 V  +22.2  pct  42
+    Q4                   n= 141  EV  +18.4  acerto 31.9%  tercos  +35.7 /   +2.3 /  +21.7  C  +26.7 V   +9.1  pct  56
+    Q5 (mais inclinada)  n= 142  EV  +19.7  acerto 31.0%  tercos  +29.4 /  +24.0 /  +10.3  C  +30.3 V  +10.5  pct  62
+  [1:3 sem parcial]
+    Q1 (mais plana)      n= 142  EV  +23.2  acerto 31.0%  tercos  +33.3 /   -7.0 /  +37.5  C  +25.0 V  +21.6  pct  54
+    Q2                   n= 141  EV  +22.0  acerto 30.5%  tercos  +33.3 /  +24.4 /  +15.2  C  +48.6 V   -4.2  pct  49
+    Q3                   n= 141  EV  +13.5  acerto 28.4%  tercos   +0.0 /  +25.5 /   +9.1  C   +7.7 V  +20.6  pct  26
+    Q4                   n= 141  EV  +26.2  acerto 31.9%  tercos  +57.1 /   +4.5 /  +27.5  C  +38.7 V  +12.1  pct  62
+    Q5 (mais inclinada)  n= 142  EV  +24.6  acerto 31.0%  tercos  +32.4 /  +28.0 /  +17.2  C  +40.9 V  +10.5  pct  59
+  [1:2 sem parcial]
+    Q1 (mais plana)      n= 142  EV  +12.0  acerto 37.3%  tercos  +22.2 /   -2.3 /  +16.7  C   +7.4 V  +16.2  pct  39
+    Q2                   n= 141  EV  +12.8  acerto 37.6%  tercos  +20.0 /  +13.3 /   +9.1  C  +28.6 V   -2.8  pct  42
+    Q3                   n= 141  EV   +8.5  acerto 36.2%  tercos  -12.5 /  +23.5 /   +4.5  C   -3.8 V  +23.8  pct  27
+    Q4                   n= 141  EV  +20.6  acerto 40.4%  tercos  +28.6 /   -6.8 /  +34.8  C  +28.0 V  +12.1  pct  70
+    Q5 (mais inclinada)  n= 142  EV  +19.0  acerto 39.4%  tercos  +44.1 /  +26.0 /   -1.7  C  +37.9 V   +2.6  pct  66
+  [1:1 sem parcial]
+    Q1 (mais plana)      n= 142  EV  +10.6  acerto 54.9%  tercos  +25.9 /  -11.6 /  +18.1  C   +7.4 V  +13.5  pct  44
+    Q2                   n= 141  EV   +5.0  acerto 52.5%  tercos  -13.3 /   +6.7 /  +12.1  C   +8.6 V   +1.4  pct  17
+    Q3                   n= 141  EV  +16.3  acerto 58.2%  tercos   +0.0 /  +17.6 /  +21.2  C  +10.3 V  +23.8  pct  72
+    Q4                   n= 141  EV  +10.6  acerto 55.3%  tercos  +14.3 /   +0.0 /  +15.9  C  +14.7 V   +6.1  pct  43
+    Q5 (mais inclinada)  n= 142  EV  +14.8  acerto 57.0%  tercos  +26.5 /  +20.0 /   +3.4  C  +19.7 V  +10.5  pct  66
+  [limitada, 1:3 com parcial]
+    Q1 (mais plana)      n=  84  EV  -16.7  acerto 21.4%  tercos   +0.0 /  -25.8 /  -15.8
+    Q2                   n= 100  EV  +12.8  acerto 33.0%  tercos   -8.7 /  +34.8 /  +10.2
+    Q3                   n=  92  EV  +29.1  acerto 37.0%  tercos  +11.1 /  +14.8 /  +44.1
+    Q4                   n=  91  EV  +13.7  acerto 33.0%  tercos  -69.2 /  +40.9 /  +17.8
+    Q5 (mais inclinada)  n=  95  EV  +24.7  acerto 34.7%  tercos  +11.1 /  +20.8 /  +34.1

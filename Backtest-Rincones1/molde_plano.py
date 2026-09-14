@@ -375,7 +375,8 @@ footer a{color:var(--ink-3)}
 """
 
 
-CABECA = """<title>Plano Operacional Rincones1</title>
+CABECA = """<meta charset="utf-8">
+<title>Plano Operacional Rincones1</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@600;700&family=Libre+Franklin:wght@400;600&family=JetBrains+Mono:wght@400;500;600&display=swap">

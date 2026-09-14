@@ -45,9 +45,9 @@ def dump_dia(barras, diario, ctx, d):
         tr = E.setup_niveis(b, aj, niveis, tag)
         print('SETUP %-3s %d trade(s)' % (tag, len(tr)))
         for t in tr:
-            print('   %s %-6s nivel %-6s @%.0f -> %s as %s : %+.0f pts (alvo ajuste %.0f, stop %.0f)'
+            print('   %s %-6s nivel %-6s @%.0f -> %s as %s : %+.0f pts (alvo %.0f, stop %.0f)'
                   % (t['hora'], 'COMPRA' if t['lado'] > 0 else 'VENDA', t['nivel'], t['entrada'],
-                     t['motivo'], t['hora_saida'], t['pts'], aj,
+                     t['motivo'], t['hora_saida'], t['pts'], t['alvo'],
                      t['entrada'] - E.STOP if t['lado'] > 0 else t['entrada'] + E.STOP))
     print('')
 
@@ -61,7 +61,7 @@ def premissa(barras, ctx, validos):
     for d in validos:
         b, c = barras[d], ctx[d]
         aj = c['aj']
-        for t in E.setup_niveis(b, aj, c['fund'], 'CD', stop=1e9, parcial=False):
+        for t in E.setup_niveis(b, aj, c['fund'], 'CD', stop=1e9, parcial=False, alvo_ajuste=True):
             total += 1
             if t['motivo'] == 'ALVO':
                 chega += 1
@@ -101,7 +101,8 @@ def premissa(barras, ctx, validos):
         n = 0
         for d in validos:
             b, c = barras[d], ctx[d]
-            for t in E.setup_niveis(b, c['aj'], c['fund'], 'CD', stop=float(s), parcial=False):
+            for t in E.setup_niveis(b, c['aj'], c['fund'], 'CD', stop=float(s), parcial=False,
+                                    alvo_ajuste=True):
                 tot += t['pts']
                 n += 1
         print('     stop %4d -> %+9.0f pts em %d trades (%.1f pts/trade)' % (s, tot, n, tot / n))

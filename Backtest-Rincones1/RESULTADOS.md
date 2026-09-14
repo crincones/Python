@@ -138,7 +138,87 @@ resolve o atraso; não resolve a falta de confirmação.
 
 ---
 
-## 6. O stop: 100 contra 150
+## 6. A restrição do leque
+
+O gatilho de esforço não olha **onde** o preço está — ele só mede que alguém
+agrediu e falhou. A restrição desta seção diz onde isso conta: a barra tem de
+estar **encostada no leque** ou **do lado de trás dele**. O gatilho que dispara
+com o preço esticado **na frente** do leque, fora da tolerância do toque, é
+descartado. Liga-se com `FILTRO_LEQUE = True` em `engine.py`.
+
+### Onde o preço está quando o gatilho dispara
+
+| posição da barra | WINV26 · barras / gatilhos | WINFUT · barras / gatilhos |
+|---|---|---|
+| tocando alguma das três | 75,0% / 61,7% | 76,0% / 53,3% |
+| **atrás** do leque, fora da tolerância | 1,7% / 4,3% | 1,6% / 3,3% |
+| na frente — *exatamente o que a restrição corta* | 23,3% / 34,0% | 22,4% / 43,5% |
+
+### Sem restrição — qualquer posição em relação às médias
+
+| | gatilhos | stop | n | EV | t | PF | DD |
+|---|---|---|---|---|---|---|---|
+| WINV26 · setup B isolado | 94 | 150 | 35 | +68,6 | +2,86 | 2,45 | 450 |
+| WINV26 · **carteira A + B** | 94 | 150 | 59 | +77,5 | +3,39 | 2,61 | 450 |
+| WINV26 · setup B isolado | 94 | 100 | 35 | +40,0 | +2,10 | 2,00 | 300 |
+| WINV26 · **carteira A + B** | 94 | 100 | 60 | +51,7 | +2,73 | 2,35 | 300 |
+| WINFUT · setup B isolado | 246 | 150 | 103 | +21,0 | +1,21 | 1,31 | 1725 |
+| WINFUT · **carteira A + B** | 246 | 150 | 148 | +43,0 | +2,84 | 1,71 | 1575 |
+| WINFUT · setup B isolado | 246 | 100 | 103 | +22,3 | +1,89 | 1,53 | 900 |
+| WINFUT · **carteira A + B** | 246 | 100 | 149 | +28,2 | +2,27 | 1,66 | 1500 |
+
+### Só gatilho que toca ou fica atrás do leque
+
+| | gatilhos | stop | n | EV | t | PF | DD |
+|---|---|---|---|---|---|---|---|
+| WINV26 · setup B isolado | 62 | 150 | 13 | +103,8 | +2,25 | 4,00 | 150 |
+| WINV26 · **carteira A + B** | 62 | 150 | 38 | +88,8 | +2,61 | 2,88 | 450 |
+| WINV26 · setup B isolado | 62 | 100 | 13 | +76,9 | +1,86 | 3,50 | 200 |
+| WINV26 · **carteira A + B** | 62 | 100 | 38 | +71,1 | +2,44 | 3,08 | 300 |
+| WINFUT · setup B isolado | 139 | 150 | 26 | +54,8 | +1,53 | 1,95 | 525 |
+| WINFUT · **carteira A + B** | 139 | 150 | 78 | +73,1 | +3,29 | 2,36 | 525 |
+| WINFUT · setup B isolado | 139 | 100 | 26 | +61,5 | +2,24 | 3,00 | 200 |
+| WINFUT · **carteira A + B** | 139 | 100 | 78 | +50,0 | +2,61 | 2,26 | 400 |
+
+**A restrição não mexe no A: ela reescreve o B.** Cortando 34,0% e 43,5% dos gatilhos, ela melhora o EV da carteira A + B em **4 das 4** células (duas bases × dois stops), o `t` em **2 de 4** e o drawdown em **2 de 4** (sem piorar em nenhuma). O setup A sai **idêntico** nas quatro — ele já exigia o toque, então já estava inteiro dentro da restrição. No WINV26 o setup B cai de 35 para 13 trades e o EV vai de +68,6 para +103,8 (t +2,86 → +2,25); a carteira A + B vai de +77,5 para +88,8 de EV, com o drawdown parado em 450 pontos. No WINFUT o setup B cai de 103 para 26 trades e o EV vai de +21,0 para +54,8 (t +1,21 → +1,53); a carteira A + B vai de +43,0 para +73,1 de EV, com o drawdown de 1575 para 525 pontos. O que sobra do B é o afastamento medido **no leque ou atrás dele**: mesmo lugar do A, direção oposta — quem decide é de que lado veio a agressão que falhou. O que ela joga fora é a esticada à frente das médias, que é exatamente onde a reversão é mais cara. A ressalva é de amostra: onde o `t` piora, ele piora porque a restrição tirou trade, não porque tirou vantagem — o EV sobe e o `t` cai junto com o n.
+
+> **Por que ela não é o padrão.** Não é uma peneira nova de qualidade: é uma
+> troca de carteira. Corta uma fatia grande dos gatilhos e quase todo o
+> setup B, e o que sobra do B é pequeno demais para medir sozinho — o `t`
+> cai onde o EV sobe, e isso é aritmética de amostra, não vantagem perdida.
+> Com dois arquivos que se sobrepõem na maior parte da janela, promovê-la a
+> padrão seria escolher a curva mais bonita de uma amostra pequena.
+
+### As duas metades da restrição, separadas (carteira A + B)
+
+| gatilhos aceitos | stop | WINV26 · gat / n / EV / t / DD | WINFUT · gat / n / EV / t / DD |
+|---|---|---|---|
+| sem restrição | 150 | 94 · 59 · +77,5 · +3,39 · 450 | 246 · 148 · +43,0 · +2,84 · 1575 |
+| sem restrição | 100 | 94 · 60 · +51,7 · +2,73 · 300 | 246 · 149 · +28,2 · +2,27 · 1500 |
+| só o toque no leque | 150 | 58 · 36 · +81,2 · +2,26 · 450 | 131 · 76 · +69,1 · +3,08 · 525 |
+| só o toque no leque | 100 | 58 · 36 · +72,2 · +2,42 · 300 | 131 · 76 · +50,0 · +2,60 · 400 |
+| só o que fica atrás do leque | 150 | 4 · 2 · +225,0 · — · 0 | 8 · 2 · +225,0 · — · 0 |
+| só o que fica atrás do leque | 100 | 4 · 2 · +50,0 · — · 0 | 8 · 2 · +50,0 · — · 0 |
+| **os dois — a variante** | 150 | 62 · 38 · +88,8 · +2,61 · 450 | 139 · 78 · +73,1 · +3,29 · 525 |
+| **os dois — a variante** | 100 | 62 · 38 · +71,1 · +2,44 · 300 | 139 · 78 · +50,0 · +2,61 · 400 |
+
+**A metade de trás do leque ajuda, mas não sempre.** Ela vale 4,3% e 3,3% dos gatilhos e melhora o EV em 2 das 4 células. WINV26: só o toque dá +81,2 de EV, com o de trás junto dá +88,8; WINFUT: só o toque dá +69,1 de EV, com o de trás junto dá +73,1. Nenhuma das duas leituras aguenta peso: sozinha, a metade de trás rende **2 e 2 trades** nas duas bases. O que a decomposição mostra com segurança é outra coisa — a restrição é, na prática, **quase toda** o toque. Com tolerância de um range médio, o preço que se afastou o bastante para deixar o leque inteiro para trás quase não acontece.
+
+### A restrição nas cinco médias de regime (carteira A + B, stop 150)
+
+| média | % barras tocando | WINV26 · sem / com | WINFUT · sem / com |
+|---|---|---|---|
+| **3 EMAs 21/42/72** ← padrão | 76,0% | 59 · +77,5 · +3,39 / 38 · +88,8 · +2,61 | 148 · +43,0 · +2,84 / 78 · +73,1 · +3,29 |
+| KAMA 13 | 74,0% | 46 · +75,0 · +2,61 / 18 · +66,7 · +1,16 | 122 · +25,1 · +1,45 / 48 · +26,6 · +0,92 |
+| Hull 13 | 99,0% | 31 · +36,3 · +0,82 / 31 · +36,3 · +0,82 | 78 · +25,0 · +1,11 / 78 · +25,0 · +1,11 |
+| T3 Tillson 13 | 68,3% | 63 · +64,3 · +2,61 / 36 · +35,4 · +1,00 | 160 · +27,1 · +1,75 / 86 · +29,7 · +1,55 |
+| estilo Jurik 21 | 90,0% | 62 · +46,0 · +1,62 / 36 · +20,8 · +0,59 | 151 · +24,3 · +1,52 / 102 · +13,9 · +0,82 |
+
+**A restrição é uma propriedade do leque, não das médias em geral.** Em nenhuma família ela melhora o `t` nas duas bases ao mesmo tempo. Com as três EMAs — WINV26: +77,5 → +88,8 de EV (t +3,39 → +2,61); WINFUT: +43,0 → +73,1 de EV (t +2,84 → +3,29). Em Hull 13 a restrição é **inerte**: com média única e tolerância de um range médio, o preço encosta na linha quase sempre, e não sobra nada para cortar. “Atrás do leque” pressupõe um leque: três linhas separadas o bastante para haver um lado de cá e um de lá. Uma linha só não tem espessura, e a restrição vira outra coisa — um filtro do preço contra a inclinação.
+
+---
+
+## 7. O stop: 100 contra 150
 
 | stop | carteira | WINV26 · EV / t / PF / DD | WINFUT · EV / t / PF / DD |
 |---|---|---|---|
@@ -175,7 +255,7 @@ cheio; com stop 100 a parcial sai em +100 e o alvo paga +200.
 
 ---
 
-## 7. Carteira — uma posição por vez (stop 150)
+## 8. Carteira — uma posição por vez (stop 150)
 
 ### WINV26
 
@@ -198,7 +278,7 @@ Adicionar C piora tudo nas duas bases.
 
 ---
 
-## 8. Alvo e parcial
+## 9. Alvo e parcial
 
 EV em pontos, carteira A + B, com a **parcial acompanhando o stop de cada linha**.
 **Negrito** = melhor da linha.
@@ -224,7 +304,7 @@ pico isolado: 200 é pior, 400 e 500 são piores.
 
 ---
 
-## 9. Entrada, fora da amostra e custos
+## 10. Entrada, fora da amostra e custos
 
 ### Tipo de entrada (carteira A + B, stop 150)
 
@@ -267,7 +347,7 @@ preenche.
 
 ---
 
-## 10. Ressalvas
+## 11. Ressalvas
 
 - **Amostra pequena.** 44 pregões no WINFUT, 13 com trade no WINV26. Vários `t`
   ficam entre +1 e +2, que não é evidência forte. O setup C tem 7 e 19 trades — a
@@ -285,11 +365,11 @@ preenche.
 
 ---
 
-## 11. O que eu faria
+## 12. O que eu faria
 
 1. **Manter o stop em 150.** O de 100 só mede melhor em 1 das 4 comparações (WINV26 · só A); nas outras o de 150 fica na frente. Com a fórmula nova do eixo [E2] o stop curto deixou de ser a escolha limpa que era com a antiga — e o ganho dele em risco por trade continua valendo, então é uma troca, não uma decisão óbvia.
 2. **Só A tem o melhor EV por trade; A + B tem o melhor t.** O A entrega mais por operação e um drawdown menor; a carteira com B entrega mais no total e um resultado diário mais estável. No WINV26: só A dá +81,0 de EV com t +2,18 e DD 300; A + B dá +77,5 com t +3,39 e DD 450. No WINFUT: só A dá +77,8 de EV com t +2,97 e DD 300; A + B dá +43,0 com t +2,84 e DD 1575.
 3. **Manter as três EMAs como padrão.** Elas dão o melhor t em 3 das 4 combinações de base e stop; ficam atrás em WINFUT com stop 100 (ganha estilo Jurik 21). E onde o empilhamento perde, quem aparece na frente é a aproximação de Jurik — que não é o JMA de verdade, então trocar o padrão por causa dela seria trocar por um indicador que não existe aqui.
 4. **Manter o alvo em 300.**
 5. **Não ligar o setup C.**
-6. **Medir o custo real da corretora** e refazer a § 8 antes de dimensionar posição.
+6. **Medir o custo real da corretora** e refazer a § 10 antes de dimensionar posição.

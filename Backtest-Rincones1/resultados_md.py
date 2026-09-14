@@ -140,8 +140,93 @@ def gera(ctx, fmt, ROT_REG, ROT_SU):
     A('> JMA foi testado". Se o resultado dela pesasse na decisão, o certo seria')
     A('> licenciar o indicador de verdade e refazer.\n')
 
+    # --- 6: a restricao do leque
+    lq = R.get('leque')
+    A('---\n\n## 6. A restrição do leque\n')
+    A('O gatilho de esforço não olha **onde** o preço está — ele só mede que alguém')
+    A('agrediu e falhou. A restrição desta seção diz onde isso conta: a barra tem de')
+    A('estar **encostada no leque** ou **do lado de trás dele**. O gatilho que dispara')
+    A('com o preço esticado **na frente** do leque, fora da tolerância do toque, é')
+    A('descartado. Liga-se com `FILTRO_LEQUE = True` em `engine.py`.\n')
+    if not lq:
+        A('> (sem comparativo do leque neste resumo)\n')
+    else:
+        A('### Onde o preço está quando o gatilho dispara\n')
+        A('| posição da barra | WINV26 · barras / gatilhos | WINFUT · barras / gatilhos |')
+        A('|---|---|---|')
+        for k, rot in (('toca', 'tocando alguma das três'),
+                       ('atras', '**atrás** do leque, fora da tolerância'),
+                       ('frente', 'na frente — *exatamente o que a restrição corta*')):
+            A('| %s | %s / %s | %s / %s |'
+              % (rot, p1(lq['posicao']['WINV26'][k]['barras']),
+                 p1(lq['posicao']['WINV26'][k]['gatilhos']),
+                 p1(lq['posicao']['WINFUT'][k]['barras']),
+                 p1(lq['posicao']['WINFUT'][k]['gatilhos'])))
+        A('')
+        for chave in lq['ordem']:
+            rot_ch = lq['rotulos'][chave]
+            A('### %s\n' % (rot_ch[0].upper() + rot_ch[1:]))
+            A('| | gatilhos | stop | n | EV | t | PF | DD |')
+            A('|---|---|---|---|---|---|---|---|')
+            for b in BASES:
+                g = lq['grid'][b][chave]
+                for stop in R['stops']:
+                    for ch, rot in (('setup_B', 'setup B isolado'),
+                                    ('cAB', '**carteira A + B**')):
+                        m = g[str(stop)][ch]
+                        A('| %s · %s | %d | %d | %s | %s | %s | %s | %d |'
+                          % (b, rot, g['gatilhos'], stop, m['n'], n1(m['ev']),
+                             t2(m['t']), f2(m['pf']), round(m['dd'])))
+            A('')
+        A(ctx['ver_leque_md'] + '\n')
+        A('> **Por que ela não é o padrão.** Não é uma peneira nova de qualidade: é uma')
+        A('> troca de carteira. Corta uma fatia grande dos gatilhos e quase todo o')
+        A('> setup B, e o que sobra do B é pequeno demais para medir sozinho — o `t`')
+        A('> cai onde o EV sobe, e isso é aritmética de amostra, não vantagem perdida.')
+        A('> Com dois arquivos que se sobrepõem na maior parte da janela, promovê-la a')
+        A('> padrão seria escolher a curva mais bonita de uma amostra pequena.\n')
+        if 'decomp' in lq:
+            A('### As duas metades da restrição, separadas (carteira A + B)\n')
+            A('| gatilhos aceitos | stop | WINV26 · gat / n / EV / t / DD '
+              '| WINFUT · gat / n / EV / t / DD |')
+            A('|---|---|---|---|')
+            for chave in ['livre'] + lq['decomp_ordem']:
+                for stop in R['stops']:
+                    def cel(b):
+                        if chave == 'livre':
+                            g = lq['grid'][b]['livre']
+                            m, gat = g[str(stop)]['cAB'], g['gatilhos']
+                        else:
+                            g = lq['decomp'][b][chave]
+                            m, gat = g[str(stop)], g['gatilhos']
+                        return ('%d · %d · %s · %s · %d'
+                                % (gat, m['n'], n1(m['ev']), t2(m['t']),
+                                   round(m['dd'])) if m else '—')
+                    rot = ('sem restrição' if chave == 'livre'
+                           else lq['decomp_rot'][chave])
+                    A('| %s | %d | %s | %s |'
+                      % ('**%s**' % rot if chave == 'leque' else rot,
+                         stop, cel('WINV26'), cel('WINFUT')))
+            A('')
+            A(ctx['ver_leque_decomp_md'] + '\n')
+        A('### A restrição nas cinco médias de regime (carteira A + B, stop %d)\n' % sp)
+        A('| média | % barras tocando | WINV26 · sem / com | WINFUT · sem / com |')
+        A('|---|---|---|---|')
+        for reg in REGIMES:
+            def cel(b):
+                g = lq['regimes'][b][reg]
+                return ' / '.join(
+                    ('%d · %s · %s' % (g[c]['n'], n1(g[c]['ev']), t2(g[c]['t'])))
+                    if g[c] else '—' for c in lq['ordem'])
+            A('| %s%s | %s | %s | %s |'
+              % ('**%s**' % ROT_REG[reg][0] if reg == 'ema3' else ROT_REG[reg][0],
+                 ' ← padrão' if reg == 'ema3' else '',
+                 p1(lq['regimes']['WINFUT'][reg]['toca']), cel('WINV26'), cel('WINFUT')))
+        A('')
+        A(ctx['ver_leque_ma_md'] + '\n')
+
     # --- 4
-    A('---\n\n## 6. O stop: 100 contra %d\n' % sp)
+    A('---\n\n## 7. O stop: 100 contra %d\n' % sp)
     A('| stop | carteira | WINV26 · EV / t / PF / DD | WINFUT · EV / t / PF / DD |')
     A('|---|---|---|---|')
     for stop in (sp, 100):
@@ -181,7 +266,7 @@ def gera(ctx, fmt, ROT_REG, ROT_SU):
         A(ctx['ver_gestao_md'] + '\n')
 
     # --- 5
-    A('---\n\n## 7. Carteira — uma posição por vez (stop %d)\n' % sp)
+    A('---\n\n## 8. Carteira — uma posição por vez (stop %d)\n' % sp)
     for b in BASES:
         A('### %s\n' % b)
         A(CAB)
@@ -192,7 +277,7 @@ def gera(ctx, fmt, ROT_REG, ROT_SU):
     A('Adicionar C piora tudo nas duas bases.\n')
 
     # --- 6
-    A('---\n\n## 8. Alvo e parcial\n')
+    A('---\n\n## 9. Alvo e parcial\n')
     A('EV em pontos, carteira A + B, com a **parcial acompanhando o stop de cada linha**.')
     A('**Negrito** = melhor da linha.\n')
     for b in BASES:
@@ -210,7 +295,7 @@ def gera(ctx, fmt, ROT_REG, ROT_SU):
     A('pico isolado: 200 é pior, 400 e 500 são piores.\n')
 
     # --- 7
-    A('---\n\n## 9. Entrada, fora da amostra e custos\n')
+    A('---\n\n## 10. Entrada, fora da amostra e custos\n')
     A('### Tipo de entrada (carteira A + B, stop %d)\n' % sp)
     A('| | WINV26 | WINFUT |\n|---|---|---|')
     for ch, rot in (('entrada_meio', 'limitada no meio do candle'),
@@ -246,7 +331,7 @@ def gera(ctx, fmt, ROT_REG, ROT_SU):
     A('preenche.\n')
 
     # --- 8
-    A('---\n\n## 10. Ressalvas\n')
+    A('---\n\n## 11. Ressalvas\n')
     A('- **Amostra pequena.** %d pregões no WINFUT, %s com trade no WINV26. Vários `t`'
       % (R['bases']['WINFUT']['pregoes'], ctx['preg26tr']))
     A('  ficam entre +1 e +2, que não é evidência forte. O setup C tem 7 e 19 trades — a')
@@ -263,11 +348,11 @@ def gera(ctx, fmt, ROT_REG, ROT_SU):
     A('- **Sem filtro de horário, rolagem ou vencimento.**\n')
 
     # --- 9
-    A('---\n\n## 11. O que eu faria\n')
+    A('---\n\n## 12. O que eu faria\n')
     A('1. ' + ctx['acao_stop_md'])
     A('2. ' + ctx['acao_carteira_md'])
     A('3. ' + ctx['acao_ma_md'])
     A('4. **Manter o alvo em %d.**' % ctx['alvo'])
     A('5. **Não ligar o setup C.**')
-    A('6. **Medir o custo real da corretora** e refazer a § 8 antes de dimensionar posição.')
+    A('6. **Medir o custo real da corretora** e refazer a § 10 antes de dimensionar posição.')
     return '\n'.join(L) + '\n'

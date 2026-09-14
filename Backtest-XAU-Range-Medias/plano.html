@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="pt-BR"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Plano de operação — médias + Esforço × Resultado</title>
+<style>
+:root{
+  --tinta:#12161c; --tinta2:#5d6874; --tinta3:#8d97a3;
+  --fundo:#f7f8fa; --papel:#ffffff; --linha:#e3e7ec; --caixa:#f2f4f7;
+  --realce:#3b5bdb; --alta:#0f9d76; --baixa:#e03131;
+  --sans:"Inter","Segoe UI Variable Text","Segoe UI",system-ui,
+         -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,"Cascadia Code","JetBrains Mono","SF Mono",
+         Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --tinta:#e6e9ee; --tinta2:#98a2b0; --tinta3:#6b7686;
+    --fundo:#0e1116; --papel:#161a21; --linha:#252b34; --caixa:#1b2027;
+    --realce:#748ffc; --alta:#38d9a9; --baixa:#ff6b6b;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fundo);color:var(--tinta);
+  font:15.5px/1.7 var(--sans);letter-spacing:-0.005em;
+  -webkit-font-smoothing:antialiased}
+.env{max-width:820px;margin:0 auto;padding:60px 24px 100px}
+h1{font-size:34px;line-height:1.15;margin:0 0 30px;letter-spacing:-0.028em;
+  font-weight:700;padding-bottom:22px;border-bottom:2px solid var(--tinta)}
+h2{font-size:22px;margin:52px 0 8px;padding-top:20px;font-weight:650;
+  letter-spacing:-0.02em;border-top:1px solid var(--linha)}
+h3{font-size:17px;margin:30px 0 4px;font-weight:640;letter-spacing:-0.012em}
+p{margin:13px 0}
+a{color:var(--realce);text-decoration:none}
+code{font:12.5px/1.5 var(--mono);background:var(--caixa);padding:2px 6px;
+  border-radius:5px;letter-spacing:0}
+pre{background:var(--caixa);border:1px solid var(--linha);border-radius:10px;
+  padding:16px 18px;overflow-x:auto;margin:20px 0}
+pre code{background:none;padding:0;font-size:12.5px;line-height:1.7}
+.lead{font-size:19px;line-height:1.6;letter-spacing:-0.015em}
+.destaque{background:var(--caixa);border-left:3px solid var(--realce);
+  padding:16px 20px;margin:24px 0;border-radius:0 8px 8px 0}
+.destaque p{margin:0}
+.aviso{border:1px solid var(--baixa);border-radius:10px;padding:16px 20px;
+  margin:24px 0;background:color-mix(in srgb,var(--baixa) 6%,transparent)}
+.aviso p{margin:0}
+table{border-collapse:collapse;width:100%;margin:20px 0;font-size:13px;
+  font-variant-numeric:tabular-nums;letter-spacing:0}
+th,td{padding:8px 11px;text-align:left;border-bottom:1px solid var(--linha);
+  vertical-align:top}
+thead th{border-bottom:1.5px solid var(--tinta2);font-weight:650;
+  color:var(--tinta2);text-transform:uppercase;font-size:10.5px;
+  letter-spacing:.07em}
+.rolagem{overflow-x:auto}
+ul,ol{margin:13px 0;padding-left:24px}
+li{margin:6px 0}
+hr{border:0;border-top:1px solid var(--linha);margin:38px 0}
+footer{margin-top:60px;padding-top:20px;border-top:1px solid var(--linha);
+  font-size:12.5px;color:var(--tinta2)}
+@media(max-width:640px){h1{font-size:27px}.env{padding:38px 16px 60px}}
+</style>
+</head><body><div class="env">
+<h1>Plano de operação manual — médias + Esforço × Resultado em range de 388 ticks</h1>
+<p class="lead">Este plano opera a variante <b>V2</b>: EMA de 21/42/72 em leque aberto define a tendência, o indicador dá o momento, e a gestão é <b>1:2 fixa</b>. Leia o §7 antes de mandar a primeira ordem — o estudo que gerou este plano tem uma reprovação importante nele.</p>
+<div class="rolagem"><table><thead><tr><th>o que o backtest mediu (V2)</th><th></th></tr></thead><tbody><tr><td>Operações</td><td>548 em 83 pregões (6,6 por pregão)</td></tr><tr><td>Acerto</td><td>37,8%</td></tr><tr><td>Payoff</td><td>2,00</td></tr><tr><td>Fator de lucro</td><td>1,21</td></tr><tr><td>Expectativa <b>dentro</b> da amostra</td><td>+0,133 R = +25,8 ticks</td></tr><tr><td>Expectativa <b>fora</b> da amostra</td><td><b>+0,035 R</b> — é este o número em que acreditar</td></tr><tr><td>Significância</td><td>t = +2,14</td></tr><tr><td>Pior rebaixamento</td><td>-20,0 R, 24 operações para recuperar</td></tr><tr><td>Maior sequência de perdas</td><td>14 operações</td></tr><tr><td>Maior sequência de ganhos</td><td>6 operações</td></tr><tr><td>Duração típica</td><td>1,6 barras</td></tr></tbody></table></div>
+<h2>1 · O gráfico e as médias</h2>
+<ul><li>Símbolo sintético de range gerado pelo <code>Range_Claude_v1.mq5</code>, com <b>388 ticks</b> de range.</li><li>Indicador <code>Trigger_EsforcoResultado_Range.mq5</code> aplicado ao gráfico, com os parâmetros de fábrica — não mexa neles.</li><li><b>Três médias exponenciais</b> do fechamento: <b>21, 42 e 72</b>.</li></ul>
+<div class="destaque"><p><b>Use EMA. Não use Hull.</b> É a conclusão mais sólida do estudo inteiro. Comparando par a par — mesma largura de leque, mesma gestão, mesmo stop — a EMA vence a Hull em <b>69 dos 80 pares</b> testados, com diferença mediana de +0,037 R. A Hull persegue o preço de perto e vira antes; o preço disso é trocar de lado 1.367 vezes contra 422 da EMA no mesmo histórico. Cada troca é uma tendência que ela declarou e desfez. Sensibilidade a virada não é a mesma coisa que leitura de tendência.</p></div>
+<h2>2 · O contexto: quando existe tendência</h2>
+<p>Duas condições, as duas medidas na barra de sinal. Se qualquer uma falhar, <b>não há operação</b> — não importa o quão bonito esteja o sinal do indicador.</p>
+<ol><li><b>As três médias ordenadas</b> na direção que se vai operar: <code>EMA21 &gt; EMA42 &gt; EMA72</code> para comprar, o inverso para vender.</li><li><b>O leque aberto:</b> a distância entre a EMA21 e a EMA72 tem de ser de pelo menos <b>400 ticks = 4,00 dólares</b>. É a tradução numérica de "médias não emboladas".</li></ol>
+<p>Na prática, medir os 400 ticks a olho é difícil e desnecessário: coloque a ferramenta de linha vertical entre as duas médias, ou apenas exija que dê para enxergar <b>4 dólares de separação</b> entre a mais rápida e a mais lenta. O estudo mostra platô, não pico — errar por 50 ticks não muda nada.</p>
+<p>A progressão medida justifica as duas exigências, nesta ordem:</p>
+<div class="rolagem"><table><thead><tr><th>contexto exigido</th><th>operações</th><th>expectativa</th></tr></thead><tbody><tr><td>nenhum — só o sinal do indicador</td><td>1.686</td><td>+0,062 R</td></tr><tr><td>médias ordenadas</td><td>730</td><td>+0,097 R</td></tr><tr><td><b>médias ordenadas + leque aberto</b></td><td>548</td><td><b>+0,133 R</b></td></tr><tr><td>médias ordenadas CONTRA o sinal</td><td>761</td><td>+0,029 R</td></tr></tbody></table></div>
+<p>A última linha é o controle que importa: operar <i>contra</i> o leque rende +0,029 R. O contexto não é decoração.</p>
+<h2>3 · A entrada</h2>
+<ol><li><b>Espere a barra de sinal FECHAR.</b> A seta aparece na barra em formação e pode sumir quando ela fecha — <code>resRel</code>, <code>qualRel</code> e o corpo mudam até o último tick. Sinal em barra aberta não é sinal.</li><li><b>Confira o contexto</b> (§2): médias ordenadas <i>e</i> leque aberto, na direção da barra de sinal.</li><li><b>Entre a mercado, no fechamento da barra</b>, a favor da direção da barra de sinal. Vale igual para a seta de absorção e para a de divergência.</li><li><b>Uma posição por vez.</b> Sinal que aparecer com posição aberta é ignorado, não acumulado.</li></ol>
+<p>São cerca de <b>6,6 operações por pregão</b> — o filtro do leque descarta boa parte dos sinais, e é para isso que ele existe.</p>
+<h2>4 · A saída: qual das três gestões usar</h2>
+<p>As três formas pedidas foram testadas. Duas delas <b>não são mensuráveis neste gráfico</b> — e é importante entender por quê antes de escolher.</p>
+<div class="rolagem"><table><thead><tr><th>gestão</th><th>desfechos</th><th>expectativa medida</th><th>confiável?</th></tr></thead><tbody><tr><td><b>fixo</b> — stop 194 t, alvo 388 t, nada se move</td><td>−1R ou +2R</td><td>+0,133 R</td><td><b>sim</b></td></tr><tr><td><b>parcial + breakeven da operação</b> — 50% em +1R, stop não se move</td><td>−1R, 0, +1,5R</td><td>+0,123 R</td><td><b>sim</b></td></tr><tr><td>parcial + stop na entrada — 50% em +1R, stop vai para a entrada</td><td>−1R, +0,5R, +1,5R</td><td>+0,176 R</td><td>não — intervalo de 0,354 R</td></tr><tr><td>breakeven puro — stop vai para a entrada em +1R, sem parcial</td><td>−1R, 0, +2R</td><td>+0,240 R</td><td>não — intervalo de 0,697 R</td></tr></tbody></table></div>
+<div class="aviso"><p><b>Por que as duas últimas não são mensuráveis.</b> A entrada é o fechamento da barra de sinal, então a barra seguinte <b>abre exatamente no preço de entrada</b>. Quando ela sobe 1R, qualquer pavio inferior faz o preço "voltar ao breakeven" no papel — e como a barra de range percorre 388 ticks garantidos, isso acontece em praticamente toda barra que arma o gatilho. O arquivo não diz se a mínima veio antes ou depois do toque em 1R, e as duas leituras dão resultados que diferem em até 0,70 R. Não é que a gestão seja ruim: é que este histórico não permite julgá-la.</p></div>
+<div class="destaque"><p><b>"Breakeven na média da operação" é uma conta, não uma opinião.</b> Com metade da posição realizada em +1R, o resultado da operação inteira num stop em −1R é <code>0,5 × (+S) + 0,5 × (−S) = 0</code>. Ou seja: <b>o breakeven da operação já está no stop inicial</b> — não é preciso mexer em nada. Levar o stop para a entrada não é breakeven, é travar +0,5R. São coisas diferentes, e só a primeira é mensurável aqui.</p></div>
+<p><b>A recomendação:</b> use a gestão <b>fixa</b>. Ela mede +0,133 R contra +0,123 R da parcial com breakeven da operação, é a mais simples de executar, e não depende de nenhuma suposição. Se preferir a sensação de realizar metade no meio do caminho, use a <code>parcial_op</code> — mas <b>não mexa no stop</b> ao fazer a parcial.</p>
+<h3>O tamanho do stop</h3>
+<p>Stop de <b>194 ticks</b>, alvo de <b>388 ticks</b>. Duas razões, e a primeira é geométrica.</p>
+<p>Num gráfico de range a barra percorre no máximo 388 ticks, então ela não consegue tocar dois níveis separados por mais que isso. Como stop e alvo distam <code>S + 2S = 3S</code>, o resultado deixa de depender de qualquer convenção exatamente a partir de:</p>
+<pre><code>S &gt; range / 3 = 129,3 ticks</code></pre>
+<p>Medido no arquivo, a largura do intervalo cai de 0,245 em S=120 para <b>exatamente zero</b> em S=130 — a previsão e a régua batem. A segunda razão é que de 130 a 220 ticks existe um platô: a expectativa desce suavemente e nenhum valor é um pico. 194 ticks fica no meio dele, com folga confortável acima do limite.</p>
+<p><b>Não use stop abaixo de 129 ticks.</b> Abaixo do limite o número que você viu no backtest não significa nada.</p>
+<h2>5 · Tamanho e risco</h2>
+<p>O risco por operação é <b>194 ticks = 1,94 dólares por lote</b>.</p>
+<ul><li>Arbitre o lote para que <b>1R fique em 0,25% a 0,5% do capital</b>. O pior rebaixamento medido foi de 20,0 R; com 0,5% por operação isso seria uma queda de 10,0% no capital — e ele pode ser pior fora da amostra.</li><li><b>Prepare-se para 14 perdas seguidas.</b> Foi a maior sequência medida, e com 38% de acerto ela é esperada, não anormal. A média de perdas seguidas é 2,8.</li><li><b>Limite diário de perda: 3R.</b> Atingiu, fecha a plataforma.</li><li><b>Limite de 13 operações por dia</b>, o dobro da média medida.</li></ul>
+<div class="destaque"><p><b>O acerto é baixo por construção, e está tudo bem.</b> Com alvo de 2R e stop de 1R, o ponto de equilíbrio é 33,3% de acerto. A V2 acerta 37,8%. Isso significa que <b>duas em cada três operações são perdas</b> — quem não aguenta essa sequência não deve operar 1:2. A alternativa é a gestão com parcial, que sobe o acerto para 51,6% ao custo de expectativa menor.</p></div>
+<h2>6 · O que não fazer</h2>
+<div class="rolagem"><table><thead><tr><th>tentação</th><th>o que o backtest diz</th></tr></thead><tbody><tr><td>Trocar a EMA pela Hull</td><td>A EMA vence em 69 dos 80 pares testados. A Hull vira antes e erra mais.</td></tr><tr><td>Operar sem exigir o leque aberto</td><td>Cai de +0,133 R para +0,097 R.</td></tr><tr><td>Operar sem contexto de médias nenhum</td><td>Cai para +0,062 R.</td></tr><tr><td>Apertar o stop para menos de 129 ticks</td><td>Abaixo do limite geométrico o resultado passa a depender de uma convenção — o número deixa de ser mensurável.</td></tr><tr><td>Adotar o breakeven puro porque mediu melhor</td><td>O intervalo dele vai de -0,444 R a +0,253 R. Ele <i>pode</i> ser melhor; o histórico não permite afirmar.</td></tr><tr><td>Usar a configuração campeã do grid</td><td>Ela mede +0,320 R dentro da amostra e entrega +0,035 R fora. Foi o máximo de 96 tentativas.</td></tr><tr><td>Aumentar o lote depois de uma sequência boa</td><td>Com t = +2,14, sequências boas e ruins de 6 operações são esperadas sem que nada tenha mudado.</td></tr><tr><td>Mexer nos parâmetros do indicador</td><td>Foram varridos no estudo anterior deste gráfico e são todos platôs. Mexer depois de ver os resultados é ajustar à amostra.</td></tr></tbody></table></div>
+<h2>7 · Expectativa realista — leia antes de operar</h2>
+<div class="aviso"><p><b>O estudo tem duas reprovações sérias, e elas mudam o que esperar.</b> Primeira: <b>o resultado vive no último terço do histórico</b>. Os dois primeiros terços rendem +0,075 R e +0,053 R, indistinguíveis de zero; o terceiro rende +0,250 R e carrega tudo. Segunda: <b>escolher a melhor configuração numa metade e testá-la na outra derruba o resultado de +0,320 R para +0,035 R</b>. O grid descreve o passado; ele não mostrou capacidade de prever.</p></div>
+<p>E o custo decide o resto. +0,133 R sobre um stop de 194 ticks são +25,8 ticks por operação:</p>
+<div class="rolagem"><table><thead><tr><th>custo ida+volta</th><th>expectativa por operação</th><th>por pregão</th></tr></thead><tbody><tr><td>0 ticks</td><td>+0,133 R = +25,8 ticks</td><td>+1,71 USD por lote</td></tr><tr><td>10 ticks</td><td>+0,082 R = +15,8 ticks</td><td>+1,05 USD por lote</td></tr><tr><td>20 ticks</td><td>+0,030 R = +5,8 ticks</td><td>+0,39 USD por lote</td></tr><tr><td>40 ticks</td><td>-0,073 R = -14,2 ticks</td><td>-0,93 USD por lote</td></tr></tbody></table></div>
+<p>Com 20 ticks de custo sobra +0,030 R; com 40, -0,073 R. E esse é o número <i>dentro</i> da amostra. Fora dela, com custo, não sobra nada.</p>
+<div class="destaque"><p><b>O que fazer com isso.</b> O que sobreviveu ao estudo não foi um sistema: foram <b>duas escolhas de projeto</b>. Usar EMA em vez de Hull, e exigir o leque aberto. As duas melhoram o gatilho de forma consistente e por razões estruturais. O que não sobreviveu foi a calibragem fina — o stop exato, a largura exata do leque, a gestão exata.</p></div>
+<p><b>Comece com lote mínimo e trate os três primeiros meses como coleta de dados.</b> O objetivo dessa fase é medir duas coisas que o backtest não sabe: o seu slippage real e se o regime de mercado do último terço continua valendo.</p>
+<h2>8 · Como saber se parou de funcionar</h2>
+<p>Defina os critérios <b>agora</b>. Depois de uma sequência ruim ninguém escreve regra de parada honesta.</p>
+<ul><li><b>Registre toda operação</b> com: data e hora, tipo de sinal, lado, largura do leque na entrada, distância do preço à EMA21, preço de entrada e de saída, resultado em R e o slippage contra o fechamento da barra.</li><li><b>Depois de 50 operações</b>, compare o acerto com 37,8%. Abaixo de 33% a estratégia não paga o alvo de 2R.</li><li><b>Depois de 100 operações</b>, some o slippage médio. Se passar de 15 ticks por operação, não há margem: +25,8 ticks de expectativa bruta não pagam isso.</li><li><b>Pare em −20 R acumulados</b> — é o pior rebaixamento medido. A essa altura a hipótese de que a vantagem sumiu é mais simples que a de azar.</li><li><b>Refaça o backtest a cada trimestre</b> com o histórico novo: <code>python rodar.py</code>. Acompanhe menos o acerto e mais a <b>estabilidade entre os terços</b> — foi ali que este estudo falhou.</li></ul>
+<hr>
+<p>Gerado por <code>plano.py</code> a partir de <code>saida/resumo.json</code> (2026-09-06 10:13). Os números vêm todos do backtest; nenhum foi digitado à mão. Para refazer: <code>python rodar.py &amp;&amp; python plano.py</code>.</p>
+<footer>Gerado por <code>plano.py</code> a partir de <code>saida/resumo.json</code> (2026-09-06 10:13).</footer>
+</div></body></html>

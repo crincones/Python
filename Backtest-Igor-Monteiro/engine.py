@@ -11,7 +11,8 @@ Setups:
   CD - pivos + bolas com regra de fusao de 300 pts
 
 Gestao (ESTRATEGIA.md 5): stop 100, saida parcial de 2/3 em +45 que zera o risco
-e move o stop do restante para +45, alvo final 500 pts ou o ajuste.
+e move o stop do restante para o preco medio da operacao (-90 da entrada, onde o
+total zera), alvo final de 500 pts fixos em todos os setups.
 """
 import csv
 import os
@@ -25,7 +26,8 @@ AJ_CSV = os.path.join(BASE, 'dados', 'Ajustes-WINFUT-NoDiv-NoSplits.2026-08-28.c
 # ---------------------------------------------------------------- parametros
 TICK        = 5.0      # tick do WIN, em pontos
 STOP        = 100.0    # stop em pontos
-ALVO_FIXO   = 500.0    # alvo fixo em pontos (setups A e B)
+ALVO_FIXO   = 500.0    # alvo fixo em pontos, em todos os setups
+ALVO_NO_AJUSTE = False  # True = setups C/D/CD saem no ajuste em vez de ALVO_FIXO (spec anterior)
 TICKS_AFAST = 1        # setup A: ticks de afastamento que armam o gatilho
 DIST_MIN    = 600.0    # distancia minima nivel <-> ajuste
 CRUZA_AJ    = 600.0    # quanto o preco precisa ultrapassar o ajuste p/ virar o regime
@@ -34,13 +36,16 @@ FUSAO       = 300.0    # bola e pivo mais proximos que isso: fica o mais afastad
 BOLA_PASSO  = 1000.0   # "bolas" = multiplos de 1000
 FIBS        = (0.618, 1.000, 1.618, 2.000)   # niveis do Pivot_Points_Pro
 VAL_PONTO   = 0.20     # R$ por ponto, 1 contrato WIN
+CONTRATOS   = 6        # lote: o minimo que realiza parcial de 1/2 (3) e de 2/3 (4) e
+                       # deixa o preco medio num preco real; pts sao por contrato do lote
 CUSTO_PTS   = 0.0      # custo de ida e volta em pontos (0 = bruto)
 
 # --- saida parcial (ESTRATEGIA.md 5)
 USA_PARCIAL  = True
 PARCIAL_PTS  = 45.0    # onde sai a parcial
 PARCIAL_FRAC = 2.0 / 3  # fracao da posicao que sai na parcial (2/3 -> resultado 2:1)
-PARCIAL_STOP = 45.0    # stop do restante depois da parcial (0 = zero a zero)
+PARCIAL_STOP = 'medio'  # stop do restante depois da parcial: 'medio' = preco medio
+                        # da operacao (o total zera); ou pts a favor da entrada (0 = na entrada)
 
 # --- regime
 REGIME_EXCLUSIVO = True   # ao cruzar o ajuste em CRUZA_AJ pts o lado inicial e desligado
@@ -254,29 +259,75 @@ def funde(niveis, ajuste, dist=FUSAO):
 
 
 # ---------------------------------------------------------------- simulacao
+def contratos_parcial(pfrac=None, lote=None):
+    """Quantos contratos do lote saem na parcial. A fracao tem de ser realizavel
+    com contratos inteiros: com 6, servem 1/2 (3) e 2/3 (4); 3/4 nao."""
+    pfrac = PARCIAL_FRAC if pfrac is None else pfrac
+    lote = CONTRATOS if lote is None else lote
+    n = pfrac * lote
+    if abs(n - round(n)) > 1e-9 or not 0 < round(n) < lote:
+        raise ValueError('parcial de %.4f nao cabe num lote de %d contratos' % (pfrac, lote))
+    return int(round(n))
+
+
+def stop_resto(pstop=None, pfrac=None, ppts=None, stop=None):
+    """
+    Stop do restante depois da parcial, em pts a favor da entrada (negativo =
+    contra). 'medio' e o preco medio da operacao depois de realizar a parcial:
+    o ponto em que o restante devolve exatamente o que a parcial ganhou, e o
+    total da operacao zera. Com 6 contratos e 2/3 em +45: saem 4 x 45 = 180,
+    sobram 2 -> medio a 90 pts contra a entrada. Arredondado ao tick, para o
+    lado da entrada (o total nunca fica negativo). O stop nunca e afastado: se
+    o medio cair alem do stop original, fica o stop.
+    """
+    pstop = PARCIAL_STOP if pstop is None else pstop
+    pfrac = PARCIAL_FRAC if pfrac is None else pfrac
+    ppts = PARCIAL_PTS if ppts is None else ppts
+    stop = STOP if stop is None else stop
+    if pstop != 'medio':
+        return float(pstop)
+    n = contratos_parcial(pfrac)
+    dist = n * ppts / (CONTRATOS - n)
+    dist = int(dist / TICK + 1e-9) * TICK
+    return -min(dist, stop)
+
+
+def _liq(pts):
+    """Resultado liquido, sem o ruido de ponto flutuante: 2/3*45 + 1/3*(-90)
+    daria -7e-15, e o zero a zero passaria a contar como perda."""
+    return round(pts - CUSTO_PTS, 6) + 0.0
+
+
 def fecha(barras, i0, entrada, lado, stop=None, alvo_px=None, otimista=False,
           parcial=None, ema=None, alvo_ema5=False, favoravel_na_entrada=None):
     """
     Percorre da barra i0 (inclusive) ate o fim do pregao.
 
     Gestao com parcial (ESTRATEGIA.md 5): ao atingir +PARCIAL_PTS sai PARCIAL_FRAC
-    da posicao e o stop do restante vai para +PARCIAL_STOP; antes disso vale o stop
-    cheio. Resultado em pontos por 1 contrato inteiro.
+    da posicao e o stop do restante vai para o preco medio da operacao (ver
+    stop_resto); antes disso vale o stop cheio. Resultado em pontos por 1
+    contrato inteiro.
 
     Empate intrabarra: o pior caso ganha (stop antes do alvo), salvo `otimista`.
     `alvo_ema5` troca o alvo pela EMA21 de M5 corrente.
+
+    Devolve (pts, motivo, hora_saida, indice_saida, indice_parcial ou None).
     """
     stop = STOP if stop is None else stop
     if parcial is None:
         parcial = USA_PARCIAL
     if favoravel_na_entrada is None:
         favoravel_na_entrada = FAVORAVEL_NA_ENTRADA
-    ppts, pfrac, pstop = PARCIAL_PTS, PARCIAL_FRAC, PARCIAL_STOP
+    ppts = PARCIAL_PTS
+    # a parcial sai em contratos inteiros do lote (e o medio sai deles)
+    pfrac = contratos_parcial() / float(CONTRATOS) if parcial else 0.0
+    pstop = stop_resto(stop=stop) if parcial else 0.0
 
     px_stop = entrada - stop * lado
     px_parc = entrada + ppts * lado
     px_pstop = entrada + pstop * lado
     feita = False
+    jp = None              # barra em que a parcial saiu
     ganho = 0.0            # ja realizado na parcial
     tam = 1.0              # fracao ainda aberta
 
@@ -302,19 +353,20 @@ def fecha(barras, i0, entrada, lado, stop=None, alvo_px=None, otimista=False,
                 ganho += pfrac * ppts
                 tam -= pfrac
                 feita = True
+                jp = j
             if alvo_ok:
-                return ganho + tam * lado * (alvo - entrada) - CUSTO_PTS, 'ALVO', hm, j
+                return _liq(ganho + tam * lado * (alvo - entrada)), 'ALVO', hm, j, jp
             if stop_ok(px_pstop if feita else px_stop):
                 s = px_pstop if feita else px_stop
-                return ganho + tam * lado * (s - entrada) - CUSTO_PTS, \
-                       ('STOP+' if feita else 'STOP'), hm, j
+                return _liq(ganho + tam * lado * (s - entrada)), \
+                       ('STOP+' if feita else 'STOP'), hm, j, jp
         else:
             # conservador: o adverso resolve antes do favoravel, na ordem em que o
             # preco teria de atravessar os niveis (stop -> parcial -> stop+ -> alvo)
             if stop_ok(px_pstop if feita else px_stop):
                 s = px_pstop if feita else px_stop
-                return ganho + tam * lado * (s - entrada) - CUSTO_PTS, \
-                       ('STOP+' if feita else 'STOP'), hm, j
+                return _liq(ganho + tam * lado * (s - entrada)), \
+                       ('STOP+' if feita else 'STOP'), hm, j, jp
             if parcial and not feita and parc_ok:
                 # o stop+ so passa a valer na barra seguinte: para disparar a
                 # parcial o preco teve de subir ate +PARCIAL_PTS, entao a extremidade
@@ -322,11 +374,12 @@ def fecha(barras, i0, entrada, lado, stop=None, alvo_px=None, otimista=False,
                 ganho += pfrac * ppts
                 tam -= pfrac
                 feita = True
+                jp = j
             if alvo_ok:
-                return ganho + tam * lado * (alvo - entrada) - CUSTO_PTS, 'ALVO', hm, j
+                return _liq(ganho + tam * lado * (alvo - entrada)), 'ALVO', hm, j, jp
 
     hm, o, h, l, c = barras[-1]
-    return ganho + tam * lado * (c - entrada) - CUSTO_PTS, 'FECHAMENTO', hm, len(barras) - 1
+    return _liq(ganho + tam * lado * (c - entrada)), 'FECHAMENTO', hm, len(barras) - 1, jp
 
 
 # ---------------------------------------------------------------- setup A
@@ -348,11 +401,11 @@ def setup_A(barras, ajuste, ticks=None, stop=None, alvo=None, otimista=False,
                 continue
         if (h >= ab) if lado > 0 else (l <= ab):
             alvo_px = ajuste if alvo_ajuste else (ab + alvo * lado)
-            pts, motivo, hs, _ = fecha(barras, i, ab, lado, stop, alvo_px, otimista,
-                                       parcial, ema, alvo_ema5)
+            pts, motivo, hs, k, jp = fecha(barras, i, ab, lado, stop, alvo_px, otimista,
+                                           parcial, ema, alvo_ema5)
             return [dict(setup='A', nivel='ABERTURA', lado=lado, entrada=ab,
                          hora=hm, pts=pts, motivo=motivo, hora_saida=hs,
-                         dist_ajuste=abs(ab - ajuste), i=i)]
+                         dist_ajuste=abs(ab - ajuste), i=i, k=k, jp=jp, alvo=alvo_px)]
     return []
 
 
@@ -367,17 +420,17 @@ def setup_B(barras, ajuste, stop=None, alvo=None, otimista=False, parcial=None,
     lado = 1 if ab < ajuste else -1
     for i, (hm, o, h, l, c) in enumerate(barras):
         if (h >= ajuste) if lado > 0 else (l <= ajuste):
-            pts, motivo, hs, _ = fecha(barras, i, ajuste, lado, stop,
-                                       ajuste + alvo * lado, otimista, parcial,
-                                       ema, alvo_ema5)
+            pts, motivo, hs, k, jp = fecha(barras, i, ajuste, lado, stop,
+                                           ajuste + alvo * lado, otimista, parcial,
+                                           ema, alvo_ema5)
             return [dict(setup='B', nivel='AJUSTE', lado=lado, entrada=ajuste,
                          hora=hm, pts=pts, motivo=motivo, hora_saida=hs,
-                         dist_ajuste=0.0, i=i)]
+                         dist_ajuste=0.0, i=i, k=k, jp=jp, alvo=ajuste + alvo * lado)]
     return []
 
 
 # ---------------------------------------------------------------- setups C / D / CD
-def setup_niveis(barras, ajuste, niveis, tag, stop=None, alvo_ajuste=True,
+def setup_niveis(barras, ajuste, niveis, tag, stop=None, alvo_ajuste=None,
                  alvo_fixo=None, dist_min=None, retracao=None, cruza=None,
                  otimista=False, uma_posicao=False, parcial=None,
                  regime_exclusivo=None, ema=None, alvo_ema5=False):
@@ -390,9 +443,11 @@ def setup_niveis(barras, ajuste, niveis, tag, stop=None, alvo_ajuste=True,
       - ao ultrapassar o ajuste em `cruza` o regime VIRA: o outro lado e habilitado
         e, com regime_exclusivo, o lado inicial e desligado (ESTRATEGIA.md 4.3)
       - retracao de `retracao` pts sem tocar o nivel invalida o proximo nivel
-      - alvo no ajuste (ou fixo, ou EMA21 de M5), stop de `stop` pts + parcial
+      - alvo fixo de ALVO_FIXO pts (ou o ajuste, ou EMA21 de M5), stop de `stop` pts + parcial
     """
     stop = STOP if stop is None else stop
+    if alvo_ajuste is None:
+        alvo_ajuste = ALVO_NO_AJUSTE
     dist_min = DIST_MIN if dist_min is None else dist_min
     retracao = RETRACAO if retracao is None else retracao
     cruza = CRUZA_AJ if cruza is None else cruza
@@ -447,11 +502,12 @@ def setup_niveis(barras, ajuste, niveis, tag, stop=None, alvo_ajuste=True,
                 if uma_posicao and i <= ocupado_ate:
                     continue
                 alvo_px = ajuste if alvo_ajuste else (px + (alvo_fixo or ALVO_FIXO) * lado)
-                pts, motivo, hs, j_sai = fecha(barras, i, px, lado, stop, alvo_px,
-                                               otimista, parcial, ema, alvo_ema5)
+                pts, motivo, hs, j_sai, jp = fecha(barras, i, px, lado, stop, alvo_px,
+                                                   otimista, parcial, ema, alvo_ema5)
                 trades.append(dict(setup=tag, nivel=nome, lado=lado, entrada=px,
                                    hora=hm, pts=pts, motivo=motivo, hora_saida=hs,
-                                   dist_ajuste=abs(px - ajuste), i=i))
+                                   dist_ajuste=abs(px - ajuste), i=i, k=j_sai, jp=jp,
+                                   alvo=alvo_px))
                 if uma_posicao:
                     ocupado_ate = j_sai
 
@@ -497,13 +553,14 @@ def metricas(trades, ndias):
         dd = min(dd, eq - pico)
     return dict(
         n=len(trades), total=tot, media=tot / len(trades), por_dia=tot / ndias,
+        zerados=100.0 * sum(1 for p in pts if p == 0) / len(trades),
         alvos=sum(1 for t in trades if t['motivo'] == 'ALVO'),
         stops=sum(1 for t in trades if t['motivo'] == 'STOP'),
         stops_p=sum(1 for t in trades if t['motivo'] == 'STOP+'),
         fech=sum(1 for t in trades if t['motivo'] == 'FECHAMENTO'),
         acerto=100.0 * len(g) / len(trades),
         pf=(sum(g) / abs(sum(pr))) if pr else float('inf'),
-        dd=dd, maxg=max(pts), maxp=min(pts), reais=tot * VAL_PONTO,
+        dd=dd, maxg=max(pts), maxp=min(pts), reais=tot * VAL_PONTO * CONTRATOS,
         ndias=ndias,
         longs=sum(1 for t in trades if t['lado'] > 0),
         shorts=sum(1 for t in trades if t['lado'] < 0),

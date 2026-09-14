@@ -1,0 +1,81 @@
+lendo XAUUSD_388_N_M1_202605110101_202609042330.csv
+39239 barras, 2026-05-11 01:01:19 a 2026-09-04 23:30:12
+premissa: range mediano 388 t, 99.8% das barras dentro de +-10%; agressao vendedora presente em 99.4% das barras
+
+--- o que o gatilho produz ---
+  1782 sinais em 39239 barras (4.5%): absorcao 1556, divergencia 226
+  21.0 sinais por pregao, um a cada 22 barras
+
+--- excursao pura depois do sinal (sem regra de saida) ---
+  sinal                        H20  MFE  834  MAE  825  razao 1.011  deriva  +17.3 (t +0.58)
+  direcao_sorteada             H20  MFE  827  MAE  829  razao 0.998  deriva  -13.7 (t -0.45)
+  barra_e_direcao_sorteadas    H20  MFE  848  MAE  819  razao 1.035  deriva  +20.1 (t +0.67)
+  esforco_baixo                H20  MFE  824  MAE  844  razao 0.976  deriva   -1.3 (t -0.02)
+
+--- linha de base: o proprio grafico ja tem inclinacao? ---
+  todas as barras          n  39238  continua 51.45%  z +5.73
+  barras de virada         n  19639  continua 51.77%  z +4.97
+  virada + esforço baixo   n   9266  continua 51.71%  z +3.28
+  SINAL do indicador       n   1782  continua 53.76%  z +3.17
+  SINAL + esforço baixo    n    575  continua 58.09%  z +3.88
+  o indicador acrescenta +6.4 pontos sobre o controle emparelhado (z +2.97)
+
+--- busca por filtro (metrica neutra, meio range) ---
+  esforço <= 80% do normal               n   562  acerto  58.0%  z +3.80  (1R: z +2.23)
+  esforço <= 100% do normal              n   757  acerto  56.8%  z +3.74  (1R: z +1.22)
+  esforço <= 90% do normal               n   666  acerto  57.1%  z +3.64  (1R: z +1.26)
+  esforço <= 70% do normal               n   466  acerto  58.2%  z +3.52  (1R: z +2.02)
+  só nas horas selecionadas              n   331  acerto  58.9%  z +3.24  (1R: z +1.47)
+  esforço <= 60% do normal               n   383  acerto  58.2%  z +3.22  (1R: z +1.97)
+  só vendas                              n   908  acerto  54.8%  z +2.92  (1R: z -0.38)
+  agressão a favor <= 25% do normal      n  1474  acerto  53.7%  z +2.87  (1R: z +0.56)
+  ... 30 filtros testados; o maior z tem de ser lido como o maximo de 30 tentativas
+
+--- validacao cruzada do horario ---
+  escolhe_1a_testa_2a  horas [1, 2, 3, 4, 5, 9, 11, 18, 20] -> n 334  acerto 52.1% (referencia 54.2%)  z +0.77
+  escolhe_2a_testa_1a  horas [3, 4, 8, 10, 15, 16, 18] -> n 375  acerto 52.8% (referencia 52.2%)  z +1.08
+  horas em comum: [3, 4, 18]  -> o filtro de horario NAO se confirma
+
+--- validacao do filtro de esforco ---
+  plato: 0.50:54.7%  0.60:58.2%  0.70:58.2%  0.75:57.5%  0.80:58.0%  0.85:56.8%  0.90:57.1%  1.00:56.8%  1.10:56.3%  1.20:55.6%
+  metade 1a  n  278  acerto 57.9%  z +2.64  exp +30.7 t
+  metade 2a  n  284  acerto 58.1%  z +2.73  exp +31.4 t
+  terco 1   n  184  acerto 56.0%  z +1.62  exp +23.2 t
+  terco 2   n  187  acerto 58.8%  z +2.41  exp +34.2 t
+  terco 3   n  191  acerto 59.2%  z +2.53  exp +35.5 t
+  controle invertido: acerto 42.0%  exp -31.1 t
+
+--- sensibilidade aos parametros do PROPRIO indicador ---
+  periodo_base     20:55.8%  30:57.7%  40:57.5%  60:58.0%*  80:57.6%  100:56.3%  140:55.7%
+  fator_res        0.5:60.0%  0.6:58.3%  0.7:58.0%*  0.8:57.1%  0.9:56.3%
+  fator_qual       0.2:58.5%  0.35:58.5%  0.5:58.0%*  0.65:57.0%  0.8:57.1%
+  fator_corpo      0.6:56.8%  0.7:56.2%  0.8:58.0%*  0.9:57.5%
+  lim_desq         0.02:56.9%  0.05:58.0%*  0.1:57.5%  0.2:56.0%
+  fator_completa   0.5:57.8%  0.7:58.0%  0.9:58.0%*  0.98:58.0%
+
+--- gestao (selecao do esforco baixo fixa) ---
+  1:1 a 1/4 do range (97 t)              n  562  acerto  30.1%  exp   -38.7 t = -0.399R  (t -10.29)
+  1:1 a MEIO RANGE (194 t)               n  562  acerto  58.0%  exp   +31.1 t = +0.160R  (t +3.84)  <- sem ambiguidade
+  1:1 a 3/4 do range (291 t)             n  551  acerto  56.4%  exp   +37.5 t = +0.129R  (t +3.05)  <- sem ambiguidade
+  1:1 a um range (388 t = 1R)            n  546  acerto  54.8%  exp   +37.0 t = +0.095R  (t +2.23)  <- sem ambiguidade
+  1:1 a dois ranges (776 t)              n  502  acerto  47.6%  exp   -37.1 t = -0.048R  (t -1.07)  <- sem ambiguidade
+  stop 1R, alvo 1,5R                     n  542  acerto  41.7%  exp   +16.5 t = +0.042R  (t +0.80)  <- sem ambiguidade
+  stop 1R, alvo 2R                       n  533  acerto  34.0%  exp    +7.3 t = +0.019R  (t +0.30)  <- sem ambiguidade
+  stop 1R, parcial em 1R, runner até 2R  n  539  acerto  54.5%  exp   +15.1 t = +0.039R  (t +0.89)  <- sem ambiguidade
+  stop 1R, parcial em 1R, runner até 3R  n  530  acerto  54.3%  exp   +11.7 t = +0.030R  (t +0.65)  <- sem ambiguidade
+  meio range, saída forçada em 5 barras  n  562  acerto  58.0%  exp   +31.1 t = +0.160R  (t +3.84)  <- sem ambiguidade
+
+--- variantes ---
+       variante                             sin   ops  acerto   exp/op     total     FL       DD
+  V0   regra literal                       1508  1508   50.6%     -7.5    -11252   0.96   -21922
+  V1   só absorção                         1319  1319   50.6%     -6.8     -8924   0.96   -21146
+  V2   só divergência                       221   221   49.3%    -19.3     -4268   0.90    -5432
+  V3   entrada limitada no meio do range   1612   748   48.7%    -27.8    -20758   0.86   -27160
+  V4   gestão 1:1, sem runner              1612  1612   50.6%     +4.3     +6984   1.02   -11252
+  V5   só nas horas selecionadas            312   312   54.2%    +32.3    +10088   1.18    -5044
+  V6   esforço baixo, gestão 1:1            546   546   54.8%    +37.0    +20176   1.21    -3492
+  V7   meio range — todos os sinais        1731  1731   53.2%    +12.4    +21534   1.14    -3492
+  V8   meio range + esforço baixo           562   562   58.0%    +31.1    +17460   1.38    -1746
+  V9   controle: lado invertido             562   562   42.0%    -31.1    -17460   0.72   -18430
+
+saida/resumo.json e saida/barras.json gravados.

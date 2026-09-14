@@ -1,0 +1,433 @@
+//==================================================================
+// MOMENTUMPI_OUROPRATA_ROBO  -  ProfitChart / NTSL  -  ESTRATEGIA
+//
+// WINFUT, grafico de 20 PI (Pontos de Inversao). Compra e venda.
+//
+// A estrategia principal de relatorio.html, na variante que o estudo
+// levou adiante: padrao OURO, entrada no FECHAMENTO do candle de
+// continuacao, 1:3 com parcial.
+//
+//   Sinal     = o mesmo do indicador ntsl/MomentumPI_OuroPrata.ntsl
+//   Gestao    = stop 100, parcial de 50% em +100 (stop do restante na
+//               media da operacao), alvo 300, uma posicao por vez,
+//               zera no fim do pregao, limite de 120 candles.
+//
+// Validador:  python Robo-NTSL/valida_robo.py
+//   Transcreve as secoes 1 a 4 deste arquivo em Python, barra a barra,
+//   e compara com a engine que produziu relatorio.html. Ver [R5].
+//
+//==================================================================
+// [R1] O QUE FOI MEDIDO  (relatorio.html, variante fecha|parcial|ouro)
+//==================================================================
+// Base WINFUT_20PI.csv, 10.000 candles, 06/08 a 11/09/2026, 26 pregoes.
+// Carteira de uma posicao por vez, resultado BRUTO, 1 contrato:
+//
+//   170 operacoes    +5.800 pts    +34,1 pts por operacao
+//   acerto 36,5%     fator de lucro 1,89    rebaixamento maximo 800 pts
+//   6,8 operacoes por pregao     maior sequencia de perdas: 6
+//
+//   Saidas: 61 no alvo, 65 no stop, 43 no zero a zero (stop do
+//   restante apos a parcial), 1 no fim do dia.
+//
+// NivelMinimo(1) liga tambem o PRATA: 243 operacoes, +28,0 por
+// operacao, acerto 34,2%, fator 1,70, rebaixamento 600.
+//
+//==================================================================
+// [R2] A REGRA  (compra; venda e o espelho exato)
+//==================================================================
+// Lida no FECHAMENTO do candle de continuacao (a barra atual):
+//
+//   BASE
+//     1. a barra atual fecha em ALTA e a anterior fechou em BAIXA,
+//        as duas no mesmo pregao
+//     2. Hull 50 ascendente:           Hull > Hull[1]
+//     3. Hull atras dos dois topos:    High > Hull  e  High[1] > Hull[1]
+//     4. EMA 21 dentro do par: entre o menor fundo e o maior topo
+//   PRATA = base +
+//     5. retracao de RetracaoMin (2) ou mais candles contra
+//     6. NAO e exaustao: reprova se a Hull esta ABRINDO a curva a
+//        favor (Hull - 2*Hull[1] + Hull[2] > 0) E o fechamento esta a
+//        mais de EsticExaustao (0,45) ATR da EMA 21
+//   OURO = prata +
+//     7. pavio total do candle (range - corpo) entre 25 e 90 pontos
+//
+//==================================================================
+// [R3] CONFIGURACAO DA AUTOMACAO  --  CONFIRA ANTES DE LIGAR
+//==================================================================
+// [R3a] MODO DE EXECUCAO: "Realizar envio de ordens no FECHAMENTO do
+//       candle", com "executar apenas no fechamento do candle"
+//       marcado (Manual NTSL 11.4). Este codigo guarda estado entre
+//       barras (entrada, parcial, saida) e foi escrito para rodar UMA
+//       vez por candle. No modo "ao satisfazer condicao" ele NAO vale.
+//
+// [R3b] OPCOES DE SAIDA: NAO configure OCO na automacao (Manual 11.6).
+//       A OCO tem preferencia e anula o stop, a parcial e o alvo deste
+//       codigo.
+//
+// [R3c] QUANTIDADE: nLote (2) vai no codigo. Deixe "Quantidade maxima
+//       da posicao" >= nLote, senao a plataforma corta a entrada e a
+//       parcial nunca e reconhecida. Com nLote = 1 a parcial e
+//       desligada sozinha e o robo opera 1:3 puro.
+//
+// [R3d] ZERAGEM: o robo zera por relogio (nHoraZera). Como reforco,
+//       marque tambem "Zerar posicao" no fim do intervalo de execucao
+//       da automacao (Manual 11.5), uns minutos depois de nHoraZera.
+//
+//==================================================================
+// [R4] O QUE MUDA DO BACKTEST PARA O ROBO
+//==================================================================
+// [R4a] A PRIMEIRA BARRA DO TRADE FICA SEM STOP. A entrada a mercado e
+//       enviada no fechamento do candle de sinal e executa na abertura
+//       do seguinte; stop, parcial e alvo so podem ser enviados quando
+//       a posicao ja existe, no fechamento dessa barra. No PI isso custa
+//       pouco: a barra seguinte abre na entrada e fecha EXATAMENTE a 100
+//       pontos dela -- no nivel do stop ou no da parcial -- e a ordem
+//       enviada ali executa na abertura da proxima, nesse mesmo preco.
+//       O que se perde e o pavio alem dos 100 pontos dessa barra, e o
+//       caso raro em que ela toca o stop e fecha a favor (o backteste
+//       conta stop; o robo segue no trade).
+//
+// [R4b] STOP-LIMITE. O stop vai como ordem stop com limite FolgaStop
+//       pontos alem do gatilho. Folga zero pode nao executar num
+//       movimento rapido; folga grande piora o preco. O backteste
+//       assume execucao exata no stop.
+//
+// [R4c] PARCIAL POR ORDEM LIMITADA em +nParcialEm, com nLote*FracParcial
+//       contratos. O backteste da a parcial por feita ao TOCAR o nivel;
+//       uma limitada real depende de fila. A parcial so e reconhecida
+//       quando a posicao diminui de fato (PositionQty).
+//
+// [R4d] FIM DO DIA POR RELOGIO. O backteste sai no fechamento do
+//       ultimo candle do pregao. Aqui: nao abre depois de
+//       nHoraFimEntrada e zera a partir de nHoraZera. Time() e a hora de
+//       ABERTURA do candle. Na base medida, 4 dos 170 trades comecaram
+//       depois das 18h.
+//
+// [R4e] ATR. O backteste usa ATR exponencial de 21 com semente pela
+//       media aritmetica; aqui a mesma EMA comeca do zero. A diferenca
+//       some depois de ~200 candles e so afeta o veto de exaustao.
+//
+// [R4f] CUSTO ZERO NO BACKTESTE. A 10 pts por operacao o Ouro cai de
+//       +34,1 para +24,1 por trade.
+//
+// [R4g] AMOSTRA: 26 pregoes, um so regime (alta). Rode em conta
+//       simulada antes de dinheiro real.
+//
+// [R4h] HULL. O backteste calcula WMA(2*WMA(25) - WMA(50), 7) sobre o
+//       fechamento; aqui e a HullMovingAverage(50) do Profit. Confira uma
+//       vez com o indicador ntsl/MomentumPI_OuroPrata.ntsl em
+//       Diagnostico(1), que escreve a Hull usada embaixo de cada barra.
+//       A EMA 21 ja foi conferida contra a coluna exportada do Profit.
+//
+//==================================================================
+// [R5] O VALIDADOR
+//==================================================================
+// valida_robo.py confere duas coisas:
+//   . o SINAL: as secoes 1 a 3 portadas linha a linha contra a engine
+//     (quais barras sao Ouro e Prata);
+//   . o SEQUENCIAMENTO: a maquina de estados da secao 4 (uma posicao
+//     por vez, nenhuma entrada na barra em que a anterior saiu) contra
+//     a carteira do relatorio -- usando os desfechos da propria engine,
+//     porque o preenchimento real so o Profit simula.
+// O resultado da ultima execucao esta logo abaixo, em [R6].
+//
+//==================================================================
+// [R6] RESULTADO DO VALIDADOR
+//==================================================================
+//   SINAL           engine 248 (173 Ouro)  x  robo 248 (173 Ouro)
+//                   0 so na engine, 0 so no robo, 0 nivel diferente
+//   SEQUENCIAMENTO  Ouro:          170 trades, MESMA lista da carteira
+//                   Ouro + Prata:  243 trades, MESMA lista da carteira
+//   Nenhum trade da carteira medida comeca depois de 18:15, entao o
+//   filtro de horario [R4d] nao tira nenhum.
+//
+//==================================================================
+// ESTRUTURA
+//==================================================================
+//   1  leituras posicionais (fora de qualquer if -- Manual 4.5)
+//   2  series proprias: ATR exponencial e contagem de candles seguidos
+//   3  o sinal: base, Prata, Ouro
+//   4  ordens: deteccao de entrada/saida, gestao, zeragem, entrada
+//   5  marcacao visual dos sinais
+//==================================================================
+
+input
+  //--- QUE SINAL OPERA ------------------------------------------------
+  NivelMinimo     (2);      // 2 = so OURO (medido)  |  1 = OURO e PRATA
+  OperarCompra    (true);
+  OperarVenda     (true);
+
+  //--- GESTAO ----------------------------------------------------------
+  nLote           (2);      // contratos na entrada; >= 2 para a parcial
+  nStop           (100);    // stop inicial, pontos
+  UsarParcial     (true);
+  nParcialEm      (100);    // parcial em +pontos
+  FracParcial     (0.50);   // fracao do lote na parcial
+  nAlvo           (300);    // alvo do restante, pontos
+  FolgaStop       (20);     // limite da ordem stop, pontos alem do gatilho [R4b]
+  MaxBarras       (120);    // encerra o trade depois de N candles
+
+  //--- HORARIO -- NAO MEDIDO, ver [R4d] --------------------------------
+  nHoraFimEntrada (1815);   // HHMM: nao abre posicao a partir daqui
+  nHoraZera       (1820);   // HHMM: zera a posicao a partir daqui
+
+  //--- INDICADORES E CORTES (iguais ao relatorio -- nao mexa sem medir)
+  PeriodoHull     (50);
+  PeriodoEMA      (21);
+  PeriodoATR      (21);
+  RetracaoMin     (2);
+  EsticExaustao   (0.45);
+  PavioMin        (25);
+  PavioMax        (90);
+
+  //--- VISUAL ----------------------------------------------------------
+  MostrarSinais   (true);   // pinta Ouro (ambar) e Prata (cinza)
+
+var
+  //--- 1. leituras posicionais
+  fO, fC, fH, fL             : Float;
+  fO1, fC1, fH1, fL1         : Float;
+  hull0, hull1, hull2        : Float;
+  ema, tr                    : Float;
+  dataBarra, dataAnt         : Integer;
+  hora                       : Integer;
+
+  //--- 2. series proprias
+  atrE, atrAnt               : Float;
+  sent, sentAnt              : Integer;
+  corrida, corridaAnt        : Integer;
+
+  //--- 3. sinal
+  lado                       : Integer;
+  topo, fundo, corpo, pavio  : Float;
+  curva, dist                : Float;
+  hullOk, emaOk, retOk       : Boolean;
+  exaustao, geomOk           : Boolean;
+  nivel, sinal               : Integer;
+
+  //--- 4. ordens
+  tinhaPos, parcialFeita     : Boolean;
+  bParcialOk                 : Boolean;
+  nBarraEnt, nBarraSaida     : Integer;
+  nLoteParc                  : Integer;
+  ladoPos                    : Integer;
+  fEnt, qtd, qtdIni          : Float;
+  fStopIni, fStopRest, fStop : Float;
+  fParc, fAlvo, kAtr         : Float;
+
+begin
+  //================================================================
+  // 1. LEITURAS POSICIONAIS -- antes de qualquer if ou laco
+  //================================================================
+  fO  := Open;      fC  := Close;     fH  := High;      fL  := Low;
+  fO1 := Open[1];   fC1 := Close[1];  fH1 := High[1];   fL1 := Low[1];
+
+  hull0 := HullMovingAverage(PeriodoHull);
+  hull1 := HullMovingAverage(PeriodoHull)[1];
+  hull2 := HullMovingAverage(PeriodoHull)[2];
+  ema   := MediaExp(PeriodoEMA, Close);
+  tr    := TrueRange;
+
+  //  Date e Time sao funcoes SEM parametro: capturadas em variavel, e o
+  //  historico e lido da variavel (licao do MomentumPI_OuroPrata.ntsl).
+  dataBarra := Date;
+  dataAnt   := dataBarra[1];
+  hora      := Time;
+
+  //================================================================
+  // 2. SERIES PROPRIAS
+  //================================================================
+  //  ATR exponencial, como a engine (Nelogica: EMA do true range).
+  kAtr   := 2 / (PeriodoATR + 1);
+  atrAnt := atrE[1];
+  atrE   := tr * kAtr + atrAnt * (1 - kAtr);
+
+  //  Candles seguidos no mesmo sentido, ate a barra atual inclusive.
+  //  Igual a engine: a contagem NAO para na virada do dia.
+  sentAnt    := sent[1];
+  corridaAnt := corrida[1];
+  if fC > fO then
+    sent := 1
+  else if fC < fO then
+    sent := -1
+  else
+    sent := 0;
+
+  if sent = sentAnt then
+    corrida := corridaAnt + 1
+  else
+    corrida := 1;
+
+  //================================================================
+  // 3. O SINAL
+  //================================================================
+  nivel := 0;
+  sinal := 0;
+  lado  := 0;
+
+  if CurrentBar >= PeriodoHull + 10 then
+  begin
+    if OperarCompra and (fC > fO) and (fC1 < fO1) then
+      lado := 1
+    else if OperarVenda and (fC < fO) and (fC1 > fO1) then
+      lado := -1;
+
+    if (lado <> 0) and (dataBarra = dataAnt) then
+    begin
+      //--- base: Hull no sentido e atras dos dois extremos
+      if lado = 1 then
+        hullOk := (hull0 > hull1) and (fH > hull0) and (fH1 > hull1)
+      else
+        hullOk := (hull0 < hull1) and (fL < hull0) and (fL1 < hull1);
+
+      //--- base: EMA 21 atravessando o par
+      topo := fH;
+      if fH1 > topo then topo := fH1;
+      fundo := fL;
+      if fL1 < fundo then fundo := fL1;
+      emaOk := (ema >= fundo) and (ema <= topo);
+
+      if hullOk and emaOk then
+      begin
+        //--- Prata: retracao. A barra anterior e a ultima da retracao;
+        //    corridaAnt e quantos candles contra vieram ate ela.
+        retOk := corridaAnt >= RetracaoMin;
+
+        //--- Prata: veto de exaustao (sem divisao: ATR multiplica)
+        curva    := (hull0 - 2 * hull1 + hull2) * lado;
+        dist     := (fC - ema) * lado;
+        exaustao := (curva > 0) and (atrE > 0) and (dist > EsticExaustao * atrE);
+
+        //--- Ouro: pavio total do candle de continuacao
+        corpo := fC - fO;
+        if corpo < 0 then corpo := -corpo;
+        pavio  := (fH - fL) - corpo;
+        geomOk := (pavio >= PavioMin) and (pavio <= PavioMax);
+
+        if retOk and (not exaustao) then
+        begin
+          if geomOk then
+            nivel := 2
+          else
+            nivel := 1;
+        end;
+      end;
+    end;
+
+    if (nivel > 0) and (nivel >= NivelMinimo) then
+      sinal := lado;
+  end;
+
+  //================================================================
+  // 4. ORDENS -- so em barra fechada
+  //================================================================
+  bParcialOk := UsarParcial and (nLote >= 2);
+  nLoteParc  := Round(nLote * FracParcial);
+  if nLoteParc < 1 then nLoteParc := 1;
+  if nLoteParc >= nLote then nLoteParc := nLote - 1;
+
+  if MaxBarsForward > 0 then
+  begin
+    //--- 4.1 a posicao acabou nesta barra? --------------------------
+    //  Guarda a barra: a engine nao deixa entrar no candle em que a
+    //  operacao anterior saiu.
+    if tinhaPos and (not HasPosition) then
+    begin
+      nBarraSaida  := CurrentBar;
+      parcialFeita := false;
+    end;
+
+    //--- 4.2 a posicao comecou nesta barra? --------------------------
+    //  A ordem a mercado foi enviada no fechamento do candle de sinal e
+    //  executou na abertura deste. O trade conta a partir do sinal.
+    if HasPosition and (not tinhaPos) then
+    begin
+      nBarraEnt    := CurrentBar - 1;
+      parcialFeita := false;
+      if IsBought then
+        qtdIni := BuyPositionQty
+      else
+        qtdIni := SellPositionQty;
+    end;
+
+    //--- 4.3 gestao -----------------------------------------------------
+    if HasPosition then
+    begin
+      if IsBought then
+      begin
+        ladoPos := 1;
+        fEnt    := BuyPrice;
+        qtd     := BuyPositionQty;
+      end
+      else
+      begin
+        ladoPos := -1;
+        fEnt    := SellPrice;
+        qtd     := SellPositionQty;
+      end;
+
+      //  parcial reconhecida pela posicao, nao pelo preco [R4c]
+      if bParcialOk and (qtd < qtdIni) then
+        parcialFeita := true;
+
+      fStopIni := fEnt - ladoPos * nStop;
+      fParc    := fEnt + ladoPos * nParcialEm;
+      fAlvo    := fEnt + ladoPos * nAlvo;
+
+      //  stop do restante na MEDIA da operacao: o preco em que o lucro
+      //  da parcial zera a perda do resto. Com 50% em +100 ele cai
+      //  exatamente no stop inicial. Nunca mais longe que o inicial.
+      fStopRest := fEnt - ladoPos * (FracParcial * nParcialEm / (1 - FracParcial));
+      if (fStopRest - fStopIni) * ladoPos < 0 then
+        fStopRest := fStopIni;
+
+      if parcialFeita then
+        fStop := fStopRest
+      else
+        fStop := fStopIni;
+
+      if (CurrentBar - nBarraEnt >= MaxBarras) or (hora >= nHoraZera) then
+        ClosePosition
+      else if ladoPos = 1 then
+      begin
+        SellToCoverStop(fStop, fStop - FolgaStop, qtd);
+        if bParcialOk and (not parcialFeita) then
+          SellToCoverLimit(fParc, nLoteParc)
+        else
+          SellToCoverLimit(fAlvo, qtd);
+      end
+      else
+      begin
+        BuyToCoverStop(fStop, fStop + FolgaStop, qtd);
+        if bParcialOk and (not parcialFeita) then
+          BuyToCoverLimit(fParc, nLoteParc)
+        else
+          BuyToCoverLimit(fAlvo, qtd);
+      end;
+    end;
+
+    //--- 4.4 entrada -----------------------------------------------------
+    //  Uma posicao por vez; nunca na barra em que a anterior saiu.
+    if (not HasPosition) and (not tinhaPos) and (sinal <> 0)
+       and (CurrentBar > nBarraSaida) and (hora < nHoraFimEntrada) then
+    begin
+      if sinal = 1 then
+        BuyAtMarket(nLote)
+      else
+        SellShortAtMarket(nLote);
+    end;
+
+    tinhaPos := HasPosition;
+  end;
+
+  //================================================================
+  // 5. MARCACAO VISUAL
+  //================================================================
+  if MostrarSinais and (nivel > 0) then
+  begin
+    if nivel = 2 then
+      PaintBar(RGB(255, 190, 0))       // Ouro
+    else
+      PaintBar(RGB(168, 180, 196));    // Prata
+  end;
+end;

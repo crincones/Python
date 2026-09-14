@@ -1,0 +1,377 @@
+<meta charset="utf-8">
+<title>Plano Operacional Rincones1-DTA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@600;700&family=Libre+Franklin:wght@400;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --paper:#E9E7E1; --card:#FAF9F6; --card-2:#F2F0EA;
+  --ink:#17191A; --ink-2:#55585A; --ink-3:#85888B;
+  --line:#D3D0C8; --line-2:#E3E0D8;
+  --accent:#1D4E3F; --accent-soft:#DFE9E4; --on-accent:#FAF9F6;
+  --caution:#8F5400; --caution-soft:#F4E9D6;
+  --stop:#8E2B20; --stop-soft:#F4E1DE;
+  --shadow:0 1px 2px rgba(23,25,26,.05), 0 10px 28px -16px rgba(23,25,26,.22);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#131412; --card:#1B1D1A; --card-2:#212420;
+    --ink:#EDEBE4; --ink-2:#B0AEA5; --ink-3:#83817A;
+    --line:#33362F; --line-2:#282B25;
+    --accent:#78C3A4; --accent-soft:#1E2C26; --on-accent:#131412;
+    --caution:#E0A649; --caution-soft:#2C2517;
+    --stop:#E0836F; --stop-soft:#2E1D1A;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -16px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#131412; --card:#1B1D1A; --card-2:#212420;
+  --ink:#EDEBE4; --ink-2:#B0AEA5; --ink-3:#83817A;
+  --line:#33362F; --line-2:#282B25;
+  --accent:#78C3A4; --accent-soft:#1E2C26; --on-accent:#131412;
+  --caution:#E0A649; --caution-soft:#2C2517;
+  --stop:#E0836F; --stop-soft:#2E1D1A;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -16px rgba(0,0,0,.7);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"Libre Franklin","Helvetica Neue",Arial,sans-serif;
+  font-size:16px; line-height:1.62; -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:960px; margin:0 auto; padding:0 22px 96px}
+
+/* ---------- cabecalho ---------- */
+header.topo{
+  border-bottom:2px solid var(--ink); margin-bottom:8px;
+  padding:56px 0 22px;
+}
+.eyebrow{
+  font-family:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  font-size:11.5px; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--accent); font-weight:600; margin:0 0 14px;
+}
+h1{
+  font-family:"Archivo Narrow","Arial Narrow",Arial,sans-serif;
+  font-weight:700; font-size:clamp(34px,6vw,58px); line-height:1.02;
+  letter-spacing:-.015em; margin:0 0 16px; text-wrap:balance;
+}
+.dek{font-size:17px; color:var(--ink-2); max-width:62ch; margin:0}
+.chips{display:flex; flex-wrap:wrap; gap:8px; margin:22px 0 0}
+.chip{
+  font-family:"JetBrains Mono",monospace; font-size:12px; font-weight:500;
+  padding:6px 11px; border:1px solid var(--line); border-radius:999px;
+  background:var(--card); color:var(--ink-2);
+}
+.chip b{color:var(--ink); font-weight:600}
+
+/* ---------- secoes com o numero na goteira ---------- */
+section{
+  display:grid; grid-template-columns:64px minmax(0,1fr); gap:0 22px;
+  padding:38px 0 6px; border-bottom:1px solid var(--line-2);
+}
+section:last-of-type{border-bottom:0}
+.gut{
+  font-family:"JetBrains Mono",monospace; font-size:13px; font-weight:600;
+  color:var(--accent); padding-top:9px; letter-spacing:.04em;
+  border-top:2px solid var(--accent); align-self:start; margin-top:8px;
+}
+.gut:empty{border-top-color:var(--line)}
+.corpo{min-width:0}
+h2{
+  font-family:"Archivo Narrow","Arial Narrow",Arial,sans-serif;
+  font-weight:700; font-size:clamp(23px,3.2vw,31px); line-height:1.14;
+  margin:0 0 18px; letter-spacing:-.01em; text-wrap:balance;
+}
+h3{
+  font-family:"Archivo Narrow","Arial Narrow",Arial,sans-serif;
+  font-weight:700; font-size:18px; margin:32px 0 12px;
+  color:var(--accent); letter-spacing:.01em;
+}
+p{margin:0 0 16px; max-width:66ch}
+a{color:var(--accent); text-underline-offset:2px}
+strong{font-weight:600}
+code{
+  font-family:"JetBrains Mono",monospace; font-size:.87em;
+  background:var(--card-2); border:1px solid var(--line-2);
+  padding:1px 5px; border-radius:4px;
+}
+
+/* ---------- listas ---------- */
+ul,ol{margin:0 0 16px; padding-left:22px; max-width:66ch}
+li{margin:0 0 9px}
+li::marker{color:var(--ink-3); font-family:"JetBrains Mono",monospace; font-size:.9em}
+
+/* ---------- blocos de codigo: o fluxo da regra ---------- */
+pre{
+  font-family:"JetBrains Mono",monospace; font-size:13px; line-height:1.75;
+  background:var(--card); border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  padding:16px 18px; border-radius:6px; overflow-x:auto; margin:0 0 20px;
+  color:var(--ink);
+}
+
+/* ---------- tabelas ---------- */
+.scroll{overflow-x:auto; margin:0 0 22px; border-radius:8px;
+  border:1px solid var(--line); background:var(--card); box-shadow:var(--shadow)}
+table{border-collapse:collapse; width:100%; font-size:14.5px}
+th,td{padding:11px 14px; text-align:left; border-bottom:1px solid var(--line-2);
+  vertical-align:top}
+thead th{
+  font-family:"JetBrains Mono",monospace; font-size:11px; font-weight:600;
+  letter-spacing:.08em; text-transform:uppercase; color:var(--ink-3);
+  background:var(--card-2); border-bottom:1px solid var(--line);
+}
+tbody tr:last-child td{border-bottom:0}
+td.num,th.num{
+  font-family:"JetBrains Mono",monospace; font-variant-numeric:tabular-nums;
+  text-align:right; white-space:nowrap;
+}
+tbody tr:hover{background:var(--card-2)}
+.box{
+  font-family:"JetBrains Mono",monospace; font-size:19px; line-height:1;
+  color:var(--accent);
+}
+
+/* ---------- painel de nota ---------- */
+aside.nota{
+  background:var(--accent-soft); border-left:3px solid var(--accent);
+  padding:15px 18px; margin:0 0 22px; border-radius:0 7px 7px 0;
+  font-size:15px; color:var(--ink-2); max-width:70ch;
+}
+aside.nota strong{color:var(--ink)}
+aside.nota.gerado{
+  background:transparent; border-left-color:var(--line);
+  color:var(--ink-3); font-size:13.5px;
+  font-family:"JetBrains Mono",monospace; line-height:1.6;
+}
+
+/* ---------- o cartao de pregao ---------- */
+.cartao{
+  margin:52px 0 0; background:var(--card); border:2px solid var(--ink);
+  border-radius:10px; padding:26px 28px; box-shadow:var(--shadow);
+}
+.cartao h2{margin-top:0}
+.cartao .lab{
+  font-family:"JetBrains Mono",monospace; font-size:11px; font-weight:600;
+  letter-spacing:.16em; text-transform:uppercase; color:var(--ink-3);
+  margin:0 0 6px;
+}
+.grade{display:grid; gap:18px; grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
+  margin:22px 0 0}
+.celula{border-top:2px solid var(--line); padding-top:12px}
+.celula .k{
+  font-family:"JetBrains Mono",monospace; font-size:11px; font-weight:600;
+  letter-spacing:.12em; text-transform:uppercase; color:var(--ink-3);
+}
+.celula .v{
+  font-family:"Archivo Narrow",Arial,sans-serif; font-weight:700;
+  font-size:30px; line-height:1.1; margin:4px 0 2px;
+  font-variant-numeric:tabular-nums;
+}
+.celula .s{font-size:13px; color:var(--ink-2)}
+.celula.go{border-top-color:var(--accent)} .celula.go .v{color:var(--accent)}
+.celula.cau{border-top-color:var(--caution)} .celula.cau .v{color:var(--caution)}
+.celula.par{border-top-color:var(--stop)} .celula.par .v{color:var(--stop)}
+
+.regra-ouro{
+  margin:30px 0 0; padding:20px 22px; border-radius:8px;
+  background:var(--caution-soft); border:1px solid var(--caution);
+  font-family:"Archivo Narrow",Arial,sans-serif; font-weight:700;
+  font-size:clamp(19px,2.6vw,25px); line-height:1.25; color:var(--ink);
+  text-wrap:balance;
+}
+.regra-ouro span{
+  display:block; font-family:"Libre Franklin",sans-serif; font-weight:400;
+  font-size:14.5px; line-height:1.6; color:var(--ink-2); margin-top:10px;
+}
+
+footer{
+  margin-top:60px; padding-top:22px; border-top:1px solid var(--line);
+  font-family:"JetBrains Mono",monospace; font-size:12.5px; color:var(--ink-3);
+}
+footer a{color:var(--ink-3)}
+
+@media (max-width:640px){
+  section{grid-template-columns:1fr; gap:0}
+  .gut{margin-bottom:12px; padding-top:6px; display:inline-block; min-width:44px}
+}
+@media print{
+  body{background:#fff} .scroll{box-shadow:none} section{break-inside:avoid}
+  .cartao{break-before:page}
+}
+</style>
+
+<div class="wrap">
+<header class="topo">
+  <p class="eyebrow">Rincones1-DTA · procedimento operacional</p>
+  <h1>Plano operacional<br>WIN · 10.000 ticks</h1>
+  <p class="dek">O relatório diz o que foi medido. Este documento diz o que eu
+  faço na frente da tela — e como eu avalio se fiz certo, num dia em que o
+  resultado não tem como me dizer isso.</p>
+  <div class="chips"><span class="chip">ativo <b>WIN</b></span><span class="chip">gráfico <b>10.000 ticks</b></span><span class="chip">setups <b>D + T</b></span><span class="chip">stop <b>0,75 × ATR</b></span><span class="chip">alvo <b>+300 pts</b></span><span class="chip">trades/pregão <b>~4,8</b></span><span class="chip">pregões positivos <b>60%</b></span></div>
+</header>
+
+<aside class="nota gerado"><strong>Este arquivo é gerado.</strong> Rode <code>python rodar.py &amp;&amp; python plano.py</code>. Os números saem de <code>saida/resumo.json</code>, os mesmos do <a href="relatorio.html">relatorio.html</a>. Os números de desempenho das §§ 4, 7 e 10 <strong>descontam 5 pontos de custo por trade</strong>; os de comparação entre regras são brutos, como no relatório. O texto do procedimento é fixo; se você mudar uma regra, mude aqui <strong>e</strong> em <a href="ESTRATEGIA.md">ESTRATEGIA.md</a>.</aside>
+<p>Companheiro operacional de <a href="RESULTADOS.md">RESULTADOS.md</a>. O relatório diz <strong>o que foi medido</strong>; este arquivo diz <strong>o que eu faço na frente da tela</strong>.</p>
+<section><div class="gut">0</div><div class="corpo"><h2>O contrato</h2>
+<p>Eu opero <strong>um</strong> setup principal, com <strong>um</strong> tamanho de risco, seguindo as regras 1 a 6 deste arquivo. As regras não mudam durante o pregão. Não mudam depois de uma perda. Não mudam depois de um ganho. Mudam apenas na <strong>revisão mensal</strong> da § 10, com os dados na mão.</p>
+<p>A única coisa que eu avalio ao fim do dia é <strong>se segui o plano</strong> — não quanto ganhei. A § 7 explica por que, com os números que tornam isso não uma frase bonita, mas a leitura correta dos dados.</p>
+<p>Assinado: ____________________   Data: __ / __ / ____</p>
+</section>
+<section><div class="gut">1</div><div class="corpo"><h2>O que eu opero — e o que eu não opero</h2>
+<div class="scroll"><table><tbody><tr><td><strong>Ativo</strong></td><td>WIN (mini índice)</td></tr><tr><td><strong>Gráfico</strong></td><td>candle de <strong>10.000 ticks</strong></td></tr><tr><td><strong>Contexto na tela</strong></td><td>EMA 21 · Hull 50 · Keltner ±2 ATR(20) em volta da EMA</td></tr><tr><td><strong>Setup</strong></td><td><strong>D — descolamento da Hull</strong>. O T entra pelas mesmas regras de gestão e é raro</td></tr><tr><td><strong>Lado</strong></td><td>compra e venda</td></tr><tr><td><strong>Posições</strong></td><td><strong>uma por vez</strong>. Sinal que chega com posição aberta é ignorado</td></tr></tbody></table></div>
+<p><strong>O que eu NÃO opero:</strong></p>
+<ul><li><strong>Reversão na banda de Keltner.</strong> É o uso de manual do canal e foi medido: negativo no WINFUT em toda configuração testada. Preço esticado é onde eu <strong>não</strong> opero, não onde eu vendo topo.</li><li><strong>Rejeição de banda (setup K).</strong> Mede positivo sozinho e mesmo assim piora a carteira, porque ocupa a vaga de um trade melhor. Fora até uma revisão decidir o contrário.</li><li><strong>Qualquer coisa que o indicador não marcou.</strong> Se não saiu a seta, não existe trade — por mais óbvio que o gráfico pareça.</li></ul>
+<aside class="nota"><strong>A leitura econômica, em uma frase:</strong> o indicador acende quando alguém gastou muito e não levou o preço. Isso é absorção, e absorção se desfaz. A Hull diz se havia movimento para desfazer (inclinada) e de que lado o preço está em relação a ele. Eu entro do lado de quem <strong>não</strong> falhou.</aside>
+</section>
+<section><div class="gut">2</div><div class="corpo"><h2>O gatilho — quando existe trade</h2>
+<p>O indicador faz a conta; eu confiro o contexto. <strong>Todos os seis</strong> têm de estar verdadeiros. Um único "não" e não há trade.</p>
+<div class="scroll"><table><thead><tr><th>#</th><th>Verificação</th><th></th></tr></thead><tbody><tr><td class="num">1</td><td>O indicador marcou a seta, com índice ≥ <strong>0,80</strong></td><td><span class="box">☐</span></td></tr><tr><td class="num">2</td><td>A <strong>Hull 50 está inclinada</strong> — subindo ou descendo, mas nunca deitada</td><td><span class="box">☐</span></td></tr><tr><td class="num">3</td><td>O close está do lado <strong>oposto</strong> ao da Hull: eu compro <strong>abaixo</strong> dela, vendo <strong>acima</strong></td><td><span class="box">☐</span></td></tr><tr><td class="num">4</td><td>O preço está <strong>dentro do canal</strong> — não encostou na banda de 2 ATR</td><td><span class="box">☐</span></td></tr><tr><td class="num">5</td><td>O mergulho até a EMA 21 é de no máximo <strong>1,5 ATR</strong> — não é queda livre</td><td><span class="box">☐</span></td></tr><tr><td class="num">6</td><td>Estou dentro do horário e <strong>sem posição aberta</strong></td><td><span class="box">☐</span></td></tr></tbody></table></div>
+<p>O item 1 já embute o que o indicador mede e eu não preciso conferir a olho: índice de esforço ≥ 0,80, corpo ≤ 50% do range, e o meio do corpo do lado certo. Os itens 2 e 3 são a regra que o backtest achou e que <strong>contraria a leitura de manual</strong>: não é "comprar acima de uma Hull que sobe", é comprar <strong>abaixo</strong> dela quando ela está inclinada. Se isso soar errado na hora, releia a § 3 do relatório antes de improvisar.</p>
+<aside class="nota"><strong>O item 2 é o mais importante da lista.</strong> Hull deitada é o pior contexto medido: -62,3 pontos por trade no WINV26 e -35,1 no WINFUT. Se só uma linha deste plano sobreviver, que seja esta.</aside>
+</section>
+<section><div class="gut">3</div><div class="corpo"><h2>A entrada — a regra da barra seguinte</h2>
+<pre>barra t      o gatilho fecha. Eu envio a limitada no MEIO do candle,
+             (máxima + mínima) / 2, arredondado ao tick.
+barra t+1    ou ela preenche AQUI, ou eu CANCELO.
+barra t+2    não existe. O sinal morreu.</pre>
+<p><strong>Não preencheu, acabou.</strong> Não persigo o preço, não entro a mercado "para não perder", não deixo a ordem no livro para ver no que dá. Cancelo e volto a esperar.</p>
+<p>Cerca de <strong>20% dos sinais serão abortados</strong> — no WINV26, 21 de 103; no WINFUT, 51 de 257. Isso não é falha de execução: é <strong>o plano funcionando</strong>. Um sinal abortado entra no diário como *aderência cumprida*, exatamente como um trade vencedor.</p>
+<aside class="nota"><strong>Aqui a regra não é só disciplina — ela paga.</strong> A limitada mede +32,8 por trade contra +19,7 da entrada a mercado, e contra +29,3 da limitada deixada viva até o fim do pregão. Entrar no meio do candle do gatilho <strong>é</strong> parte da vantagem.</aside>
+</section>
+<section><div class="gut">4</div><div class="corpo"><h2>A gestão — decidida antes, executada sem opinião</h2>
+<p>O stop <strong>não é um número fixo</strong>: ele é 0,75 × ATR da barra do sinal, com piso de 50 e teto de 400 pontos. Em pregão parado ele encolhe, em pregão violento ele abre — e é isso que faz o risco por trade ser o mesmo em regimes diferentes. Na amostra medida ele ficou entre <strong>62 e 164 pontos</strong>, com média de <strong>93</strong>.</p>
+<div class="scroll"><table><tbody><tr><td><strong>Stop inicial</strong></td><td><strong>0,75 × ATR</strong> da barra do gatilho ≈ 95 pontos</td></tr><tr><td><strong>Parcial</strong></td><td><strong>50% da posição na MESMA distância do stop</strong></td></tr><tr><td><strong>No momento da parcial</strong></td><td><strong>nada a fazer.</strong> O stop já está na média da operação: com meia posição realizada na distância do stop, o stop inicial <strong>é</strong> o zero a zero</td></tr><tr><td><strong>Alvo do restante</strong></td><td><strong>+300 pontos</strong></td></tr><tr><td><strong>Saída forçada</strong></td><td>fechamento do pregão</td></tr></tbody></table></div>
+<p><strong>Tabela de conversão — leia o ATR e use a linha:</strong></p>
+<div class="scroll"><table><thead><tr><th>ATR na hora do sinal</th><th>stop e parcial</th><th>alvo</th></tr></thead><tbody><tr><td class="num">80</td><td>60 pts (R$ 12,00)</td><td class="num">+300</td></tr><tr><td class="num">100</td><td>75 pts (R$ 15,00)</td><td class="num">+300</td></tr><tr><td class="num">120</td><td>90 pts (R$ 18,00)</td><td class="num">+300</td></tr><tr><td class="num">150</td><td>110 pts (R$ 22,00)</td><td class="num">+300</td></tr><tr><td class="num">200</td><td>150 pts (R$ 30,00)</td><td class="num">+300</td></tr></tbody></table></div>
+<p>Resultado por trade, por contrato de lote cheio, com o stop típico de 95:</p>
+<div class="scroll"><table><thead><tr><th>desfecho</th><th>pontos</th><th>R$</th><th>frequência medida</th></tr></thead><tbody><tr><td>stop antes da parcial</td><td class="num">−95</td><td class="num">−19,00</td><td class="num">42%</td></tr><tr><td>parcial e depois o stop</td><td class="num">0</td><td>R$ 0,00</td><td class="num">22%</td></tr><tr><td>parcial e depois alvo</td><td class="num">+198</td><td class="num">+39,50</td><td class="num">36%</td></tr><tr><td>fim de pregão</td><td>o que estiver</td><td>—</td><td class="num">0%</td></tr></tbody></table></div>
+<p><strong>O stop não anda — nunca.</strong> Ele entra na distância do ATR e fica lá até o trade acabar. Com a parcial saindo na <strong>mesma distância</strong>, o stop inicial <strong>já é</strong> a média da operação, e o trade que volta depois da parcial morre em zero. Não há nada para arrastar, e arrastar seria estragar.</p>
+<p><strong>A parcial não é opcional.</strong> Ela é o que compra o direito de deixar o resto correr até +300 sem risco. Sem ela o plano é outro, e os números são outros.</p>
+</section>
+<section><div class="gut">5</div><div class="corpo"><h2>Tamanho e limites do dia</h2>
+<p><strong>Risco por trade</strong> = o stop do trade = <strong>R$ 19,00 por contrato</strong> no stop típico de 95 pontos.</p>
+<p>Regra de dimensionamento:</p>
+<pre>contratos = (1% do capital) / (stop do trade em pontos x R$ 0,20)
+
+com o stop lido da tabela da § 4, ANTES de enviar a ordem</pre>
+<p>Como o stop varia, o <strong>número de contratos varia junto</strong> — é assim que o risco em reais fica constante. Em pregão de ATR alto eu opero menos contratos, não o mesmo lote com stop maior.</p>
+<p><strong>Limites rígidos do pregão</strong> — atingiu, o dia acabou, sem discussão:</p>
+<div class="scroll"><table><thead><tr><th>limite</th><th>valor</th><th>por quê</th></tr></thead><tbody><tr><td><strong>3 stops no dia</strong></td><td>≈ −285 pts (R$ 57,00 / contrato)</td><td>o pior pregão medido foi -629 pts</td></tr><tr><td><strong>1 violação de regra</strong></td><td>—</td><td>erro de processo fecha o dia, mesmo no lucro</td></tr></tbody></table></div>
+<p>O segundo limite é o mais importante e o mais fácil de ignorar. Um erro de processo num dia de lucro é <strong>mais perigoso</strong> que um num dia de prejuízo, porque o resultado o recompensa.</p>
+</section>
+<section><div class="gut">6</div><div class="corpo"><h2>A rotina do pregão</h2>
+<p><strong>Antes de abrir (5 minutos)</strong></p>
+<ul><li>Gráfico em 10.000 ticks; EMA 21, Hull 50 e o canal de Keltner na tela; o histograma de esforço na subjanela</li><li><strong>Ler o ATR(20) e anotar o stop do dia</strong> pela tabela da § 4</li><li>Definir o número de contratos <strong>antes</strong> do primeiro sinal</li><li>Reler as regras 1 a 4 deste arquivo. Sim, todo dia.</li></ul>
+<p><strong>Durante</strong></p>
+<ul><li>Só existe ação quando a seta imprime. O resto do tempo eu <strong>espero</strong>.</li><li>Em ~4,8 trades por pregão, a maior parte do dia é espera. Isso é o trabalho, não uma pausa dele.</li><li>Enviada a ordem: uma barra. Preencheu ou cancelou.</li><li>Aberta a posição: stop, parcial e alvo já estão definidos. Nada a decidir.</li></ul>
+<p><strong>Depois</strong></p>
+<ul><li>Preencher o diário da § 9, <strong>incluindo os sinais abortados</strong></li><li>Calcular a <strong>nota de aderência</strong> do dia (§ 7)</li><li>Não olhar o resultado acumulado. Ele é olhado uma vez por mês, na revisão.</li></ul>
+</section>
+<section><div class="gut">7</div><div class="corpo"><h2>Como eu meço sucesso: aderência, não resultado</h2>
+<h3>7.1 A razão, com os números</h3>
+<p>Carteira D + T, gestão padrão, <strong>descontando 5 pontos de custo por trade</strong> — a leitura honesta, não a bruta:</p>
+<div class="scroll"><table><thead><tr><th></th><th>WINV26</th><th>WINFUT</th></tr></thead><tbody><tr><td>acerto por trade</td><td class="num">45%</td><td class="num">36%</td></tr><tr><td>valor esperado por trade</td><td>+53,4 pts</td><td>+27,8 pts</td></tr><tr><td><strong>desvio</strong> por trade</td><td>134 pts</td><td>130 pts</td></tr><tr><td>pregões positivos</td><td class="num">85%</td><td class="num">60%</td></tr><tr><td>pior pregão</td><td>-462 pts</td><td>-629 pts</td></tr><tr><td>maior sequência de pregões negativos</td><td class="num">2</td><td class="num">5</td></tr><tr><td>chance de uma <strong>semana</strong> fechar negativa</td><td class="num">4%</td><td class="num">21%</td></tr><tr><td>rebaixamento máximo</td><td>739 pts (R$ 147,80)</td><td>953 pts (R$ 190,60)</td></tr></tbody></table></div>
+<p>Olhe a linha do <strong>desvio</strong>: 130 pontos por trade, contra um valor esperado de +27,8. O ruído é várias vezes maior que o sinal em cada operação isolada. Isso não é um defeito da estratégia — é como toda vantagem pequena se parece de perto.</p>
+<p>As consequências, que eu preciso ter aceitado <strong>antes</strong> de elas acontecerem:</p>
+<ul><li><strong>40% dos pregões fecham no vermelho.</strong> Um dia negativo é o caso comum, não um sinal de nada.</li><li><strong>5 pregões negativos seguidos já aconteceram</strong> na amostra medida. Vão acontecer de novo.</li><li><strong>21% de chance de uma semana inteira fechar negativa</strong>, com a vantagem totalmente intacta.</li><li>Duas perdas seguidas: 41% de chance. Três: 26%. Não é raro.</li></ul>
+<p><strong>Conclusão operacional:</strong> o resultado de um dia, e mesmo de uma semana, <strong>não contém informação</strong> sobre se eu operei bem. Julgar o processo pelo resultado diário é ler ruído como se fosse mensagem — e a reação a esse ruído é o que destrói planos que funcionavam.</p>
+<p>A aderência, ao contrário, eu <strong>observo diretamente</strong>, todo dia, sem erro de medição. É a única coisa que eu controlo. Então é a única coisa que eu meço.</p>
+<h3>7.2 A nota de aderência</h3>
+<p><strong>Por trade</strong> — seis itens, cada um vale 1:</p>
+<div class="scroll"><table><thead><tr><th>#</th><th>item</th></tr></thead><tbody><tr><td class="num">1</td><td>O contexto tinha as seis marcas da § 2, todas</td></tr><tr><td class="num">2</td><td>Entrei pela limitada no meio do candle, no preço certo</td></tr><tr><td class="num">3</td><td>A ordem valeu <strong>uma barra</strong>, e eu cancelei quando não preencheu</td></tr><tr><td class="num">4</td><td>O stop entrou na distância do ATR, imediatamente</td></tr><tr><td class="num">5</td><td>A parcial saiu na mesma distância (e o stop ficou onde estava)</td></tr><tr><td class="num">6</td><td>Não mexi em nada depois disso</td></tr></tbody></table></div>
+<p><strong>Por pregão</strong> — quatro itens, cada um vale 1:</p>
+<div class="scroll"><table><thead><tr><th>#</th><th>item</th></tr></thead><tbody><tr><td class="num">7</td><td>Não operei nenhum sinal fora dos setups D e T</td></tr><tr><td class="num">8</td><td>Respeitei o limite de perda do dia</td></tr><tr><td class="num">9</td><td>Registrei tudo no diário, inclusive os abortados</td></tr><tr><td class="num">10</td><td>Não mudei o tamanho da posição no meio do pregão</td></tr></tbody></table></div>
+<pre>nota do dia = (pontos obtidos) / (pontos possíveis) × 100</pre>
+<p><strong>A regra que dá sentido a tudo isto:</strong></p>
+<aside class="nota"><strong>Um trade vencedor tomado fora das regras conta como FALHA.</strong> Ele vale 0 na nota, e vale um registro em vermelho no diário.</aside>
+<p>Se essa regra não valer, a nota de aderência vira um enfeite: o resultado volta a mandar, e o plano deixa de existir nos dias em que ele mais importa.</p>
+<p><strong>Metas:</strong></p>
+<ul><li><strong>≥ 95% na semana</strong> — é o padrão de operação</li><li><strong>&lt; 90% na semana</strong> — parar de operar e reler o plano; o problema é de execução, e mexer em parâmetro nesse estado só troca um problema por dois</li><li><strong>100% num dia de prejuízo</strong> — isso é um <strong>dia bem-sucedido</strong>. Anotar como tal.</li></ul>
+</section>
+<section><div class="gut">8</div><div class="corpo"><h2>Os cinco erros que este plano existe para impedir</h2>
+<p><strong>1. Operar a Hull como manual manda.</strong> Comprar acima de uma Hull que sobe é a leitura natural, e é a que mede <strong>pior</strong> com este gatilho. Quando a mão coçar para entrar "a favor", é exatamente o momento em que o backtest diz não.</p>
+<p><strong>2. Perseguir o sinal abortado.</strong> "Ele foi embora sem mim." Vai acontecer com 20% dos sinais, todo mês. A regra da barra seguinte existe para tirar essa decisão da minha mão no momento em que eu estou menos apto a tomá-la.</p>
+<p><strong>3. Afastar o stop.</strong> É o erro que muda a distribuição inteira: troca uma perda planejada por uma perda de tamanho desconhecido. Todos os números deste arquivo deixam de valer no instante em que isso acontece uma vez.</p>
+<p><strong>4. Vender topo na banda.</strong> O canal de Keltner está na tela como <strong>régua de esticamento</strong>, não como gatilho. Reversão na banda foi medida e perde. Se eu me pegar operando a banda, eu estou operando outro plano — sem backtest.</p>
+<p><strong>5. Mexer no lote pelo resultado.</strong> Dobrar depois de perder é tentar recuperar num trade o que a distribuição devolve em vinte. Aumentar depois de ganhar é a mesma aposta, com o disfarce de confiança. O lote sai da conta da § 5, com o ATR do dia, e não muda dentro do pregão.</p>
+</section>
+<section><div class="gut">9</div><div class="corpo"><h2>O diário</h2>
+<p>Uma linha por <strong>sinal</strong> — inclusive os abortados.</p>
+<div class="scroll"><table><thead><tr><th>campo</th><th>o que anotar</th></tr></thead><tbody><tr><td>data / hora</td><td>do fechamento da barra do gatilho</td></tr><tr><td>lado</td><td>compra ou venda</td></tr><tr><td>ATR e stop usado</td><td>o que a tabela da § 4 mandou</td></tr><tr><td>preço da limitada</td><td>o meio do candle, arredondado</td></tr><tr><td>preencheu?</td><td>sim / <strong>abortado</strong></td></tr><tr><td>desfecho</td><td>alvo / zero a zero / stop / fim de pregão</td></tr><tr><td>pontos</td><td>resultado, em pontos</td></tr><tr><td><strong>nota de aderência</strong></td><td>0 a 6</td></tr><tr><td><strong>o que eu senti</strong></td><td>uma linha, honesta</td></tr></tbody></table></div>
+<p>A última coluna é a que descobre os padrões. "Entrei com pressa porque o anterior tinha stopado" é a informação que nenhuma métrica de desempenho captura, e é onde estão os erros repetidos.</p>
+<p>No fim do mês: contar quantos trades tiveram <strong>nota 6</strong>. Essa contagem é o placar do mês. O resultado em reais é uma consequência, e será olhado depois dela.</p>
+</section>
+<section><div class="gut">10</div><div class="corpo"><h2>Revisão e disjuntores</h2>
+<p><strong>A revisão é mensal, em data marcada.</strong> Nunca no meio de uma sequência ruim, nunca no meio de uma boa. Na revisão eu olho, nesta ordem:</p>
+<ol><li>A <strong>nota de aderência</strong> média do mês</li><li>Quantos sinais foram abortados, e se isso ficou perto de 20%</li><li>O resultado, em pontos, contra o valor esperado de +27,8 por trade</li><li>O <strong>custo real</strong> cobrado pela corretora, comparado com os 5 pontos por trade que os números desta página já descontam</li><li>Se o ritmo está cansativo, <strong>subir o nível do gatilho de 0,80 para 0,85</strong> — é a alavanca medida para ter menos sinais e mais qualidade, e está na § 05 do relatório</li></ol>
+<p><strong>Disjuntores</strong> — automáticos, não opinativos:</p>
+<div class="scroll"><table><thead><tr><th>gatilho</th><th>ação</th></tr></thead><tbody><tr><td>rebaixamento de <strong>953 pts</strong> (R$ 190,60)</td><td>reduzir o lote à metade</td></tr><tr><td>rebaixamento de <strong>1906 pts</strong> (R$ 381,20)</td><td>parar de operar e reabrir o backtest</td></tr><tr><td>aderência &lt; 90%% na semana</td><td>parar de operar; treinar em simulador</td></tr><tr><td>5 pregões negativos seguidos</td><td>parar por um dia e reler este arquivo</td></tr></tbody></table></div>
+<p>O primeiro disjuntor está no <strong>pior rebaixamento já medido</strong>. Chegar nele é normal. O segundo é o dobro dele: chegar lá já é evidência de que alguma coisa mudou — no mercado ou em mim — e merece medição, não persistência.</p>
+<p>O último é sobre estado mental, não sobre estatística: 5 pregões negativos seguidos já aconteceram na amostra, então 5 não prova nada. Mas depois de 5 eu não sou a mesma pessoa na frente da tela, e é essa pessoa que o disjuntor protege.</p>
+</section>
+<section><div class="gut">11</div><div class="corpo"><h2>O que este plano herda de incerto</h2>
+<p>Ler antes de dimensionar posição. Está tudo em <a href="RESULTADOS.md">RESULTADOS.md § 14</a>.</p>
+<ul><li><strong>Amostra pequena.</strong> 13 e 43 pregões com trade, dois meses de mercado.</li><li><strong>As duas bases não são independentes</strong> — o WINFUT contém o WINV26 inteiro. Concordarem é menos confirmação do que parece.</li><li><strong>As regras saíram destas mesmas bases.</strong> O lado da Hull, o veto da Hull plana, o nível do gatilho e o tamanho do stop foram escolhidos olhando estes dois arquivos. Há sobreajuste embutido, e o desempenho real tende a ser pior que o medido.</li><li><strong>A ordem limitada é dada por preenchida assim que o preço toca o nível.</strong> Na prática existe fila, e nem todo toque preenche — este é o otimismo que mais pesa contra os números acima.</li><li><strong>Sem filtro de horário, rolagem ou vencimento.</strong></li></ul>
+<p>Nada disso é motivo para não operar o plano. É motivo para operá-lo <strong>pequeno</strong> até que os seus próprios registros, e não os meus, digam que ele funciona.</p>
+</section>
+
+
+<div class="cartao">
+  <p class="lab">Cartão de pregão</p>
+  <h2>O que eu levo para a tela</h2>
+  <p>Se eu só puder olhar uma coisa antes da abertura, é isto.</p>
+
+  <div class="grade">
+    <div class="celula go">
+      <div class="k">Setup</div><div class="v">D</div>
+      <div class="s">descolamento da Hull. O T entra pela mesma regra e é raro.</div>
+    </div>
+    <div class="celula cau">
+      <div class="k">Veto</div><div class="v">Hull plana</div>
+      <div class="s">sem inclinação na Hull 50, não existe trade.</div>
+    </div>
+    <div class="celula go">
+      <div class="k">Entrada</div><div class="v">1 barra</div>
+      <div class="s">limitada no meio do candle. Não preencheu, cancela.</div>
+    </div>
+    <div class="celula cau">
+      <div class="k">Stop</div><div class="v">0,75 × ATR</div>
+      <div class="s">~95 pts com o ATR de hoje · R$ 19,00 por contrato. Nunca se afasta.</div>
+    </div>
+    <div class="celula go">
+      <div class="k">Parcial</div><div class="v">+95</div>
+      <div class="s">50% da posição, na mesma distância do stop.</div>
+    </div>
+    <div class="celula go">
+      <div class="k">Alvo</div><div class="v">+300</div>
+      <div class="s">pontos, no restante da posição.</div>
+    </div>
+    <div class="celula par">
+      <div class="k">Fim do dia</div><div class="v">3 stops</div>
+      <div class="s">ou 1 violação de regra. O que vier primeiro.</div>
+    </div>
+    <div class="celula par">
+      <div class="k">Ritmo</div><div class="v">~4,8</div>
+      <div class="s">trades por pregão. O resto do dia é espera.</div>
+    </div>
+  </div>
+
+  <div class="regra-ouro">
+    Um trade vencedor tomado fora das regras conta como falha.
+    <span>Ele vale zero na nota de aderência e entra em vermelho no diário.
+    Sem esta regra a nota vira enfeite, e o resultado volta a mandar
+    justamente nos dias em que o plano mais importa.</span>
+  </div>
+</div>
+
+
+<footer>
+  Gerado por <code>plano.py</code> a partir de <code>saida/resumo.json</code> —
+  os mesmos números de <code>relatorio.html</code>.
+  Companheiro de <code>RESULTADOS.md</code> e <code>ESTRATEGIA.md</code>.
+  Números descontando 5 pontos de custo por trade.
+</footer>
+</div>

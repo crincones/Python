@@ -1,0 +1,164 @@
+//------------------------------------------------------------------
+// PavioFavor_Verde  -  Grafico PI 20 (WINFUT)  -  NTSL
+//
+// Versao do PavioContra_Magenta reescrita com o que o backteste
+// (pavio_contra.html) mediu, e nao com a hipotese de partida.
+// Sem Hull e sem EMA.
+//
+//   ▼ verde acima da maxima   = VENDA
+//                               (2-4 altas, depois uma baixa com
+//                                pavio SUPERIOR PEQUENO: 5% a 25%)
+//   ▲ verde abaixo da minima  = COMPRA
+//                               (2-4 baixas, depois uma alta com
+//                                pavio INFERIOR PEQUENO: 5% a 25%)
+//
+// Verde para nao confundir com o magenta nem com o MomentumPI_OuroPrata.
+// Inserir no MESMO painel do grafico de precos.
+//
+//==================================================================
+// A REGRA  (venda; compra e o espelho exato)
+//==================================================================
+// Lida na barra CONTRA, a atual:
+//
+//   1. a barra atual fecha em BAIXA
+//   2. imediatamente antes dela, de 2 a 4 barras seguidas fecharam em
+//      ALTA -- 1 ou 5+ nao vale
+//   3. todas no mesmo pregao (ChecarDia)
+//   4. pavio SUPERIOR (lado da abertura) entre 5% e 25% do corpo:
+//
+//          pavio = High - Open         corpo = |Close - Open|
+//
+//      No PI 20 o corpo e 100 pts: 5 a 25 pts. 5% = 1 tick, ou seja,
+//      "tem pavio, mas pequeno". A barra que sobe e desaba sem ter
+//      esticado quase nada.
+//
+// O que mudou em relacao ao magenta, e por que:
+//   . PAVIO 25-90% -> 5-25%. Nas faixas medidas, os pavios pequenos
+//     renderam mais que os grandes, e a faixa 25-90% ficou abaixo de
+//     subconjuntos sorteados.
+//   . PAVIO ZERO FICA FORA. Mediu mal nas gestoes 1:3 e 1:1 -- mas sao
+//     so 47 casos, entao e o corte menos confiavel da regra.
+//   . 2 a 4 BARRAS continua. O "4 barras e ruim" do estudo valia com o
+//     pavio grande (-14 pts); com o pavio pequeno o 4 nao atrapalha, e
+//     cortar o 4 PIORA a regra. Os dois achados nao se somam.
+//   . O SENTIDO continua o do candle contra: operado ao contrario, o
+//     mesmo sinal perde em todas as gestoes.
+//
+//==================================================================
+// O QUE FOI MEDIDO  (WINFUT_20PI.csv, 10.000 barras, 26 pregoes)
+//==================================================================
+// 783 sinais: 397 compras + 386 vendas. Bruto, sinal a sinal, ENTRADA
+// NO FECHAMENTO do candle contra, stop 100:
+//
+//   gestao              pts/sinal   tercos T1 / T2 / T3
+//   1:3 com parcial        +9,9      +15,2 / +11,0 / +6,8
+//   1:3 sem parcial       +11,2      +15,2 / +13,5 / +7,9
+//   1:1                    +8,6      +15,2 /  +8,5 / +5,8
+//
+// Positivo nos tres tercos e nos dois lados (1:3 com parcial: compra
+// +6,4, venda +13,5). Contra 2.000 subconjuntos sorteados de todos os
+// candles contra, fica no percentil 90 (1:3 com parcial).
+//
+//==================================================================
+// LEIA ANTES DE OPERAR
+//==================================================================
+//  . E DENTRO DA AMOSTRA. A faixa 5-25% foi escolhida olhando estes
+//    mesmos 26 pregoes. Os numeros acima sao o teto, nao a expectativa.
+//  . NAO PAGA CUSTO COM FOLGA. A 10 pts por operacao sobra de -2,2 a
+//    +1,2 pts por sinal, conforme a gestao (1:2 e a pior). A 5 pts,
+//    de +3 a +6.
+//  . O terco mais recente e o mais fraco (T3 < T2 < T1).
+//  . SO NO FECHAMENTO. Com limitada no meio do corpo a regra mede de
+//    -12 a +3 pts e perde para o sorteio.
+//  . Uma regra mais simples -- 2 a 3 barras, SEM filtro de pavio --
+//    mediu parecido (+7,4 por sinal, percentil 87, com o dobro de
+//    sinais). Para usar assim: PavioMinPct(0), PavioMaxPct(100),
+//    BarrasMax(3).
+//
+// NAO E UM SETUP VALIDADO. E o desenho do que a amostra sugeriu.
+//
+// REPINTURA: enquanto a barra nao fecha, o lado dela e o pavio mudam.
+// Em barra fechada a seta e definitiva.
+//
+// Licoes herdadas do MomentumPI_OuroPrata (ver secao 5 dele):
+//   . Date e funcao sem parametros: capturada em `dataBarra` e o
+//     historico e lido da variavel, nunca como Date[j].
+//   . PlotText so usa o parametro Price com Position = 3.
+//------------------------------------------------------------------
+
+input
+  BarrasMin       (2);     // barras no mesmo sentido antes da contra
+  BarrasMax       (4);
+  PavioMinPct     (5);     // pavio do lado da abertura, em % do CORPO
+  PavioMaxPct     (25);
+  OperarCompra    (1);
+  OperarVenda     (1);
+  TamSeta         (12);
+  SeparacaoPts    (40);    // afastamento da seta, em pontos do ativo
+  Colorir         (1);     // 1 = pinta a barra contra de verde
+  ChecarDia       (1);     // 1 = sequencia inteira no mesmo pregao
+
+var
+  j, k                 : integer;
+  dataBarra            : float;
+  pavio, corpo         : float;
+  venda, compra        : boolean;
+  contando             : boolean;
+  verde                : integer;
+
+begin
+  dataBarra := Date;
+  verde     := RGB(0, 200, 80);
+
+  if CurrentBar >= BarrasMax + 2 then
+  begin
+    //  barra contra: em baixa -> venda | em alta -> compra
+    venda  := (OperarVenda = 1)  and (Close < Open);
+    compra := (OperarCompra = 1) and (Close > Open);
+
+    if venda or compra then
+    begin
+      //--- barras no sentido anterior, seguidas, terminando em [1] -----
+      k := 0;
+      contando := true;
+      for j := 1 to BarrasMax + 1 do
+      begin
+        if contando then
+        begin
+          if (ChecarDia = 1) and (dataBarra[j] <> dataBarra) then
+            contando := false
+          else if venda and (Close[j] > Open[j]) then
+            k := j
+          else if compra and (Close[j] < Open[j]) then
+            k := j
+          else
+            contando := false;
+        end;
+      end;
+
+      //--- pavio do lado de onde veio o movimento (lado da abertura) ---
+      if venda then
+        pavio := High - Open      // barra de baixa: max(Open,Close) = Open
+      else
+        pavio := Open - Low;      // barra de alta:  min(Open,Close) = Open
+
+      corpo := Close - Open;
+      if corpo < 0 then corpo := -corpo;
+
+      //--- desenho ------------------------------------------------------
+      //  comparacao por multiplicacao: sem divisao, sem risco de zero
+      if (k >= BarrasMin) and (k <= BarrasMax)
+         and (pavio * 100 >= PavioMinPct * corpo)
+         and (pavio * 100 <= PavioMaxPct * corpo) then
+      begin
+        if venda then
+          PlotText("▼", verde, 3, TamSeta, High + SeparacaoPts)
+        else
+          PlotText("▲", verde, 3, TamSeta, Low - SeparacaoPts);
+
+        if Colorir = 1 then
+          PaintBar(verde);
+      end;
+    end;
+  end;
+end;

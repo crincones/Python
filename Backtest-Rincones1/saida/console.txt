@@ -12,6 +12,32 @@ entrada: ordem limitada no meio do candle, valida por 1 barra(s) | custo: 0.0 pt
     WINFUT  parcial em +100 · stop na média da operação          | stop 150: EV  +41.1 t+3.21 | stop 100: EV  +28.2 t+2.27
     WINFUT  parcial em +100 · stop na entrada (o modelo antigo)  | stop 150: EV  +36.5 t+2.89 | stop 100: EV  +26.0 t+2.33
 
+  A VARIANTE DO LEQUE: so gatilho que TOCA ou fica ATRAS das medias
+    WINV26  posicao dos gatilhos: toca 61.7% · atras  4.3% · na frente 34.0%
+    WINV26  sem restrição — qualquer posição em relação às médias gatilhos=  94 | stop 150: EV  +77.5 t+3.39 n= 59 DD  450 | stop 100: EV  +51.7 t+2.73 n= 60 DD  300
+    WINV26  só gatilho que toca ou fica atrás do leque     gatilhos=  62 | stop 150: EV  +88.8 t+2.61 n= 38 DD  450 | stop 100: EV  +71.1 t+2.44 n= 38 DD  300
+    WINV26  setup B isolado (stop 150): livre n= 35 EV  +68.6 t+2.86 -> leque n= 13 EV +103.8 t+2.25
+    WINV26  só o toque no leque              gatilhos=  58 | stop 150: EV  +81.2 t+2.26 n= 36 | stop 100: EV  +72.2 t+2.42 n= 36
+    WINV26  só o que fica atrás do leque     gatilhos=   4 | stop 150: EV +225.0 t +nan n=  2 | stop 100: EV  +50.0 t +nan n=  2
+    WINV26  os dois — a variante             gatilhos=  62 | stop 150: EV  +88.8 t+2.61 n= 38 | stop 100: EV  +71.1 t+2.44 n= 38
+      ema3  toca 75.0% das barras | livre n= 59 EV  +77.5 t+3.39   | leque n= 38 EV  +88.8 t+2.61  
+      kama  toca 75.8% das barras | livre n= 46 EV  +75.0 t+2.61   | leque n= 18 EV  +66.7 t+1.16  
+      hma   toca 99.1% das barras | livre n= 31 EV  +36.3 t+0.82   | leque n= 31 EV  +36.3 t+0.82  
+      t3    toca 66.6% das barras | livre n= 63 EV  +64.3 t+2.61   | leque n= 36 EV  +35.4 t+1.00  
+      jma   toca 89.7% das barras | livre n= 62 EV  +46.0 t+1.62   | leque n= 36 EV  +20.8 t+0.59  
+    WINFUT  posicao dos gatilhos: toca 53.3% · atras  3.3% · na frente 43.5%
+    WINFUT  sem restrição — qualquer posição em relação às médias gatilhos= 246 | stop 150: EV  +43.0 t+2.84 n=148 DD 1575 | stop 100: EV  +28.2 t+2.27 n=149 DD 1500
+    WINFUT  só gatilho que toca ou fica atrás do leque     gatilhos= 139 | stop 150: EV  +73.1 t+3.29 n= 78 DD  525 | stop 100: EV  +50.0 t+2.61 n= 78 DD  400
+    WINFUT  setup B isolado (stop 150): livre n=103 EV  +21.0 t+1.21 -> leque n= 26 EV  +54.8 t+1.53
+    WINFUT  só o toque no leque              gatilhos= 131 | stop 150: EV  +69.1 t+3.08 n= 76 | stop 100: EV  +50.0 t+2.60 n= 76
+    WINFUT  só o que fica atrás do leque     gatilhos=   8 | stop 150: EV +225.0 t +nan n=  2 | stop 100: EV  +50.0 t +nan n=  2
+    WINFUT  os dois — a variante             gatilhos= 139 | stop 150: EV  +73.1 t+3.29 n= 78 | stop 100: EV  +50.0 t+2.61 n= 78
+      ema3  toca 76.0% das barras | livre n=148 EV  +43.0 t+2.84   | leque n= 78 EV  +73.1 t+3.29  
+      kama  toca 74.0% das barras | livre n=122 EV  +25.1 t+1.45   | leque n= 48 EV  +26.6 t+0.92  
+      hma   toca 99.0% das barras | livre n= 78 EV  +25.0 t+1.11   | leque n= 78 EV  +25.0 t+1.11  
+      t3    toca 68.3% das barras | livre n=160 EV  +27.1 t+1.75   | leque n= 86 EV  +29.7 t+1.55  
+      jma   toca 90.0% das barras | livre n=151 EV  +24.3 t+1.52   | leque n=102 EV  +13.9 t+0.82  
+
   O EIXO [E2]: FORMULA ANTIGA x NOVA  (ema3, carteira A + B)
     WINV26  v1 · |delta| / |Close-Open|      gatilhos=  106 | stop 150: EV  +44.0 t+1.81 n= 63 | stop 100: EV  +53.1 t+2.79 n= 64
     WINV26  v2 · (|delta|/esforço) × volta   gatilhos=   94 | stop 150: EV  +77.5 t+3.39 n= 59 | stop 100: EV  +51.7 t+2.73 n= 60

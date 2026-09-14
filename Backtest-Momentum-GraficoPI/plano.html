@@ -1,0 +1,948 @@
+<!doctype html>
+<html lang="pt-BR" data-tema="auto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Plano de trading &middot; momentum no grafico PI</title>
+<style>
+:root{
+  color-scheme: light;
+  --plano:#f9f9f7; --card:#fcfcfb; --card2:#f3f2ee;
+  --tinta:#0b0b0b; --tinta2:#52514e; --mudo:#898781;
+  --grade:#e1e0d9; --eixo:#c3c2b7; --borda:rgba(11,11,11,.10);
+  --ouro:#184f95; --prata:#2a78d6; --bronze:#86b6ef;
+  --ganho:#2a78d6; --perda:#e34948; --neutro:#d9d8d2;
+  --bom:#0ca30c; --alerta:#fab219; --grave:#ec835a; --critico:#d03b3b;
+  --sombra:0 1px 2px rgba(11,11,11,.05), 0 1px 8px rgba(11,11,11,.04);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-tema="claro"]){
+    color-scheme: dark;
+    --plano:#0d0d0d; --card:#1a1a19; --card2:#222221;
+    --tinta:#fff; --tinta2:#c3c2b7; --mudo:#898781;
+    --grade:#2c2c2a; --eixo:#383835; --borda:rgba(255,255,255,.10);
+    --ouro:#cde2fb; --prata:#5598e7; --bronze:#184f95;
+    --ganho:#3987e5; --perda:#e66767; --neutro:#383835;
+    --sombra:0 1px 2px rgba(0,0,0,.4), 0 1px 8px rgba(0,0,0,.3);
+  }
+}
+:root[data-tema="escuro"]{
+  color-scheme: dark;
+  --plano:#0d0d0d; --card:#1a1a19; --card2:#222221;
+  --tinta:#fff; --tinta2:#c3c2b7; --mudo:#898781;
+  --grade:#2c2c2a; --eixo:#383835; --borda:rgba(255,255,255,.10);
+  --ouro:#cde2fb; --prata:#5598e7; --bronze:#184f95;
+  --ganho:#3987e5; --perda:#e66767; --neutro:#383835;
+  --sombra:0 1px 2px rgba(0,0,0,.4), 0 1px 8px rgba(0,0,0,.3);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--plano); color:var(--tinta);
+  font:15px/1.65 system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+  font-variant-numeric:tabular-nums;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1140px; margin:0 auto; padding-block:0 72px; padding-left:20px; padding-right:20px}
+h1,h2,h3{line-height:1.2; letter-spacing:-.02em; margin:0}
+h1{font-size:clamp(28px,4.4vw,44px); font-weight:680}
+h2{font-size:clamp(21px,2.7vw,28px); font-weight:640; margin-top:8px}
+h3{font-size:16px; font-weight:640; margin-bottom:8px}
+p{margin:0 0 14px}
+a{color:var(--prata)}
+small{font-size:12.5px}
+code,.mono{font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  font-size:.92em}
+
+/* ------------------------------------------------------------ topo */
+header.capa{padding:56px 0 32px; border-bottom:1px solid var(--borda)}
+.chapeu{font-size:12px; font-weight:640; letter-spacing:.10em; text-transform:uppercase;
+  color:var(--mudo); margin-bottom:12px}
+.sub{color:var(--tinta2); font-size:17px; max-width:70ch; margin-top:14px}
+.selo{display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:600;
+  color:var(--tinta2); background:var(--card2); border:1px solid var(--borda);
+  border-radius:999px; padding:3px 10px; margin:2px 6px 2px 0}
+
+/* --------------------------------------------------------- secoes */
+section{padding-top:52px; scroll-margin-top:64px}
+.olho{color:var(--tinta2); max-width:74ch; margin:10px 0 26px}
+.nota{font-size:13.5px; color:var(--mudo); max-width:78ch; margin-top:10px}
+
+/* ---------------------------------------------------------- cards */
+.card{background:var(--card); border:1px solid var(--borda); border-radius:12px;
+  padding:20px; box-shadow:var(--sombra)}
+.grade{display:grid; gap:16px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media (max-width:860px){ .g3,.g4{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media (max-width:560px){ .g2,.g3,.g4{grid-template-columns:1fr} }
+
+/* ------------------------------------------------------- estatisticas */
+.tile{background:var(--card); border:1px solid var(--borda); border-radius:12px;
+  padding:16px 18px; box-shadow:var(--sombra)}
+.tile .rot{font-size:12px; font-weight:600; color:var(--mudo); letter-spacing:.02em}
+.tile .num{font-size:clamp(24px,3.2vw,32px); font-weight:660; letter-spacing:-.03em;
+  margin-top:4px; line-height:1.1}
+.tile .pe{font-size:12.5px; color:var(--tinta2); margin-top:3px}
+.mini .tile{padding:12px 13px}
+.mini .tile .num{font-size:clamp(19px,2.1vw,23px)}
+.mini .tile .pe{font-size:11.5px}
+.pos{color:var(--ganho)} .neg{color:var(--perda)}
+
+/* ---------------------------------------------------------- tabelas */
+.rolo{overflow-x:auto; -webkit-overflow-scrolling:touch}
+table{border-collapse:collapse; width:100%; font-size:13.5px}
+th,td{padding:7px 10px; text-align:right; white-space:nowrap;
+  border-bottom:1px solid var(--grade)}
+th{font-size:11.5px; font-weight:640; color:var(--mudo); text-transform:uppercase;
+  letter-spacing:.05em; border-bottom:1px solid var(--eixo); position:sticky; top:0;
+  background:var(--card)}
+td:first-child,th:first-child{text-align:left}
+tbody tr:hover{background:var(--card2)}
+tr.destaque td{background:color-mix(in srgb, var(--prata) 9%, transparent); font-weight:620}
+.tag{display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:640;
+  padding:2px 8px; border-radius:999px; border:1px solid var(--borda)}
+.pt{width:8px; height:8px; border-radius:50%; flex:none}
+
+/* ----------------------------------------------------------- abas */
+.abas{display:flex; gap:4px; flex-wrap:wrap; margin-bottom:14px}
+.aba{font:inherit; font-size:13px; font-weight:600; color:var(--tinta2);
+  background:var(--card2); border:1px solid var(--borda); border-radius:8px;
+  padding:6px 13px; cursor:pointer}
+.aba:hover{color:var(--tinta)}
+.aba[aria-pressed="true"]{background:var(--prata); border-color:var(--prata);
+  color:var(--card); }
+
+/* --------------------------------------------------------- graficos */
+figure{margin:0}
+figcaption{font-size:12.5px; color:var(--mudo); margin-top:8px}
+.viz{width:100%; display:block; overflow:visible}
+.viz text{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+.eixo-tx{font-size:11px; fill:var(--mudo)}
+.grade-l{stroke:var(--grade); stroke-width:1}
+.base-l{stroke:var(--eixo); stroke-width:1}
+.legenda{display:flex; flex-wrap:wrap; gap:14px; font-size:12.5px; color:var(--tinta2);
+  margin:2px 0 10px}
+.legenda span{display:inline-flex; align-items:center; gap:6px}
+.chave{width:12px; height:3px; border-radius:2px; flex:none}
+.chave.q{height:10px; width:10px; border-radius:3px}
+
+/* --------------------------------------------------------- tooltip */
+.dica{position:fixed; z-index:40; pointer-events:none; opacity:0; transition:opacity .09s;
+  background:var(--card); color:var(--tinta); border:1px solid var(--borda);
+  border-radius:8px; padding:8px 11px; font-size:12.5px; box-shadow:var(--sombra);
+  max-width:280px}
+.dica b{font-weight:640}
+.dica .l{color:var(--mudo)}
+
+/* ------------------------------------------------------ diagrama padrao */
+.diag{background:var(--card); border:1px solid var(--borda); border-radius:12px;
+  padding:16px; box-shadow:var(--sombra)}
+.diag h3{display:flex; align-items:center; gap:8px}
+
+/* --------------------------------------------------------- galeria */
+.galeria .ex{background:var(--card); border:1px solid var(--borda); border-radius:12px;
+  padding:12px 12px 14px; box-shadow:var(--sombra)}
+.ex-topo{display:flex; justify-content:space-between; align-items:baseline; gap:8px;
+  font-size:12.5px; margin-bottom:6px}
+.ex-data{color:var(--tinta2); font-weight:600}
+.ex-res{font-weight:660}
+.ex-viz{min-height:190px}
+.galeria figcaption{font-size:12px; line-height:1.5; margin-top:6px}
+@media (max-width:980px){ .galeria{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media (max-width:620px){ .galeria{grid-template-columns:1fr} }
+
+/* --------------------------------------------------------- kline */
+#kwrap{background:var(--card); border:1px solid var(--borda); border-radius:12px;
+  padding:14px; box-shadow:var(--sombra)}
+#kchart{width:100%; height:480px}
+@media (max-width:700px){ #kchart{height:360px} }
+#kfiltros{margin-bottom:14px; padding-bottom:12px; border-bottom:1px solid var(--grade)}
+#kfiltros .linha-f{display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  margin-bottom:6px}
+#kfiltros .rot-f{font-size:11.5px; font-weight:640; color:var(--mudo);
+  text-transform:uppercase; letter-spacing:.05em; min-width:66px}
+#kfiltros .abas{margin-bottom:0}
+#kfiltros .aba[disabled]{opacity:.38; cursor:not-allowed}
+.kresumo{font-size:13px; color:var(--tinta2); margin:10px 0 0}
+.knav{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px}
+.knav button{font:inherit; font-size:13px; font-weight:600; background:var(--card2);
+  color:var(--tinta); border:1px solid var(--borda); border-radius:8px;
+  padding:6px 12px; cursor:pointer}
+.knav button:hover{border-color:var(--eixo)}
+.knav select{font:inherit; font-size:13px; background:var(--card2); color:var(--tinta);
+  border:1px solid var(--borda); border-radius:8px; padding:6px 10px; max-width:100%}
+.kinfo{display:flex; gap:18px; flex-wrap:wrap; font-size:13px; color:var(--tinta2);
+  margin-top:12px; padding-top:12px; border-top:1px solid var(--grade)}
+.kinfo b{color:var(--tinta); font-weight:640}
+
+/* ---------------------------------------------------------- rodape */
+.bandeira{border-left:3px solid var(--alerta); background:var(--card2);
+  border-radius:0 8px 8px 0; padding:14px 18px; margin:18px 0}
+.bandeira h3{margin-bottom:6px}
+ul.enx{margin:0 0 14px; padding-left:20px}
+ul.enx li{margin-bottom:7px}
+footer{margin-top:64px; padding-top:24px; border-top:1px solid var(--borda);
+  color:var(--mudo); font-size:13px}
+
+/* ------------------------------------------------------- navegacao */
+nav.indice{position:sticky; top:0; z-index:30; background:color-mix(in srgb,var(--plano) 88%,transparent);
+  backdrop-filter:blur(8px); border-bottom:1px solid var(--borda)}
+nav.indice ul{display:flex; gap:2px; list-style:none; margin:0; padding:8px 0;
+  overflow-x:auto; -webkit-overflow-scrolling:touch}
+nav.indice a{display:block; font-size:12.5px; font-weight:600; color:var(--tinta2);
+  text-decoration:none; padding:5px 10px; border-radius:7px; white-space:nowrap}
+nav.indice a:hover{background:var(--card2); color:var(--tinta)}
+.tema{position:fixed; right:16px; bottom:16px; z-index:50; width:40px; height:40px;
+  border-radius:50%; border:1px solid var(--borda); background:var(--card);
+  color:var(--tinta); cursor:pointer; box-shadow:var(--sombra); font-size:17px}
+@media print{ nav.indice,.tema{display:none} }
+
+.passo{display:grid; grid-template-columns:44px 1fr; gap:16px; align-items:start;
+  background:var(--card); border:1px solid var(--borda); border-radius:12px;
+  padding:18px 20px; box-shadow:var(--sombra); margin-bottom:12px}
+.passo .n{width:34px; height:34px; border-radius:50%; display:grid; place-items:center;
+  background:var(--prata); color:var(--card); font-weight:680; font-size:15px}
+.passo.veto .n{background:var(--critico)}
+.passo h3{font-size:17px; margin-bottom:6px}
+.passo .regra{margin:0 0 10px}
+.passo .por{font-size:13.5px; color:var(--tinta2); border-left:2px solid var(--grade);
+  padding-left:12px; margin:0 0 8px}
+.passo .nao{font-size:13px; color:var(--critico); font-weight:600; margin:0}
+.passo.veto{border-left:3px solid var(--critico)}
+
+.regua{display:grid; grid-template-columns:1fr; gap:0; background:var(--card);
+  border:1px solid var(--borda); border-radius:12px; overflow:hidden;
+  box-shadow:var(--sombra)}
+.regua .faixa{display:grid; grid-template-columns:120px 1fr; gap:14px;
+  padding:14px 18px; border-bottom:1px solid var(--grade); align-items:baseline}
+.regua .faixa:last-child{border-bottom:none}
+.regua .vlr{font-weight:680; font-size:18px; letter-spacing:-.02em}
+
+.lista-chk{list-style:none; padding:0; margin:0}
+.lista-chk li{display:grid; grid-template-columns:22px 1fr; gap:10px;
+  padding:9px 0; border-bottom:1px solid var(--grade); align-items:start}
+.lista-chk li:last-child{border-bottom:none}
+.lista-chk .cx{width:16px; height:16px; border:1.5px solid var(--eixo);
+  border-radius:4px; margin-top:3px}
+.lista-chk .cx.x{border-color:var(--critico)}
+
+@media print{
+  body{background:#fff}
+  .card,.passo,.regua{box-shadow:none; break-inside:avoid}
+  section{padding-top:24px}
+}
+</style>
+</head>
+<body>
+<nav class="indice"><div class="wrap"><ul><li><a href="#setup">O setup</a></li><li><a href="#gatilhos">Os 6 passos</a></li><li><a href="#niveis">Ouro, Prata, Bronze</a></li><li><a href="#gestao">Gestao</a></li><li><a href="#regras">Regras de mesa</a></li><li><a href="#galeria">Como se parece</a></li><li><a href="#checklist">Folha de checagem</a></li></ul></div></nav>
+<div class="wrap">
+
+<header class="capa">
+  <div class="chapeu">Plano de trading &middot; WINFUT &middot; grafico de 20 PI</div>
+  <h1>Momentum de continuacao</h1>
+  <p class="sub">Seis perguntas de sim ou nao, na ordem em que se olha para a tela.
+  Se qualquer uma der nao, o trade nao existe &mdash; nao ha "quase".</p>
+  <div style="margin-top:18px">
+    <span class="selo">Hull 50</span>
+    <span class="selo">EMA 21</span>
+    <span class="selo">Keltner 21 &plusmn; 2,0 ATR</span>
+    <span class="selo">stop 100</span>
+    <span class="selo">alvo 300</span>
+    <span class="selo">parcial 50% em +100</span>
+  </div>
+  <div class="bandeira" style="margin-top:24px">
+    <h3>Leia isto antes</h3>
+    <p style="margin-bottom:0">Este plano sai de um backteste de
+    <b>26 pregoes</b> &mdash; pouco mais de um mes, todo ele em
+    mercado de alta. Os numeros sao <b>brutos</b>, sem corretagem e sem slippage.
+    Rode em simulador por pelo menos um mes antes de qualquer dinheiro real, e refaca
+    a medicao quando houver base maior. Ver <code>RESULTADOS.md</code> para o que o
+    teste nao mediu.</p>
+  </div>
+</header>
+
+<section id="setup">
+  <h2>O setup</h2>
+  <p class="olho">No grafico de <b>20 PI</b> do WINFUT, todo candle fecha exatamente
+  100 pontos acima ou abaixo da sua abertura. O que se procura e uma <b>retracao</b>
+  contra a tendencia seguida de um candle de <b>continuacao</b> a favor, com a Hull 50
+  atras do preco e a EMA 21 cortando o par. A venda e o espelho exato da compra.</p>
+  <div class="grade g4">
+    <div class="tile"><div class="rot">Por operacao</div>
+      <div class="num pos">+34,1 pts</div>
+      <div class="pe">R$ +6,82 com 1 contrato</div></div>
+    <div class="tile"><div class="rot">Acerto</div>
+      <div class="num">36,5%</div>
+      <div class="pe">alvo de 300 com stop de 100</div></div>
+    <div class="tile"><div class="rot">Frequencia</div>
+      <div class="num">6,8</div>
+      <div class="pe">operacoes por pregao</div></div>
+    <div class="tile"><div class="rot">Rebaixamento maximo</div>
+      <div class="num">800 pts</div>
+      <div class="pe">R$ 160 &middot; a pior sequencia medida</div></div>
+  </div>
+  <p class="nota">Padrao Ouro, entrada no fechamento, com parcial. Medido em
+  170 operacoes ao longo de 25 pregoes.</p>
+</section>
+
+<section id="gatilhos">
+  <h2>Os seis passos</h2>
+  <p class="olho">Na ordem. O passo 5 e o unico <b>veto</b>: ele nao aprova nada,
+  so reprova &mdash; e e o que mais separa trade bom de trade ruim.</p>
+  
+  <div class="passo">
+    <div class="n">1</div>
+    <div>
+      <h3>A Hull 50 esta no sentido do trade?</h3>
+      <p class="regra">Para comprar, a Hull tem de estar <b>subindo</b> e ficar <b>abaixo</b> do preco. Para vender, descendo e acima.</p>
+      <p class="por">E a unica coisa que define de que lado se opera. Sem ela nao ha "continuacao" de coisa nenhuma.</p>
+      <p class="nao">Nao vale se: Hull plana, ou preco do lado errado dela.</p>
+    </div>
+  </div>
+  <div class="passo">
+    <div class="n">2</div>
+    <div>
+      <h3>Houve uma retracao de 2 ou mais candles?</h3>
+      <p class="regra">Conte os candles <b>contra</b> a tendencia antes do candle atual. Precisa de <b>2 ou mais</b>.</p>
+      <p class="por">Um candle so de retracao mede menos da metade de dois. Um candle contra e ruido; dois ja sao um movimento.</p>
+      <p class="nao">Nao vale se: Retracao de um candle so. Espere a proxima.</p>
+    </div>
+  </div>
+  <div class="passo">
+    <div class="n">3</div>
+    <div>
+      <h3>Os dois extremos do par estao fora da Hull?</h3>
+      <p class="regra">O topo do ultimo candle da retracao <b>e</b> o topo do candle de continuacao, os dois acima da Hull (numa compra). Na venda, os dois fundos abaixo dela.</p>
+      <p class="por">E o que separa um pullback dentro da tendencia de uma virada que ja atravessou a media.</p>
+      <p class="nao">Nao vale se: Qualquer um dos dois extremos do lado de dentro da Hull.</p>
+    </div>
+  </div>
+  <div class="passo">
+    <div class="n">4</div>
+    <div>
+      <h3>A EMA 21 passa entre os topos e os fundos do par?</h3>
+      <p class="regra">A EMA 21 tem de estar <b>dentro</b> da faixa que vai do menor fundo ao maior topo dos dois candles.</p>
+      <p class="por">E a forma de exigir que a retracao tenha ido ate a media -- nem menos (nao retraiu), nem mais (nao e mais retracao).</p>
+      <p class="nao">Nao vale se: EMA acima do par inteiro ou abaixo dele.</p>
+    </div>
+  </div>
+  <div class="passo veto">
+    <div class="n">&times;</div>
+    <div>
+      <h3>NAO e exaustao?</h3>
+      <p class="regra">Descarte se as <b>duas</b> coisas forem verdade ao mesmo tempo: a Hull esta <b>abrindo a curva</b> a favor do trade (acelerando) <b>e</b> o fechamento ja esta a mais de <b>0,45 ATR</b> da EMA 21 (com ATR perto de 150, isso e mais ou menos <b>68 pontos</b>).</p>
+      <p class="por">E o filtro que mais separa. Sozinha, nenhuma das duas metades diz quase nada; juntas marcam 4 de cada 10 sinais, e esses 4 nao pagam. E a intuicao da "Hull perto da banda", so que medida no lugar certo.</p>
+      <p class="nao">Nao vale se: Hull acelerando E preco ja esticado. E o unico veto obrigatorio.</p>
+    </div>
+  </div>
+  <div class="passo">
+    <div class="n">6</div>
+    <div>
+      <h3>O candle de continuacao tem a forma certa?</h3>
+      <p class="regra">Pavio total (range menos os 100 pontos do corpo) entre <b>25</b> e <b>90</b> pontos. Na pratica: o range do candle entre 125 e 190 pontos.</p>
+      <p class="por">No grafico de PI o corpo e sempre 100 pontos, entao o pavio E a forma. Candle liso demais e fino demais para pagar; candle de pavio enorme e briga, nao continuacao.</p>
+      <p class="nao">Nao vale se: Este e o que separa Ouro de Prata. Falhando so ele, o sinal ainda e Prata -- opere menor, ou nao opere.</p>
+    </div>
+  </div>
+</section>
+
+<section id="niveis">
+  <h2>Ouro, Prata e Bronze</h2>
+  <p class="olho">Quando um passo falha, o sinal nao vira lixo automaticamente: ele
+  cai de nivel. A tabela diz o que fazer com cada um.</p>
+  <div class="card rolo">
+    <table>
+      <thead><tr><th>Nivel</th><th>Passos que cumpre</th><th>Por operacao</th>
+        <th>Acerto</th><th>Por dia</th><th>Rebaix.</th><th>O que fazer</th></tr></thead>
+      <tbody><tr><td><span class="tag"><span class="pt" style="background:var(--ouro)"></span>Ouro</span></td><td style="text-align:left">1 a 6, todos</td><td>+34,1 pts</td><td>36,5%</td><td>6,8</td><td>800 pts</td><td style="text-align:left"><b>Opere.</b></td></tr><tr><td><span class="tag"><span class="pt" style="background:var(--prata)"></span>Prata</span></td><td style="text-align:left">1 a 5 (falha so o 6)</td><td>+27,4 pts</td><td>34,2%</td><td>9,3</td><td>600 pts</td><td style="text-align:left"><b>Opere com metade do tamanho, ou deixe passar.</b></td></tr><tr><td><span class="tag"><span class="pt" style="background:var(--bronze)"></span>Bronze</span></td><td style="text-align:left">1 a 4 (falha o veto de exaustao)</td><td>+11,5 pts</td><td>29,3%</td><td>21,9</td><td>1.700 pts</td><td style="text-align:left"><b>Nao opere.</b></td></tr></tbody>
+    </table>
+    <p class="nota">"Por operacao" e o valor esperado medido no backteste, em pontos.
+    O Bronze aparece na tabela para que fique claro <b>quanto</b> se perde operando
+    tudo: quatro vezes mais trades para ganhar o mesmo, com o dobro do rebaixamento
+    &mdash; e isso antes de custo, que multiplica por quatro tambem.</p>
+  </div>
+</section>
+
+<section id="gestao">
+  <h2>Gestao da operacao</h2>
+  <p class="olho">Fixa. Nao se negocia stop no meio do trade.</p>
+  <div class="regua">
+    <div class="faixa"><div class="vlr">Entrada</div>
+      <div>A mercado, no <b>fechamento</b> do candle de continuacao. Nao antecipe:
+      entrar no meio do corpo com ordem limitada mede pior, porque perde justamente
+      os trades que nao voltam &mdash; e sao eles que pagam.</div></div>
+    <div class="faixa"><div class="vlr">Stop 100</div>
+      <div>100 pontos da entrada, posicionado <b>antes</b> de a ordem de
+      entrada ser enviada. Um candle de PI inteiro e 100 pontos: o stop equivale a
+      um candio contra.</div></div>
+    <div class="faixa"><div class="vlr">Parcial +100</div>
+      <div>Sai <b>metade</b> da posicao em +100. O stop do restante
+      <b>nao se move</b>: com meia posicao e a parcial na mesma distancia do stop, o
+      preco em que o lucro ja realizado cancela a perda do restante <i>e</i> o stop
+      inicial. Mudou o risco, nao o preco &mdash; e por isso o "zero a zero" aqui e
+      zero de verdade.</div></div>
+    <div class="faixa"><div class="vlr">Alvo 300</div>
+      <div>O restante sai em +300. Nao mexa no alvo com a operacao aberta:
+      a grade inteira de stop e alvo foi medida, e 300 e um topo local &mdash; 250 e
+      400 medem pior.</div></div>
+    <div class="faixa"><div class="vlr">1:2, se quiser</div>
+      <div>Trocar o alvo de 300 por <b>200</b> sem parcial
+      sobe o acerto de 36,5% para <b>41,6%</b> &mdash;
+      e derruba a expectativa de +34,1 para
+      <b>+24,3</b> pontos por operacao, com rebaixamento
+      <b>maior</b> (1.400 contra 800). Mede positivo, mas
+      paga para errar menos. Se a sequencia de perdas do 1:3 for o que te tira do
+      plano, o 1:2 e um preco honesto por isso; fora dessa razao, nao compensa.</div></div>
+    <div class="faixa"><div class="vlr">Fim do pregao</div>
+      <div>Zera no ultimo candle do dia. Day trade, sem excecao.</div></div>
+    <div class="faixa"><div class="vlr">Uma por vez</div>
+      <div>Enquanto houver posicao aberta, sinal novo e ignorado. Todos os numeros
+      deste plano foram medidos assim.</div></div>
+  </div>
+</section>
+
+<section id="regras">
+  <h2>Regras de mesa</h2>
+  <div class="grade g2">
+    <div class="card">
+      <h3>O que o backteste apoia</h3>
+      <ul class="enx" style="margin-bottom:0">
+        <li>Operar compra e venda &mdash; os dois lados medem parecido
+        (40,5% de acerto na compra, 33,0% na venda).</li>
+        <li>Operar o dia inteiro. Nenhuma faixa de horario se mostrou boa ou ruim de
+        forma estavel, inclusive a hora seguinte a abertura do mercado a vista.</li>
+        <li>Tamanho de posicao constante. Nada no teste apoia aumentar depois de ganho
+        ou depois de perda.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>O que fica a criterio, com medicao a favor</h3>
+      <ul class="enx" style="margin-bottom:0">
+        <li><b>Hull colada na EMA.</b> Quando a Hull passa mais de 8 candles colada na
+        EMA 21, o setup mediu muito mal &mdash; e a consolidacao. A amostra e pequena
+        (31 sinais) e por isso o filtro nao entrou na regra, mas se voce ve o cacho
+        embolado na tela, tem medicao a seu favor para deixar passar.</li>
+        <li><b>Sem a parcial.</b> Rende mais (+44,7
+        contra +34,1 por trade) e balanca mais
+        (1.200 contra 800 pontos de rebaixamento). E
+        escolha de conforto, nao de backteste.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="galeria">
+  <h2>Como o Ouro se parece</h2>
+  <p class="olho">Seis exemplos reais, espalhados pelo periodo do backteste. A faixa
+  clara e o par <b>retracao + continuacao</b>; a seta e a entrada; as linhas sao stop,
+  parcial e alvo. A <b>Hull 50</b> e a linha amarela, a <b>EMA 21</b> a azul. Todos os
+  seis cumprem os seis passos &mdash; o que muda de um para o outro e so o desfecho,
+  que nao se sabe na hora de entrar.</p>
+  <div class="grade g3 galeria">
+      <figure class="ex">
+        <div class="ex-topo">
+          <span class="ex-data">07/08 09:30 &middot;
+            compra</span>
+          <span class="ex-res pos">+200 pts</span>
+        </div>
+        <div id="gal_0" class="ex-viz"></div>
+        <figcaption>Retracao de 3 candles,
+          pavio de 70 pts. Saiu no alvo &mdash;
+          ganhou.</figcaption>
+      </figure>
+      <figure class="ex">
+        <div class="ex-topo">
+          <span class="ex-data">19/08 10:36 &middot;
+            compra</span>
+          <span class="ex-res neg">-100 pts</span>
+        </div>
+        <div id="gal_1" class="ex-viz"></div>
+        <figcaption>Retracao de 2 candles,
+          pavio de 80 pts. Saiu no stop &mdash;
+          perdeu.</figcaption>
+      </figure>
+      <figure class="ex">
+        <div class="ex-topo">
+          <span class="ex-data">27/08 09:20 &middot;
+            compra</span>
+          <span class="ex-res ">0 pts</span>
+        </div>
+        <div id="gal_2" class="ex-viz"></div>
+        <figcaption>Retracao de 2 candles,
+          pavio de 40 pts. Saiu no zero a zero &mdash;
+          empatou.</figcaption>
+      </figure>
+      <figure class="ex">
+        <div class="ex-topo">
+          <span class="ex-data">01/09 14:06 &middot;
+            compra</span>
+          <span class="ex-res pos">+200 pts</span>
+        </div>
+        <div id="gal_3" class="ex-viz"></div>
+        <figcaption>Retracao de 2 candles,
+          pavio de 30 pts. Saiu no alvo &mdash;
+          ganhou.</figcaption>
+      </figure>
+      <figure class="ex">
+        <div class="ex-topo">
+          <span class="ex-data">08/09 14:40 &middot;
+            compra</span>
+          <span class="ex-res ">0 pts</span>
+        </div>
+        <div id="gal_4" class="ex-viz"></div>
+        <figcaption>Retracao de 2 candles,
+          pavio de 40 pts. Saiu no zero a zero &mdash;
+          empatou.</figcaption>
+      </figure>
+      <figure class="ex">
+        <div class="ex-topo">
+          <span class="ex-data">11/09 11:30 &middot;
+            venda</span>
+          <span class="ex-res neg">-100 pts</span>
+        </div>
+        <div id="gal_5" class="ex-viz"></div>
+        <figcaption>Retracao de 3 candles,
+          pavio de 75 pts. Saiu no stop &mdash;
+          perdeu.</figcaption>
+      </figure></div>
+  <p class="nota">Com acerto de 36%, a maioria dos exemplos de
+  qualquer amostra honesta vai ser de perda &mdash; e por isso eles estao aqui. O que
+  ha para decorar e o <b>desenho</b>: onde a Hull passa, quantos candles a retracao
+  tem, e o tamanho do pavio do candle que retoma.</p>
+</section>
+
+<section id="checklist">
+  <h2>Folha de checagem</h2>
+  <p class="olho">Para imprimir e deixar do lado do monitor. Todas marcadas, envia.
+  Uma so em branco, nao envia.</p>
+  <div class="card">
+    <ul class="lista-chk"><li><span class="cx"></span><span>Hull 50 no sentido do trade e atras do preco</span></li><li><span class="cx"></span><span>Retracao de 2 ou mais candles</span></li><li><span class="cx"></span><span>Os dois extremos do par fora da Hull</span></li><li><span class="cx"></span><span>EMA 21 entre os topos e os fundos do par</span></li><li><span class="cx x"></span><span>NAO e exaustao (Hull acelerando + preco esticado)</span></li><li><span class="cx"></span><span>Pavio total do candle entre 25 e 90 pontos</span></li><li><span class="cx"></span><span>Stop de 100 pontos ja posicionado ANTES de entrar</span></li><li><span class="cx"></span><span>Nao ha posicao aberta neste momento</span></li></ul>
+  </div>
+  <div class="bandeira">
+    <h3>Os tres erros que este plano tenta impedir</h3>
+    <ol class="enx" style="margin-bottom:0">
+      <li><b>Entrar esticado.</b> O passo 5 existe so para isso, e e o filtro que
+      mais separa.</li>
+      <li><b>Chamar um candle de retracao.</b> O passo 2 pede dois.</li>
+      <li><b>Operar todo sinal que aparece.</b> O Bronze existe na tabela para
+      mostrar o preco disso.</li>
+    </ol>
+  </div>
+</section>
+
+<footer>
+  <p>Plano gerado do backteste em <code>relatorio.html</code> / <code>RESULTADOS.md</code>.
+  Base: 10.000 candles de 20 PI, 26
+  pregoes (2026-08-06 a 2026-09-11).</p>
+  <p>Backteste nao e promessa. 26 pregoes de mercado em alta
+  nao garantem resultado nenhum.</p>
+</footer>
+</div>
+<button class="tema" id="btema" title="Alternar tema" aria-label="Alternar tema">&#9681;</button>
+<script>const D={"candles":{"o":[175320.0,175420.0,175520.0,175420.0,175520.0,175420.0,175320.0,175420.0,175520.0,175620.0,175720.0,175820.0,175720.0,175620.0,175520.0,175620.0,175720.0,175820.0,175920.0,175820.0,175920.0,172135.0,172035.0,172135.0,172035.0,172135.0,172035.0,172135.0,172235.0,172335.0,172235.0,172335.0,172435.0,172335.0,172235.0,172335.0,172235.0,172335.0,172435.0,177170.0,177270.0,177170.0,177270.0,177370.0,177470.0,177370.0,177270.0,177170.0,177070.0,177170.0,177270.0,177170.0,177070.0,177170.0,177270.0,177170.0,177270.0,177170.0,177070.0,176970.0,176870.0,182890.0,182990.0,183090.0,182990.0,182890.0,182990.0,183090.0,182990.0,183090.0,183190.0,183090.0,183190.0,183090.0,182990.0,183090.0,183190.0,183290.0,183390.0,183290.0,183190.0,189880.0,189780.0,189880.0,189980.0,189880.0,189980.0,190080.0,190180.0,190080.0,189980.0,190080.0,190180.0,190080.0,189980.0,190080.0,190180.0,190080.0,189980.0,190080.0,190180.0,188960.0,189060.0,189160.0,189260.0,189360.0,189260.0,189160.0,189060.0,188960.0,188860.0,188760.0,188660.0,188760.0,188860.0,188960.0,188860.0,188960.0,188860.0,188760.0],"h":[175485.0,175550.0,175565.0,175535.0,175595.0,175420.0,175425.0,175550.0,175625.0,175730.0,175855.0,175870.0,175730.0,175630.0,175640.0,175735.0,175830.0,175925.0,175945.0,175920.0,176035.0,172135.0,172135.0,172150.0,172140.0,172150.0,172140.0,172240.0,172345.0,172345.0,172335.0,172440.0,172515.0,172410.0,172340.0,172350.0,172335.0,172435.0,172545.0,177270.0,177280.0,177275.0,177370.0,177470.0,177570.0,177375.0,177270.0,177260.0,177175.0,177285.0,177320.0,177195.0,177170.0,177280.0,177345.0,177280.0,177285.0,177180.0,177105.0,177010.0,176925.0,183005.0,183100.0,183145.0,183000.0,183055.0,183090.0,183095.0,183095.0,183200.0,183235.0,183190.0,183220.0,183115.0,183095.0,183195.0,183295.0,183390.0,183390.0,183340.0,183195.0,189890.0,189880.0,189980.0,189995.0,189980.0,190085.0,190185.0,190215.0,190160.0,190085.0,190180.0,190270.0,190125.0,190085.0,190185.0,190215.0,190085.0,190100.0,190180.0,190290.0,189060.0,189165.0,189285.0,189365.0,189380.0,189295.0,189190.0,189100.0,188970.0,188890.0,188810.0,188780.0,188885.0,188960.0,189025.0,188960.0,188960.0,188960.0,188780.0],"l":[175315.0,175360.0,175320.0,175335.0,175300.0,175320.0,175300.0,175360.0,175495.0,175620.0,175720.0,175710.0,175615.0,175470.0,175470.0,175570.0,175655.0,175775.0,175815.0,175740.0,175870.0,172015.0,171995.0,172030.0,171935.0,172035.0,172035.0,172080.0,172220.0,172230.0,172220.0,172315.0,172325.0,172225.0,172160.0,172215.0,172190.0,172290.0,172345.0,177100.0,177170.0,177105.0,177190.0,177330.0,177350.0,177260.0,177160.0,177070.0,177065.0,177105.0,177160.0,177050.0,177030.0,177095.0,177165.0,177165.0,177165.0,177065.0,176955.0,176865.0,176750.0,182815.0,182960.0,182985.0,182890.0,182855.0,182990.0,182990.0,182960.0,183065.0,183060.0,183025.0,183090.0,182980.0,182965.0,183065.0,183180.0,183215.0,183285.0,183185.0,183090.0,189775.0,189780.0,189775.0,189880.0,189870.0,189945.0,190015.0,190080.0,189980.0,189975.0,190070.0,190080.0,189945.0,189945.0,190055.0,190075.0,189980.0,189895.0,190050.0,190165.0,188905.0,189025.0,189090.0,189190.0,189250.0,189150.0,189055.0,188955.0,188830.0,188755.0,188650.0,188640.0,188760.0,188850.0,188850.0,188845.0,188860.0,188755.0,188655.0],"c":[175420.0,175520.0,175420.0,175520.0,175420.0,175320.0,175420.0,175520.0,175620.0,175720.0,175820.0,175720.0,175620.0,175520.0,175620.0,175720.0,175820.0,175920.0,175820.0,175920.0,176020.0,172035.0,172135.0,172035.0,172135.0,172035.0,172135.0,172235.0,172335.0,172235.0,172335.0,172435.0,172335.0,172235.0,172335.0,172235.0,172335.0,172435.0,172535.0,177270.0,177170.0,177270.0,177370.0,177470.0,177370.0,177270.0,177170.0,177070.0,177170.0,177270.0,177170.0,177070.0,177170.0,177270.0,177170.0,177270.0,177170.0,177070.0,176970.0,176870.0,176770.0,182990.0,183090.0,182990.0,182890.0,182990.0,183090.0,182990.0,183090.0,183190.0,183090.0,183190.0,183090.0,182990.0,183090.0,183190.0,183290.0,183390.0,183290.0,183190.0,183090.0,189780.0,189880.0,189980.0,189880.0,189980.0,190080.0,190180.0,190080.0,189980.0,190080.0,190180.0,190080.0,189980.0,190080.0,190180.0,190080.0,189980.0,190080.0,190180.0,190280.0,189060.0,189160.0,189260.0,189360.0,189260.0,189160.0,189060.0,188960.0,188860.0,188760.0,188660.0,188760.0,188860.0,188960.0,188860.0,188960.0,188860.0,188760.0,188660.0],"hma":[175440.39,175428.39,175415.99,175407.27,175399.48,175390.19,175382.73,175379.33,175382.0,175392.55,175412.11,175435.91,175459.55,175478.72,175495.79,175513.23,175533.58,175559.43,175587.32,175619.75,175658.46,172227.65,172230.27,172227.96,172224.34,172217.31,172211.19,172209.09,172213.07,172218.39,172227.24,172240.77,172254.56,172264.6,172273.78,172279.26,172285.01,172294.04,172308.95,176867.32,176873.51,176885.44,176904.56,176932.35,176964.28,176996.66,177025.83,177049.31,177070.39,177092.2,177111.89,177127.53,177142.9,177160.73,177176.96,177193.7,177207.14,177214.73,177214.01,177202.84,177180.24,183107.97,183101.05,183092.82,183081.12,183069.48,183060.54,183050.4,183042.0,183038.21,183036.15,183038.79,183042.21,183043.5,183046.14,183052.47,183064.54,183084.17,183106.44,183127.72,183144.73,189547.6,189558.55,189576.83,189597.64,189622.41,189652.4,189688.98,189727.92,189764.98,189802.53,189842.69,189881.09,189914.26,189945.6,189978.18,190008.64,190033.62,190056.38,190080.19,190107.21,189002.36,189010.62,189024.8,189046.95,189072.34,189097.14,189117.95,189131.38,189134.88,189126.81,189106.32,189079.45,189051.36,189026.3,189001.69,188980.97,188961.01,188938.97,188912.21],"ema":[175630.54,175620.5,175602.27,175594.79,175578.9,175555.36,175543.06,175540.96,175548.15,175563.77,175587.06,175599.15,175601.04,175593.68,175596.07,175607.34,175626.67,175653.34,175668.49,175691.35,175721.23,172136.71,172136.56,172127.32,172128.02,172119.57,172120.97,172131.34,172149.85,172157.59,172173.72,172197.47,172209.97,172212.25,172223.41,172224.46,172234.51,172252.74,172278.4,177143.95,177146.32,177157.56,177176.87,177203.52,177218.66,177223.32,177218.48,177204.98,177201.8,177208.0,177204.54,177192.31,177190.28,177197.53,177195.03,177201.84,177198.95,177187.23,177167.48,177140.44,177106.76,182998.44,183006.76,183005.24,182994.76,182994.33,183003.03,183001.84,183009.86,183026.23,183032.03,183046.39,183050.36,183044.87,183048.97,183061.79,183082.54,183110.49,183126.81,183132.55,183128.68,189837.43,189841.3,189853.91,189856.28,189867.53,189886.84,189913.49,189928.63,189933.3,189946.64,189967.85,189978.05,189978.23,189987.48,190004.98,190011.8,190008.91,190015.37,190030.34,190053.03,189079.96,189087.23,189102.94,189126.31,189138.46,189140.42,189133.11,189117.37,189093.98,189063.61,189026.92,189002.66,188989.69,188986.99,188975.44,188974.04,188963.67,188945.16,188919.23],"dt":["07/08 09:30:03","07/08 09:30:03","07/08 09:30:03","07/08 09:30:04","07/08 09:30:04","07/08 09:30:05","07/08 09:30:05","07/08 09:30:05","07/08 09:30:06","07/08 09:30:08","07/08 09:30:10","07/08 09:30:10","07/08 09:30:12","07/08 09:30:13","07/08 09:30:13","07/08 09:30:13","07/08 09:30:14","07/08 09:30:25","07/08 09:30:27","07/08 09:30:35","07/08 09:30:39","19/08 10:32:07","19/08 10:32:08","19/08 10:32:19","19/08 10:32:30","19/08 10:33:02","19/08 10:33:27","19/08 10:33:43","19/08 10:34:02","19/08 10:34:26","19/08 10:34:29","19/08 10:34:50","19/08 10:35:06","19/08 10:35:27","19/08 10:36:04","19/08 10:36:20","19/08 10:36:34","19/08 10:37:22","19/08 10:38:01","27/08 09:09:33","27/08 09:10:07","27/08 09:10:16","27/08 09:11:19","27/08 09:13:24","27/08 09:14:18","27/08 09:16:13","27/08 09:16:37","27/08 09:16:39","27/08 09:17:47","27/08 09:18:18","27/08 09:19:51","27/08 09:20:17","27/08 09:20:28","27/08 09:21:01","27/08 09:22:44","27/08 09:23:24","27/08 09:23:51","27/08 09:25:22","27/08 09:25:30","27/08 09:26:41","27/08 09:27:43","01/09 13:36:46","01/09 13:38:49","01/09 13:39:12","01/09 13:41:26","01/09 13:42:37","01/09 13:43:34","01/09 13:43:36","01/09 13:45:36","01/09 13:46:17","01/09 13:46:35","01/09 13:51:54","01/09 14:02:15","01/09 14:04:44","01/09 14:06:55","01/09 14:08:06","01/09 14:11:30","01/09 14:15:49","01/09 14:17:28","01/09 14:18:00","01/09 14:20:00","08/09 14:01:21","08/09 14:03:46","08/09 14:04:38","08/09 14:08:55","08/09 14:13:45","08/09 14:17:10","08/09 14:18:27","08/09 14:22:10","08/09 14:24:01","08/09 14:25:54","08/09 14:29:13","08/09 14:30:01","08/09 14:34:50","08/09 14:40:22","08/09 14:43:03","08/09 14:44:27","08/09 14:46:00","08/09 14:47:32","08/09 14:55:46","08/09 15:00:37","11/09 11:17:08","11/09 11:17:56","11/09 11:18:29","11/09 11:19:59","11/09 11:21:28","11/09 11:21:56","11/09 11:23:04","11/09 11:23:15","11/09 11:24:09","11/09 11:24:24","11/09 11:25:11","11/09 11:28:10","11/09 11:28:21","11/09 11:29:22","11/09 11:30:15","11/09 11:32:07","11/09 11:32:25","11/09 11:33:14","11/09 11:36:10"],"kc_sup":null,"kc_inf":null},"parametros":{"ema":21,"hull":50,"atr":21,"desvio":2.0,"stop":100.0,"alvo":300.0,"parcial_em":100.0,"frac":0.5,"apos":"media","max_barras":120,"fecha_dia":1,"val_ponto":0.2,"pi":100.0,"estic_exaustao":0.45,"n_ret_min":2,"pavio_min":25.0,"pavio_max":90.0},"galeria_ex":[{"de":0,"ate":20,"i_ret":11,"i_sin":14,"i_ent":14,"i_sai":17,"lado":1,"pts":200.0,"preco_ent":175620.0,"data":"07/08 09:30","rot_saida":"alvo","n_ret":3,"pav_tot":70.0,"motivo":"cumpre os seis passos","nivel":"ouro"},{"de":21,"ate":38,"i_ret":32,"i_sin":34,"i_ent":34,"i_sai":35,"lado":1,"pts":-100.0,"preco_ent":172335.0,"data":"19/08 10:36","rot_saida":"stop","n_ret":2,"pav_tot":80.0,"motivo":"cumpre os seis passos","nivel":"ouro"},{"de":39,"ate":60,"i_ret":50,"i_sin":52,"i_ent":52,"i_sai":57,"lado":1,"pts":0.0,"preco_ent":177170.0,"data":"27/08 09:20","rot_saida":"zero a zero","n_ret":2,"pav_tot":40.0,"motivo":"cumpre os seis passos","nivel":"ouro"},{"de":61,"ate":80,"i_ret":72,"i_sin":74,"i_ent":74,"i_sai":77,"lado":1,"pts":200.0,"preco_ent":183090.0,"data":"01/09 14:06","rot_saida":"alvo","n_ret":2,"pav_tot":30.0,"motivo":"cumpre os seis passos","nivel":"ouro"},{"de":81,"ate":100,"i_ret":92,"i_sin":94,"i_ent":94,"i_sai":97,"lado":1,"pts":0.0,"preco_ent":190080.0,"data":"08/09 14:40","rot_saida":"zero a zero","n_ret":2,"pav_tot":40.0,"motivo":"cumpre os seis passos","nivel":"ouro"},{"de":101,"ate":119,"i_ret":112,"i_sin":115,"i_ent":115,"i_sai":116,"lado":-1,"pts":-100.0,"preco_ent":188860.0,"data":"11/09 11:30","rot_saida":"stop","n_ret":3,"pav_tot":75.0,"motivo":"cumpre os seis passos","nivel":"ouro"}]};</script>
+<script>
+/* =====================================================================
+   Kit de graficos em SVG puro. Nenhuma biblioteca: o arquivo precisa
+   abrir offline, e as formas aqui sao poucas.
+
+   Regras seguidas (skill dataviz):
+     . marca fina, 2px na linha, ponta arredondada de 4px na barra
+     . grade e eixo recuados, texto em tinta de texto e nunca na cor da serie
+     . camada de hover em tudo o que tem marca
+     . legenda sempre que ha 2 ou mais series, com rotulo escrito
+   ===================================================================== */
+const NS='http://www.w3.org/2000/svg';
+const dica=document.createElement('div'); dica.className='dica'; document.body.appendChild(dica);
+
+function el(t,a,pai){const e=document.createElementNS(NS,t);
+  for(const k in a) e.setAttribute(k,a[k]); if(pai) pai.appendChild(e); return e;}
+function cor(nome){return getComputedStyle(document.documentElement).getPropertyValue('--'+nome).trim();}
+function fmt(v,c){ if(v===null||v===undefined||Number.isNaN(v)) return '-';
+  return v.toLocaleString('pt-BR',{minimumFractionDigits:c===undefined?0:c,
+                                  maximumFractionDigits:c===undefined?0:c}); }
+function sinal(v,c){return (v>0?'+':'')+fmt(v,c);}
+/* O rotulo de categoria fica a esquerda, num espaco que encolhe no celular.
+   Texto em SVG nao quebra linha: quando nao cabe, corta. */
+function corta(t,larg){
+  const cabe=Math.floor(larg/5.6);      /* ~5,6 px por caractere a 11px */
+  return t.length<=cabe?t:t.slice(0,Math.max(3,cabe-1))+'…';
+}
+/* margem esquerda dos graficos de categoria: 190px no desktop, mas nunca
+   mais que 42% da largura -- senao no celular sobra sarjeta e nao grafico */
+function margemRot(W,pedida){
+  return Math.max(70,Math.min(pedida===undefined?190:pedida,W*0.42));
+}
+
+function mostra(ev,html){
+  dica.innerHTML=html; dica.style.opacity='1';
+  const r=dica.getBoundingClientRect();
+  let x=ev.clientX+14, y=ev.clientY-r.height-12;
+  if(x+r.width>innerWidth-8) x=ev.clientX-r.width-14;
+  if(y<8) y=ev.clientY+18;
+  dica.style.left=x+'px'; dica.style.top=y+'px';
+}
+function some(){dica.style.opacity='0';}
+
+/* escala linear */
+function esc(d0,d1,r0,r1){const k=(d1===d0)?0:(r1-r0)/(d1-d0);
+  return v=>r0+(v-d0)*k;}
+
+/* passos de eixo agradaveis */
+function passos(min,max,n){
+  if(min===max){min-=1;max+=1;}
+  const bruto=(max-min)/n, m=Math.pow(10,Math.floor(Math.log10(bruto)));
+  const cands=[1,2,2.5,5,10].map(x=>x*m);
+  const p=cands.find(x=>x>=bruto)||cands[cands.length-1];
+  const a=Math.floor(min/p)*p, b=Math.ceil(max/p)*p, out=[];
+  for(let v=a; v<=b+p/2; v+=p) out.push(Math.abs(v)<p/1e6?0:v);
+  return out;
+}
+
+/* ---------------------------------------------------- grafico de linhas */
+function linhas(alvo,series,op){
+  op=op||{}; const box=document.querySelector(alvo); if(!box) return;
+  box.innerHTML='';
+  const W=box.clientWidth||800, H=op.alt||300;
+  const L=Math.min(op.esq===undefined?54:op.esq,W*0.16), R=14, T=12,
+        B=op.base===undefined?28:op.base;
+  const svg=el('svg',{class:'viz',viewBox:`0 0 ${W} ${H}`,width:W,height:H},box);
+  const ativos=series.filter(s=>s.dados.length);
+  if(!ativos.length) return;
+  const nx=Math.max(...ativos.map(s=>s.dados.length));
+  let y0=Math.min(0,...ativos.map(s=>Math.min(...s.dados)));
+  let y1=Math.max(0,...ativos.map(s=>Math.max(...s.dados)));
+  const ts=passos(y0,y1,4); y0=ts[0]; y1=ts[ts.length-1];
+  const Y=esc(y0,y1,H-B,T);
+  /* Se a serie traz `xs` (posicao no tempo, de 0 a 1), o eixo e o TEMPO --
+     e e o unico jeito de comparar curvas com contagens de trade diferentes.
+     Sem `xs`, cai no numero do trade. */
+  const porTempo=ativos.every(s=>s.xs);
+  const Xt=esc(0,1,L,W-R), Xn=esc(0,Math.max(1,nx-1),L,W-R);
+  const px=(s,i)=>porTempo?Xt(s.xs[i]):Xn(i);
+
+  ts.forEach(v=>{ el('line',{class:'grade-l',x1:L,x2:W-R,y1:Y(v),y2:Y(v)},svg);
+    el('text',{class:'eixo-tx',x:L-8,y:Y(v)+4,'text-anchor':'end'},svg).textContent=fmt(v);});
+  el('line',{class:'base-l',x1:L,x2:W-R,y1:Y(0),y2:Y(0)},svg);
+
+  ativos.forEach(s=>{
+    const d=s.dados.map((v,i)=>(i?'L':'M')+px(s,i).toFixed(1)+' '+Y(v).toFixed(1)).join(' ');
+    if(s.area){
+      const f=s.dados.length-1;
+      el('path',{d:d+` L ${px(s,f)} ${Y(0)} L ${px(s,0)} ${Y(0)} Z`,
+        fill:cor(s.cor),'fill-opacity':.10,stroke:'none'},svg);
+    }
+    el('path',{d:d,fill:'none',stroke:cor(s.cor),'stroke-width':2,
+      'stroke-linejoin':'round','stroke-linecap':'round'},svg);
+  });
+
+  /* Rotulo direto na ponta de cada serie -- ate 4, como manda a skill. As
+     pontas costumam cair na mesma altura; os rotulos sao afastados um do
+     outro antes de desenhar, senao um cobre o outro. */
+  if(ativos.length<=4 && op.rotulaPonta!==false){
+    const alvo=ativos.map((s,k)=>({k,s,y:Y(s.dados[s.dados.length-1])}))
+                     .sort((a,b)=>a.y-b.y);
+    for(let i=1;i<alvo.length;i++)
+      if(alvo[i].y-alvo[i-1].y<13) alvo[i].y=alvo[i-1].y+13;
+    const excesso=alvo.length?alvo[alvo.length-1].y-(H-B):0;
+    if(excesso>0) alvo.forEach(a=>a.y-=excesso);
+    alvo.forEach(a=>{
+      el('text',{class:'eixo-tx',x:W-R-2,y:a.y+4,'text-anchor':'end',
+        fill:cor(a.s.cor),'font-weight':'640'},svg).textContent=a.s.nome;
+    });
+  }
+
+  el('text',{class:'eixo-tx',x:L,y:H-8},svg)
+    .textContent=op.x0||(porTempo?(ativos[0].dt?ativos[0].dt[0]:'') : '1');
+  el('text',{class:'eixo-tx',x:W-R,y:H-8,'text-anchor':'end'},svg)
+    .textContent=op.x1||(porTempo
+      ? (ativos[0].dt?ativos[0].dt[ativos[0].dt.length-1]:'') : ('trade '+nx));
+
+  /* cruz + tooltip */
+  const cx=el('line',{class:'base-l',y1:T,y2:H-B,opacity:0},svg);
+  const pts=ativos.map(s=>el('circle',{r:4,fill:cor(s.cor),stroke:cor('card'),
+    'stroke-width':2,opacity:0},svg));
+  el('rect',{x:L,y:T,width:W-R-L,height:H-B-T,fill:'transparent'},svg)
+    .addEventListener('mousemove',ev=>{
+      const bb=svg.getBoundingClientRect();
+      const mx=(ev.clientX-bb.left)*(W/bb.width);
+      cx.setAttribute('x1',mx); cx.setAttribute('x2',mx); cx.setAttribute('opacity',1);
+      /* no eixo de tempo cada serie tem o SEU trade mais proximo do cursor */
+      let rot='', h='';
+      ativos.forEach((s,k)=>{
+        let i;
+        if(porTempo){
+          const alvo=(mx-L)/(W-R-L);
+          i=0; let melhor=Infinity;
+          for(let j=0;j<s.xs.length;j++){
+            const d=Math.abs(s.xs[j]-alvo);
+            if(d<melhor){melhor=d; i=j;}
+          }
+          if(!rot&&s.dt) rot=s.dt[i];
+        } else {
+          i=Math.max(0,Math.min(s.dados.length-1,
+            Math.round((mx-L)/((W-R-L)/Math.max(1,nx-1)))));
+          if(!rot) rot='trade '+(i+1);
+        }
+        pts[k].setAttribute('cx',px(s,i)); pts[k].setAttribute('cy',Y(s.dados[i]));
+        pts[k].setAttribute('opacity',1);
+        h+=`<br><span class="l">${s.nome}</span> ${sinal(s.dados[i])} ${op.un||'pts'}`+
+           (porTempo?` <span class="l">(${i+1})</span>`:'');
+      });
+      mostra(ev,`<b>${rot}</b>`+h);
+    });
+  svg.addEventListener('mouseleave',()=>{some(); cx.setAttribute('opacity',0);
+    pts.forEach(p=>p.setAttribute('opacity',0));});
+}
+
+/* ------------------------------------------- barras (uma serie, horizontal) */
+function barrasH(alvo,itens,op){
+  op=op||{}; const box=document.querySelector(alvo); if(!box) return;
+  box.innerHTML='';
+  const W=box.clientWidth||800;
+  const L=margemRot(W,op.esq), R=54, T=6, B=24, h=op.altBarra||26;
+  const H=T+B+itens.length*h;
+  const svg=el('svg',{class:'viz',viewBox:`0 0 ${W} ${H}`,width:W,height:H},box);
+  let v0=Math.min(0,...itens.map(d=>d.v)), v1=Math.max(0,...itens.map(d=>d.v));
+  const ts=passos(v0,v1,4); v0=ts[0]; v1=ts[ts.length-1];
+  const X=esc(v0,v1,L,W-R);
+  ts.forEach(v=>{ el('line',{class:'grade-l',x1:X(v),x2:X(v),y1:T,y2:H-B},svg);
+    el('text',{class:'eixo-tx',x:X(v),y:H-8,'text-anchor':'middle'},svg).textContent=fmt(v);});
+  el('line',{class:'base-l',x1:X(0),x2:X(0),y1:T,y2:H-B},svg);
+
+  itens.forEach((d,i)=>{
+    const y=T+i*h+3, ah=h-8;
+    const a=Math.min(X(0),X(d.v)), b=Math.max(X(0),X(d.v));
+    const c=cor(d.cor||(d.v>=0?'ganho':'perda'));
+    el('rect',{x:a,y:y,width:Math.max(1.5,b-a),height:ah,rx:4,fill:c,'fill-opacity':d.fraco?.45:1},svg);
+    el('text',{class:'eixo-tx',x:L-10,y:y+ah/2+4,'text-anchor':'end',
+      fill:cor('tinta2')},svg).textContent=corta(d.nome,L-14);
+    el('text',{class:'eixo-tx',x:(d.v>=0?b+6:a-6),y:y+ah/2+4,
+      'text-anchor':d.v>=0?'start':'end',fill:cor('tinta2'),'font-weight':'620'},svg)
+      .textContent=sinal(d.v,op.casas===undefined?1:op.casas);
+    el('rect',{x:0,y:T+i*h,width:W,height:h,fill:'transparent'},svg)
+      .addEventListener('mousemove',ev=>mostra(ev,
+        `<b>${d.nome}</b><br><span class="l">${op.rotV||'valor'}</span> `+
+        `${sinal(d.v,op.casas===undefined?1:op.casas)} ${op.un||'pts'}`+
+        (d.extra?'<br>'+d.extra:'')));
+  });
+  svg.addEventListener('mouseleave',some);
+}
+
+/* ------------------------------------------ colunas (histograma / diario) */
+function colunas(alvo,itens,op){
+  op=op||{}; const box=document.querySelector(alvo); if(!box) return;
+  box.innerHTML='';
+  const W=box.clientWidth||800, H=op.alt||240;
+  const L=Math.min(op.esq===undefined?48:op.esq,W*0.16), R=10, T=10, B=op.base||26;
+  const svg=el('svg',{class:'viz',viewBox:`0 0 ${W} ${H}`,width:W,height:H},box);
+  let v0=Math.min(0,...itens.map(d=>d.v)), v1=Math.max(0,...itens.map(d=>d.v));
+  const ts=passos(v0,v1,4); v0=ts[0]; v1=ts[ts.length-1];
+  const Y=esc(v0,v1,H-B,T), pas=(W-R-L)/itens.length;
+  /* com poucas faixas a coluna viraria um bloco de 200px: fica limitada e
+     centrada na sua fatia */
+  const larg=Math.max(1,Math.min(pas-2,op.maxLarg||72)), folga=(pas-larg)/2;
+  ts.forEach(v=>{ el('line',{class:'grade-l',x1:L,x2:W-R,y1:Y(v),y2:Y(v)},svg);
+    el('text',{class:'eixo-tx',x:L-8,y:Y(v)+4,'text-anchor':'end'},svg).textContent=fmt(v);});
+  el('line',{class:'base-l',x1:L,x2:W-R,y1:Y(0),y2:Y(0)},svg);
+
+  itens.forEach((d,i)=>{
+    const x=L+i*pas+folga, a=Math.min(Y(0),Y(d.v)), b=Math.max(Y(0),Y(d.v));
+    el('rect',{x:x,y:a,width:larg,height:Math.max(1.5,b-a),rx:Math.min(4,larg/2),
+      fill:cor(d.cor||(d.v>=0?'ganho':'perda')),'fill-opacity':d.fraco?.45:1},svg);
+    el('rect',{x:L+i*pas,y:T,width:pas,height:H-B-T,fill:'transparent'},svg)
+      .addEventListener('mousemove',ev=>mostra(ev,
+        `<b>${d.nome}</b><br><span class="l">${op.rotV||'valor'}</span> `+
+        `${sinal(d.v,op.casas===undefined?0:op.casas)} ${op.un||'pts'}`+
+        (d.extra?'<br>'+d.extra:'')));
+    if(op.rotula && itens.length<=14)
+      el('text',{class:'eixo-tx',x:x+larg/2,y:H-8,'text-anchor':'middle'},svg)
+        .textContent=d.nome;
+  });
+  if(op.x0) el('text',{class:'eixo-tx',x:L,y:H-8},svg).textContent=op.x0;
+  if(op.x1) el('text',{class:'eixo-tx',x:W-R,y:H-8,'text-anchor':'end'},svg).textContent=op.x1;
+  svg.addEventListener('mouseleave',some);
+}
+
+/* --------------------------------------------------------- mapa de calor */
+function calor(alvo,m,op){
+  op=op||{}; const box=document.querySelector(alvo); if(!box) return;
+  box.innerHTML='';
+  const W=box.clientWidth||800;
+  const L=Math.max(46,Math.min(op.esq||68,W*0.22)), R=10, T=30, B=26, cel=op.cel||30;
+  const nc=m.cols.length, nl=m.lins.length;
+  const lc=Math.min(cel*2.2,(W-L-R)/nc), H=T+B+nl*cel;
+  const svg=el('svg',{class:'viz',viewBox:`0 0 ${W} ${H}`,width:W,height:H},box);
+  const vs=m.cel.flat().map(c=>c.v);
+  const lo=Math.min(...vs), hi=Math.max(...vs);
+  m.cols.forEach((c,j)=>el('text',{class:'eixo-tx',x:L+j*lc+lc/2,y:T-10,
+    'text-anchor':'middle'},svg).textContent=c);
+  m.lins.forEach((r,i)=>el('text',{class:'eixo-tx',x:L-8,y:T+i*cel+cel/2+4,
+    'text-anchor':'end'},svg).textContent=corta(r,L-10));
+  m.cel.forEach((linha,i)=>linha.forEach((d,j)=>{
+    const t=(d.v-lo)/((hi-lo)||1);
+    const g=el('g',{},svg);
+    /* rampa sequencial de UM tom, do claro ao escuro. O teto de opacidade e
+       0,55 de proposito: acima disso o numero dentro da celula deixa de ter
+       contraste, e o numero e o que se le aqui -- a cor so ordena. */
+    el('rect',{x:L+j*lc+1,y:T+i*cel+1,width:lc-2,height:cel-2,rx:4,
+      fill:cor('prata'),'fill-opacity':(0.08+0.47*t).toFixed(3)},g);
+    if(d.melhor) el('rect',{x:L+j*lc+1,y:T+i*cel+1,width:lc-2,height:cel-2,rx:4,
+      fill:'none',stroke:cor('tinta'),'stroke-width':1.5},g);
+    el('text',{class:'eixo-tx',x:L+j*lc+lc/2,y:T+i*cel+cel/2+4,'text-anchor':'middle',
+      fill:cor('tinta'),'font-weight':d.melhor?'700':'500'},g)
+      .textContent=fmt(d.v,op.casas===undefined?1:op.casas);
+    g.addEventListener('mousemove',ev=>mostra(ev,d.dica));
+  }));
+  if(op.rotX) el('text',{class:'eixo-tx',x:L+(nc*lc)/2,y:H-8,'text-anchor':'middle'},svg)
+    .textContent=op.rotX;
+  svg.addEventListener('mouseleave',some);
+}
+
+/* ------------------------------------------- miniatura de um padrao
+   Um candle de PI tem corpo fixo de 100 pontos, entao numa miniatura o
+   que da para ler e a ESCADA dos corpos e o tamanho dos pavios -- que e
+   justamente o que distingue Ouro de Prata. Por isso a miniatura desenha
+   o candle inteiro e nao uma linha.
+
+   Marca: a faixa clara e o par retracao + continuacao; a seta e a
+   entrada; as linhas horizontais sao stop, parcial e alvo. */
+function miniPadrao(alvo, ex, op){
+  op=op||{}; const box=(typeof alvo==='string')?document.querySelector(alvo):alvo;
+  if(!box) return;
+  box.innerHTML='';
+  const C=D.candles, P=D.parametros;
+  const de=ex.de, ate=Math.min(C.dt.length-1,ex.ate), nb=ate-de+1;
+  const W=box.clientWidth||320, H=op.alt||190;
+  const L=4, R=44, T=8, B=16;
+  const svg=el('svg',{class:'viz',viewBox:`0 0 ${W} ${H}`,width:W,height:H,
+    role:'img','aria-label':op.rotulo||'exemplo do padrao'},box);
+
+  const lado=ex.lado, ent=ex.preco_ent;
+  const pStop=ent-lado*P.stop, pAlvo=ent+lado*P.alvo, pParc=ent+lado*P.parcial_em;
+  let lo=Infinity, hi=-Infinity;
+  for(let i=de;i<=ate;i++){
+    lo=Math.min(lo,C.l[i],C.hma[i]??lo,C.ema[i]??lo);
+    hi=Math.max(hi,C.h[i],C.hma[i]??hi,C.ema[i]??hi);
+  }
+  /* O stop entra sempre no enquadramento: ele esta perto e da a escala.
+     O alvo, a 3x o stop, esprema as velas ate o padrao sumir -- por isso
+     ele entra so ate 2/3 de faixa extra, e quando nao cabe a linha e
+     desenhada na borda com o rotulo marcado. */
+  lo=Math.min(lo,pStop); hi=Math.max(hi,pStop);
+  const faixa=hi-lo;
+  const cortado=(lado>0)?(pAlvo>hi+faixa*0.66):(pAlvo<lo-faixa*0.66);
+  if(lado>0) hi=Math.min(pAlvo,hi+faixa*0.66); else lo=Math.max(pAlvo,lo-faixa*0.66);
+  const folga=(hi-lo)*0.06; lo-=folga; hi+=folga;
+  const pas=(W-L-R)/nb, larg=Math.max(2,Math.min(11,pas*0.62));
+  const X=i=>L+(i-de+0.5)*pas, Y=esc(lo,hi,H-B,T);
+
+  /* niveis da operacao, por tras de tudo */
+  const yAlvo=cortado?(lado>0?T+2:H-B-2):Y(pAlvo);
+  [[yAlvo,'ganho',cortado?(lado>0?'alvo ↑':'alvo ↓'):'alvo',cortado],
+   [Y(pParc),'ganho','parcial',false],[Y(ent),'tinta','entrada',false],
+   [Y(pStop),'perda','stop',false]].forEach(([y,c,rot,tracejar])=>{
+    if(y<T-1||y>H-B+1) return;
+    el('line',{x1:X(ex.i_sin),x2:W-R,y1:y,y2:y,stroke:cor(c),'stroke-width':1,
+      'stroke-dasharray':(rot==='parcial'||tracejar)?'3 3':'none',opacity:.55},svg);
+    el('text',{class:'eixo-tx',x:W-R+4,y:y+3.5,fill:cor(c)},svg).textContent=rot;
+  });
+
+  /* a faixa do par retracao + continuacao */
+  el('rect',{x:X(ex.i_ret)-larg/2-2,y:T,
+    width:(ex.i_sin-ex.i_ret)*pas+larg+4,height:H-B-T,rx:3,
+    fill:cor('prata'),'fill-opacity':.13},svg);
+
+  /* Hull 50 e EMA 21 */
+  [['hma','alerta'],['ema','prata']].forEach(([k,c])=>{
+    let d='';
+    for(let i=de;i<=ate;i++){
+      const v=C[k][i]; if(v===null||v===undefined) continue;
+      d+=(d?'L':'M')+X(i).toFixed(1)+' '+Y(v).toFixed(1)+' ';
+    }
+    if(d) el('path',{d:d,fill:'none',stroke:cor(c),'stroke-width':1.6,
+      'stroke-linejoin':'round','stroke-linecap':'round',opacity:.95},svg);
+  });
+
+  /* os candles */
+  for(let i=de;i<=ate;i++){
+    const alta=C.c[i]>=C.o[i], c=cor(alta?'ganho':'perda');
+    const x=X(i), topo=Math.min(Y(C.o[i]),Y(C.c[i]));
+    const alt=Math.max(1.5,Math.abs(Y(C.o[i])-Y(C.c[i])));
+    const dentro=(i>=ex.i_ret&&i<=ex.i_sin);
+    el('line',{x1:x,x2:x,y1:Y(C.h[i]),y2:Y(C.l[i]),stroke:c,'stroke-width':1.2,
+      opacity:dentro?1:.5},svg);
+    el('rect',{x:x-larg/2,y:topo,width:larg,height:alt,rx:1.5,fill:c,
+      'fill-opacity':dentro?1:.5},svg);
+  }
+
+  /* a seta da entrada e a marca da saida */
+  const xe=X(ex.i_ent), ye=Y(ent), d=lado>0?1:-1;
+  el('polygon',{points:`${xe},${ye+d*5} ${xe-4.5},${ye+d*13} ${xe+4.5},${ye+d*13}`,
+    fill:cor('tinta')},svg);
+  el('circle',{cx:X(ex.i_sai),cy:Y(ex.pts>=0?(lado>0?C.h[ex.i_sai]:C.l[ex.i_sai])
+    :(lado>0?C.l[ex.i_sai]:C.h[ex.i_sai])),r:3.5,fill:'none',
+    stroke:cor(ex.pts>0?'ganho':(ex.pts<0?'perda':'mudo')),'stroke-width':1.6},svg);
+
+  /* hover: a leitura completa do exemplo */
+  el('rect',{x:0,y:0,width:W,height:H,fill:'transparent'},svg)
+    .addEventListener('mousemove',ev=>mostra(ev,
+      `<b>${ex.data} &middot; ${lado>0?'compra':'venda'}</b><br>`+
+      `<span class="l">retracao</span> ${ex.n_ret} candle${ex.n_ret>1?'s':''}<br>`+
+      `<span class="l">pavio do candle de continuacao</span> ${fmt(ex.pav_tot)} pts<br>`+
+      `<span class="l">entrada</span> ${fmt(ex.preco_ent)}<br>`+
+      `<span class="l">saida</span> ${ex.rot_saida}, ${sinal(ex.pts)} pts`));
+  svg.addEventListener('mouseleave',some);
+}
+
+/* ------------------------------------------ barras agrupadas (por terco) */
+function grupos(alvo,itens,nomes,op){
+  op=op||{}; const box=document.querySelector(alvo); if(!box) return;
+  box.innerHTML='';
+  const W=box.clientWidth||800;
+  const L=margemRot(W,op.esq), R=48, T=6, B=24, h=op.altBarra||34;
+  const H=T+B+itens.length*h;
+  const svg=el('svg',{class:'viz',viewBox:`0 0 ${W} ${H}`,width:W,height:H},box);
+  const todos=itens.flatMap(d=>d.v);
+  let v0=Math.min(0,...todos), v1=Math.max(0,...todos);
+  const ts=passos(v0,v1,4); v0=ts[0]; v1=ts[ts.length-1];
+  const X=esc(v0,v1,L,W-R);
+  ts.forEach(v=>{ el('line',{class:'grade-l',x1:X(v),x2:X(v),y1:T,y2:H-B},svg);
+    el('text',{class:'eixo-tx',x:X(v),y:H-8,'text-anchor':'middle'},svg).textContent=fmt(v);});
+  el('line',{class:'base-l',x1:X(0),x2:X(0),y1:T,y2:H-B},svg);
+  const nb=nomes.length, hb=(h-8)/nb;
+  itens.forEach((d,i)=>{
+    el('text',{class:'eixo-tx',x:L-10,y:T+i*h+h/2+4,'text-anchor':'end',
+      fill:cor('tinta2')},svg).textContent=corta(d.nome,L-14);
+    d.v.forEach((v,k)=>{
+      if(v===null) return;
+      const y=T+i*h+4+k*hb, a=Math.min(X(0),X(v)), b=Math.max(X(0),X(v));
+      el('rect',{x:a,y:y,width:Math.max(1.5,b-a),height:Math.max(2,hb-2),rx:2,
+        fill:cor(op.cores[k])},svg);
+    });
+    el('rect',{x:0,y:T+i*h,width:W,height:h,fill:'transparent'},svg)
+      .addEventListener('mousemove',ev=>mostra(ev,`<b>${d.nome}</b><br>`+
+        nomes.map((n,k)=>`<span class="l">${n}</span> ${d.v[k]===null?'-':sinal(d.v[k],1)} pts`+
+          (d.n?` <span class="l">(n=${d.n[k]})</span>`:'')).join('<br>')));
+  });
+  svg.addEventListener('mouseleave',some);
+}
+</script>
+<script>
+function desenha(){
+  (D.galeria_ex||[]).forEach((ex,k)=>miniPadrao('#gal_'+k,ex));
+}
+desenha();
+addEventListener('resize',()=>{clearTimeout(window._rz);
+  window._rz=setTimeout(desenha,180);});
+const bt=document.getElementById('btema');
+function temaAtual(){const t=document.documentElement.dataset.tema;
+  if(t==='claro'||t==='escuro') return t;
+  return matchMedia('(prefers-color-scheme: dark)').matches?'escuro':'claro';}
+bt.addEventListener('click',()=>{
+  document.documentElement.dataset.tema = temaAtual()==='escuro'?'claro':'escuro';
+  desenha();});
+</script>
+</body>
+</html>

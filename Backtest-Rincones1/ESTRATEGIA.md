@@ -139,6 +139,37 @@ gatilho dispara CONTRA o afastamento
 
 ---
 
+## 4.1. A restrição do leque — variante, desligada por padrão
+
+`FILTRO_LEQUE` em `engine.py`. **Só vale o gatilho que toca o leque ou fica atrás dele.**
+
+O gatilho de esforço não olha *onde* o preço está — ele só mede que alguém agrediu e falhou. Esta restrição diz onde isso conta.
+
+O leque **aponta** para um lado: para cima quando a EMA21 está acima da EMA72, para baixo no contrário. Daí saem três posições, todas normalizadas pelo mesmo `mrng`:
+
+```
+lado    = sinal de (EMA21 − EMA72)          para onde o leque aponta
+topo    = maior das três médias
+fundo   = menor das três
+toca    = a barra encosta em alguma das três, tolerância TOL_TOQUE × mrng
+atrás   = lado > 0 e High < fundo    |    lado < 0 e Low > topo
+na frente = lado > 0 e Low > topo    |    lado < 0 e High < fundo
+```
+
+`atrás` e `na frente` são **sem tolerância** — a barra inteira do lado de lá da média extrema. Quem cai dentro da faixa de tolerância já é `toca`. A variante aceita `toca OU atrás`, e descarta o resto.
+
+Com média única (`REGIME_MA` ≠ `ema3`) a definição degenera para uma linha só, e `lado` passa a ser o sinal da inclinação.
+
+**O que ela faz, medido:**
+
+- **O setup A não muda.** Ele já exige o toque, então já estava inteiro dentro da restrição — sai idêntico nas quatro células (duas bases × dois stops).
+- **O setup B é reescrito.** Ele é por construção um setup de *afastamento*, e a maior parte dos afastamentos acontece à frente do leque. Sobram um terço a um quarto dos trades — os que se afastaram para **trás**, ou que ainda encostam em alguma das três.
+- Números completos em [RESULTADOS.md § 6](RESULTADOS.md), com a distribuição das posições, as cinco médias de regime e o veredito calculado.
+
+**Por que fica desligada.** Não é uma peneira nova de qualidade: é uma troca de carteira. O EV sobe nas quatro células e o drawdown não piora em nenhuma, mas o `t` cai onde a amostra encolhe — e com dois arquivos que se sobrepõem na maior parte da janela, promovê-la a padrão seria escolher a curva mais bonita de uma amostra pequena. Ela está medida, implementada e acessível; o que falta para decidir é mais pregão.
+
+---
+
 ## 5. Execução e gestão
 
 ### Entrada — **a regra da barra seguinte**
@@ -164,7 +195,7 @@ Melhora o WINFUT, piora o WINV26, pouco dos dois lados. O motivo de ser barata: 
 
 Cerca de **um sinal em dez é abortado**. Isso é o comportamento correto, não uma falha de execução.
 
-Alternativa disponível: `ENTRADA = 'fecha'` (a mercado no fechamento da barra do sinal). Ela **nunca aborta**, e por isso passou a medir melhor `t` nas duas bases desde que a regra entrou — ver [RESULTADOS.md § 8](RESULTADOS.md). São carteiras diferentes, não uma troca óbvia.
+Alternativa disponível: `ENTRADA = 'fecha'` (a mercado no fechamento da barra do sinal). Ela **nunca aborta**, e por isso passou a medir melhor `t` nas duas bases desde que a regra entrou — ver [RESULTADOS.md § 10](RESULTADOS.md). São carteiras diferentes, não uma troca óbvia.
 
 ### Gestão
 
@@ -195,7 +226,7 @@ Resultado por trade, em pontos, para 1 unidade de posição:
 1. **A gestão começa sempre na barra SEGUINTE à da entrada.** Nem a barra do sinal (cujo High/Low ocorreu *antes* do fechamento) nem a barra do preenchimento (cujo High/Low em parte ocorreu *antes* do toque na limitada) são usadas para stop ou alvo. Sem isso o backtest lê preço que ainda não aconteceu.
 2. **Quando stop e alvo cabem na mesma barra, assume-se o STOP.** Com barra de 10.000 ticks não dá para saber a ordem intrabarra; a hipótese é a pessimista.
 3. **Uma posição por vez** (`carteira=True`). Sinal que chega com posição aberta é ignorado. O modo `carteira=False` mede cada sinal isolado e serve só para comparar setups entre si.
-4. **Nada de custo por padrão** (`CUSTO_PTS = 0`). A sensibilidade a custo está medida em [RESULTADOS.md § 9](RESULTADOS.md) — e importa.
+4. **Nada de custo por padrão** (`CUSTO_PTS = 0`). A sensibilidade a custo está medida em [RESULTADOS.md § 10](RESULTADOS.md) — e importa.
 5. **A saída por fim de pregão é a última barra DAQUELE pregão** (`[B1]` no código). Vale a pena registrar porque a primeira versão errava aqui: o laço quebrava na primeira barra do pregão *seguinte* e marcava a saída no fechamento dela, embolsando o gap da abertura. Afetava 1 trade em 200 no WINFUT, mas valia 388 pontos — 8% do resultado total. Corrigido.
 
 ---
@@ -214,6 +245,7 @@ Todos no topo de `engine.py`.
 | | `CORPO_MAX` | 50 | medido — obrigatório com limitada |
 | gatilho | `METRICA_E2` | 2 | medido — a fórmula do eixo E2; 0 é a antiga |
 | | `DESCARTA_E2` | True | medido, e remedido com a fórmula nova |
+| | `FILTRO_LEQUE` | False | **variante** — só gatilho que toca ou fica atrás do leque; medida em § 4.1 |
 | | `PERIODO_REF` | 20 | medido (melhor nos dois) |
 | regime | `REGIME_MA` | `ema3` | medido contra kama / hma / t3 / jma |
 | médias | `EMA_R/M/L` | 21 / 42 / 72 | herdado do repositório |

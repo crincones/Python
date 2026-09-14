@@ -20,7 +20,8 @@ def render(ctx):
     return re.sub(r'\{\{([^}]+)\}\}', sub, MOLDE)
 
 
-MOLDE = r"""<title>Rincones1</title>
+MOLDE = r"""<meta charset="utf-8">
+<title>Rincones1</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
@@ -177,7 +178,19 @@ select{font-size:12.5px;background:var(--card);color:var(--ink);border:1px solid
 @media(max-width:900px){.painel{grid-template-columns:minmax(0,1fr)}}
 .quadro{background:var(--card);border:1px solid var(--line);border-radius:12px;
   padding:14px;box-shadow:var(--shadow);min-width:0}
-.quadro svg{display:block;width:100%;height:auto;overflow:visible}
+.quadro .cab{display:flex;flex-wrap:wrap;gap:10px;align-items:baseline;
+  margin:0 2px 10px;font-family:Archivo,sans-serif;font-size:12.5px;color:var(--ink-3)}
+.quadro .cab b{font-size:14px;font-weight:600;color:var(--ink)}
+.quadro .cab .dica{margin-left:auto;font-size:11px}
+/* a área do gráfico nunca muda de tamanho: o aviso de "nenhum trade" cobre o
+   gráfico em vez de escondê-lo. Escondendo, o observador de resize via altura
+   zero e o painel do esforço encolhia para o mínimo — e não voltava. */
+.area{position:relative}
+#kchart{width:100%;height:470px;min-width:0}
+.area .vazio{position:absolute;inset:0;margin:0;max-width:none;display:grid;
+  place-items:center;background:var(--card);border-radius:8px;z-index:5}
+.area .vazio[hidden]{display:none}  /* o display:grid acima vence o [hidden] do navegador */
+@media(max-width:700px){#kchart{height:380px}}
 .ficha{background:var(--card);border:1px solid var(--line);border-radius:12px;
   box-shadow:var(--shadow);overflow:hidden}
 .ficha .topo{padding:14px 16px;border-bottom:1px solid var(--line-2)}
@@ -325,7 +338,42 @@ footer{margin-top:72px;padding-top:24px;border-top:1px solid var(--line);
 </section>
 
 <section>
-  <h2><span class="n">06</span> O stop</h2>
+  <h2><span class="n">06</span> A restrição do leque</h2>
+  <h3>Só vale o gatilho que toca ou fica atrás das médias</h3>
+  <p>O gatilho de esforço não olha <em>onde</em> o preço está — ele só mede que alguém agrediu e falhou. A restrição desta seção diz onde isso conta: a barra tem de estar <strong>encostada no leque</strong> ou <strong>do lado de trás dele</strong>. O gatilho que dispara com o preço esticado <strong>na frente</strong> do leque, fora da tolerância do toque, é descartado.</p>
+  <p class="sub">O leque aponta para um lado — para cima quando a EMA21 está acima da EMA72. <b>Na frente</b> é o lado para onde ele aponta; <b>atrás</b> é o outro, com o leque inteiro entre o preço e o movimento. <b>Tocando</b> é encostar em qualquer uma das três, com a tolerância de {{tol_toque}} range médio que o setup A já usa. Liga-se com <code>FILTRO_LEQUE = True</code> em <code>engine.py</code>; o padrão desta rodada é <code>{{leque_atual}}</code>.</p>
+
+  {{tab_leque_pos}}
+
+  {{tab_leque}}
+
+  <div class="note">
+    <div class="lab">O que a restrição faz</div>
+    <p>{{ver_leque}}</p>
+  </div>
+
+  <div class="note risk">
+    <div class="lab">Por que ela não é o padrão</div>
+    <p>Ela não é uma peneira nova de qualidade: é uma <strong>troca de carteira</strong>. Corta uma fatia grande dos gatilhos e quase todo o setup B, e o que sobra do B é pequeno demais para medir sozinho — o <code>t</code> cai onde o EV sobe, e isso é aritmética de amostra, não vantagem perdida. Com dois arquivos que se sobrepõem na maior parte da janela, promover a restrição a padrão seria escolher a curva mais bonita de uma amostra pequena. Ela está medida e disponível; o que falta para decidir é mais pregão.</p>
+  </div>
+
+  {{tab_leque_decomp}}
+
+  <div class="note">
+    <div class="lab">O toque ou o lado de trás?</div>
+    <p>{{ver_leque_decomp}}</p>
+  </div>
+
+  {{tab_leque_ma}}
+
+  <div class="note">
+    <div class="lab">A restrição sobrevive à troca de média?</div>
+    <p>{{ver_leque_ma}}</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="n">07</span> O stop</h2>
   <h3>100 contra 150, lado a lado</h3>
   <p>Você opera com 150. Medido lado a lado, com o resto igual (parcial de {{frac}}% na distância do stop, alvo {{alvo}}). Trocar o stop troca as duas linhas: com 150 a parcial sai em +150 e o alvo cheio paga +225 por contrato; com 100, +100 e +200.</p>
   {{stops}}
@@ -342,14 +390,14 @@ footer{margin-top:72px;padding-top:24px;border-top:1px solid var(--line);
 </section>
 
 <section>
-  <h2><span class="n">07</span> Curva de capital</h2>
+  <h2><span class="n">08</span> Curva de capital</h2>
   <h3>Trade a trade, carteira A + B</h3>
   <p class="sub">Pontos acumulados, stop {{stop_pad}}. Passe o mouse para ver cada operação. As duas bases se sobrepõem no tempo — não são amostras independentes.</p>
   <div class="charts" id="charts"></div>
 </section>
 
 <section>
-  <h2><span class="n">08</span> Qualidade contra volume</h2>
+  <h2><span class="n">09</span> Qualidade contra volume</h2>
   <h3>A escolha real da carteira</h3>
   <p>Uma posição por vez, prioridade A &gt; B &gt; C, stop {{stop_pad}}. Adicionar o setup B <strong>soma mais pontos no total</strong> e <strong>dobra o drawdown</strong>. Adicionar C piora tudo nas duas bases.</p>
   {{cart26}}
@@ -358,7 +406,7 @@ footer{margin-top:72px;padding-top:24px;border-top:1px solid var(--line);
 </section>
 
 <section>
-  <h2><span class="n">09</span> Alvo e parcial</h2>
+  <h2><span class="n">10</span> Alvo e parcial</h2>
   <h3>O alvo de 300 está no ponto</h3>
   <p>EV em pontos, carteira A + B, com a <strong>parcial acompanhando o stop de cada linha</strong>. A célula em destaque de cada linha é a melhor daquela linha.</p>
   <div class="charts">{{grade26}}{{gradefu}}</div>
@@ -374,7 +422,7 @@ footer{margin-top:72px;padding-top:24px;border-top:1px solid var(--line);
 </section>
 
 <section>
-  <h2><span class="n">10</span> Fora da amostra</h2>
+  <h2><span class="n">11</span> Fora da amostra</h2>
   <h3>Julho é o único mês que não foi visto</h3>
   <p>As duas bases se sobrepõem — o WINFUT contém a janela inteira do WINV26 e mais julho. O único corte quase-independente é o calendário.</p>
   <div class="scroll"><table>
@@ -386,7 +434,7 @@ footer{margin-top:72px;padding-top:24px;border-top:1px solid var(--line);
 </section>
 
 <section>
-  <h2><span class="n">11</span> Custos</h2>
+  <h2><span class="n">12</span> Custos</h2>
   <h3>Leia antes de comemorar</h3>
   <div class="scroll"><table>
     <caption>Carteira A + B · stop {{stop_pad}} · custo de ida e volta, em pontos</caption>
@@ -398,14 +446,16 @@ footer{margin-top:72px;padding-top:24px;border-top:1px solid var(--line);
 </section>
 
 <section>
-  <h2><span class="n">12</span> Os trades, um a um</h2>
+  <h2><span class="n">13</span> Os trades, um a um</h2>
   <h3>Candles, médias, gatilho e desfecho</h3>
   <p class="sub">Todos os sinais de cada setup, medidos isoladamente — inclusive os do setup C desligado, para ver por que ele falha. Navegue com ← → ou clique na lista. Regime das 3 EMAs. O botão <strong>stop</strong> troca a variante: os sinais são os mesmos, o que muda é onde o trade morre — e a parcial acompanha o stop, então trocar o stop move as duas linhas.</p>
+  <p class="sub">O gráfico carrega o <strong>pregão inteiro</strong>: a <strong>janela</strong> só define o zoom inicial em volta do trade. Depois disso, roda do mouse dá zoom, arrastar navega o dia, e o cruzamento mostra a barra sob o cursor com preço, hora e índice de esforço.</p>
 
   <div class="bar">
     <div class="grp"><span class="lab">base</span><span id="gBase"></span></div>
     <div class="grp"><span class="lab">stop</span><span id="gStop"></span></div>
     <div class="grp"><span class="lab">setup</span><span id="gSetup"></span></div>
+    <div class="grp"><span class="lab">leque</span><span id="gLeque"></span></div>
     <div class="grp"><span class="lab">desfecho</span><span id="gRes"></span></div>
     <div class="grp"><span class="lab">janela</span>
       <select id="selJanela">
@@ -422,7 +472,13 @@ footer{margin-top:72px;padding-top:24px;border-top:1px solid var(--line);
   </div>
 
   <div class="painel">
-    <div class="quadro" id="quadro"></div>
+    <div class="quadro">
+      <div class="cab" id="kcab"></div>
+      <div class="area">
+        <div id="kchart"></div>
+        <p class="vazio" id="kvazio" hidden></p>
+      </div>
+    </div>
     <div>
       <div class="ficha" id="ficha"></div>
       <div class="lista-wrap">
@@ -443,11 +499,12 @@ footer{margin-top:72px;padding-top:24px;border-top:1px solid var(--line);
     <span><i class="sw" style="background:var(--neg)"></i>stop</span>
     <span><i class="sw" style="background:var(--warn)"></i>parcial (na distância do stop)</span>
     <span><i class="sw" style="background:var(--pos)"></i>alvo</span>
+    <span>roda do mouse = zoom · arrastar = navegar o pregão inteiro</span>
   </div>
 </section>
 
 <section>
-  <h2><span class="n">13</span> Ressalvas</h2>
+  <h2><span class="n">14</span> Ressalvas</h2>
   <h3>O que enfraquece tudo acima</h3>
   <div class="note risk"><div class="lab">Amostra pequena</div>
     <p>{{pregfu}} pregões no WINFUT, {{preg26tr}} com trade no WINV26. Vários <code>t</code> ficam entre +1 e +2, que não é evidência forte. O setup C tem 7 e 19 trades — a conclusão sobre ele é “não há evidência a favor”, não “está provado que perde”.</p></div>
@@ -464,7 +521,7 @@ footer{margin-top:72px;padding-top:24px;border-top:1px solid var(--line);
 </section>
 
 <section>
-  <h2><span class="n">14</span> O que eu faria</h2>
+  <h2><span class="n">15</span> O que eu faria</h2>
   <h3>Em ordem</h3>
   <ol class="acoes">
     <li>{{acao_stop}}</li>
@@ -472,7 +529,7 @@ footer{margin-top:72px;padding-top:24px;border-top:1px solid var(--line);
     <li>{{acao_ma}}</li>
     <li><strong>Manter o alvo em {{alvo}}.</strong> Melhor da linha nas seis linhas das duas grades.</li>
     <li><strong>Não ligar o setup C.</strong></li>
-    <li><strong>Medir o custo real da sua corretora</strong> e refazer a seção 11 com o número verdadeiro antes de dimensionar posição.</li>
+    <li><strong>Medir o custo real da sua corretora</strong> e refazer a seção 12 com o número verdadeiro antes de dimensionar posição.</li>
   </ol>
 </section>
 
@@ -482,6 +539,8 @@ footer{margin-top:72px;padding-top:24px;border-top:1px solid var(--line);
 </div>
 
 <div class="tip" id="tip"></div>
+
+<script>{{klinecharts_js}}</script>
 
 <script>
 const EQ = {
@@ -550,95 +609,292 @@ const alvoEl=document.getElementById('charts');
 const RES_ROT={alvo:'alvo',stop:'stop',zero:'zero a zero',fim:'fim do pregão'};
 const SU_ROT={A:'A · tendência',B:'B · reversão rápida',C:'C · consolidação'};
 const ALVO_V={{alvo}}, STOPS_V={{stops_js}}, PARC_FIXA={{parc_fixa_js}};
-let vBase=Object.keys(D)[0], vStop=String({{stop_pad}}), fSetup='todos', fRes='todos', janela=50, cur=0;
+let vBase=Object.keys(D)[0], vStop=String({{stop_pad}}), fSetup='todos', fRes='todos', fLeque='todos', janela=50, cur=0;
 if(!STOPS_V.includes(vStop)) vStop=STOPS_V[0];
 const stopPts=()=>+vStop, parcPts=()=>PARC_FIXA===null?+vStop:PARC_FIXA;
 
-function grupo(el,opcoes,valor,onda){
-  el.innerHTML='';
-  opcoes.forEach(([v,rot])=>{
-    const b=document.createElement('button');
-    b.textContent=rot; b.setAttribute('aria-pressed',String(v===valor));
-    b.onclick=()=>onda(v); el.appendChild(b);
-  });
+/* --- a paleta ---
+   O gráfico desenha em canvas, e canvas não enxerga variável CSS. Lemos as
+   cores do :root na mão e relemos quando o sistema troca claro/escuro. */
+const CSSV=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const MONO='"IBM Plex Mono", monospace', SANS='Archivo, sans-serif';
+let COR={};
+function lePaleta(){
+  COR={alta:CSSV('--alta'),baixa:CSSV('--baixa'),accent:CSSV('--accent'),
+       ink:CSSV('--ink'),ink2:CSSV('--ink-2'),ink3:CSSV('--ink-3'),
+       line:CSSV('--line'),line2:CSSV('--line-2'),card:CSSV('--card'),
+       pos:CSSV('--pos'),neg:CSSV('--neg'),warn:CSSV('--warn'),zero:CSSV('--zero')};
 }
-function lista_trades(){ return D[vBase].trades[vStop]||[]; }
-function filtrados(){
-  return lista_trades().filter(t=>(fSetup==='todos'||t.su===fSetup)&&(fRes==='todos'||t.res===fRes));
+lePaleta();
+function alfa(cor,a){
+  const h=cor.replace('#',''), n=h.length===3?h.split('').map(c=>c+c).join(''):h;
+  return 'rgba('+parseInt(n.slice(0,2),16)+','+parseInt(n.slice(2,4),16)+','
+        +parseInt(n.slice(4,6),16)+','+a+')';
 }
-function desenha(){
-  const lst=filtrados(), quadro=document.getElementById('quadro'), ficha=document.getElementById('ficha');
-  if(!lst.length){
-    quadro.innerHTML='<p class="vazio">Nenhum trade com estes filtros.</p>';
-    ficha.innerHTML=''; document.getElementById('lista').innerHTML='';
-    document.getElementById('cont').textContent='0 de 0'; return;
+const corDoRes=r=>r==='alvo'?COR.pos:r==='stop'?COR.neg:r==='zero'?COR.zero:COR.warn;
+const PRECO=v=>NF.format(Math.round(v));
+
+/* --- as peças de desenho próprias, em cima do klinecharts ---------------
+   São quatro: a linha de nível (entrada/stop/parcial/alvo, com a etiqueta
+   de preço no eixo), a marca de barra (gatilho/entrada/saída), a faixa do
+   trade aberto e a seta do lado. */
+klinecharts.registerOverlay({
+  name:'rin-nivel', totalStep:2, lock:true,
+  needDefaultPointFigure:false, needDefaultXAxisFigure:false, needDefaultYAxisFigure:false,
+  createPointFigures:({overlay,coordinates,bounding})=>{
+    const e=overlay.extendData, y=coordinates[0].y;
+    return [
+      {type:'line',ignoreEvent:true,
+       attrs:{coordinates:[{x:0,y:y},{x:bounding.width,y:y}]},
+       styles:{color:e.cor,size:1,style:e.cheia?'solid':'dashed',dashedValue:[4,3]}},
+      {type:'text',ignoreEvent:true,
+       attrs:{x:e.dir?bounding.width-4:4,y:y-3,text:e.rot,
+              align:e.dir?'right':'left',baseline:'bottom'},
+       styles:{color:e.cor,size:10,family:SANS,weight:'600',
+               backgroundColor:alfa(COR.card,.75),
+               paddingLeft:4,paddingRight:4,paddingTop:1,paddingBottom:1,borderRadius:2}}
+    ];
+  },
+  createYAxisFigures:({overlay,coordinates,bounding})=>{
+    const e=overlay.extendData;
+    if(!e.preco) return [];
+    return {type:'text',ignoreEvent:true,
+      attrs:{x:bounding.width-2,y:coordinates[0].y,text:e.preco,align:'right',baseline:'middle'},
+      styles:{color:COR.card,size:10,family:MONO,weight:'600',backgroundColor:e.cor,
+              paddingLeft:4,paddingRight:4,paddingTop:2,paddingBottom:2,borderRadius:2}};
   }
-  cur=Math.max(0,Math.min(cur,lst.length-1));
-  const t=lst[cur], dia=D[vBase].dias[t.d];
-  const meio=Math.round((t.i+t.k)/2), n=dia.o.length;
+});
+klinecharts.registerOverlay({
+  name:'rin-marca', totalStep:2, lock:true,
+  needDefaultPointFigure:false, needDefaultXAxisFigure:false, needDefaultYAxisFigure:false,
+  createPointFigures:({overlay,coordinates,bounding})=>{
+    const e=overlay.extendData, x=coordinates[0].x;
+    return [
+      {type:'line',ignoreEvent:true,
+       attrs:{coordinates:[{x:x,y:0},{x:x,y:bounding.height}]},
+       styles:{color:e.cor,size:1,style:'dashed',dashedValue:[2,3]}},
+      /* as três marcas caem em degraus: gatilho, entrada e saída costumam ficar
+         a poucas barras uma da outra, e lado a lado as etiquetas se cobriam */
+      {type:'text',ignoreEvent:true,
+       attrs:{x:x,y:bounding.height-4-e.degrau*19,text:e.rot,align:'center',
+              baseline:'bottom'},
+       styles:{color:COR.card,size:10,family:SANS,weight:'600',backgroundColor:e.cor,
+               paddingLeft:4,paddingRight:4,paddingTop:2,paddingBottom:2,borderRadius:2}}
+    ];
+  }
+});
+klinecharts.registerOverlay({
+  name:'rin-zona', totalStep:3, lock:true,
+  needDefaultPointFigure:false, needDefaultXAxisFigure:false, needDefaultYAxisFigure:false,
+  createPointFigures:({overlay,coordinates,bounding})=>{
+    if(coordinates.length<2) return [];
+    const a=Math.min(coordinates[0].x,coordinates[1].x);
+    const b=Math.max(coordinates[0].x,coordinates[1].x);
+    return [{type:'rect',ignoreEvent:true,
+      attrs:{x:a,y:0,width:Math.max(1,b-a),height:bounding.height},
+      styles:{style:'fill',color:overlay.extendData.cor}}];
+  }
+});
+klinecharts.registerOverlay({
+  name:'rin-seta', totalStep:2, lock:true,
+  needDefaultPointFigure:false, needDefaultXAxisFigure:false, needDefaultYAxisFigure:false,
+  createPointFigures:({overlay,coordinates})=>{
+    const e=overlay.extendData, x=coordinates[0].x, y=coordinates[0].y, d=e.compra?1:-1;
+    return [{type:'polygon',ignoreEvent:true,
+      attrs:{coordinates:[{x:x,y:y+d*7},{x:x-5,y:y+d*17},{x:x+5,y:y+d*17}]},
+      styles:{style:'fill',color:e.cor}}];
+  }
+});
+
+/* As médias e o índice não são recalculados aqui: vêm prontos da engine,
+   pendurados em cada barra. O indicador só repassa. */
+klinecharts.registerIndicator({
+  name:'RIN_REG', shortName:'regime', series:'price', precision:0,
+  figures:[{key:'e1',title:'EMA 21: ',type:'line'},
+           {key:'e2',title:'EMA 42: ',type:'line'},
+           {key:'e3',title:'EMA 72: ',type:'line'}],
+  calc:dl=>dl.map(k=>({e1:k.e1,e2:k.e2,e3:k.e3}))
+});
+klinecharts.registerIndicator({
+  name:'RIN_ESF', shortName:'esforço', precision:0, minValue:-100, maxValue:100,
+  figures:[{key:'esf',title:'índice: ',type:'bar',baseValue:0,
+    styles:d=>{
+      const v=(d.current.indicatorData||{}).esf||0;
+      return {color:alfa(v>=0?COR.alta:COR.baixa, Math.abs(v)>=80?.95:.28)};
+    }}],
+  calc:dl=>dl.map(k=>({esf:k.esf}))
+});
+
+/* --- o gráfico --------------------------------------------------------
+   As barras são de 10.000 ticks, não de tempo: o eixo anda num passo
+   sintético de um minuto por barra e o rótulo mostra o horário real. */
+const T_BARRA=60000, ALT_ESF=104;
+let kchart=null, kDia=null, kT0=0;
+const iDe=ts=>Math.round((ts-kT0)/T_BARRA);
+
+function estilos(){
+  return {
+    grid:{horizontal:{color:COR.line2},vertical:{show:false}},
+    candle:{
+      bar:{upColor:COR.alta,downColor:COR.baixa,noChangeColor:COR.ink3,
+           upBorderColor:COR.alta,downBorderColor:COR.baixa,noChangeBorderColor:COR.ink3,
+           upWickColor:COR.alta,downWickColor:COR.baixa,noChangeWickColor:COR.ink3},
+      priceMark:{high:{color:COR.ink3,textSize:10,textFamily:MONO},
+                 low:{color:COR.ink3,textSize:10,textFamily:MONO},
+                 last:{show:false}},
+      tooltip:{showRule:'follow_cross',
+        rect:{color:COR.card,borderColor:COR.line},
+        text:{size:11,family:MONO,color:COR.ink2},
+        custom:dados=>{
+          const k=dados.current, esf=kDia?(kDia.x[iDe(k.timestamp)]||0):0;
+          return [
+            {title:{text:'hora',color:COR.ink3},
+             value:{text:kDia?(kDia.hm[iDe(k.timestamp)]||'—'):'—',color:COR.ink}},
+            {title:{text:'abre',color:COR.ink3},value:{text:PRECO(k.open),color:COR.ink}},
+            {title:{text:'máx',color:COR.ink3},value:{text:PRECO(k.high),color:COR.ink}},
+            {title:{text:'mín',color:COR.ink3},value:{text:PRECO(k.low),color:COR.ink}},
+            {title:{text:'fecha',color:COR.ink3},
+             value:{text:PRECO(k.close),color:k.close>=k.open?COR.alta:COR.baixa}},
+            {title:{text:'esforço',color:COR.ink3},
+             value:{text:(esf>0?'+':'')+esf,
+                    color:Math.abs(esf)>=80?(esf>0?COR.alta:COR.baixa):COR.ink2}}
+          ];
+        }}},
+    indicator:{tooltip:{text:{size:11,family:SANS,color:COR.ink3}}},
+    xAxis:{axisLine:{color:COR.line},tickLine:{color:COR.line},
+           tickText:{color:COR.ink3,size:10,family:MONO}},
+    yAxis:{axisLine:{color:COR.line},tickLine:{color:COR.line},
+           tickText:{color:COR.ink3,size:10,family:MONO}},
+    separator:{color:COR.line},
+    crosshair:{horizontal:{line:{color:COR.ink3,style:'dashed'},
+                 text:{color:COR.card,backgroundColor:COR.ink2,borderColor:COR.ink2,
+                       size:10,family:MONO}},
+               vertical:{line:{color:COR.ink3,style:'dashed'},
+                 text:{color:COR.card,backgroundColor:COR.ink2,borderColor:COR.ink2,
+                       size:10,family:MONO}}}
+  };
+}
+/* o klinecharts NÃO mescla estilo de linha com o padrão: o array trocado
+   substitui o de fábrica inteiro, e cada item precisa vir completo. */
+function estiloRegime(){
+  const l=(cor,tam,tracejada)=>({color:cor,size:tam,smooth:false,
+    style:tracejada?'dashed':'solid',dashedValue:[3,3]});
+  return {lines:[l(COR.accent,1.6,false),l(COR.ink3,1.2,false),l(COR.ink3,1.2,true)]};
+}
+function iniciaGrafico(){
+  kchart=klinecharts.init('kchart',{
+    styles:estilos(),
+    thousandsSeparator:'.',
+    customApi:{
+      /* o eixo do tempo é sintético; o rótulo é o horário real da barra */
+      formatDate:(fmt,ts,formato,tipo)=>{
+        if(!kDia) return '';
+        const hm=kDia.hm[iDe(ts)]||'';
+        return tipo===0?(kDia.d+'  '+hm):hm;
+      },
+      formatBigNumber:v=>String(v)
+    }
+  });
+  kchart.setPriceVolumePrecision(0,0);
+  kchart.createIndicator({name:'RIN_REG',styles:estiloRegime()},true,{id:'candle_pane'});
+  kchart.createIndicator({name:'RIN_ESF'},false,{id:'esf',height:ALT_ESF});
+  /* o resize reparte a altura entre os painéis; refixamos a do esforço para
+     ele não ir encolhendo a cada mudança de tamanho. */
+  new ResizeObserver(()=>{
+    if(!kchart) return;
+    kchart.resize();
+    kchart.setPaneOptions({id:'esf',height:ALT_ESF});
+  }).observe(document.getElementById('kchart'));
+  const mq=window.matchMedia('(prefers-color-scheme:dark)');
+  const trocaTema=()=>{
+    lePaleta();
+    kchart.setStyles(estilos());
+    kchart.overrideIndicator({name:'RIN_REG',styles:estiloRegime()},'candle_pane');
+    desenha();
+  };
+  if(mq.addEventListener) mq.addEventListener('change',trocaTema);
+}
+
+function carrega(t,dia){
+  if(kDia===dia){posiciona(t,dia); return;}
+  kDia=dia; kT0=Date.parse(dia.d+'T00:00:00Z');
+  const n=dia.o.length, lst=new Array(n);
+  for(let i=0;i<n;i++) lst[i]={
+    timestamp:kT0+i*T_BARRA,
+    open:dia.base+dia.o[i], high:dia.base+dia.h[i],
+    low:dia.base+dia.l[i],  close:dia.base+dia.c[i],
+    e1:dia.base+dia.e1[i], e2:dia.base+dia.e2[i], e3:dia.base+dia.e3[i],
+    esf:dia.x[i]};
+  kchart.applyNewData(lst,false,()=>posiciona(t,dia));
+}
+
+function posiciona(t,dia){
+  const n=dia.o.length, meio=Math.round((t.i+t.k)/2);
   let a=Math.max(0,meio-Math.floor(janela/2));
   let z=Math.min(n-1,a+janela-1); a=Math.max(0,z-janela+1);
 
-  const W=760,HP=340,HH=74,MT=10,ML=8,MR=64,GAP=10, iw=W-ML-MR, m=z-a+1;
-  const bw=iw/m, cw=Math.max(1.6,Math.min(11,bw*0.62));
-  let lo=Infinity,hi=-Infinity;
-  for(let i=a;i<=z;i++){
-    lo=Math.min(lo,dia.l[i],dia.e1[i],dia.e2[i],dia.e3[i]);
-    hi=Math.max(hi,dia.h[i],dia.e1[i],dia.e2[i],dia.e3[i]);
-  }
-  const stopP=t.ent-t.s*stopPts(), alvoP=t.ent+t.s*ALVO_V, parcP=t.ent+t.s*parcPts();
-  [stopP,alvoP,parcP,t.ent].forEach(v=>{lo=Math.min(lo,v);hi=Math.max(hi,v);});
-  const pad=(hi-lo)*0.06||20; lo-=pad; hi+=pad;
-  const X=i=>ML+(i-a+0.5)*bw, Y=v=>MT+HP-(v-lo)/(hi-lo)*HP;
-  const preco=v=>NF.format(Math.round(v+dia.base));
-  let s='';
-  [[alvoP,'var(--pos)','alvo'],[parcP,'var(--warn)','parcial'],
-   [t.ent,'var(--accent)','entrada'],[stopP,'var(--neg)','stop']].forEach(([v,cor,rot])=>{
-    s+=`<line x1="${ML}" x2="${W-MR}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="${cor}" stroke-width="1" stroke-dasharray="${rot==='entrada'?'':'4 3'}" opacity=".85"/>`
-      +`<text x="${W-MR+6}" y="${(Y(v)+3.5).toFixed(1)}" font-family="IBM Plex Mono, monospace" font-size="10" fill="${cor}">${rot} ${preco(v)}</text>`;
+  const larg=kchart.getSize('candle_pane','main').width||600;
+  kchart.setBarSpace(Math.max(1,Math.min(50,larg/janela)));
+  kchart.scrollToDataIndex(z+2);
+
+  const ts=i=>kT0+i*T_BARRA;
+  const ent=dia.base+t.ent;
+  const stopP=ent-t.s*stopPts(), parcP=ent+t.s*parcPts(), alvoP=ent+t.s*ALVO_V;
+
+  kchart.removeOverlay();
+  /* a faixa vem primeiro: fica por baixo das linhas e das marcas */
+  kchart.createOverlay({name:'rin-zona',lock:true,
+    points:[{timestamp:ts(t.f)},{timestamp:ts(t.k)}],
+    extendData:{cor:alfa(COR.accent,.07)}},'candle_pane');
+  [[alvoP,COR.pos,'alvo',false],[parcP,COR.warn,'parcial',false],
+   [ent,COR.accent,'entrada',true],[stopP,COR.neg,'stop',false]].forEach(v=>{
+    kchart.createOverlay({name:'rin-nivel',lock:true,points:[{value:v[0]}],
+      extendData:{cor:v[1],rot:v[2],cheia:v[3],preco:PRECO(v[0])}},'candle_pane');
   });
-  const rota=arr=>{let p='';for(let i=a;i<=z;i++)p+=(i===a?'M':'L')+X(i).toFixed(1)+' '+Y(arr[i]).toFixed(1);return p;};
-  s+=`<path d="${rota(dia.e3)}" fill="none" stroke="var(--ink-3)" stroke-width="1.2" opacity=".45"/>`;
-  s+=`<path d="${rota(dia.e2)}" fill="none" stroke="var(--ink-3)" stroke-width="1.2" opacity=".8"/>`;
-  s+=`<path d="${rota(dia.e1)}" fill="none" stroke="var(--accent)" stroke-width="1.6"/>`;
-  for(let i=a;i<=z;i++){
-    const alta=dia.c[i]>=dia.o[i], cor=alta?'var(--alta)':'var(--baixa)', x=X(i);
-    const yo=Y(dia.o[i]), yc=Y(dia.c[i]);
-    const y1=Math.min(yo,yc), alt=Math.max(1.2,Math.abs(yc-yo));
-    const op=(i>=t.f&&i<=t.k)||i===t.i?1:.5;
-    s+=`<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${Y(dia.h[i]).toFixed(1)}" y2="${Y(dia.l[i]).toFixed(1)}" stroke="${cor}" stroke-width="1" opacity="${op}"/>`
-      +`<rect x="${(x-cw/2).toFixed(1)}" y="${y1.toFixed(1)}" width="${cw.toFixed(1)}" height="${alt.toFixed(1)}" fill="${cor}" opacity="${op}"/>`;
+  kchart.createOverlay({name:'rin-marca',lock:true,points:[{timestamp:ts(t.i)}],
+    extendData:{cor:COR.ink3,rot:'gatilho',degrau:2}},'candle_pane');
+  kchart.createOverlay({name:'rin-marca',lock:true,points:[{timestamp:ts(t.f)}],
+    extendData:{cor:COR.accent,rot:'entrada',degrau:1}},'candle_pane');
+  kchart.createOverlay({name:'rin-marca',lock:true,points:[{timestamp:ts(t.k)}],
+    extendData:{cor:corDoRes(t.res),rot:RES_ROT[t.res],degrau:0}},'candle_pane');
+  kchart.createOverlay({name:'rin-seta',lock:true,
+    points:[{timestamp:ts(t.i),value:dia.base+(t.s===1?dia.l[t.i]:dia.h[t.i])}],
+    extendData:{cor:t.s===1?COR.alta:COR.baixa,compra:t.s===1}},'candle_pane');
+  /* os cortes do gatilho; rótulo à direita, que é onde sobra espaço no painel */
+  [80,-80].forEach(v=>{
+    kchart.createOverlay({name:'rin-nivel',lock:true,points:[{value:v}],
+      extendData:{cor:COR.ink3,rot:(v>0?'+':'−')+'80',cheia:false,preco:'',dir:true}},'esf');
+  });
+}
+
+function lista_trades(){ return D[vBase].trades[vStop]||[]; }
+function filtrados(){
+  return lista_trades().filter(t=>(fSetup==='todos'||t.su===fSetup)&&(fRes==='todos'||t.res===fRes)
+    &&(fLeque==='todos'||(fLeque==='no'?t.lq===1:t.lq===0)));
+}
+function desenha(){
+  const lst=filtrados(), ficha=document.getElementById('ficha');
+  const cab=document.getElementById('kcab'), vazio=document.getElementById('kvazio');
+  if(!lst.length){
+    vazio.hidden=false;
+    vazio.textContent='Nenhum trade com estes filtros.';
+    cab.innerHTML=''; ficha.innerHTML=''; document.getElementById('lista').innerHTML='';
+    document.getElementById('cont').textContent='0 de 0';
+    document.getElementById('listaTit').textContent='Trades filtrados';
+    document.getElementById('btnAnt').disabled=true;
+    document.getElementById('btnProx').disabled=true;
+    return;
   }
-  const marca=(i,cor,txt,cima)=>{
-    if(i<a||i>z) return '';
-    const x=X(i), yT=MT-2, yB=MT+HP+2;
-    return `<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${yT}" y2="${yB}" stroke="${cor}" stroke-width="1" stroke-dasharray="2 3" opacity=".7"/>`
-      +`<text x="${x.toFixed(1)}" y="${cima?yT-3:yB+11}" text-anchor="middle" font-family="Archivo, sans-serif" font-size="10" font-weight="600" fill="${cor}">${txt}</text>`;
-  };
-  s+=marca(t.i,'var(--ink-3)','gatilho',true);
-  s+=marca(t.f,'var(--accent)','entrada',false);
-  const corRes=t.res==='alvo'?'var(--pos)':t.res==='stop'?'var(--neg)':t.res==='zero'?'var(--zero)':'var(--warn)';
-  s+=marca(t.k,corRes,RES_ROT[t.res],false);
-  if(t.i>=a&&t.i<=z){
-    const x=X(t.i), y=t.s===1?Y(dia.l[t.i])+16:Y(dia.h[t.i])-16;
-    const pts=t.s===1?`${x},${y-9} ${x-6},${y+2} ${x+6},${y+2}`:`${x},${y+9} ${x-6},${y-2} ${x+6},${y-2}`;
-    s+=`<polygon points="${pts}" fill="${t.s===1?'var(--alta)':'var(--baixa)'}"/>`;
-  }
-  const yH=MT+HP+GAP+14;
-  let mx=1; for(let i=a;i<=z;i++) mx=Math.max(mx,Math.abs(dia.x[i]));
-  const YH=v=>yH+HH/2-(v/mx)*(HH/2-2);
-  s+=`<text x="${ML}" y="${yH-4}" font-family="Archivo, sans-serif" font-size="10" font-weight="600" fill="var(--ink-3)">ÍNDICE DE ESFORÇO (sinal = delta)</text>`
-    +`<line x1="${ML}" x2="${W-MR}" y1="${YH(0).toFixed(1)}" y2="${YH(0).toFixed(1)}" stroke="var(--line)" stroke-width="1"/>`;
-  for(let i=a;i<=z;i++){
-    const v=dia.x[i]; if(!v) continue;
-    const x=X(i), forte=Math.abs(v)>=80, cor=v>=0?'var(--alta)':'var(--baixa)';
-    s+=`<rect x="${(x-cw/2).toFixed(1)}" y="${Math.min(YH(0),YH(v)).toFixed(1)}" width="${cw.toFixed(1)}" height="${Math.abs(YH(v)-YH(0)).toFixed(1)}" fill="${cor}" opacity="${forte?.95:.3}"/>`;
-  }
-  [80,-80].forEach(v=>{ s+=`<line x1="${ML}" x2="${W-MR}" y1="${YH(v).toFixed(1)}" y2="${YH(v).toFixed(1)}" stroke="var(--ink-3)" stroke-width="1" stroke-dasharray="3 3" opacity=".6"/>`; });
-  const hAll=yH+HH+14;
-  s+=`<text x="${ML}" y="${hAll}" font-family="IBM Plex Mono, monospace" font-size="10" fill="var(--ink-3)">${dia.hm[a]}</text>`
-    +`<text x="${W-MR}" y="${hAll}" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="10" fill="var(--ink-3)">${dia.hm[z]}</text>`;
-  quadro.innerHTML=`<svg viewBox="0 0 ${W} ${hAll+6}" role="img" aria-label="Pregão ${dia.d}, trade ${t.su} ${t.s===1?'de compra':'de venda'}, desfecho ${RES_ROT[t.res]}, ${t.pnl} pontos">${s}</svg>`;
+  vazio.hidden=true;
+  cur=Math.max(0,Math.min(cur,lst.length-1));
+  const t=lst[cur], dia=D[vBase].dias[t.d];
+  const ent=dia.base+t.ent;
+  const stopP=ent-t.s*stopPts(), parcP=ent+t.s*parcPts(), alvoP=ent+t.s*ALVO_V;
+
+  cab.innerHTML='<b>'+vBase+' · '+dia.d+'</b>'
+    +'<span>'+SU_ROT[t.su]+' · '+(t.s===1?'compra':'venda')+' · stop '+vStop+'</span>'
+    +'<span class="dica">'+dia.o.length+' barras no pregão · janela inicial de '+janela+'</span>';
+  carrega(t,dia);
 
   const c=t.pnl>0?'pos':t.pnl<0?'neg':'zer';
   ficha.innerHTML=`<div class="topo">
@@ -647,11 +903,11 @@ function desenha(){
     <div class="linhas">
       <div class="ln"><span class="k">setup</span><span class="v">${SU_ROT[t.su]}</span></div>
       <div class="ln"><span class="k">lado</span><span class="v">${t.s===1?'compra':'venda'}</span></div>
-      <div class="ln"><span class="k">entrada</span><span class="v">${preco(t.ent)}</span></div>
-      <div class="ln"><span class="k">stop</span><span class="v neg">${preco(stopP)}</span></div>
-      <div class="ln"><span class="k">parcial</span><span class="v" style="color:var(--warn)">${preco(parcP)}</span></div>
-      <div class="ln"><span class="k">alvo</span><span class="v pos">${preco(alvoP)}</span></div>
-      <div class="ln"><span class="k">duração</span><span class="v">${t.bar} barras</span></div>
+      <div class="ln"><span class="k">entrada</span><span class="v">${PRECO(ent)}</span></div>
+      <div class="ln"><span class="k">stop</span><span class="v neg">${PRECO(stopP)}</span></div>
+      <div class="ln"><span class="k">parcial</span><span class="v" style="color:var(--warn)">${PRECO(parcP)}</span></div>
+      <div class="ln"><span class="k">alvo</span><span class="v pos">${PRECO(alvoP)}</span></div>
+      <div class="ln"><span class="k">duração</span><span class="v">${t.bar} ${t.bar===1?'barra':'barras'}</span></div>
       <div class="ln"><span class="k">espera no fill</span><span class="v">${t.f-t.i} ${t.f-t.i===1?'barra':'barras'}</span></div>
       <div class="ln"><span class="k">R$ / contrato</span><span class="v ${c}">${(t.pnl*0.2).toFixed(2).replace('.',',')}</span></div>
     </div>`;
@@ -673,6 +929,14 @@ function desenha(){
   document.getElementById('btnAnt').disabled=cur===0;
   document.getElementById('btnProx').disabled=cur===lst.length-1;
 }
+function grupo(el,opcoes,valor,onda){
+  el.innerHTML='';
+  opcoes.forEach(([v,rot])=>{
+    const b=document.createElement('button');
+    b.textContent=rot; b.setAttribute('aria-pressed',String(v===valor));
+    b.onclick=()=>onda(v); el.appendChild(b);
+  });
+}
 function montaControles(){
   grupo(document.getElementById('gBase'),Object.keys(D).map(k=>[k,k]),vBase,
         v=>{vBase=v;cur=0;montaControles();desenha();});
@@ -681,6 +945,9 @@ function montaControles(){
   const sus=['todos',...[...new Set(lista_trades().map(t=>t.su))].sort()];
   grupo(document.getElementById('gSetup'),sus.map(v=>[v,v]),fSetup,
         v=>{fSetup=v;cur=0;montaControles();desenha();});
+  grupo(document.getElementById('gLeque'),
+        [['todos','todos'],['no','toca ou atrás'],['fora','na frente']],fLeque,
+        v=>{fLeque=v;cur=0;montaControles();desenha();});
   grupo(document.getElementById('gRes'),
         [['todos','todos'],['alvo','alvo'],['stop','stop'],['zero','zero a zero']],fRes,
         v=>{fRes=v;cur=0;montaControles();desenha();});
@@ -693,6 +960,6 @@ document.addEventListener('keydown',e=>{
   if(e.key==='ArrowLeft'&&cur>0){cur--;desenha();}
   if(e.key==='ArrowRight'){cur++;desenha();}
 });
-montaControles(); desenha();
+iniciaGrafico(); montaControles(); desenha();
 </script>
 """

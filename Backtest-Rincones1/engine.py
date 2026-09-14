@@ -15,6 +15,10 @@ Tres setups, separados pelo REGIME das medias 21/42/72:
   C  - REVERSAO EM CONSOLIDACAO: medias emboladas, preco afastado do
        cacho, gatilho contra o afastamento.
 
+Variante disponivel (ESTRATEGIA.md 4.1): FILTRO_LEQUE = True aceita so o
+gatilho que TOCA o leque ou fica ATRAS dele, descartando o que dispara com
+o preco esticado a frente das medias. Desligada por padrao.
+
 Gestao (ESTRATEGIA.md 5): stop 150, parcial de 50% em +100 que zera o
 risco (stop do restante vai para a entrada), alvo final 300.
 
@@ -78,6 +82,15 @@ NIVEL_MIN = 0.80       # indice minimo
 CORTE_POSICAO = 50.0   # posMediaCorpo <= isto (delta comprador)
 CORPO_MAX = 50.0       # corpo/range maximo, em %  -- exigido pela entrada limitada
 DESCARTA_E2 = True     # descarta barras em que [E2] e o eixo dominante
+FILTRO_LEQUE = False   # VARIANTE "so no leque": aceita o gatilho apenas quando a
+                       # barra TOCA alguma das medias ou fica ATRAS do leque --
+                       # isto e, do lado oposto ao que o leque aponta. Descarta o
+                       # gatilho que dispara com o preco NA FRENTE do leque e fora
+                       # da tolerancia do toque. Ver ESTRATEGIA.md 4.1.
+                       #   False        desligado
+                       #   True         toca OU atras   <- a variante
+                       #   'toca'       so o toque      | as duas metades, para
+                       #   'atras'      so o de tras    | atribuir o efeito
 
 # --- medias e regimes
 REGIME_MA = 'ema3'     # 'ema3' | 'kama' | 'hma' | 't3' | 'jma'  -- ver ESTRATEGIA.md 3
@@ -196,6 +209,14 @@ def gatilho(d):
     ok &= d.porcCorpoWick.to_numpy() <= CORPO_MAX
     if DESCARTA_E2:
         ok &= ~d.e2Manda.to_numpy()
+    if FILTRO_LEQUE:
+        # a VARIANTE do leque. Exige contexto() antes -- e de la que vem a
+        # posicao da barra em relacao as medias.
+        if 'no_leque' not in d.columns:
+            raise ValueError('FILTRO_LEQUE exige contexto(d) antes de gatilho(d)')
+        col = {'toca': 'toca_leque', 'atras': 'atras_leque'}.get(FILTRO_LEQUE,
+                                                                 'no_leque')
+        ok &= d[col].to_numpy()
     return np.where(ok, -dirC, 0)
 
 
@@ -351,6 +372,37 @@ def contexto(d, regime=None):
     for mm in medias:
         toca |= (L - tol <= mm) & (mm <= H + tol)
     d['toca'] = toca
+
+    # POSICAO EM RELACAO AO LEQUE  (a variante FILTRO_LEQUE)
+    #
+    # O leque APONTA para um lado -- para cima quando a rapida esta acima da
+    # lenta, para baixo no contrario (com media unica, para onde ela sobe).
+    # 'frente' e o lado para onde ele aponta; 'atras' e o lado de tras dele.
+    #
+    #   leque apontando para CIMA:
+    #
+    #        NA FRENTE   -- preco esticado a favor da tendencia
+    #   ==== EMA21 ====
+    #   ==== EMA42 ====   TOCANDO  -- dentro da tolerancia de qualquer uma
+    #   ==== EMA72 ====
+    #        ATRAS       -- o leque inteiro entre o preco e o movimento
+    #
+    # 'atras' e 'frente' sao SEM tolerancia -- a barra inteira do lado de la da
+    # media extrema. Quem cai na faixa de tolerancia ja e 'toca'.
+    lado = np.sign(np.nan_to_num(forca))
+    topo = medias[0].copy()
+    fundo = medias[0].copy()
+    for mm in medias[1:]:
+        topo = np.maximum(topo, mm)
+        fundo = np.minimum(fundo, mm)
+    atras = ((lado > 0) & (H < fundo)) | ((lado < 0) & (L > topo))
+    # As tres colunas PARTICIONAM as barras, para que a tabela do relatorio
+    # some 100%: quem esta atras mas dentro da tolerancia conta como toque, e
+    # 'frente' e por definicao tudo o que a variante descarta.
+    d['toca_leque'] = toca
+    d['atras_leque'] = atras & ~toca
+    d['no_leque'] = toca | atras          # o que a variante FILTRO_LEQUE aceita
+    d['frente_leque'] = ~d.no_leque.to_numpy()
     return d
 
 

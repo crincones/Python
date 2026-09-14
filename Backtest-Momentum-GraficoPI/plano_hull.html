@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="pt-BR" data-tema="auto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Plano Hull Retracao</title>
+<style>
+:root{
+  color-scheme: light;
+  --plano:#f9f9f7; --card:#fcfcfb; --card2:#f3f2ee;
+  --tinta:#0b0b0b; --tinta2:#52514e; --mudo:#898781;
+  --grade:#e1e0d9; --eixo:#c3c2b7; --borda:rgba(11,11,11,.10);
+  --ouro:#184f95; --prata:#2a78d6; --bronze:#86b6ef;
+  --ganho:#2a78d6; --perda:#e34948; --neutro:#d9d8d2;
+  --bom:#0ca30c; --alerta:#fab219; --grave:#ec835a; --critico:#d03b3b;
+  --sombra:0 1px 2px rgba(11,11,11,.05), 0 1px 8px rgba(11,11,11,.04);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-tema="claro"]){
+    color-scheme: dark;
+    --plano:#0d0d0d; --card:#1a1a19; --card2:#222221;
+    --tinta:#fff; --tinta2:#c3c2b7; --mudo:#898781;
+    --grade:#2c2c2a; --eixo:#383835; --borda:rgba(255,255,255,.10);
+    --ouro:#cde2fb; --prata:#5598e7; --bronze:#184f95;
+    --ganho:#3987e5; --perda:#e66767; --neutro:#383835;
+    --sombra:0 1px 2px rgba(0,0,0,.4), 0 1px 8px rgba(0,0,0,.3);
+  }
+}
+:root[data-tema="escuro"]{
+  color-scheme: dark;
+  --plano:#0d0d0d; --card:#1a1a19; --card2:#222221;
+  --tinta:#fff; --tinta2:#c3c2b7; --mudo:#898781;
+  --grade:#2c2c2a; --eixo:#383835; --borda:rgba(255,255,255,.10);
+  --ouro:#cde2fb; --prata:#5598e7; --bronze:#184f95;
+  --ganho:#3987e5; --perda:#e66767; --neutro:#383835;
+  --sombra:0 1px 2px rgba(0,0,0,.4), 0 1px 8px rgba(0,0,0,.3);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--plano); color:var(--tinta);
+  font:15px/1.65 system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+  font-variant-numeric:tabular-nums;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1140px; margin:0 auto; padding-block:0 72px; padding-left:20px; padding-right:20px}
+h1,h2,h3{line-height:1.2; letter-spacing:-.02em; margin:0}
+h1{font-size:clamp(28px,4.4vw,44px); font-weight:680}
+h2{font-size:clamp(21px,2.7vw,28px); font-weight:640; margin-top:8px}
+h3{font-size:16px; font-weight:640; margin-bottom:8px}
+p{margin:0 0 14px}
+a{color:var(--prata)}
+small{font-size:12.5px}
+code,.mono{font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  font-size:.92em}
+
+/* ------------------------------------------------------------ topo */
+header.capa{padding:56px 0 32px; border-bottom:1px solid var(--borda)}
+.chapeu{font-size:12px; font-weight:640; letter-spacing:.10em; text-transform:uppercase;
+  color:var(--mudo); margin-bottom:12px}
+.sub{color:var(--tinta2); font-size:17px; max-width:70ch; margin-top:14px}
+.selo{display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:600;
+  color:var(--tinta2); background:var(--card2); border:1px solid var(--borda);
+  border-radius:999px; padding:3px 10px; margin:2px 6px 2px 0}
+
+/* --------------------------------------------------------- secoes */
+section{padding-top:52px; scroll-margin-top:64px}
+.olho{color:var(--tinta2); max-width:74ch; margin:10px 0 26px}
+.nota{font-size:13.5px; color:var(--mudo); max-width:78ch; margin-top:10px}
+
+/* ---------------------------------------------------------- cards */
+.card{background:var(--card); border:1px solid var(--borda); border-radius:12px;
+  padding:20px; box-shadow:var(--sombra)}
+.grade{display:grid; gap:16px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media (max-width:860px){ .g3,.g4{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media (max-width:560px){ .g2,.g3,.g4{grid-template-columns:1fr} }
+
+/* ------------------------------------------------------- estatisticas */
+.tile{background:var(--card); border:1px solid var(--borda); border-radius:12px;
+  padding:16px 18px; box-shadow:var(--sombra)}
+.tile .rot{font-size:12px; font-weight:600; color:var(--mudo); letter-spacing:.02em}
+.tile .num{font-size:clamp(24px,3.2vw,32px); font-weight:660; letter-spacing:-.03em;
+  margin-top:4px; line-height:1.1}
+.tile .pe{font-size:12.5px; color:var(--tinta2); margin-top:3px}
+.mini .tile{padding:12px 13px}
+.mini .tile .num{font-size:clamp(19px,2.1vw,23px)}
+.mini .tile .pe{font-size:11.5px}
+.pos{color:var(--ganho)} .neg{color:var(--perda)}
+
+/* ---------------------------------------------------------- tabelas */
+.rolo{overflow-x:auto; -webkit-overflow-scrolling:touch}
+table{border-collapse:collapse; width:100%; font-size:13.5px}
+th,td{padding:7px 10px; text-align:right; white-space:nowrap;
+  border-bottom:1px solid var(--grade)}
+th{font-size:11.5px; font-weight:640; color:var(--mudo); text-transform:uppercase;
+  letter-spacing:.05em; border-bottom:1px solid var(--eixo); position:sticky; top:0;
+  background:var(--card)}
+td:first-child,th:first-child{text-align:left}
+tbody tr:hover{background:var(--card2)}
+tr.destaque td{background:color-mix(in srgb, var(--prata) 9%, transparent); font-weight:620}
+.tag{display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:640;
+  padding:2px 8px; border-radius:999px; border:1px solid var(--borda)}
+.pt{width:8px; height:8px; border-radius:50%; flex:none}
+
+/* ----------------------------------------------------------- abas */
+.abas{display:flex; gap:4px; flex-wrap:wrap; margin-bottom:14px}
+.aba{font:inherit; font-size:13px; font-weight:600; color:var(--tinta2);
+  background:var(--card2); border:1px solid var(--borda); border-radius:8px;
+  padding:6px 13px; cursor:pointer}
+.aba:hover{color:var(--tinta)}
+.aba[aria-pressed="true"]{background:var(--prata); border-color:var(--prata);
+  color:var(--card); }
+
+/* --------------------------------------------------------- graficos */
+figure{margin:0}
+figcaption{font-size:12.5px; color:var(--mudo); margin-top:8px}
+.viz{width:100%; display:block; overflow:visible}
+.viz text{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+.eixo-tx{font-size:11px; fill:var(--mudo)}
+.grade-l{stroke:var(--grade); stroke-width:1}
+.base-l{stroke:var(--eixo); stroke-width:1}
+.legenda{display:flex; flex-wrap:wrap; gap:14px; font-size:12.5px; color:var(--tinta2);
+  margin:2px 0 10px}
+.legenda span{display:inline-flex; align-items:center; gap:6px}
+.chave{width:12px; height:3px; border-radius:2px; flex:none}
+.chave.q{height:10px; width:10px; border-radius:3px}
+
+/* --------------------------------------------------------- tooltip */
+.dica{position:fixed; z-index:40; pointer-events:none; opacity:0; transition:opacity .09s;
+  background:var(--card); color:var(--tinta); border:1px solid var(--borda);
+  border-radius:8px; padding:8px 11px; font-size:12.5px; box-shadow:var(--sombra);
+  max-width:280px}
+.dica b{font-weight:640}
+.dica .l{color:var(--mudo)}
+
+/* ------------------------------------------------------ diagrama padrao */
+.diag{background:var(--card); border:1px solid var(--borda); border-radius:12px;
+  padding:16px; box-shadow:var(--sombra)}
+.diag h3{display:flex; align-items:center; gap:8px}
+
+/* --------------------------------------------------------- galeria */
+.galeria .ex{background:var(--card); border:1px solid var(--borda); border-radius:12px;
+  padding:12px 12px 14px; box-shadow:var(--sombra)}
+.ex-topo{display:flex; justify-content:space-between; align-items:baseline; gap:8px;
+  font-size:12.5px; margin-bottom:6px}
+.ex-data{color:var(--tinta2); font-weight:600}
+.ex-res{font-weight:660}
+.ex-viz{min-height:190px}
+.galeria figcaption{font-size:12px; line-height:1.5; margin-top:6px}
+@media (max-width:980px){ .galeria{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media (max-width:620px){ .galeria{grid-template-columns:1fr} }
+
+/* --------------------------------------------------------- kline */
+#kwrap{background:var(--card); border:1px solid var(--borda); border-radius:12px;
+  padding:14px; box-shadow:var(--sombra)}
+#kchart{width:100%; height:480px}
+@media (max-width:700px){ #kchart{height:360px} }
+#kfiltros{margin-bottom:14px; padding-bottom:12px; border-bottom:1px solid var(--grade)}
+#kfiltros .linha-f{display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  margin-bottom:6px}
+#kfiltros .rot-f{font-size:11.5px; font-weight:640; color:var(--mudo);
+  text-transform:uppercase; letter-spacing:.05em; min-width:66px}
+#kfiltros .abas{margin-bottom:0}
+#kfiltros .aba[disabled]{opacity:.38; cursor:not-allowed}
+.kresumo{font-size:13px; color:var(--tinta2); margin:10px 0 0}
+.knav{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px}
+.knav button{font:inherit; font-size:13px; font-weight:600; background:var(--card2);
+  color:var(--tinta); border:1px solid var(--borda); border-radius:8px;
+  padding:6px 12px; cursor:pointer}
+.knav button:hover{border-color:var(--eixo)}
+.knav select{font:inherit; font-size:13px; background:var(--card2); color:var(--tinta);
+  border:1px solid var(--borda); border-radius:8px; padding:6px 10px; max-width:100%}
+.kinfo{display:flex; gap:18px; flex-wrap:wrap; font-size:13px; color:var(--tinta2);
+  margin-top:12px; padding-top:12px; border-top:1px solid var(--grade)}
+.kinfo b{color:var(--tinta); font-weight:640}
+
+/* ---------------------------------------------------------- rodape */
+.bandeira{border-left:3px solid var(--alerta); background:var(--card2);
+  border-radius:0 8px 8px 0; padding:14px 18px; margin:18px 0}
+.bandeira h3{margin-bottom:6px}
+ul.enx{margin:0 0 14px; padding-left:20px}
+ul.enx li{margin-bottom:7px}
+footer{margin-top:64px; padding-top:24px; border-top:1px solid var(--borda);
+  color:var(--mudo); font-size:13px}
+
+/* ------------------------------------------------------- navegacao */
+nav.indice{position:sticky; top:0; z-index:30; background:color-mix(in srgb,var(--plano) 88%,transparent);
+  backdrop-filter:blur(8px); border-bottom:1px solid var(--borda)}
+nav.indice ul{display:flex; gap:2px; list-style:none; margin:0; padding:8px 0;
+  overflow-x:auto; -webkit-overflow-scrolling:touch}
+nav.indice a{display:block; font-size:12.5px; font-weight:600; color:var(--tinta2);
+  text-decoration:none; padding:5px 10px; border-radius:7px; white-space:nowrap}
+nav.indice a:hover{background:var(--card2); color:var(--tinta)}
+.tema{position:fixed; right:16px; bottom:16px; z-index:50; width:40px; height:40px;
+  border-radius:50%; border:1px solid var(--borda); background:var(--card);
+  color:var(--tinta); cursor:pointer; box-shadow:var(--sombra); font-size:17px}
+@media print{ nav.indice,.tema{display:none} }
+
+.passo{display:grid; grid-template-columns:44px 1fr; gap:16px; align-items:start;
+  background:var(--card); border:1px solid var(--borda); border-radius:12px;
+  padding:18px 20px; box-shadow:var(--sombra); margin-bottom:12px}
+.passo .n{width:34px; height:34px; border-radius:50%; display:grid; place-items:center;
+  background:var(--prata); color:var(--card); font-weight:680; font-size:15px}
+.passo.veto .n{background:var(--critico)}
+.passo h3{font-size:17px; margin-bottom:6px}
+.passo .regra{margin:0 0 10px}
+.passo .por{font-size:13.5px; color:var(--tinta2); border-left:2px solid var(--grade);
+  padding-left:12px; margin:0 0 8px}
+.passo .nao{font-size:13px; color:var(--critico); font-weight:600; margin:0}
+.passo.veto{border-left:3px solid var(--critico)}
+
+.regua{display:grid; grid-template-columns:1fr; gap:0; background:var(--card);
+  border:1px solid var(--borda); border-radius:12px; overflow:hidden;
+  box-shadow:var(--sombra)}
+.regua .faixa{display:grid; grid-template-columns:120px 1fr; gap:14px;
+  padding:14px 18px; border-bottom:1px solid var(--grade); align-items:baseline}
+.regua .faixa:last-child{border-bottom:none}
+.regua .vlr{font-weight:680; font-size:18px; letter-spacing:-.02em}
+
+.lista-chk{list-style:none; padding:0; margin:0}
+.lista-chk li{display:grid; grid-template-columns:22px 1fr; gap:10px;
+  padding:9px 0; border-bottom:1px solid var(--grade); align-items:start}
+.lista-chk li:last-child{border-bottom:none}
+.lista-chk .cx{width:16px; height:16px; border:1.5px solid var(--eixo);
+  border-radius:4px; margin-top:3px}
+.lista-chk .cx.x{border-color:var(--critico)}
+
+@media print{
+  body{background:#fff}
+  .card,.passo,.regua{box-shadow:none; break-inside:avoid}
+  section{padding-top:24px}
+}
+</style>
+</head>
+<body>
+<nav class="indice"><div class="wrap"><ul><li><a href="#setup">Setup</a></li><li><a href="#pavio">Qual pavio</a></li><li><a href="#passos">4 perguntas</a></li><li><a href="#gestao">Gestao</a></li><li><a href="#checklist">Checklist</a></li><li><a href="#parar">Quando parar</a></li><li><a href="#naofazer">Nao fazer</a></li></ul></div></nav>
+<div class="wrap">
+
+<header class="capa">
+  <div class="chapeu">Plano de trading &middot; WINFUT &middot; grafico de 20 PI &middot; provisorio</div>
+  <h1>Hull a favor, retracao curta</h1>
+  <p class="sub">Quatro perguntas de sim ou nao, na ordem em que se olha para a tela. Se qualquer
+  uma der nao, o trade nao existe.</p>
+  <div style="margin-top:18px">
+    <span class="selo">Hull 50</span><span class="selo">2 ou 3 candles contra</span>
+    <span class="selo">entrada no fechamento</span><span class="selo">stop 100 &middot; alvo 300</span>
+    <span class="selo">parcial 50% em +100</span>
+  </div>
+  <div class="bandeira" style="margin-top:24px">
+    <h3>Leia isto antes</h3>
+    <p style="margin-bottom:0">Sai de um backteste de <b>26 pregoes</b> (06/08/2026 a
+    11/09/2026), todo em mercado de alta, <b>bruto</b>. A Hull a favor era hipotese definida antes
+    de medir; os passos 2 e 4 foram ajustados nesta mesma amostra, entao os numeros abaixo sao um
+    teto. <b>Rode em simulador</b> antes de dinheiro real e compare com a tabela da secao
+    "Quando parar".</p>
+  </div>
+</header>
+
+<section id="setup">
+  <h2>O setup</h2>
+  <p class="olho">Com a Hull 50 inclinada, o preco devolve 2 ou 3 candles contra ela. O primeiro
+  candle que volta a favor da Hull, fechando sem rejeicao, e a entrada.</p>
+  <div class="grade g4">
+    <div class="tile"><div class="rot">Por operacao</div><div class="num pos">+17,6 pts</div><div class="pe">R$ +3,53 por contrato, bruto</div></div>
+    <div class="tile"><div class="rot">Acerto</div><div class="num ">30,8%</div><div class="pe">alvo 300, stop 100, parcial em +100</div></div>
+    <div class="tile"><div class="rot">Frequencia</div><div class="num ">25,7</div><div class="pe">operacoes por pregao</div></div>
+    <div class="tile"><div class="rot">Rebaixamento maximo</div><div class="num ">1.400 pts</div><div class="pe">Monte Carlo p95: 2.500 pts</div></div>
+  </div>
+  <p class="nota">Carteira de uma posicao por vez, 669 operacoes. Com 10 pts de custo
+  por operacao, o valor por sinal cai de +16,7 para +6,7.</p>
+</section>
+
+<section id="pavio">
+  <h2>Qual pavio olhar</h2>
+  <div class="card"><div class="grade g2"><figure><svg class="viz" viewBox="0 0 560 340" role="img" aria-label="Pavio avaliado no candle de sinal, compra"><polyline points="15,311 96,296 152,279 208,263 264,248 304,240" fill="none" style="stroke:var(--alerta)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><text x="15" y="329" class="eixo-tx" style="fill:var(--tinta2)">Hull 50 subindo</text><rect x="131" y="71" width="98" height="144" rx="6" style="fill:var(--prata)" fill-opacity=".12"/><text x="180" y="64" text-anchor="middle" class="eixo-tx" style="fill:var(--tinta2)">2 ou 3 contra a Hull</text><line x1="40" x2="40" y1="139" y2="208" style="stroke:var(--ganho)" stroke-width="2"/><rect x="26.0" y="144" width="28" height="62" rx="2" style="fill:var(--ganho)" fill-opacity="0.5"/><line x1="96" x2="96" y1="75" y2="146" style="stroke:var(--ganho)" stroke-width="2"/><rect x="82.0" y="82" width="28" height="62" rx="2" style="fill:var(--ganho)" fill-opacity="0.5"/><line x1="152" x2="152" y1="79" y2="149" style="stroke:var(--perda)" stroke-width="2"/><rect x="138.0" y="82" width="28" height="62" rx="2" style="fill:var(--perda)" fill-opacity="0.5"/><line x1="208" x2="208" y1="142" y2="211" style="stroke:var(--perda)" stroke-width="2"/><rect x="194.0" y="144" width="28" height="62" rx="2" style="fill:var(--perda)" fill-opacity="0.5"/><line x1="264" x2="264" y1="140" y2="236" style="stroke:var(--ganho)" stroke-width="2"/><rect x="250.0" y="144" width="28" height="62" rx="2" style="fill:var(--ganho)" fill-opacity="1"/><text x="264" y="179" text-anchor="middle" style="fill:#fff;font-size:10px;font-weight:700">100</text><rect x="254" y="134" width="20" height="16" rx="5" fill="none" style="stroke:var(--tinta)" stroke-width="2.2"/><line x1="275" x2="298" y1="142" y2="142" style="stroke:var(--tinta)" stroke-width="1.5"/><text x="302" y="131" style="fill:var(--tinta);font-size:12.5px;font-weight:700">AVALIADO: pavio de CIMA</text><text x="302" y="146" style="fill:var(--tinta);font-size:12px">lado do fechamento (onde se entra)</text><text x="302" y="161" style="fill:var(--tinta2);font-size:12px">maxima - fechamento &#8804; 10% do corpo</text><rect x="254" y="202" width="20" height="38" rx="5" fill="none" style="stroke:var(--mudo)" stroke-width="1.5" stroke-dasharray="4 3"/><line x1="275" x2="298" y1="221" y2="221" style="stroke:var(--mudo)" stroke-width="1.2" stroke-dasharray="3 3"/><text x="302" y="218" style="fill:var(--mudo);font-size:12px;font-weight:600">nao avaliado: pavio de baixo</text><text x="302" y="233" class="eixo-tx">lado da abertura, qualquer tamanho</text><text x="6" y="18" style="fill:var(--tinta);font-size:13px;font-weight:700">&#9650; COMPRA</text></svg></figure><figure><svg class="viz" viewBox="0 0 560 340" role="img" aria-label="Pavio avaliado no candle de sinal, venda"><polyline points="15,45 96,60 152,77 208,93 264,108 304,116" fill="none" style="stroke:var(--alerta)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><text x="15" y="37" class="eixo-tx" style="fill:var(--tinta2)">Hull 50 descendo</text><rect x="131" y="141" width="98" height="144" rx="6" style="fill:var(--prata)" fill-opacity=".12"/><text x="180" y="300" text-anchor="middle" class="eixo-tx" style="fill:var(--tinta2)">2 ou 3 contra a Hull</text><line x1="40" x2="40" y1="217" y2="148" style="stroke:var(--perda)" stroke-width="2"/><rect x="26.0" y="150" width="28" height="62" rx="2" style="fill:var(--perda)" fill-opacity="0.5"/><line x1="96" x2="96" y1="281" y2="210" style="stroke:var(--perda)" stroke-width="2"/><rect x="82.0" y="212" width="28" height="62" rx="2" style="fill:var(--perda)" fill-opacity="0.5"/><line x1="152" x2="152" y1="277" y2="207" style="stroke:var(--ganho)" stroke-width="2"/><rect x="138.0" y="212" width="28" height="62" rx="2" style="fill:var(--ganho)" fill-opacity="0.5"/><line x1="208" x2="208" y1="214" y2="145" style="stroke:var(--ganho)" stroke-width="2"/><rect x="194.0" y="150" width="28" height="62" rx="2" style="fill:var(--ganho)" fill-opacity="0.5"/><line x1="264" x2="264" y1="216" y2="120" style="stroke:var(--perda)" stroke-width="2"/><rect x="250.0" y="150" width="28" height="62" rx="2" style="fill:var(--perda)" fill-opacity="1"/><text x="264" y="185" text-anchor="middle" style="fill:#fff;font-size:10px;font-weight:700">100</text><rect x="254" y="206" width="20" height="16" rx="5" fill="none" style="stroke:var(--tinta)" stroke-width="2.2"/><line x1="275" x2="298" y1="214" y2="214" style="stroke:var(--tinta)" stroke-width="1.5"/><text x="302" y="203" style="fill:var(--tinta);font-size:12.5px;font-weight:700">AVALIADO: pavio de BAIXO</text><text x="302" y="218" style="fill:var(--tinta);font-size:12px">lado do fechamento (onde se entra)</text><text x="302" y="233" style="fill:var(--tinta2);font-size:12px">fechamento - minima &#8804; 10% do corpo</text><rect x="254" y="116" width="20" height="38" rx="5" fill="none" style="stroke:var(--mudo)" stroke-width="1.5" stroke-dasharray="4 3"/><line x1="275" x2="298" y1="135" y2="135" style="stroke:var(--mudo)" stroke-width="1.2" stroke-dasharray="3 3"/><text x="302" y="132" style="fill:var(--mudo);font-size:12px;font-weight:600">nao avaliado: pavio de cima</text><text x="302" y="147" class="eixo-tx">lado da abertura, qualquer tamanho</text><text x="6" y="18" style="fill:var(--tinta);font-size:13px;font-weight:700">&#9660; VENDA</text></svg></figure></div></div>
+</section>
+
+<section id="passos">
+  <h2>As 4 perguntas</h2>
+  
+  <div class="passo"><div class="n">1</div><div>
+    <h3>A Hull 50 esta inclinada a favor do trade?</h3><p class="regra">Para <b>comprar</b>, a Hull 50 tem de estar <b>subindo</b> no fechamento do candle de sinal (valor atual maior que o do candle anterior). Para <b>vender</b>, descendo. Nao importa se o preco esta acima ou abaixo dela.</p><p class="por">E o filtro que sustenta o setup: com a Hull contra, o mesmo padrao mede +1,7 pts por sinal; a favor, +11,4.</p>
+    <p class="nao">Nao vale se: Hull plana ou inclinada contra.</p></div></div>
+  <div class="passo"><div class="n">2</div><div>
+    <h3>Vieram 2 ou 3 candles seguidos CONTRA a Hull?</h3><p class="regra">Na compra: 2 ou 3 candles seguidos de <b>baixa</b>, no mesmo pregao, imediatamente antes do candle de sinal. Na venda: 2 ou 3 de alta.</p><p class="por">3 antes mediu +20,1, 2 antes +11,2; 1 so e fraco (+7,1) e 4 perde (-9,2).</p>
+    <p class="nao">Nao vale se: 1 candle, ou 4 ou mais. Retracao que atravessa a virada do dia.</p></div></div>
+  <div class="passo"><div class="n">3</div><div>
+    <h3>O candle de sinal fechou A FAVOR da Hull?</h3><p class="regra">O candle atual fecha no sentido da Hull: <b>alta</b> na compra, <b>baixa</b> na venda. Espere o candle <b>fechar</b>: antes disso o lado dele nao esta definido.</p><p class="por">E o primeiro candle que devolve o movimento para o lado da Hull.</p>
+    <p class="nao">Nao vale se: Candle ainda aberto.</p></div></div>
+  <div class="passo"><div class="n">4</div><div>
+    <h3>O pavio do lado do fechamento e pequeno?</h3><p class="regra">Na compra, o pavio de <b>cima</b> do candle de sinal (maxima menos fechamento) ate <b>10 pontos</b> (10% do corpo). Na venda, o de <b>baixo</b> (fechamento menos minima). O pavio do outro lado (o da abertura) nao importa.</p><p class="por">Ate 10% mediu +14,6 pts por sinal; acima, -6,4. Pavio grande alem do fechamento e o preco rejeitado justamente no sentido do trade.</p>
+    <p class="nao">Nao vale se: Pavio do lado do fechamento acima de 10 pontos.</p></div></div>
+</section>
+
+<section id="gestao">
+  <h2>A gestao</h2>
+  <div class="regua">
+    <div class="faixa"><div class="vlr">Entrada</div><div>A mercado, no <b>fechamento</b> do candle de
+      sinal. Nao use limitada no meio do corpo: ela perdeu o primeiro terco do periodo.</div></div>
+    <div class="faixa"><div class="vlr neg">Stop 100</div><div>100 pontos contra a entrada, colocado junto
+      com a entrada.</div></div>
+    <div class="faixa"><div class="vlr pos">+100</div><div>Sai <b>metade</b>. O stop do restante fica na
+      media da operacao &mdash; que, com metade realizada a +100, e o proprio stop inicial: se voltar,
+      a operacao sai no zero a zero.</div></div>
+    <div class="faixa"><div class="vlr pos">Alvo 300</div><div>Sai o restante.</div></div>
+    <div class="faixa"><div class="vlr">Fim do dia</div><div>Zera o que estiver aberto no ultimo candle
+      do pregao.</div></div>
+    <div class="faixa"><div class="vlr">1 por vez</div><div>Sinal que aparece com posicao aberta e
+      ignorado.</div></div>
+  </div>
+  <p class="nota">Sem parcial (1:3 puro) o valor por sinal sobe para +21,9, mas o
+  rebaixamento vai de 1.400 para 2.200 pts e a
+  maior sequencia de perdas de 7 para
+  22.</p>
+</section>
+
+<section id="checklist">
+  <h2>Checklist antes de clicar</h2>
+  <div class="card"><ul class="lista-chk"><li><span class="cx"></span><span>Hull 50 inclinada a favor do trade</span></li><li><span class="cx"></span><span>2 ou 3 candles seguidos contra a Hull, no mesmo pregao</span></li><li><span class="cx"></span><span>Candle de sinal FECHADO a favor da Hull</span></li><li><span class="cx"></span><span>Pavio do lado do fechamento ate 10 pontos</span></li><li><span class="cx"></span><span>Nenhuma posicao aberta agora</span></li><li><span class="cx"></span><span>Stop de 100 pontos definido ANTES de entrar</span></li></ul></div>
+</section>
+
+<section id="parar">
+  <h2>Quando parar</h2>
+  <div class="card rolo"><table>
+    <thead><tr><th>Sinal de alerta</th><th>Referencia do backteste</th></tr></thead>
+    <tbody>
+      <tr><td>Rebaixamento acima de</td><td>2.500 pts (p95 do Monte Carlo)</td></tr>
+      <tr><td>Perdas seguidas acima de</td><td>7 (maximo medido)</td></tr>
+      <tr><td>Acerto, depois de 100 operacoes, abaixo de</td><td>25% (medido: 30,8%)</td></tr>
+      <tr><td>Valor por operacao, depois de 100, abaixo de</td><td>o custo real por operacao</td></tr>
+    </tbody></table>
+    <p class="nota">Qualquer um desses: pare, volte ao simulador e meca de novo com a base nova.</p></div>
+</section>
+
+<section id="naofazer">
+  <h2>O que nao fazer</h2>
+  <ul class="enx">
+    <li><b>Entrar antes do candle fechar.</b> O lado do candle e o pavio so existem no fechamento.</li>
+    <li><b>Filtrar pelo pavio da abertura.</b> O efeito medido aparece so na compra e se inverte
+    na limitada &mdash; nao e regra.</li>
+    <li><b>Aceitar 4 candles de retracao.</b> Mediu negativo.</li>
+    <li><b>Operar com a Hull plana ou contra.</b> E o que tira o resultado do zero.</li>
+  </ul>
+</section>
+<footer>Gerado por <code>relatorio_hull.py</code> a partir de <code>saida/hull_contra.json</code>.
+Estudo completo em <code>hull_contra.html</code>.</footer>
+</div>
+<button class="tema" id="btema" title="Alternar tema" aria-label="Alternar tema">&#9681;</button>
+<script>
+const bt=document.getElementById('btema');
+bt.addEventListener('click',()=>{const t=document.documentElement.dataset.tema;
+  const escuro=(t==='escuro')||(t!=='claro'&&matchMedia('(prefers-color-scheme: dark)').matches);
+  document.documentElement.dataset.tema=escuro?'claro':'escuro';});
+</script>
+</body>
+</html>

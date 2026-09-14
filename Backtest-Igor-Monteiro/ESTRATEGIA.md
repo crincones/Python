@@ -121,7 +121,8 @@ construção.
 ### 4.1 Filtro de distância mínima
 
 Só é operável o nível que estiver a **600 pontos ou mais do ajuste**. Isso
-garante alvo mínimo de 600 pts e descarta os níveis colados no ajuste.
+garante espaço até o ajuste maior que o alvo de 500 e descarta os níveis colados
+nele.
 
 > Consequência importante: no lado da abertura, isso só existe se o gap do dia
 > for ≥ 600 pts. Na base, **apenas 24% dos pregões abrem tão longe do ajuste**
@@ -194,10 +195,11 @@ Duas travas importantes, que decidem o comportamento da regra:
 
 | Item                 | Regra                                                                                                       |
 | -------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Lote                 | **6 contratos** — o mínimo que realiza parcial de 1/2 (3) e de 2/3 (4) com contratos inteiros               |
 | Entrada              | ordem limite no preço do nível; preenche no toque                                                           |
 | Stop                 | **100 pontos** contra                                                                                       |
-| Parcial              | em **+45 pontos** sai **2/3** da posição, o que zera o risco, e o stop do restante vai para **+45**         |
-| Alvo                 | 500 pontos fixos, ou o ajuste (setups C/D/CD)                                                               |
+| Parcial              | em **+45 pontos** sai **2/3** da posição, e o stop do restante vai para o **preço médio da operação** (−90) |
+| Alvo                 | **500 pontos fixos** em todos os setups (o ajuste dá a direção, não o alvo)                                 |
 | Saída forçada        | a mercado, no fechamento da última barra do pregão                                                          |
 | Posições simultâneas | permitidas por padrão (cada nível é um trade independente); variante "uma posição por vez" também reportada |
 | Custos               | resultados **brutos**, sem corretagem/emolumentos                                                           |
@@ -209,8 +211,29 @@ ganho = 2/3 × 45 + 1/3 × 500 = 196,7 pts   contra risco de 100 pts  →  1,97:
 ```
 
 (1/2 daria 2,7:1 e 3/4 daria 1,6:1; 2/3 é a única fração que fecha em 2:1.)
-Resultados possíveis de um trade: **−100** (stop), **+45** (parcial e stop+),
-ou **+196,7** (parcial e alvo, com alvo de 500).
+
+**O breakeven é no médio da operação, não no preço de entrada.** Depois da
+parcial, o terço que sobra tem o stop movido para o preço em que ele devolve
+exatamente o que a parcial ganhou — o total da operação fica zerado:
+
+```
+lote de 6: saem 4 contratos em +45       -> realizado 4 × 45 = 180 pts
+sobram 2:  médio = entrada − 180 ÷ 2     =  entrada − 90
+se o stop do resto for pego: 180 + 2 × (−90) = 0
+```
+
+O stop do resto fica, portanto, **10 pontos** mais perto que o stop original —
+não na entrada nem no lucro. Com a parcial de 50% (3 de 6), o médio fica a
+3 × 45 ÷ 3 = **45** pontos. O médio é arredondado ao tick para o lado da entrada
+(com 6 contratos, nas duas frações, a conta já cai exata). Se ele cair além do
+stop original, o stop não é afastado: fica onde estava — é o caso das parciais
+em +100, que só aparecem na grade de sensibilidade.
+
+Os resultados em pontos são **por contrato** (o total do lote dividido por 6); os
+R$ são do lote inteiro.
+
+Resultados possíveis de um trade: **−100** (stop), **0** (parcial e stop no
+médio), ou **+196,7** (parcial e alvo, com alvo de 500).
 
 ### 5.1 Resolução intrabarra
 
@@ -230,7 +253,7 @@ RESULTADOS.md §2.
    convenção o principal determinante do resultado.
 3. **Teto absoluto.** Barra de entrada creditada e o alvo ganha todo empate.
 
-O stop movido para +45 só passa a valer **na barra seguinte** à da parcial: para
+O stop movido para o médio só passa a valer **na barra seguinte** à da parcial: para
 disparar a parcial o preço teve de subir 45 pontos, logo a extremidade adversa
 daquela barra é anterior a ela.
 
@@ -240,13 +263,14 @@ daquela barra é anterior a ela.
 
 | Tag    | Nome                 | Entrada                                                                                                                                    | Alvo                             |
 | ------ | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------- |
-| **A**  | Retorno à abertura   | Preço se afasta 1 tick (5 pts) da abertura no sentido contrário ao ajuste; ordem limite na abertura preenche quando o preço volta ao nível | 500 pts fixos ou saída no ajuste |
+| **A**  | Retorno à abertura   | Preço se afasta 1 tick (5 pts) da abertura no sentido contrário ao ajuste; ordem limite na abertura preenche quando o preço volta ao nível | 500 pts fixos                    |
 | **B**  | Trade seco no ajuste | Ordem no próprio ajuste, no viés do dia; preenche no primeiro toque do ajuste                                                              | 500 pts fixos                    |
-| **C**  | Pivôs → ajuste       | Regras 3.1 + 4.x sobre os 8 pivôs                                                                                                          | ajuste                           |
-| **D**  | Bolas → ajuste       | Regras 3.2 + 4.x sobre os múltiplos de 1000                                                                                                | ajuste                           |
-| **CD** | Pivôs + bolas        | Regras 3.1 + 3.2 + **3.3 (fusão 300)** + 4.x                                                                                               | ajuste                           |
+| **C**  | Pivôs → ajuste       | Regras 3.1 + 4.x sobre os 8 pivôs                                                                                                          | 500 pts fixos                    |
+| **D**  | Bolas → ajuste       | Regras 3.2 + 4.x sobre os múltiplos de 1000                                                                                                | 500 pts fixos                    |
+| **CD** | Pivôs + bolas        | Regras 3.1 + 3.2 + **3.3 (fusão 300)** + 4.x                                                                                               | 500 pts fixos                    |
 
-Todos com stop de 100 pontos.
+Todos com stop de 100 pontos. As variantes com saída no ajuste (C/D/CD, e A) são
+reportadas em paralelo, para comparação com o spec anterior.
 
 ---
 
@@ -257,7 +281,8 @@ Todos no topo de `engine.py`:
 ```python
 TICK        = 5.0      # tick do WIN
 STOP        = 100.0    # stop em pontos
-ALVO_FIXO   = 500.0    # alvo fixo dos setups A e B
+ALVO_FIXO   = 500.0    # alvo fixo, em todos os setups
+ALVO_NO_AJUSTE = False # True = C/D/CD saem no ajuste (spec anterior)
 TICKS_AFAST = 1        # setup A: ticks de afastamento que armam o gatilho
 DIST_MIN    = 600.0    # distância mínima nível <-> ajuste
 CRUZA_AJ    = 600.0    # ultrapassagem do ajuste que libera o outro lado
@@ -265,13 +290,15 @@ RETRACAO    = 500.0    # retração que invalida o próximo nível
 FUSAO       = 300.0    # bola x pivô: fica o mais afastado do ajuste
 BOLA_PASSO  = 1000.0   # "bolas"
 FIBS        = (0.618, 1.000, 1.618, 2.000)
-VAL_PONTO   = 0.20     # R$/ponto
+VAL_PONTO   = 0.20     # R$/ponto, por contrato
+CONTRATOS   = 6        # lote: realiza parcial de 1/2 e de 2/3
 CUSTO_PTS   = 0.0      # custo de ida e volta em pontos
 
 USA_PARCIAL  = True    # saída parcial (5)
 PARCIAL_PTS  = 45.0    # onde sai a parcial
-PARCIAL_FRAC = 2/3     # fração que sai na parcial -> resultado 2:1
-PARCIAL_STOP = 45.0    # stop do restante depois da parcial
+PARCIAL_FRAC = 2/3     # fração que sai na parcial (4 de 6) -> resultado 2:1
+PARCIAL_STOP = 'medio' # stop do restante: no preço médio da operação (−90);
+                       # um número = pts a favor da entrada (0 = na entrada)
 
 REGIME_EXCLUSIVO     = True   # ao cruzar o ajuste, o lado inicial desliga (4.3)
 FAVORAVEL_NA_ENTRADA = False  # a barra de entrada só resolve o lado adverso (5.1)
@@ -307,9 +334,10 @@ Pontos onde o enunciado admitia mais de uma leitura, e o que foi adotado:
    alcançado **enquanto o preço se afasta** do ajuste (novo extremo do dia). Um
    pivô que fique entre a abertura e o ajuste, alcançado na subida rumo ao
    ajuste, não gera entrada — seria compra de rompimento, não de reversão.
-2. **Alvo dos setups C/D/CD** — o enunciado diz *"operar a reversão até o
-   ajuste"*, então o alvo primário é o ajuste. A variante de 500 pts fixos é
-   reportada em paralelo para permitir comparação direta com A e B.
+2. **Alvo dos setups C/D/CD** — o ajuste dá a **direção** da operação, mas o
+   alvo é de **500 pts fixos**, como em A e B (definição do autor da estratégia,
+   que substituiu a leitura anterior de sair no próprio ajuste). A variante com
+   saída no ajuste segue reportada em paralelo.
 3. **Um trade por nível** — "sempre no primeiro toque" foi lido como: cada nível
    vale uma entrada por pregão. Um dia pode gerar várias entradas (média de 1,78
    nos dias que operam, máximo de 6).

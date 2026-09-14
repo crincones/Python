@@ -1,0 +1,443 @@
+//------------------------------------------------------------------
+// MomentumPI_OuroPrata  -  Grafico PI 20 (WINFUT)  -  NTSL
+//
+// Trigger do setup de CONTINUACAO medido em Backtest-Momentum-GraficoPI:
+// retracao seguida de candle de continuacao, com Hull 50 atras do preco
+// e EMA 21 atravessando o par.
+//
+//   ▲ abaixo da minima  = compra
+//   ▼ acima da maxima   = venda
+//   cor AMBAR  = padrao OURO   (cumpre os seis filtros)
+//   cor PRATA  = padrao PRATA  (falha so a geometria do candle)
+//   sem seta   = Bronze, que mede pouco e nao vale a corretagem
+//
+// A cor separa OURO de PRATA, nao compra de venda -- o lado ja esta
+// dito pela direcao da seta e pelo lado do candle em que ela aparece.
+//
+// Inserir no MESMO painel do grafico de precos. Nenhum Plot: so texto
+// e, se Colorir(1), a pintura da barra do gatilho.
+//
+// Base da medicao: WINFUT/WINFUT_20PI.csv, 10.000 barras PI 20,
+//   06/08/2026 a 11/09/2026, 26 pregoes. Relatorio completo em
+//   relatorio.html; a regra linha a linha em ESTRATEGIA.md.
+//
+//==================================================================
+// 1. A REGRA  (compra; venda e o espelho exato)
+//==================================================================
+// Lida na barra do GATILHO, que e o candle de CONTINUACAO:
+//
+//   BASE (Bronze -- nao sai seta)
+//     1. o gatilho fecha em ALTA e a barra anterior fechou em BAIXA
+//     2. Hull 50 ascendente:      hull > hull[1]
+//     3. Hull atras do preco:     High > hull
+//     4. o topo da barra anterior tambem acima da Hull
+//     5. EMA 21 dentro do par: entre o menor fundo e o maior topo
+//        das duas barras
+//     6. as duas barras no mesmo pregao
+//
+//   PRATA = base + as duas exigencias que mais pagam
+//     7. a retracao tem RetracaoMin ou mais barras contra
+//     8. NAO e exaustao: reprova se a Hull estiver ABRINDO A CURVA a
+//        favor do trade E o fechamento ja estiver a mais de
+//        EsticExaustao ATRs da EMA 21
+//
+//   OURO  = Prata + a forma do candle de continuacao
+//     9. pavio total (range menos o corpo) entre PavioMin e PavioMax
+//
+//==================================================================
+// 2. POR QUE ESTES FILTROS, E NAO OS OBVIOS
+//==================================================================
+// Valor esperado por sinal, medido nos 655 sinais da base, alvo 300 /
+// stop 100 com parcial de 50% em +100, entrada no fechamento:
+//
+//   Bronze   655 sinais   +11,5 pts   acerto 29,0%
+//   Prata    248 sinais   +27,4 pts   acerto 33,9%
+//   Ouro     173 sinais   +34,1 pts   acerto 36,4%
+//
+// Os tres medem POSITIVO nos tres tercos do periodo (Ouro: +48 / +25
+// / +35), que e o teste mais duro que 26 pregoes permitem.
+//
+// [A] O VETO DE EXAUSTAO E O FILTRO QUE MAIS SEPARA -- e nenhuma das
+//     suas metades funciona sozinha. A tabela 2x2 nos 655 sinais:
+//
+//                             perto da EMA     esticado da EMA
+//       Hull fechando a curva    +8,5 (106)       +27,2 (112)
+//       Hull abrindo a curva    +24,2 (165)        -1,5 (272)
+//
+//     So a celula de baixo a direita e ruim, e ela sozinha carrega 272
+//     dos 655 sinais. Por isso o veto exige as DUAS condicoes juntas.
+//
+// [B] A CONCAVIDADE DA HULL, ISOLADA, MEDE AO CONTRARIO DO ESPERADO.
+//     Hull "abrindo a curva" (a concavidade classica de quem compra)
+//     rende +8,2 pts em 437 sinais; "fechando a curva", +18,1 em 218 --
+//     nos tres tercos. Ela NAO entra como filtro isolado, so dentro do
+//     veto de [A].
+//
+// [C] O PAVIO E A UNICA FORMA QUE UM CANDLE DE PI TEM. Com o corpo
+//     fixo em 100 pontos nao ha relacao corpo/pavio para estudar: o
+//     pavio total E a forma. As duas pontas medem mal e o miolo paga:
+//       ate 25 pts   -2,8 (145)      25 a 45   +25,0 (144)
+//       45 a 65     +18,7 (107)      65 a 90   +17,4 (144)
+//       acima de 90  -1,3 (115)
+//     Candle liso demais e fino demais para pagar; candle de pavio
+//     enorme e briga, nao continuacao. Este e o filtro que separa Ouro
+//     de Prata -- e o unico que so existe DEPOIS que a barra fecha.
+//
+// [D] UM CANDLE SO DE RETRACAO E RUIDO.
+//       1 candle  +5,3 (349)    2 candles +20,8 (226)
+//       3 candles +16,7 ( 66)   4 ou mais  -7,1 ( 14)
+//
+// [E] O QUE FOI MEDIDO E NAO ENTROU: a inclinacao da EMA 21 (separa ao
+//     contrario e tem correlacao 0,78 com o esticamento -- e a mesma
+//     informacao), a distancia da Hull a banda de Keltner isolada (nao
+//     separa nada) e o horario (nenhuma faixa e estavel nos tres
+//     tercos). Empilhar os quatro melhores filtros ao mesmo tempo
+//     deixa 16 sinais e valor esperado NEGATIVO: por isso a regra usa
+//     tres, nao oito.
+//
+//==================================================================
+// 3. REPINTURA -- LEIA ANTES DE CONFIAR NA SETA
+//==================================================================
+// Defasar(0), o padrao, coloca a seta NA PROPRIA BARRA DO GATILHO,
+// que e onde ela e util. O preco disso e que, enquanto a barra nao
+// fechou, a classificacao pode mudar:
+//
+//   - o LADO da barra so se define quando ela fecha (num grafico PI a
+//     barra fecha exatamente a 100 pts da abertura, para um lado ou
+//     para o outro);
+//   - o PAVIO cresce ate o fim, entao um sinal pode nascer Ouro e
+//     terminar Prata, ou o contrario.
+//
+// Em barra fechada nada disso muda mais: a seta e definitiva.
+//
+// Defasar(1) le tudo da barra [1], ja fechada, e NUNCA repinta -- em
+// troca a seta sai uma barra a frente do gatilho, e a pintura de barra
+// perde o sentido (cairia na barra errada), entao Colorir e ignorado.
+// Use Defasar(1) para conferir historico; Defasar(0) para operar.
+//
+//==================================================================
+// 4. O QUE ESTE INDICADOR NAO E
+//==================================================================
+// E um TRIGGER, nao um simulador: toda barra que cumpre a regra ganha
+// seta. O backteste, ao contrario, opera UMA POSICAO POR VEZ e
+// descarta o sinal que aparece com posicao aberta -- dos 173 sinais
+// Ouro, 170 viraram trade; dos 655 Bronze, so 569. Na tela vao
+// aparecer mais setas do que trades o backteste fez.
+//
+// A gestao medida esta fora daqui, e e fixa: stop 100, parcial de 50%
+// em +100 levando o stop do restante para a media da operacao, alvo
+// 300, zerando no fim do pregao. Ver PLANO.md.
+//
+//
+//==================================================================
+// 5. NAO SAI NENHUMA SETA? -- Diagnostico(1)
+//==================================================================
+// Ligue Diagnostico(1) e olhe a tela. Ele responde na ordem:
+//
+//  [a] NAO APARECE NEM O PONTO CINZA em baixo de cada barra.
+//      O indicador nao esta no painel de precos. PlotText escreve numa
+//      COORDENADA DE PRECO: num sub-painel proprio, cujo eixo vai de 0
+//      a 1, a seta cai a 175.000 pontos fora da tela e nada se ve --
+//      inclusive a pintura de barra, que nao tem barra para pintar.
+//      Arraste o indicador para cima do grafico de precos, ou insira
+//      com "no mesmo painel".
+//
+//  [b] APARECE O PONTO, mas nenhum numero azul. Nao ha par
+//      retracao+continuacao na tela: ou o grafico nao e de PI / Renko
+//      (num grafico de tempo o padrao existe, mas e muito mais raro),
+//      ou OperarCompra e OperarVenda estao os dois em 0.
+//
+//  [c] APARECE NUMERO AZUL. Ele diz ate onde a regra chegou nesta
+//      barra, e o primeiro numero que voce NUNCA ve e o filtro que
+//      esta barrando:
+//        1  duas barras opostas (o par existe)
+//        2  + as duas do mesmo pregao
+//        3  + Hull no sentido e atras dos dois extremos
+//        4  + EMA 21 atravessando o par
+//        5  + retracao com RetracaoMin barras ou mais
+//        6  + nao e exaustao            -> sai seta PRATA
+//        7  + pavio dentro da faixa     -> sai seta OURO
+//      Se parar no 1, e a checagem de pregao: ponha ChecarDia(0) e
+//      confirme. Se parar no 3, confira se a HMA do grafico usa o
+//      mesmo periodo de PeriodoHull.
+//
+//  [d] APARECE "atr?" VERMELHO em toda a tela. Media(PeriodoATR,
+//      TrueRange) nao esta devolvendo valor nesta base -- historico
+//      curto demais. O indicador continua funcionando: sem ATR o veto
+//      de exaustao perde a metade do esticamento e passam mais sinais.
+//
+// CONFERIDO CONTRA O MANUAL NTSL (Manual-NTSL/ManualNTSL.pdf).
+// Toda funcao usada aqui esta no indice de 403 funcoes do manual, com a
+// assinatura conferida:
+//   19.22 PlotText(Content:String; Color:Integer; Position:Integer;
+//                  FontSize:Integer; Price:Float)
+//   19.18 PaintBar(Cor:Integer)          20.65 HullMovingAverage(Periodo)
+//   25.8  Media(Periodo; Serie)          25.9  MediaExp(Periodo; Serie)
+//   16.15 Date(): Integer                      TrueRange(), Round, RGB
+//
+// POR QUE AS VERSOES ANTERIORES NAO DESENHAVAM NADA
+// ------------------------------------------------
+// `Date()` e funcao SEM PARAMETROS (16.15). O codigo escrevia `Date[p]`,
+// indexando uma funcao sem argumentos -- construcao que o manual nunca
+// exemplifica (ele so indexa funcao COM parametros, como
+// `mediaExp(20, Close)[1]`). Compilava e devolvia lixo, entao
+// `Date[p] = Date[p+1]` era falso em toda barra, gatC/gatV nunca ficavam
+// verdadeiros, `nivel` nunca saia de zero -- e por isso nao aparecia
+// seta NEM pintura, enquanto o diagnostico continuava desenhando, porque
+// os pontos dele sao incondicionais. Esse detalhe foi o que localizou o
+// bug.
+//
+// Agora `Date` e capturada uma vez por barra em `dataBarra`, e o
+// historico e lido da VARIAVEL -- que guarda serie como qualquer
+// variavel de NTSL. Nenhuma funcao sem parametro e indexada em lugar
+// nenhum deste arquivo.
+//
+// Dois outros erros, achados no caminho e tambem corrigidos:
+//   . PlotText: o parametro Price SO e usado com Position = 3. Nos
+//     modos 0/1/2 o preco e ignorado -- era o que fazia SeparacaoPts
+//     nao ter efeito. As setas agora usam Position = 3.
+//   . `atrV > 0` estava no MESMO portao que CurrentBar, entao um ATR
+//     zerado apagaria o indicador inteiro em vez de degradar um filtro.
+//     Hoje o ATR so multiplica o lado direito de uma comparacao.
+//==================================================================
+// 6. RESSALVA QUE VALE MAIS QUE OS NUMEROS
+//==================================================================
+// 26 pregoes, um instrumento,
+// tudo em mercado de alta, resultado BRUTO. A 10 pts de custo por
+// operacao a expectativa do Ouro cai de +34,1 para +24,1.
+//------------------------------------------------------------------
+
+input
+  //--- indicadores (a EMA e tambem a media do canal de Keltner) -------
+  PeriodoHull    (50);     // Hull de forca. 50 ganhou de 21, 34 e 80
+                           // em TODAS as EMAs testadas -- e crista, nao pico
+  PeriodoEMA     (21);     // EMA de tendencia
+  PeriodoATR     (21);     // janela do ATR que escala o esticamento
+
+  //--- os cortes que separam Ouro / Prata / Bronze --------------------
+  RetracaoMin    (2);      // barras contra exigidas na retracao  [D]
+  EsticExaustao  (0.45);   // ATRs de distancia do fechamento a EMA  [A]
+  PavioMin       (25);     // pavio total do candle de continuacao,
+  PavioMax       (90);     // em PONTOS do ativo                    [C]
+
+  //--- o que desenhar --------------------------------------------------
+  MostrarOuro    (1);
+  MostrarPrata   (1);      // 0 = so o Ouro na tela
+  OperarCompra   (1);
+  OperarVenda    (1);
+
+  //--- visual ----------------------------------------------------------
+  TamSeta        (12);     // tamanho da fonte da seta
+  SeparacaoPts   (40);     // afastamento da seta, em pontos do ativo
+  Colorir        (1);      // 1 = pinta a barra do gatilho na cor do nivel
+                           //     (e o que permite usar como REGRA DE
+                           //      COLORACAO); ignorado se Defasar = 1
+  Defasar        (0);      // 0 = seta na barra do gatilho (pode repintar
+                           //     enquanto ela nao fecha -- ver secao 3)
+                           // 1 = le a barra [1], nunca repinta, seta uma
+                           //     barra a frente
+  ChecarDia      (1);      // 1 = o par tem de ser do mesmo pregao
+                           // 0 = desliga essa exigencia (valvula: se o
+                           //     diagnostico parar no estagio 1, e aqui)
+  Diagnostico    (0);      // 1 = modo de conferencia -- ver secao 5
+
+var
+  p, j, k, minimo          : integer;
+  dataBarra                : float;   // Date() capturada por barra
+  hull0, hull1, hull2      : float;
+  ema, atrV                : float;
+  topo, fundo, corpo, pavio: float;
+  curvaAFavor, dist        : float;
+  lado                     : float;   // so entra em multiplicacao
+  nivel, estagio           : integer; // nivel 2 = Ouro | 1 = Prata
+  corNivel                 : integer;
+  gatC, gatV, dirC, dirV   : boolean;
+  mesmoDia                 : boolean;
+  contando, hullOk, emaOk  : boolean;
+  exaustao, retOk, geomOk  : boolean;
+  atrOk                    : boolean;
+
+begin
+  if Defasar = 1 then
+    p := 1
+  else
+    p := 0;
+
+  //--- as tres linhas de contexto -------------------------------------
+  //  Assinaturas conferidas no Manual NTSL:
+  //    20.65  HullMovingAverage(Periodo : Integer) : Float
+  //    25.9   MediaExp(Periodo : Integer; TipoSerie : Serie) : Float
+  //    25.8   Media(Periodo : Integer; TipoSerie : Serie) : Float
+  //    20.x   TrueRange() : Float
+  //  Date() e uma funcao SEM PARAMETROS (manual 16.15). Indexar
+  //  `Date[p]` direto foi o que matou as versoes anteriores: gatC/gatV
+  //  ficavam falsos em toda barra, nivel nunca saia de 0, e por isso
+  //  nao aparecia seta NEM pintura -- so o diagnostico, que desenha
+  //  incondicionalmente. O manual so indexa funcao COM parametros
+  //  (ex.: mediaExp(20, Close)[1]).
+  //  Capturada aqui numa variavel, que guarda historico como qualquer
+  //  variavel de NTSL, e lida como dataBarra[p].
+  dataBarra := Date;
+
+  hull0 := HullMovingAverage(PeriodoHull)[p];
+  hull1 := HullMovingAverage(PeriodoHull)[p + 1];
+  hull2 := HullMovingAverage(PeriodoHull)[p + 2];
+  ema   := MediaExp(PeriodoEMA, Close)[p];
+  atrV  := Media(PeriodoATR, TrueRange)[p];
+
+  //  A Hull precisa de [p+2] para a curvatura e a retracao anda algumas
+  //  barras para tras.
+  minimo := PeriodoHull + PeriodoEMA + PeriodoATR + 12;
+
+  nivel   := 0;
+  estagio := 0;
+
+  //  O ATR entra so como ESCALA do esticamento. Se vier zerado, o veto
+  //  de exaustao perde a metade do esticamento em vez de calar o
+  //  indicador inteiro.
+  atrOk := (atrV > 0);
+
+  if CurrentBar >= minimo then
+  begin
+    //================= 1. o par retracao + continuacao ===============
+    //  A direcao das duas barras -- o par -- e independente do pregao.
+    dirC := (OperarCompra = 1) and (Close[p] > Open[p])
+            and (Close[p + 1] < Open[p + 1]);
+    dirV := (OperarVenda = 1)  and (Close[p] < Open[p])
+            and (Close[p + 1] > Open[p + 1]);
+    if dirC or dirV then estagio := 1;
+
+    //  ChecarDia(0) desliga a exigencia de o par ser do mesmo pregao.
+    //  Existe como valvula: se o estagio parar no 1, e aqui.
+    mesmoDia := (ChecarDia = 0) or (dataBarra[p] = dataBarra[p + 1]);
+    gatC := dirC and mesmoDia;
+    gatV := dirV and mesmoDia;
+
+    if gatC or gatV then
+    begin
+      estagio := 2;
+      if gatC then
+        lado := 1
+      else
+        lado := -1;
+
+      //=============== 2. Hull atras dos DOIS extremos do par ========
+      if gatC then
+        hullOk := (hull0 > hull1) and (High[p] > hull0)
+                  and (High[p + 1] > hull1)
+      else
+        hullOk := (hull0 < hull1) and (Low[p] < hull0)
+                  and (Low[p + 1] < hull1);
+      if hullOk then estagio := 3;
+
+      //=============== 3. EMA 21 atravessando o par ==================
+      topo := High[p];
+      if High[p + 1] > topo then topo := High[p + 1];
+      fundo := Low[p];
+      if Low[p + 1] < fundo then fundo := Low[p + 1];
+      emaOk := (ema >= fundo) and (ema <= topo);
+      if hullOk and emaOk then estagio := 4;
+
+      //=============== 4. tamanho da retracao, em barras =============
+      //  Barras CONTRA consecutivas terminando em [p+1]. Para no
+      //  primeiro dia diferente: corrida nao atravessa o fim do pregao.
+      k := 0;
+      contando := true;
+      for j := 1 to 8 do
+      begin
+        if contando then
+        begin
+          if (ChecarDia = 1) and (dataBarra[p + j] <> dataBarra[p]) then
+            contando := false
+          else if gatC and (Close[p + j] < Open[p + j]) then
+            k := j
+          else if gatV and (Close[p + j] > Open[p + j]) then
+            k := j
+          else
+            contando := false;
+        end;
+      end;
+      retOk := (k >= RetracaoMin);
+      if hullOk and emaOk and retOk then estagio := 5;
+
+      //=============== 5. o veto de exaustao =========================
+      //  Sem divisao: o ATR virou multiplicador do lado direito.
+      //    curvaAFavor > 0  = a Hull esta ABRINDO a curva a favor
+      //    dist             = quanto o fechamento se afastou da EMA 21
+      curvaAFavor := (hull0 - 2 * hull1 + hull2) * lado;
+      dist        := (Close[p] - ema) * lado;
+      exaustao    := (curvaAFavor > 0) and atrOk
+                     and (dist > EsticExaustao * atrV);
+      if hullOk and emaOk and retOk and (not exaustao) then estagio := 6;
+
+      //=============== 6. a forma do candle de continuacao ===========
+      //  pavio total = range menos o corpo. Num grafico PI o corpo e
+      //  sempre 100 pts, entao isto e o range menos 100 -- escrito
+      //  assim vale tambem para a barra que fecha incompleta no dia.
+      corpo := Close[p] - Open[p];
+      if corpo < 0 then corpo := -corpo;
+      pavio  := (High[p] - Low[p]) - corpo;
+      geomOk := (pavio >= PavioMin) and (pavio <= PavioMax);
+
+      //=============== 7. o nivel ====================================
+      if hullOk and emaOk and retOk and (not exaustao) then
+      begin
+        if geomOk then
+        begin
+          nivel   := 2;
+          estagio := 7;
+        end
+        else
+          nivel := 1;
+      end;
+    end;
+
+    //================= 8. desenho ====================================
+    if ((nivel = 2) and (MostrarOuro = 1))
+       or ((nivel = 1) and (MostrarPrata = 1)) then
+    begin
+      if nivel = 2 then
+        corNivel := RGB(255, 190, 0)     // ambar  -- OURO
+      else
+        corNivel := RGB(168, 180, 196);  // cinza claro -- PRATA
+
+      //  Position = 3 e o UNICO modo em que PlotText usa o parametro
+      //  Price (Manual NTSL 19.22). Nos modos 0/1/2 o texto vai para
+      //  baixo/centro/cima do candle e o preco e ignorado -- era o que
+      //  fazia SeparacaoPts nao ter efeito nenhum nas versoes anteriores.
+      if gatC then
+        PlotText("▲", corNivel, 3, TamSeta, Low[p] - SeparacaoPts)
+      else
+        PlotText("▼", corNivel, 3, TamSeta, High[p] + SeparacaoPts);
+
+      //  Regra de coloracao: so faz sentido com a seta na propria barra
+      //  do gatilho, senao pintaria a barra seguinte.
+      if (Colorir = 1) and (Defasar = 0) then
+        PaintBar(corNivel);
+    end;
+
+    //================= 9. diagnostico ================================
+    if Diagnostico = 1 then
+    begin
+      //  [a] ponto cinza em TODA barra. Nenhum ponto = o indicador nao
+      //      esta desenhando (rode _teste_minimo.ntsl).
+      PlotText(".", RGB(120, 120, 120), 3, TamSeta, Low - SeparacaoPts * 2);
+
+      //  [b] ate onde a regra chegou nesta barra:
+      //      1 duas barras opostas   2 + mesmo pregao   3 + Hull
+      //      4 + EMA   5 + retracao   6 = PRATA   7 = OURO
+      if estagio >= 1 then
+        PlotText("" + estagio, RGB(0, 190, 255), 3,
+                 TamSeta, High + SeparacaoPts * 2);
+
+      //  [c] a Hull calculada, para conferir contra a HMA do grafico
+      PlotText("h" + Round(hull0), RGB(255, 190, 0), 3,
+               TamSeta, Low - SeparacaoPts * 3);
+
+      //  [d] "atr?" = ATR zerado nesta barra
+      if not atrOk then
+        PlotText("atr?", RGB(255, 80, 80), 3,
+                 TamSeta, High + SeparacaoPts * 3);
+    end;
+  end;
+end;

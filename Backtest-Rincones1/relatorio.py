@@ -20,6 +20,10 @@ import engine as E
 BASE = os.path.dirname(os.path.abspath(__file__))
 SAIDA = os.path.join(BASE, 'saida')
 DEST = os.path.join(BASE, 'relatorio.html')
+# a biblioteca do grafico vai EMBUTIDA no html -- o relatorio continua sendo um
+# arquivo unico que abre offline, sem CDN. Apache 2.0, o cabecalho de licenca
+# esta no proprio bundle.
+VENDOR_KC = os.path.join(BASE, 'vendor', 'klinecharts-9.8.10.min.js')
 BASES = ('WINV26', 'WINFUT')
 STOPS_VIZ = (150, 100)      # os stops que o visualizador de trades oferece
 REGIMES = ('ema3', 'kama', 'hma', 't3', 'jma')
@@ -37,28 +41,35 @@ ROT_SU = {'A': ('A · tendência', 'Médias alinhadas, o preço volta e toca uma
 
 
 # ------------------------------------------------------------ formatacao
+def _vazio(v):
+    """None ou NaN viram travessao. O `t` de uma amostra de dois trades vem
+    NaN da engine (desvio padrao indefinido), e '+nan' na tabela e pior que
+    dizer que nao da para medir."""
+    return v is None or v != v
+
+
 def n0(v):
-    return '—' if v is None else ('%+d' % round(v)).replace(',', '.')
+    return '—' if _vazio(v) else ('%+d' % round(v)).replace(',', '.')
 
 
 def n1(v):
-    return '—' if v is None else ('%+.1f' % v).replace('.', ',')
+    return '—' if _vazio(v) else ('%+.1f' % v).replace('.', ',')
 
 
 def p0(v):
-    return '—' if v is None else '%.0f%%' % v
+    return '—' if _vazio(v) else '%.0f%%' % v
 
 
 def p1(v):
-    return '—' if v is None else ('%.1f%%' % v).replace('.', ',')
+    return '—' if _vazio(v) else ('%.1f%%' % v).replace('.', ',')
 
 
 def t2(v):
-    return '—' if v is None else ('%+.2f' % v).replace('.', ',')
+    return '—' if _vazio(v) else ('%+.2f' % v).replace('.', ',')
 
 
 def f2(v):
-    return '—' if v is None else ('%.2f' % v).replace('.', ',')
+    return '—' if _vazio(v) else ('%.2f' % v).replace('.', ',')
 
 
 def cls(v):
@@ -66,7 +77,7 @@ def cls(v):
 
 
 def mil(v):
-    return '—' if v is None else ('{:+,.0f}'.format(v)).replace(',', '.')
+    return '—' if _vazio(v) else ('{:+,.0f}'.format(v)).replace(',', '.')
 
 
 # ------------------------------------------------------------ dados grafico
@@ -94,6 +105,8 @@ def coleta_grafico(stops=STOPS_VIZ):
         O, H, L, C = (d[c].to_numpy(float) for c in ('O', 'H', 'L', 'C'))
         er, em, el = (d[c].to_numpy(float) for c in ('er', 'em', 'el'))
         idxv, dirC = d.idx.to_numpy(), d.dirC.to_numpy()
+        # a variante do leque: 1 = o gatilho toca ou fica ATRAS das medias
+        no_leque = d.no_leque.to_numpy(bool)
         dia_arr = d.dia.to_numpy()
         hora = d.Data.dt.strftime('%H:%M').to_numpy()
 
@@ -127,7 +140,8 @@ def coleta_grafico(stops=STOPS_VIZ):
                     dia=str(t['dia']), d=di, su=t['setup'], s=int(t['s']),
                     i=int(t['i']) - off, f=int(t['jf']) - off, k=int(t['saiu']) - off,
                     ent=round(float(t['ent']) - dias[di]['base'], 1),
-                    res=t['res'], pnl=round(float(t['pnl']), 1), bar=int(t['barras'])))
+                    res=t['res'], pnl=round(float(t['pnl']), 1),
+                    lq=int(no_leque[int(t['i'])]), bar=int(t['barras'])))
             lst.sort(key=lambda t: (t['d'], t['i']))
             trades[st] = lst
         dados[nome] = dict(dias=dias, trades=trades)
@@ -637,6 +651,316 @@ def bloco_e2(R):
             '<tbody>%s</tbody></table></div>' % ''.join(linhas))
 
 
+def bloco_leque(R):
+    """Tabela: sem restricao x so gatilho que toca ou fica atras do leque."""
+    lq = R.get('leque')
+    if not lq:
+        return ''
+    linhas = []
+    for chave in lq['ordem']:
+        for stop in R['stops']:
+            for ch, rot in (('setup_A', 'setup A isolado'),
+                            ('setup_B', 'setup B isolado'),
+                            ('cA', 'carteira só A'), ('cAB', 'carteira A + B')):
+                cel = []
+                for b in BASES:
+                    m = lq['grid'][b][chave][str(stop)][ch]
+                    cel.append('<td class="num">%s</td><td class="num %s">%s</td>'
+                               '<td class="num">%s</td><td class="num">%s</td>'
+                               % (m['n'] if m else '—', cls(m['ev']) if m else '',
+                                  n1(m['ev']) if m else '—',
+                                  t2(m['t']) if m else '—',
+                                  ('%d' % round(m['dd'])) if m else '—'))
+                primeira = (stop == R['stops'][0] and ch == 'setup_A')
+                hi = (' class="hi"' if (chave == 'leque' and ch == 'cAB'
+                                        and stop == R['stops'][0]) else '')
+                linhas.append('<tr%s><td>%s</td><td class="mono">stop %d</td>'
+                              '<td>%s</td>%s</tr>'
+                              % (hi, lq['rotulos'][chave] if primeira else '',
+                                 stop, rot, ''.join(cel)))
+    return ('<div class="scroll"><table>'
+            '<caption>A restrição do leque, com todo o resto '
+            'congelado</caption>'
+            '<thead><tr><th>gatilhos aceitos</th><th>stop</th><th>carteira</th>'
+            '<th class="num" colspan="4">WINV26 · n / EV / t / DD</th>'
+            '<th class="num" colspan="4">WINFUT · n / EV / t / DD</th></tr></thead>'
+            '<tbody>%s</tbody></table></div>' % ''.join(linhas))
+
+
+def bloco_leque_pos(R):
+    """Tabela: onde as barras e os gatilhos ficam em relacao ao leque."""
+    lq = R.get('leque')
+    if not lq:
+        return ''
+    ROT = {'toca': ('tocando', 'encosta em alguma das três, com '
+                    'tolerância de 1 range médio'),
+           'atras': ('atrás', 'a barra inteira do lado oposto ao que o leque '
+                     'aponta, e fora da tolerância do toque'),
+           'frente': ('na frente', 'nem toca nem fica atrás — <b>é exatamente '
+                      'o que a restrição corta</b>')}
+    linhas = []
+    for k in ('toca', 'atras', 'frente'):
+        nome, desc = ROT[k]
+        cel = ''.join('<td class="num">%s</td><td class="num">%s</td>'
+                      % (p1(lq['posicao'][b][k]['barras']),
+                         p1(lq['posicao'][b][k]['gatilhos']))
+                      for b in BASES)
+        linhas.append('<tr%s><td><b>%s</b><div class="sub">%s</div></td>%s</tr>'
+                      % (' class="mute"' if k == 'frente' else '', nome, desc, cel))
+    return ('<div class="scroll"><table>'
+            '<caption>Onde o preço está quando o gatilho dispara</caption>'
+            '<thead><tr><th rowspan="2">posição da barra</th>'
+            '<th class="num" colspan="2">WINV26</th>'
+            '<th class="num" colspan="2">WINFUT</th></tr>'
+            '<tr><th class="num">barras</th><th class="num">gatilhos</th>'
+            '<th class="num">barras</th><th class="num">gatilhos</th></tr></thead>'
+            '<tbody>%s</tbody></table></div>' % ''.join(linhas))
+
+
+def bloco_leque_ma(R):
+    """Tabela: a restricao nas cinco medias de regime (carteira A + B)."""
+    lq = R.get('leque')
+    if not lq:
+        return ''
+    linhas = []
+    for reg in REGIMES:
+        nome, _ = ROT_REG[reg]
+        cel = []
+        inerte = True
+        for b in BASES:
+            g = lq['regimes'][b][reg]
+            if g['gatilhos_livre'] != g['gatilhos_leque']:
+                inerte = False
+            for ch in lq['ordem']:
+                m = g[ch]
+                cel.append('<td class="num">%s</td><td class="num %s">%s</td>'
+                           '<td class="num">%s</td>'
+                           % (m['n'] if m else '—', cls(m['ev']) if m else '',
+                              n1(m['ev']) if m else '—',
+                              t2(m['t']) if m else '—'))
+        toca = lq['regimes']['WINFUT'][reg]['toca']
+        obs = (' <span class="sub">— a restrição é inerte: a '
+               'barra encosta na linha quase sempre</span>') if inerte else ''
+        linhas.append('<tr%s><td><b>%s</b>%s</td><td class="num">%s</td>%s</tr>'
+                      % (' class="hi"' if reg == 'ema3' else
+                         (' class="mute"' if inerte else ''),
+                         nome, obs, p1(toca), ''.join(cel)))
+    return ('<div class="scroll"><table>'
+            '<caption>A restrição do leque nas cinco médias de '
+            'regime · carteira A + B · stop %d</caption>'
+            '<thead><tr><th rowspan="2">média de regime</th>'
+            '<th class="num" rowspan="2">%% barras<br>tocando</th>'
+            '<th class="num" colspan="6">WINV26 · sem restrição / '
+            'com</th>'
+            '<th class="num" colspan="6">WINFUT · sem restrição / '
+            'com</th></tr>'
+            '<tr>%s</tr></thead>'
+            '<tbody>%s</tbody></table></div>'
+            % (R['stops'][0],
+               ('<th class="num">n</th><th class="num">EV</th>'
+                '<th class="num">t</th>' * 4),
+               ''.join(linhas)))
+
+
+def veredito_leque(R):
+    """O que a restricao do leque faz, medido -- nao escolhido.
+
+    A restricao nao toca o setup A (que ja exige o toque) e refaz o B por
+    inteiro. A frase precisa dizer as duas coisas, e precisa dizer que o
+    ganho de EV vem com perda de amostra -- porque e ai que o operador se
+    engana sozinho.
+    """
+    lq = R.get('leque')
+    if not lq:
+        return _neg('(sem comparativo do leque neste resumo)')
+    sp = str(R['stops'][0])
+    cel = [(b, st) for b in BASES for st in R['stops']]
+
+    def conta(chave, metr):
+        return sum(1 for b, st in cel
+                   if (lq['grid'][b]['leque'][str(st)][chave] or {}).get(metr, -1e9)
+                   > (lq['grid'][b]['livre'][str(st)][chave] or {}).get(metr, -1e9))
+
+    def conta_dd(chave):
+        return sum(1 for b, st in cel
+                   if lq['grid'][b]['leque'][str(st)][chave]['dd']
+                   < lq['grid'][b]['livre'][str(st)][chave]['dd'])
+
+    tot = len(cel)
+    ev, tt, dd = conta('cAB', 'ev'), conta('cAB', 't'), conta_dd('cAB')
+    dd_pior = sum(1 for b, st in cel
+                  if lq['grid'][b]['leque'][str(st)]['cAB']['dd']
+                  > lq['grid'][b]['livre'][str(st)]['cAB']['dd'])
+    corte = ' e '.join(
+        p1(100.0 * (lq['grid'][b]['livre']['gatilhos']
+                    - lq['grid'][b]['leque']['gatilhos'])
+           / lq['grid'][b]['livre']['gatilhos']) for b in BASES)
+    intacto = all(lq['grid'][b]['leque'][str(st)]['setup_A']['n']
+                  == lq['grid'][b]['livre'][str(st)]['setup_A']['n']
+                  for b, st in cel)
+
+    linhas = []
+    for b in BASES:
+        g, h = lq['grid'][b]['leque'][sp], lq['grid'][b]['livre'][sp]
+        linhas.append('No %s o setup B cai de %d para %d trades e o EV vai de %s para '
+                      '%s (t %s → %s); a carteira A + B vai de %s para %s de EV, '
+                      'com o drawdown %s.'
+                      % (b, h['setup_B']['n'], g['setup_B']['n'],
+                         n1(h['setup_B']['ev']), n1(g['setup_B']['ev']),
+                         t2(h['setup_B']['t']), t2(g['setup_B']['t']),
+                         n1(h['cAB']['ev']), n1(g['cAB']['ev']),
+                         ('parado em %d pontos' % round(g['cAB']['dd']))
+                         if round(g['cAB']['dd']) == round(h['cAB']['dd'])
+                         else ('de %d para %d pontos'
+                               % (round(h['cAB']['dd']), round(g['cAB']['dd'])))))
+
+    cab = ('*A restrição não mexe no A: ela reescreve o B.* Cortando '
+           '%s dos gatilhos, ela melhora o EV da carteira A + B em *%d das %d* '
+           'células (duas bases × dois stops), o `t` em *%d de %d* e o '
+           'drawdown em *%d de %d* (sem piorar em nenhuma). '
+           % (corte, ev, tot, tt, tot, dd, tot)) if dd_pior == 0 else (
+        '*A restrição não mexe no A: ela reescreve o B.* Cortando %s dos '
+        'gatilhos, ela melhora o EV da carteira A + B em *%d das %d* células '
+        '(duas bases × dois stops), o `t` em *%d de %d* e o drawdown em '
+        '*%d de %d*, piorando o drawdown em %d. '
+        % (corte, ev, tot, tt, tot, dd, tot, dd_pior))
+    if intacto:
+        cab += ('O setup A sai *idêntico* nas quatro — ele já exigia '
+                'o toque, então já estava inteiro dentro da '
+                'restrição. ')
+    fecho = (' O que sobra do B é o afastamento medido *no leque ou atrás '
+             'dele*: mesmo lugar do A, direção oposta — quem decide '
+             'é de que lado veio a agressão que falhou. O que ela joga fora '
+             'é a esticada à frente das médias, que é '
+             'exatamente onde a reversão é mais cara.')
+    if tt < tot:
+        fecho += (' A ressalva é de amostra: onde o `t` piora, ele piora porque a '
+                  'restrição tirou trade, não porque tirou vantagem '
+                  '— o EV sobe e o `t` cai junto com o n.')
+    return _neg(cab + ' '.join(linhas) + fecho)
+
+
+def veredito_leque_ma(R):
+    """A restricao do leque generaliza para as outras medias de regime?"""
+    lq = R.get('leque')
+    if not lq:
+        return _neg('(sem comparativo do leque neste resumo)')
+    bons, inertes = [], []
+    for reg in REGIMES:
+        n_ok = sum(1 for b in BASES
+                   if lq['regimes'][b][reg]['leque']['t']
+                   > lq['regimes'][b][reg]['livre']['t'])
+        if all(lq['regimes'][b][reg]['gatilhos_livre']
+               == lq['regimes'][b][reg]['gatilhos_leque'] for b in BASES):
+            inertes.append(ROT_REG[reg][0])
+        elif n_ok == len(BASES):
+            bons.append(ROT_REG[reg][0])
+    if bons:
+        cab = ('*A restrição melhora %s nas duas bases.* '
+               % ' e '.join(bons))
+    else:
+        cab = ('*A restrição é uma propriedade do leque, não '
+               'das médias em geral.* Em nenhuma família ela melhora o `t` '
+               'nas duas bases ao mesmo tempo. ')
+    ema = '; '.join('%s: %s → %s de EV (t %s → %s)'
+                    % (b, n1(lq['regimes'][b]['ema3']['livre']['ev']),
+                       n1(lq['regimes'][b]['ema3']['leque']['ev']),
+                       t2(lq['regimes'][b]['ema3']['livre']['t']),
+                       t2(lq['regimes'][b]['ema3']['leque']['t']))
+                    for b in BASES)
+    corpo = 'Com as três EMAs — %s. ' % ema
+    if inertes:
+        corpo += ('Em %s a restrição é *inerte*: com média '
+                  'única e tolerância de um range médio, o preço '
+                  'encosta na linha quase sempre, e não sobra nada para '
+                  'cortar. ' % ' e '.join(inertes))
+    fecho = ('“Atrás do leque” pressupõe um leque: três '
+             'linhas separadas o bastante para haver um lado de cá e um de '
+             'lá. Uma linha só não tem espessura, e a '
+             'restrição vira outra coisa — um filtro do preço '
+             'contra a inclinação.')
+    return _neg(cab + corpo + fecho)
+
+
+def bloco_leque_decomp(R):
+    """Tabela: as duas metades da restricao, separadas (carteira A + B)."""
+    lq = R.get('leque')
+    if not lq or 'decomp' not in lq:
+        return ''
+    linhas = []
+    for chave in ['livre'] + lq['decomp_ordem']:
+        for stop in R['stops']:
+            cel = []
+            for b in BASES:
+                if chave == 'livre':
+                    g = lq['grid'][b]['livre']
+                    m, gat = g[str(stop)]['cAB'], g['gatilhos']
+                else:
+                    g = lq['decomp'][b][chave]
+                    m, gat = g[str(stop)], g['gatilhos']
+                cel.append('<td class="num">%d</td><td class="num">%s</td>'
+                           '<td class="num %s">%s</td><td class="num">%s</td>'
+                           '<td class="num">%s</td>'
+                           % (gat, m['n'] if m else '—',
+                              cls(m['ev']) if m else '', n1(m['ev']) if m else '—',
+                              t2(m['t']) if m else '—',
+                              ('%d' % round(m['dd'])) if m else '—'))
+            rot = ('sem restrição' if chave == 'livre'
+                   else lq['decomp_rot'][chave])
+            hi = ' class="hi"' if (chave == 'leque'
+                                   and stop == R['stops'][0]) else ''
+            linhas.append('<tr%s><td>%s</td><td class="mono">stop %d</td>%s</tr>'
+                          % (hi, rot if stop == R['stops'][0] else '', stop,
+                             ''.join(cel)))
+    return ('<div class="scroll"><table>'
+            '<caption>As duas metades da restrição, separadas · '
+            'carteira A + B</caption>'
+            '<thead><tr><th>gatilhos aceitos</th><th>stop</th>'
+            '<th class="num" colspan="5">WINV26 · gat / n / EV / t / DD</th>'
+            '<th class="num" colspan="5">WINFUT · gat / n / EV / t / DD</th>'
+            '</tr></thead><tbody>%s</tbody></table></div>' % ''.join(linhas))
+
+
+def veredito_leque_decomp(R):
+    """O punhado de barras 'atras do leque' paga o proprio lugar?"""
+    lq = R.get('leque')
+    if not lq or 'decomp' not in lq:
+        return _neg('(sem decomposição do leque neste resumo)')
+    cel = [(b, st) for b in BASES for st in R['stops']]
+    def _ev(b, st, ch):
+        m = lq['decomp'][b][ch][str(st)]
+        return m['ev'] if m else None
+    ganha = sum(1 for b, st in cel
+                if (_ev(b, st, 'leque') or 0) > (_ev(b, st, 'toca') or 0))
+    add = ' e '.join(p1(lq['posicao'][b]['atras']['gatilhos']) for b in BASES)
+    det = '; '.join('%s: só o toque dá %s de EV, com o de trás junto dá %s'
+                    % (b, n1(_ev(b, R['stops'][0], 'toca')),
+                       n1(_ev(b, R['stops'][0], 'leque')))
+                    for b in BASES)
+    if ganha == len(cel):
+        cab = ('*O punhado de barras atrás do leque paga o próprio lugar.* Ele é '
+               'pequeno — %s dos gatilhos — mas somar esses sinais ao toque melhora '
+               'o EV nas *%d* células. ' % (add, len(cel)))
+    elif ganha:
+        cab = ('*A metade de trás do leque ajuda, mas não sempre.* Ela vale %s dos '
+               'gatilhos e melhora o EV em %d das %d células. '
+               % (add, ganha, len(cel)))
+    else:
+        cab = ('*A restrição é o toque, e só o toque.* Os sinais atrás do leque '
+               '— %s do total — não pagam o próprio lugar em nenhuma célula. '
+               % add)
+    n_at = ' e '.join(str(lq['decomp'][b]['atras'][str(R['stops'][0])]['n']
+                          if lq['decomp'][b]['atras'][str(R['stops'][0])] else 0)
+                      for b in BASES)
+    fecho = (' Nenhuma das duas leituras aguenta peso: sozinha, a metade de trás '
+             'rende *%s trades* nas duas bases. O que a decomposição mostra com '
+             'segurança é outra coisa — a restrição é, na prática, *quase toda* '
+             'o toque. Com tolerância de um range médio, o preço que se afastou o '
+             'bastante para deixar o leque inteiro para trás quase não '
+             'acontece.' % n_at)
+    return _neg(cab + det + '.' + fecho)
+
+
 def tabela_fill(R, ROT=None):
     """Tabela: limitada valida ate o fim do pregao x valida por 1 barra."""
     lin = []
@@ -721,6 +1045,7 @@ def monta():
 
     ctx = dict(
         R=R, G=json.dumps(G, separators=(',', ':')),
+        klinecharts_js=open(VENDOR_KC, encoding='utf-8').read(),
         stop_pad=stop_pad,
         ma_slope=R['parametros']['MA_SLOPE'],
         ev26=n1(ab26['ev']), evfu=n1(abfu['ev']),
@@ -751,12 +1076,17 @@ def monta():
         alvo=int(P['ALVO']),
         frac=int(100 * P['FRAC_PARCIAL']),
         max_fill=P.get('MAX_BARRAS_FILL', 1),
+        tol_toque=('%.2g' % P['TOL_TOQUE']).replace('.', ','),
+        leque_atual=('FILTRO_LEQUE = %s' % P.get('FILTRO_LEQUE', False)),
     )
     # --- as frases de conclusao, calculadas (ver comentario em veredito_ma)
     for nome, fn in (('ver_ma', veredito_ma), ('ver_entrada', veredito_entrada),
                      ('ver_abortos', veredito_abortos), ('ver_fill', veredito_fill),
                      ('ver_setups', veredito_setups), ('ver_stop', veredito_stop),
                      ('ver_e2', veredito_e2), ('ver_filtro_e2', veredito_filtro_e2),
+                     ('ver_leque', veredito_leque),
+                     ('ver_leque_ma', veredito_leque_ma),
+                     ('ver_leque_decomp', veredito_leque_decomp),
                      ('acao_stop', acao_stop), ('acao_ma', acao_ma),
                      ('acao_carteira', acao_carteira),
                      ('ver_gestao', veredito_gestao)):
@@ -764,6 +1094,10 @@ def monta():
         ctx[nome + '_md'], ctx[nome] = md, html
     ctx['tab_fill'] = tabela_fill(R)
     ctx['tab_e2'] = bloco_e2(R)
+    ctx['tab_leque'] = bloco_leque(R)
+    ctx['tab_leque_pos'] = bloco_leque_pos(R)
+    ctx['tab_leque_ma'] = bloco_leque_ma(R)
+    ctx['tab_leque_decomp'] = bloco_leque_decomp(R)
     ctx['tab_gestao'] = bloco_gestao(R)
     ctx['e2_rot'] = R['e2']['rotulos'][R['e2']['atual']] if R.get('e2') else ''
     return ctx

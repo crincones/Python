@@ -12,12 +12,13 @@ O gatilho é o índice de esforço já validado em `ProfitChart/Indicadores/Graf
 |---|---|
 | **[PLANO.md](PLANO.md)** · **[plano.html](plano.html)** | **O plano operacional manual.** O que fazer na frente da tela, os limites do dia, a nota de aderência e o cartão de pregão. **Gerado.** |
 | [ESTRATEGIA.md](ESTRATEGIA.md) | Especificação formal: gatilho, regimes, os três setups, execução e gestão. É o contrato que a engine implementa. |
-| **[relatorio.html](relatorio.html)** | **O relatório.** Resultados, variantes de média, variante de stop, curvas de capital e o **visualizador de trades** — tudo num arquivo só. Abra no navegador. |
+| **[relatorio.html](relatorio.html)** | **O relatório.** Resultados, variantes de média, variante de stop, curvas de capital e o **visualizador de trades** — o gráfico de candles é interativo (zoom, arrasto e cruzamento) e carrega o pregão inteiro. Tudo num arquivo só, inclusive a biblioteca do gráfico: abre offline. |
 | [RESULTADOS.md](RESULTADOS.md) | Os mesmos números em markdown. **Gerado** — não edite à mão. |
 | `engine.py` | Motor: carga, indicador de esforço, as cinco médias de regime, os 3 setups, simulação de trade, métricas. |
 | `rodar.py` | Roda tudo e grava `saida/`. |
 | `relatorio.py` + `molde.py` + `resultados_md.py` | Geram `relatorio.html` e `RESULTADOS.md` a partir de `saida/resumo.json`. |
 | `plano.py` + `molde_plano.py` | Geram `PLANO.md` e `plano.html` — do mesmo `resumo.json`, e o HTML sai do próprio markdown. |
+| `vendor/` | [KLineCharts](https://klinecharts.com) 9.8.10 (Apache 2.0), embutido no HTML pelo `relatorio.py`. É a única dependência de front-end e não vai a CDN. |
 | `dados/` | Os dois CSV de 10.000 ticks exportados do Profit. |
 | `saida/` | `resumo.json` (fonte única dos números), `console.txt` e `trades_*.csv`. |
 
@@ -41,6 +42,8 @@ Mesmo gatilho (índice de esforço ≥ 0,80, corpo pequeno, eixo de deslocamento
 - **B — reversão rápida.** Fora de consolidação, preço a 1+ range médio da média, gatilho contra o afastamento.
 - **C — reversão em consolidação.** Média sem inclinação, preço afastado. **Desligado: mede negativo nas duas bases.**
 
+**Variante do leque (`FILTRO_LEQUE`, desligada).** Só vale o gatilho que **toca o leque ou fica atrás dele** — o que dispara com o preço esticado à frente das médias é descartado. Não mexe no A (que já exige o toque) e reescreve o B: EV sobe nas quatro células medidas e o drawdown do WINFUT cai de 1.575 para 525 pontos, ao custo de metade dos trades. Fica desligada porque o `t` cai onde a amostra encolhe. § 6 de [RESULTADOS.md](RESULTADOS.md).
+
 Gestão: **stop 150 (padrão) ou 100 · parcial de 50% na mesma distância do stop · alvo 300**. Quando a parcial sai, o stop do restante fica na **média da operação** — que, com meia posição e a parcial na distância do stop, é o próprio stop inicial. O stop não anda, e o trade que volta morre em **zero de verdade** (o modelo anterior pagava +50 nesse desfecho e ainda o chamava de "zero a zero").
 
 Entrada: **ordem limitada no meio do candle do gatilho, válida por UMA barra.** Não
@@ -60,8 +63,8 @@ e todo número deste projeto já está sob essa regra.
 5. **As três EMAs seguem como padrão**, com o melhor `t` em 3 das 4 combinações de base e stop; perdem só no WINFUT com stop 100, para a aproximação de Jurik — que não é o JMA de verdade.
 6. **A regra da barra seguinte custa quase nada** — cerca de um sinal em dez é abortado. O ganho dela é de disciplina, não de estatística.
 
-Leia a § 8 de [RESULTADOS.md](RESULTADOS.md) antes de dimensionar posição — os números são brutos.
+Leia a § 11 de [RESULTADOS.md](RESULTADOS.md) antes de dimensionar posição — os números são brutos.
 
 ## O visualizador
 
-Está dentro do relatório, na seção 10. Navega **trade a trade** (setas ← →, ou clique na lista): candles do pregão, as médias, linhas de entrada/stop/parcial/alvo, marcas do gatilho, do preenchimento e da saída, o índice de esforço embaixo com a linha de corte, e ficha com desfecho e R$ por contrato. Filtros por base, **stop (150 ou 100 — os sinais são os mesmos, muda onde o trade morre, e a parcial acompanha)**, setup (A/B/C — inclusive o C desligado, para ver por que falha) e desfecho.
+Está dentro do relatório, na seção 13. Navega **trade a trade** (setas ← →, ou clique na lista): candles do pregão, as médias, linhas de entrada/stop/parcial/alvo, marcas do gatilho, do preenchimento e da saída, o índice de esforço embaixo com a linha de corte, e ficha com desfecho e R$ por contrato. Filtros por base, **stop (150 ou 100 — os sinais são os mesmos, muda onde o trade morre, e a parcial acompanha)**, setup (A/B/C — inclusive o C desligado, para ver por que falha), **posição em relação ao leque (toca/atrás × na frente)** e desfecho.

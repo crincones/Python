@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="pt-BR"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Plano de operação — Esforço × Resultado em range</title>
+<style>
+:root{
+  --tinta:#1b1f24; --tinta2:#5b6570; --fundo:#fbfaf7; --papel:#ffffff;
+  --linha:#e2ddd4; --realce:#8a6a2f; --alta:#1a7f5a; --baixa:#b3453a;
+  --caixa:#f5f2ec;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --tinta:#e8e6e1; --tinta2:#9aa2ab; --fundo:#14171a; --papel:#1b1f23;
+    --linha:#2e343a; --realce:#d9ae5e; --alta:#3fbb8a; --baixa:#e0685c;
+    --caixa:#20262c;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fundo);color:var(--tinta);
+  font:16px/1.65 Georgia,'Times New Roman',serif}
+.env{max-width:800px;margin:0 auto;padding:56px 22px 90px}
+h1{font-size:32px;line-height:1.2;margin:0 0 28px;letter-spacing:-.4px;
+   padding-bottom:18px;border-bottom:2px solid var(--tinta)}
+h2{font-size:22px;margin:46px 0 6px;padding-top:14px;
+   border-top:1px solid var(--linha)}
+h3{font-size:17px;margin:26px 0 4px}
+p{margin:12px 0}
+a{color:var(--realce)}
+code{font:13px/1.5 ui-monospace,'Cascadia Mono',Consolas,monospace;
+  background:var(--caixa);padding:1px 5px;border-radius:3px}
+pre{background:var(--caixa);border:1px solid var(--linha);border-radius:7px;
+  padding:14px 16px;overflow-x:auto;margin:18px 0}
+pre code{background:none;padding:0;font-size:12.5px;line-height:1.6}
+.lead{font-size:19px;line-height:1.55;color:var(--tinta)}
+.destaque{background:var(--caixa);border-left:3px solid var(--realce);
+  padding:14px 18px;margin:22px 0;border-radius:0 5px 5px 0}
+.destaque p{margin:0}
+.aviso{border:1px solid var(--baixa);border-radius:7px;padding:14px 18px;
+  margin:22px 0;background:color-mix(in srgb,var(--baixa) 7%,transparent)}
+.aviso p{margin:0}
+table{border-collapse:collapse;width:100%;margin:18px 0;
+  font:13.5px/1.45 system-ui,-apple-system,sans-serif}
+th,td{padding:7px 10px;text-align:left;border-bottom:1px solid var(--linha);
+  vertical-align:top}
+thead th{border-bottom:1.5px solid var(--tinta);font-weight:600;
+  color:var(--tinta2);text-transform:uppercase;font-size:11px;
+  letter-spacing:.06em}
+.rolagem{overflow-x:auto}
+ul,ol{margin:12px 0;padding-left:24px}
+li{margin:5px 0}
+hr{border:0;border-top:1px solid var(--linha);margin:34px 0}
+footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--linha);
+  font:13px/1.6 system-ui,sans-serif;color:var(--tinta2)}
+@media(max-width:640px){h1{font-size:26px}.env{padding:36px 15px 60px}}
+</style>
+</head><body><div class="env">
+<h1>Plano de operação manual — Esforço × Resultado em range de 388 ticks</h1>
+<p class="lead">Este plano opera a variante <b>V8</b> do backtest: sinal do indicador, filtro de esforço baixo, alvo e stop a meio range. É a única configuração do estudo que passou em todos os controles — e ainda assim a margem dela cabe dentro de um spread ruim. Leia o §8 antes de mandar a primeira ordem.</p>
+<div class="rolagem"><table><thead><tr><th>o que o backtest mediu</th><th></th></tr></thead><tbody><tr><td>Operações</td><td>562 em 84 pregões (6,7 por pregão)</td></tr><tr><td>Acerto</td><td>58,0%</td></tr><tr><td>Expectativa bruta</td><td>+31,1 ticks = +0,160 R = +0,31 USD por lote</td></tr><tr><td>Significância</td><td>t = +3,84 (erro padrão de 8,1 ticks)</td></tr><tr><td>Fator de lucro</td><td>1,38</td></tr><tr><td>Pior rebaixamento</td><td>-1.746 ticks = -9,00 R</td></tr><tr><td>Duração típica</td><td>1,0 barra(s)</td></tr></tbody></table></div>
+<h2>1 · O gráfico, antes de qualquer coisa</h2>
+<p>O indicador só significa alguma coisa num gráfico onde <code>High-Low</code> é constante <b>e</b> onde <code>tick_volume</code> e <code>real_volume</code> carregam agressão compradora e vendedora. Aplicado em qualquer outro lugar ele não dá erro: desenha setas sem significado, que é o pior modo de falhar.</p>
+<ul><li>Símbolo sintético de range gerado pelo <code>Range_Claude_v1.mq5</code>, com <b>388 ticks</b> de range.</li><li>Indicador <code>Trigger_EsforcoResultado_Range.mq5</code> aplicado ao gráfico.</li><li>Confira o log ao anexar: se ele avisar que o range foge da mediana ou que <code>real_volume</code> está zerado, <b>pare</b>. A premissa não vale e o resto deste plano não se aplica.</li></ul>
+<div class="destaque"><p><b>Não mexa nos parâmetros do indicador.</b> Os seis foram varridos no backtest e todos são platôs — nenhum valor testado muda a conclusão, e o padrão nunca foi o melhor da varredura. Isso é o que mostra que o indicador não foi ajustado a este histórico. Mexer neles agora, depois de ver as tabelas, é a definição de ajuste à amostra.</p></div>
+<div class="rolagem"><table><thead><tr><th>parâmetro</th><th>valor</th><th>não mexer porque</th></tr></thead><tbody><tr><td><code>PeriodoBase</code></td><td>60</td><td>de 40 a 100 o resultado é o mesmo</td></tr><tr><td><code>FatorRes</code></td><td>0,70</td><td>de 0,50 a 0,70 o resultado é o mesmo ou melhor</td></tr><tr><td><code>FatorQual</code></td><td>0,50</td><td>de 0,20 a 0,50 o resultado é o mesmo</td></tr><tr><td><code>FatorCorpo</code></td><td>0,80</td><td>só afeta a divergência</td></tr><tr><td><code>LimDesq</code></td><td>0,05</td><td>só afeta a divergência</td></tr><tr><td><code>FatorCompleta</code></td><td>0,90</td><td>praticamente inerte neste símbolo</td></tr></tbody></table></div>
+<h2>2 · O filtro que decide tudo, e que o indicador ainda não mostra</h2>
+<p>O gatilho sozinho não paga. Todo sinal do indicador, operado a meio range, mede <b>53,2%</b> de acerto — positivo, mas magro. Com o filtro de esforço, sobe para <b>58,0%</b>. É esse filtro que separa o plano de uma aposta.</p>
+<p><b>A regra:</b> o <i>esforço relativo</i> da barra de sinal tem de ser <b>≤ 0,80</b>. Esforço relativo é a agressão total da barra (compradora + vendedora) dividida pela média das barras da <b>mesma direção</b> nas últimas 60. Abaixo de 0,80 significa: a barra virou o movimento com pouca gente negociando.</p>
+<p>A tese é a própria absorção, na forma mais pura: não houve briga. O preço andou porque não havia nada do outro lado — e não porque um lado venceu o outro. Só <b>32,3%</b> dos sinais passam nesse corte, então espere descartar dois de cada três.</p>
+<div class="aviso"><p><b>O indicador não publica esse número.</b> Os buffers de estudo do <code>.mq5</code> são <code>Sinal</code>, <code>Eficiência</code>, <code>ResRel</code> e <code>QualRel</code>. O esforço relativo não está entre eles — mas é <b>derivável dos dois que estão</b>.</p></div>
+<p>Como <code>Eficiência = ResRel / EsfRel</code> por definição, vale a volta:</p>
+<pre><code>EsfRel = ResRel / Eficiência</code></pre>
+<p>Conferido nos 1.782 sinais do histórico: a identidade vale em <b>100%</b> deles. Na Janela de Dados, portanto, basta dividir <code>ResRel</code> por <code>Eficiência</code> e comparar com 0,80.</p>
+<p>Fazer essa conta de cabeça no instante do sinal é pedir erro. A correção definitiva é publicar o valor como um nono buffer. Dentro do <code>.mq5</code>, a variável <code>esfRel</code> <b>já existe e já está calculada</b> no laço de <code>OnCalculate</code> — só não é gravada em lugar nenhum:</p>
+<pre><code>// no cabecalho, ao lado dos outros DRAW_NONE:
+#property indicator_buffers 9
+#property indicator_plots   9
+#property indicator_label9  "EsfRel"
+#property indicator_type9   DRAW_NONE
+
+double BufEsfRel[];                       // junto dos demais buffers
+
+// em OnInit(), depois de SetIndexBuffer(7, ...):
+SetIndexBuffer(8, BufEsfRel, INDICATOR_DATA);
+PlotIndexSetDouble(8, PLOT_EMPTY_VALUE, 0.0);
+PlotIndexSetInteger(8, PLOT_DRAW_BEGIN, g_primeira);
+
+// em OnCalculate(), na limpeza do inicio do laco:
+BufEsfRel[idx] = 0.0;
+
+// e ao lado de BufEfic[idx] = efic;
+BufEsfRel[idx] = esfRel;</code></pre>
+<p>Com o buffer no lugar, o filtro vira leitura direta na Janela de Dados — e um EA que consuma o indicador por <code>iCustom</code> passa a ter a condição inteira sem recalcular nada.</p>
+<h2>3 · A entrada</h2>
+<ol><li><b>Espere a barra de sinal FECHAR.</b> A seta do indicador aparece na barra em formação e pode sumir quando ela fecha, porque <code>resRel</code>, <code>qualRel</code> e o próprio corpo mudam até o último tick. Sinal em barra aberta não é sinal.</li><li><b>Confira o esforço relativo</b> (§2). Se <code>ResRel / Eficiência</code> for maior que 0,80, <b>não opere</b>. Este é o passo que a maioria vai querer pular, e é o único que o backtest mostrou que importa.</li><li><b>Entre a mercado, no fechamento da barra</b>, a favor da direção da barra de sinal — para cima se ela fechou de alta, para baixo se fechou de baixa. Vale igual para a seta verde/vermelha (absorção) e para a azul (divergência): as duas mediram parecido dentro do filtro (56,1% e 63,6%).</li><li><b>Uma posição por vez.</b> Sinal que aparecer com posição aberta é ignorado, não acumulado.</li></ol>
+<div class="destaque"><p><b>Por que a mercado, e não uma ordem limitada melhor?</b> Foi testado. A ordem limitada no meio do range da barra de sinal abandona 53,6% dos sinais e o preço melhor não compensa a amostra perdida — a variante V3 é a pior do estudo inteiro. Num gráfico onde a vantagem dura uma barra, esperar por preço é esperar a vantagem passar.</p></div>
+<h2>4 · A saída</h2>
+<p>Alvo e stop na mesma distância: <b>194 ticks = 1,94 dólares = meio range</b>, os dois montados junto com a entrada e não tocados depois.</p>
+<div class="rolagem"><table><thead><tr><th></th><th>valor</th><th>por quê</th></tr></thead><tbody><tr><td>Stop</td><td>194 ticks abaixo (compra) ou acima (venda) da entrada</td><td>é 1R</td></tr><tr><td>Alvo</td><td>194 ticks, a posição inteira</td><td>é onde a vantagem está</td></tr><tr><td>Parcial</td><td>nenhuma</td><td>com alvo de uma barra não há o que parcelar</td></tr><tr><td>Stop móvel</td><td>nenhum</td><td>a operação dura 1,0 barra(s)</td></tr><tr><td>Tempo máximo</td><td>nenhum necessário</td><td>a barra seguinte resolve quase sempre</td></tr></tbody></table></div>
+<div class="destaque"><p><b>Meio range não é um número escolhido por gosto.</b> É o único alvo deste gráfico em que a ambiguidade dentro da barra não existe. Como a barra tem 388 ticks por construção, ela não consegue percorrer 194 para cima <i>e</i> 194 para baixo: um dos dois lados é sempre decidido primeiro, e o backtest não precisou supor nada. Em qualquer outro alvo o número medido depende de uma convenção.</p></div>
+<p><b>Não estique o alvo.</b> Está medido: em meio range a expectativa é de +0,160 R por operação; em um range inteiro cai para +0,095 R; em dois ranges vira -0,048 R. A vantagem que o indicador enxerga vive uma barra e se dissolve.</p>
+<h2>5 · Tamanho e risco</h2>
+<p>O risco por operação é <b>194 ticks = 1,94 dólares por lote</b>. Com 6,7 operações por pregão, o risco diário bruto é de cerca de 6,7 R.</p>
+<ul><li>Arbitre o lote para que <b>1R fique em 0,25% a 0,5% do capital</b>. O pior rebaixamento medido foi de 9,0 R — com 0,5% por operação isso seria uma queda de 4,5% no capital, e ele pode ser pior fora da amostra.</li><li><b>Limite diário de perda: 3R.</b> Atingiu, fecha a plataforma.</li><li><b>Limite de 13 operações por dia</b>, que é o dobro da média medida. Passar disso significa que você está vendo sinal onde não tem.</li></ul>
+<h2>6 · O que não fazer</h2>
+<div class="rolagem"><table><thead><tr><th>tentação</th><th>o que o backtest diz</th></tr></thead><tbody><tr><td>Filtrar por horário</td><td>Reprovado. As horas boas escolhidas em metade da amostra não se confirmam na outra — a interseção é de 3 hora(s), compatível com sorteio.</td></tr><tr><td>Operar só absorção, ou só divergência</td><td>Dentro do filtro de esforço as duas medem parecido (56,1% e 63,6%). Separar só reduz a amostra.</td></tr><tr><td>Operar só um lado</td><td>Compra mede 61,5% e venda 54,8%. A diferença está dentro do ruído para esta amostra.</td></tr><tr><td>Apertar o alvo para 1/4 de range</td><td>Parece melhor no backtest e não é: nessa distância os dois lados cabem na mesma barra e o número vira artefato da convenção.</td></tr><tr><td>Deixar correr quando “está indo bem”</td><td>Cada barra além da primeira devolve vantagem. É a medida mais consistente do estudo.</td></tr><tr><td>Aumentar o lote depois de uma sequência boa</td><td>Com t = +3,84, sequências boas e ruins de 10 operações são esperadas sem que nada tenha mudado.</td></tr><tr><td>Operar sem conferir o esforço</td><td>Sem o filtro a expectativa cai de +31,1 para +12,4 ticks — e o custo come a diferença inteira.</td></tr></tbody></table></div>
+<h2>7 · Como saber se parou de funcionar</h2>
+<p>Defina os critérios <b>agora</b>, enquanto não há dinheiro em jogo. Depois de uma sequência ruim ninguém escreve regra de parada honesta.</p>
+<ul><li><b>Registre toda operação</b> com: data e hora, tipo de sinal (absorção ou divergência), lado, <code>ResRel</code>, <code>Eficiência</code>, o esforço relativo calculado, preço de entrada, preço de saída, resultado em ticks e o slippage observado contra o fechamento da barra.</li><li><b>Depois de 50 operações</b>, compare o acerto com 58,0%. Abaixo de 50% com 50 operações ainda é ruído — mas já é hora de reler o registro.</li><li><b>Depois de 100 operações</b>, some o slippage médio. Se ele passar de 20 ticks por operação, a estratégia não tem margem: +31,1 ticks de expectativa bruta não paga isso.</li><li><b>Pare em -15R acumulados.</b> É 1,7 vezes o pior rebaixamento medido, e a essa altura a hipótese de que a vantagem sumiu é mais simples que a de azar.</li><li><b>Refaça o backtest a cada trimestre</b> com o histórico novo: <code>python rodar.py</code>. O número que mais importa acompanhar não é o acerto da estratégia, e sim a <b>linha de base</b> do §5.2 do relatório — a taxa de continuação do próprio gráfico, hoje em 51,45%. Boa parte da vantagem vem dali; se ela cair para 50%, o resto cai junto.</li></ul>
+<h2>8 · Expectativa realista</h2>
+<div class="aviso"><p><b>A margem inteira cabe dentro de um spread ruim.</b> A expectativa bruta é de +31,1 ticks por operação. Com 20 ticks de custo ida-e-volta ela cai para +11,1; com 40 ticks fica <b>negativa</b> (-8,9). E a entrada é a mercado no fechamento de uma barra de range — que é exatamente um instante de movimento, onde o slippage é pior que a média.</p></div>
+<div class="rolagem"><table><thead><tr><th>custo ida+volta</th><th>expectativa por operação</th><th>por pregão</th></tr></thead><tbody><tr><td>0 ticks</td><td>+31,1 ticks</td><td>+2,08 USD por lote</td></tr><tr><td>10 ticks</td><td>+21,1 ticks</td><td>+1,41 USD por lote</td></tr><tr><td>20 ticks</td><td>+11,1 ticks</td><td>+0,74 USD por lote</td></tr><tr><td>40 ticks</td><td>-8,9 ticks</td><td>-0,60 USD por lote</td></tr></tbody></table></div>
+<p>O que este plano é: uma vantagem pequena, real dentro da amostra, que passou em quatro validações independentes (platô, metades, terços e controle invertido) e que ainda assim foi escolhida como o melhor de 30 tentativas, num único histórico de 85 pregões.</p>
+<p>O que ele não é: uma fonte de renda. <b>Comece com lote mínimo e trate os três primeiros meses como coleta de dados</b>, não como operação. O objetivo dessa fase é medir o seu slippage real — que é a única variável desconhecida que decide se sobra alguma coisa.</p>
+<div class="destaque"><p><b>O teste mais honesto que você pode fazer.</b> Opere em conta demo e em conta real ao mesmo tempo, com o mesmo lote mínimo, durante 100 operações. A diferença entre as duas curvas é o seu custo real de execução. Se ela for maior que 31 ticks por operação, o plano não tem margem — e é melhor descobrir isso com lote mínimo.</p></div>
+<hr>
+<p>Gerado por <code>plano.py</code> a partir de <code>saida/resumo.json</code> (2026-09-06 09:37). Os números vêm todos do backtest; nenhum foi digitado à mão. Para refazer: <code>python rodar.py &amp;&amp; python plano.py</code>.</p>
+<footer>Gerado por <code>plano.py</code> a partir de <code>saida/resumo.json</code> (2026-09-06 09:37).</footer>
+</div></body></html>

@@ -1,0 +1,222 @@
+========================================================================
+BACKTEST MOMENTUM -- GRAFICO PI (Pontos de Inversao)
+========================================================================
+
+[1] BASE E AUDITORIA
+    10000 candles, 26 pregoes, 2026-08-06 a 2026-09-11 (385 candles/dia)
+    corpo = 100 pontos em 99.99% dos candles (min 40, max 100)
+    abertura = fechamento anterior em 99.52%
+    EMA 21 conferida contra a da Nelogica em 9980 candles: erro max 0.944 ponto (arredondamento das 2 casas do csv), 57 candles com divergencia real
+    ATR 21 mediano 148 pontos, range mediano 145
+
+[2] SINAIS DA REGRA-BASE
+    confirmados (candle de continuacao fechado): 655
+    antecipados (ordem no fechamento da retracao): 656
+
+[3] MATRIZ  modo de entrada  x  gestao  x  nivel
+    modo      gestao   nivel       N     pts       R$     EV   win%    FL     DD   Rec
+    fecha     parcial  ouro      170    5800     1160   34.1  36.5%  1.89    800  7.25
+    fecha     parcial  prata     243    6800     1360   28.0  34.2%  1.70    600 11.33
+    fecha     parcial  bronze    569    7200     1440   12.7  29.3%  1.28   1700  4.24
+    fecha     puro     ouro      170    7600     1520   44.7  36.5%  1.70   1200  6.33
+    fecha     puro     prata     243    8700     1740   35.8  34.2%  1.54   1600  5.44
+    fecha     puro     bronze    569    9000     1800   15.8  29.3%  1.22   2100  4.29
+    fecha     r2       ouro      173    4200      840   24.3  41.6%  1.42   1400  3.00
+    fecha     r2       prata     248    4800      960   19.4  39.9%  1.32   1900  2.53
+    fecha     r2       bronze    607    4400      880    7.2  35.9%  1.11   2200  2.00
+    meio_lim  parcial  ouro       99    1500      300   15.2  34.3%  1.30    800  1.88
+    meio_lim  parcial  prata     151    2600      520   17.2  35.1%  1.34   1100  2.36
+    meio_lim  parcial  bronze    342    -175      -35   -0.5  28.1%  0.99   2875 -0.06
+    meio_lim  puro     ouro       99    3100      620   31.3  33.3%  1.47    800  3.88
+    meio_lim  puro     prata     151    5500     1100   36.4  34.4%  1.56   1000  5.50
+    meio_lim  puro     bronze    342    3400      680    9.9  27.8%  1.14   2650  1.28
+    meio_lim  r2       ouro       99    1700      340   17.2  39.4%  1.29   1100  1.55
+    meio_lim  r2       prata     152    3300      660   21.7  40.8%  1.37   1500  2.20
+    meio_lim  r2       bronze    360    1750      350    4.9  35.0%  1.08   3000  0.58
+    antecipa  parcial  prata     216    4750      950   22.0  31.5%  1.55   1200  3.96
+    antecipa  parcial  bronze    308    4575      915   14.9  28.2%  1.37    975  4.69
+    antecipa  puro     prata     216    5100     1020   23.6  31.0%  1.34   1600  3.19
+    antecipa  puro     bronze    308    3350      670   10.9  27.9%  1.15   1750  1.91
+    antecipa  r2       prata     225    4500      900   20.0  40.0%  1.33   1100  4.09
+    antecipa  r2       bronze    335    4300      860   12.8  37.6%  1.21   1200  3.58
+
+[4] FILTROS, MEDIDOS UM A UM (entrada no fechamento, com parcial)
+
+    -- concavidade
+       Hull fechando a curva            n= 218  EV=  18.1  win= 31.2%   por terco:   31.4   19.0   13.4
+       Hull abrindo a curva (concava)   n= 437  EV=   8.2  win= 27.9%   por terco:    9.4   10.3    6.2
+
+    -- esticamento
+       ate 0,15 ATR                     n= 129  EV=  26.4  win= 33.3%   por terco:   35.5   22.0   24.6
+       0,15 a 0,45                      n= 142  EV=  10.6  win= 28.2%   por terco:   50.0    8.3   -1.4
+       0,45 a 0,80                      n= 251  EV=   4.4  win= 26.3%   por terco:  -12.2   26.4   -6.3
+       acima de 0,80                    n= 133  EV=  11.7  win= 30.8%   por terco:   11.1  -23.0   30.4
+
+    -- pavio
+       ate 25 pts                       n= 145  EV=  -2.8  win= 23.4%   por terco:    7.7   10.5  -19.4
+       25 a 45                          n= 144  EV=  25.0  win= 32.6%   por terco:   24.1   34.5   16.7
+       45 a 65                          n= 107  EV=  18.7  win= 31.8%   por terco:   -4.8    0.0   35.6
+       65 a 90                          n= 144  EV=  17.4  win= 33.3%   por terco:   47.8   13.5   10.1
+       acima de 90                      n= 115  EV=  -1.3  win= 23.5%   por terco:    3.1  -13.5    1.8
+
+    -- pavio_favor
+       ate 3% do range                  n= 274  EV=   7.8  win= 28.8%   por terco:   -4.2    8.1   12.0
+       3 a 6%                           n= 240  EV=  22.5  win= 32.5%   por terco:   33.3   24.4   15.7
+       6 a 10%                          n=  85  EV=  -1.2  win= 24.7%   por terco:   12.5    6.2  -13.5
+       acima de 10%                     n=  56  EV=   1.8  win= 21.4%   por terco:   15.4    0.0   -3.4
+
+    -- pavio_contra
+       ate 15% do range                 n= 124  EV=   3.2  win= 25.8%   por terco:   16.7   20.0  -16.4
+       15 a 30%                         n= 191  EV=  14.1  win= 28.3%   por terco:   20.5   17.9    8.2
+       30 a 45%                         n= 243  EV=  14.8  win= 31.7%   por terco:   15.9    7.1   20.2
+       acima de 45%                     n=  97  EV=   8.8  win= 27.8%   por terco:    4.2    7.5   11.3
+
+    -- retracao_candles
+       1 candle                         n= 349  EV=   5.3  win= 26.9%   por terco:   10.3   19.1   -7.8
+       2 candles                        n= 226  EV=  20.8  win= 32.3%   por terco:   23.8   -1.4   33.6
+       3 candles                        n=  66  EV=  16.7  win= 31.8%   por terco:   20.0   26.1    9.1
+       4 ou mais                        n=  14  EV=  -7.1  win= 14.3%   por terco:    0.0   20.0  -25.0
+
+    -- retracao_tamanho
+       ate 1,0 ATR                      n= 192  EV=   9.1  win= 28.1%   por terco:    8.9   30.3   -5.8
+       1,0 a 1,5                        n= 183  EV=   3.8  win= 26.8%   por terco:    5.0    6.1    1.3
+       1,5 a 2,0                        n= 181  EV=  21.5  win= 32.6%   por terco:   33.3    5.3   27.8
+       acima de 2,0                     n=  99  EV=  12.1  win= 28.3%   por terco:   26.3    9.1    8.5
+
+    -- inclinacao_hull
+       ate 0,05 ATR                     n= 200  EV=   5.5  win= 27.5%   por terco:   14.3   23.1  -10.8
+       0,05 a 0,10                      n= 158  EV=  13.9  win= 29.1%   por terco:   -4.9   30.0   13.4
+       0,10 a 0,16                      n= 178  EV=  15.4  win= 29.8%   por terco:   29.2   -4.8   29.6
+       acima de 0,16                    n= 119  EV=  12.6  win= 30.3%   por terco:   37.5    6.9    6.1
+
+    -- inclinacao_ema
+       EMA contra                       n= 129  EV=  21.7  win= 31.0%   por terco:   36.4   11.6   20.8
+       0 a 0,13 ATR                     n= 134  EV=  20.9  win= 32.1%   por terco:   15.4   53.2   -1.6
+       0,13 a 0,30                      n= 198  EV=   5.3  win= 27.3%   por terco:   14.3    6.8    1.0
+       acima de 0,30                    n= 194  EV=   4.6  win= 27.3%   por terco:   -2.7   -9.8   16.7
+
+    -- banda_keltner
+       Hull a menos de 1,8 ATR da banda n= 125  EV=   8.4  win= 28.0%   por terco:  -20.0   17.6   14.3
+       1,8 a 2,3                        n= 157  EV=  13.4  win= 29.9%   por terco:   12.0   23.6    6.5
+       2,3 a 2,9                        n= 187  EV=  13.4  win= 30.5%   por terco:   22.7   10.6   10.4
+       acima de 2,9                     n= 186  EV=  10.2  win= 27.4%   por terco:   32.4    3.4    5.6
+
+    -- hull_colada
+       solta da EMA                     n= 509  EV=  12.9  win= 29.5%   por terco:   17.6   12.9   10.7
+       1 a 3 candles colada             n=  73  EV=  23.3  win= 34.2%   por terco:   27.3   33.3   12.5
+       4 a 8                            n=  42  EV=   7.1  win= 23.8%   por terco:   40.0  -33.3   20.0
+       mais de 8                        n=  31  EV= -32.3  win= 16.1%   por terco:  -57.1   12.5  -43.8
+
+    -- hora
+       9h-10h (pre-abertura a vista)    n= 220  EV=   9.1  win= 27.7%   por terco:   36.4    7.7   -0.9
+       10h-11h                          n= 200  EV=  18.0  win= 31.5%   por terco:   16.2   10.0   24.7
+       11h-12h                          n=  72  EV=  11.1  win= 29.2%   por terco:   -6.2   50.0  -17.9
+       12h-13h                          n=  32  EV=  -6.2  win= 28.1%   por terco:  -50.0  -36.4   46.2
+       13h-15h                          n=  58  EV=   6.9  win= 24.1%   por terco:   45.5    5.3   -7.1
+       depois das 15h                   n=  73  EV=  13.0  win= 30.1%   por terco:  -13.3   22.9   17.6
+
+[5] O VETO DE EXAUSTAO (concavidade x esticamento)
+    Hull fechando a curva    x perto da EMA (ate 0.45 ATR)        n= 106  EV=   8.5
+    Hull fechando a curva    x esticado da EMA                    n= 112  EV=  27.2
+    Hull abrindo a curva     x perto da EMA (ate 0.45 ATR)        n= 165  EV=  24.2
+    Hull abrindo a curva     x esticado da EMA                    n= 272  EV=  -1.5
+
+[6] OS TRES NIVEIS, TERCO A TERCO (entrada no fechamento, com parcial)
+    Ouro     n= 173  EV=  34.1  T1 n= 29 EV=  48.3 | T2 n= 55 EV=  25.5 | T3 n= 89 EV=  34.8
+    Prata    n= 248  EV=  27.4  T1 n= 44 EV=  38.6 | T2 n= 75 EV=  22.7 | T3 n=129 EV=  26.4
+    Bronze   n= 655  EV=  11.5  T1 n=131 EV=  15.3 | T2 n=217 EV=  13.1 | T3 n=307 EV=   8.8
+
+[7] GRADE STOP x ALVO (nivel Ouro, entrada no fechamento)
+
+    -- puro   (EV em pontos | win% | EV por ponto de risco)
+      stop                100              150              200              250              300              400              500              600
+        50     16.8| 45| 0.34   22.5| 36| 0.45   20.2| 28| 0.40   22.0| 24| 0.44   31.8| 24| 0.64   21.1| 16| 0.42   30.3| 15| 0.61   26.0| 12| 0.52
+        75     17.1| 53| 0.23   19.7| 42| 0.26   18.2| 34| 0.24   19.9| 29| 0.27   32.2| 29| 0.43   13.9| 19| 0.18   29.0| 18| 0.39   29.6| 16| 0.39
+       100     23.7| 62| 0.24   26.9| 51| 0.27   24.3| 42| 0.24   28.6| 37| 0.29   44.5| 36| 0.45   27.7| 26| 0.28   43.9| 25| 0.44   41.0| 21| 0.41
+       125     24.6| 66| 0.20   25.9| 55| 0.21   26.7| 47| 0.21   28.2| 41| 0.23   46.0| 40| 0.37   27.6| 29| 0.22   47.0| 28| 0.38   44.9| 25| 0.36
+       150     26.3| 71| 0.18   27.7| 59| 0.18   28.6| 51| 0.19   30.6| 45| 0.20   50.3| 45| 0.34   26.9| 32| 0.18   48.8| 31| 0.33   44.5| 27| 0.30
+       200     30.1| 76| 0.15   35.3| 66| 0.18   31.2| 57| 0.16   28.3| 50| 0.14   44.5| 49| 0.22   22.5| 37| 0.11   44.5| 35| 0.22   42.2| 31| 0.21
+       250     30.6| 80| 0.12   30.9| 69| 0.12   26.3| 61| 0.11   26.6| 55| 0.11   34.4| 51| 0.14   13.0| 40| 0.05   36.4| 39| 0.15   34.4| 35| 0.14
+       300     39.3| 84| 0.13   39.9| 75| 0.13   33.5| 66| 0.11   20.8| 58| 0.07   24.9| 54| 0.08    4.6| 43| 0.02   25.4| 41| 0.08   23.7| 37| 0.08
+
+    -- parcial   (EV em pontos | win% | EV por ponto de risco)
+      stop                100              150              200              250              300              400              500              600
+        50     11.7| 45| 0.23   14.6| 36| 0.29   13.4| 28| 0.27   14.3| 24| 0.29   19.2| 24| 0.38   13.9| 16| 0.28   18.5| 15| 0.37   16.3| 12| 0.33
+        75     15.2| 53| 0.20   16.5| 42| 0.22   15.8| 34| 0.21   16.7| 29| 0.22   22.8| 29| 0.30   13.7| 19| 0.18   21.2| 18| 0.28   21.5| 16| 0.29
+       100     23.7| 62| 0.24   25.3| 51| 0.25   24.0| 42| 0.24   26.2| 37| 0.26   34.1| 36| 0.34   25.7| 26| 0.26   33.8| 25| 0.34   32.4| 21| 0.32
+       125     24.6| 66| 0.20   25.1| 54| 0.20   24.6| 45| 0.20   27.5| 40| 0.22   36.1| 39| 0.29   27.7| 28| 0.22   37.0| 27| 0.30   33.8| 23| 0.27
+       150     26.3| 71| 0.18   27.2| 57| 0.18   27.5| 48| 0.18   31.2| 43| 0.21   40.8| 43| 0.27   31.2| 31| 0.21   41.6| 29| 0.28   37.6| 25| 0.25
+       200     30.1| 76| 0.15   31.6| 62| 0.16   29.8| 51| 0.15   34.2| 46| 0.17   42.2| 45| 0.21   32.1| 32| 0.16   43.1| 31| 0.22   39.6| 26| 0.20
+       250     30.6| 80| 0.12   31.6| 65| 0.13   29.5| 53| 0.12   33.4| 47| 0.13   39.3| 45| 0.16   29.2| 32| 0.12   40.2| 31| 0.16   36.7| 26| 0.15
+       300     39.3| 84| 0.13   40.0| 68| 0.13   37.9| 55| 0.13   40.5| 49| 0.13   44.5| 45| 0.15   34.7| 32| 0.12   46.0| 31| 0.15   40.8| 26| 0.14
+
+[7b] RELACAO RISCO : RETORNO (nivel Ouro, sem parcial)
+        stop                       1:1                       1:2                       1:3                       1:4
+          50  EV    6.6 w 57% r 0.13  EV   16.8 w 45% r 0.34  EV   22.5 w 36% r 0.45  EV   20.2 w 28% r 0.40
+          75  EV   13.4 w 59% r 0.18  EV   19.7 w 42% r 0.26  EV   19.7 w 32% r 0.26  EV   32.2 w 29% r 0.43
+         100  EV   23.7 w 62% r 0.24  EV   24.3 w 42% r 0.24  EV   44.5 w 36% r 0.45  EV   27.7 w 26% r 0.28
+         125  EV   25.1 w 60% r 0.20  EV   28.2 w 41% r 0.23  EV   32.1 w 32% r 0.26  EV   47.0 w 28% r 0.38
+         150  EV   27.7 w 59% r 0.18  EV   50.3 w 45% r 0.34  EV   37.6 w 32% r 0.25  EV   44.5 w 27% r 0.30
+         200  EV   31.2 w 57% r 0.16  EV   22.5 w 37% r 0.11  EV   42.2 w 31% r 0.21  EV   69.9 w 28% r 0.35
+         250  EV   26.6 w 55% r 0.11  EV   36.4 w 39% r 0.15  EV   50.6 w 32% r 0.20  EV   48.8 w 28% r 0.20
+         300  EV   24.9 w 54% r 0.08  EV   23.7 w 37% r 0.08  EV   31.2 w 31% r 0.10  EV   38.2 w 28% r 0.13
+      (r = pontos ganhos por ponto de risco -- o unico numero comparavel entre stops diferentes)
+
+[8] PERIODOS DE MEDIA (a EMA e sempre o meio do Keltner)
+       EMA/ATR  Hull  N base  EV base  N ouro  EV ouro  pts ouro
+            14    21     902     -0.4     151     13.2      2000
+            14    34     869      4.5     180     21.1      3800
+            14    50     860      9.7     225     25.3      5700
+            14    80     874      1.8     254      5.5      1400
+            21    21     670      0.3     104     21.2      2200
+            21    34     673      7.6     134     29.1      3900
+            21    50     655     11.5     173     34.1      5900   <- o do CLAUDE.md
+            21    80     618      1.8     196      6.6      1300
+            34    21     482     -0.9      64     31.2      2000
+            34    34     496      1.1      89     19.1      1700
+            34    50     501      7.1     116     21.6      2500
+            34    80     475      0.2     135      9.6      1300
+
+[9] CUSTO POR TRADE (ida e volta, em pontos)
+        0 pts (R$  0.00)   EV=  34.1  total=   5800 pts  FL= 1.89
+        2 pts (R$  0.40)   EV=  32.1  total=   5460 pts  FL= 1.81
+        5 pts (R$  1.00)   EV=  29.1  total=   4950 pts  FL= 1.70
+       10 pts (R$  2.00)   EV=  24.1  total=   4100 pts  FL= 1.54
+       15 pts (R$  3.00)   EV=  19.1  total=   3250 pts  FL= 1.40
+       20 pts (R$  4.00)   EV=  14.1  total=   2400 pts  FL= 1.28
+
+[10] MONTE CARLO (4.000 reamostragens dos trades)
+      fecha|parcial|ouro       mediana=   5800 pts   p05=   3000   p95=   8600   prob. de lucro=100.0%   DD p95=  1200
+      fecha|parcial|prata      mediana=   6800 pts   p05=   3600   p95=  10100   prob. de lucro=100.0%   DD p95=  1500
+      fecha|parcial|bronze     mediana=   7200 pts   p05=   2400   p95=  12200   prob. de lucro= 99.1%   DD p95=  3000
+      fecha|puro|ouro          mediana=   7600 pts   p05=   3600   p95=  11800   prob. de lucro=100.0%   DD p95=  1900
+      fecha|r2|ouro            mediana=   4200 pts   p05=   1000   p95=   7500   prob. de lucro= 98.6%   DD p95=  2000
+
+[12] GALERIA DE EXEMPLOS
+      Ouro     6 exemplos: 07/08 09:30 C +200, 19/08 10:36 C -100, 27/08 09:20 C +0, 01/09 14:06 C +200, 08/09 14:40 C +0, 11/09 11:30 V -100
+      Prata    6 exemplos: 07/08 10:03 V +200, 18/08 14:38 C -100, 26/08 09:21 V -100, 02/09 12:11 V -100, 04/09 11:46 C -100, 11/09 11:04 V -100
+      Bronze   6 exemplos: 06/08 10:54 C -100, 17/08 09:04 V +200, 25/08 09:05 C -100, 01/09 09:03 C -100, 08/09 10:06 V +0, 11/09 13:03 C +0
+
+[11] DIA A DIA DA VARIANTE ESCOLHIDA (fecha|parcial|ouro)
+      pregoes com trade: 25 de 26
+      dias positivos: 17  negativos: 6  zerados: 2
+      melhor dia: 900 pts   pior dia: -300 pts   media: 232.0 pts
+
+========================================================================
+FLUXO (agressao/tempo) E FORCA DE TENDENCIA
+========================================================================
+  fluxo: 10000 barras, duracao mediana 27 s
+  esforco: rho(esforco, resultado) no Ouro = -0.073  |  quintil de MENOR esforco = +28.6 (base +34.1)
+           corte<1 prata   1:3 com parcial  ganho  +10.1  p=0.170
+           corte<1 ouro    1:3 com parcial  ganho  +15.9  p=0.101
+           corte<1 ouro    1:3 sem parcial  ganho  +16.6  p=0.194
+           corte<1 ouro    1:2 sem parcial  ganho   +4.9  p=0.381
+           corte <1: ganho +15.9 pts, detectavel so acima de +33
+  bronze  melhor t=+3.01 (vol_cont >=)  ruido mediana t=+3.26  p=0.853  NAO passa
+          fora da amostra: T3 sem filtro +11.5 -> com filtro +8.8
+  prata   melhor t=+3.39 (er10 >=)  ruido mediana t=+4.02  p=1.000  NAO passa
+          fora da amostra: T3 sem filtro +25.3 -> com filtro -38.5
+  ouro    melhor t=+3.58 (vel_cont <=)  ruido mediana t=+4.10  p=1.000  NAO passa
+          fora da amostra: T3 sem filtro +30.0 -> com filtro -29.4
+
+[OK] saida/resumo.json  (3.1 MB)
