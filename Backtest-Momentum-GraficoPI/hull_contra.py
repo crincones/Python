@@ -35,6 +35,7 @@ import pandas as pd
 
 import engine as E
 import pavio_contra as P
+import periodos as PR
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 SAIDA = os.path.join(BASE, 'saida')
@@ -401,6 +402,32 @@ def main():
             x = pad(res[(ent, ges)]); x = x[x['aceito']]
             custo[f'{ent}|{ges}'] = {str(cc): float(x['pts'].mean() - cc) for cc in (0, 5, 10)}
     S['custo'] = custo
+
+    # ------------------------------------------------ fora da amostra original
+    #  A Hull a favor era hipotese previa; '2 a 3 barras' e 'fechamento ate
+    #  10%' foram escolhidos na base antiga (06/08 a 11/09). O resto e teste.
+    p('\n--- 9. fora da amostra original (regras escolhidas em 06/08 a 11/09) ---')
+    blocos = {}
+    for ent in ENTRADAS:
+        for ges in GESTOES:
+            t = res[(ent, ges)]
+            m24 = t['n_fav'].between(BARRAS_MIN, BARRAS_MAX)
+            ph = t[m24 & t['hull_ok']]
+            vars_ = ([('sem', t[m24]), ('contra', t[m24 & ~t['hull_ok']])]
+                     + [(k, ph[fn(ph)]) for k, (_, fn) in CANDIDATOS.items()])
+            for var, sel in vars_:
+                blocos[f'{ent}|{ges}|{var}'] = dict(
+                    sinais=PR.por_bloco(sel), carteira=PR.por_bloco(E.carteira(sel)),
+                    meses=PR.por_mes(sel))
+    for ges in GESTOES:
+        p(f"  [fecha {ROT_GESTAO[ges]}]")
+        for var in ('sem', 'contra', 'h', 'h23f10'):
+            b = blocos[f'fecha|{ges}|{var}']['sinais']
+            p(f"    {var:7s} antes {PR.linha_txt(b['antes'])} | original {PR.linha_txt(b['original'])}"
+              f" | depois {PR.linha_txt(b['depois'])}")
+    S['blocos'] = blocos
+    S['regime'] = PR.regime(d)
+    S['rot_bloco'] = PR.ROT_BLOCO
 
     dh = E.indicadores(d)
     S['candles'] = dict(t=[int(x.value // 10**6) for x in d['data']],

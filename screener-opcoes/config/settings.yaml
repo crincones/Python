@@ -1,0 +1,136 @@
+# Configuração do screener de travas de débito.
+# Valores marcados com "PROVISÓRIO" são padrões iniciais e devem ser revisados.
+# Caminhos relativos são resolvidos a partir da raiz do projeto (pasta acima de config/).
+
+mt5:
+  terminal_path: C:\Users\Carlos\AppData\Roaming\MetaQuotes\Terminal\Metatrader5B3\terminal64.exe
+  portable: true                  # o terminal da XP roda com /portable (dados na própria pasta)
+  # Se o terminal estiver fechado, o screener abre minimizado, espera login/sincronização e, ao
+  # terminar, fecha SÓ o que ele mesmo abriu. Terminal aberto pelo usuário nunca é fechado.
+  launch_if_closed: true
+  close_if_launched: true
+  startup_timeout_seconds: 180    # login + conexão + lista de símbolos
+  startup_stable_seconds: 5       # lista de símbolos sem mudar por esse tempo = sincronizada
+  shutdown_timeout_seconds: 60    # espera o fechamento normal antes de forçar
+  init_retries: 3
+  retry_wait_seconds: 2.0
+  select_batch_size: 100          # símbolos selecionados por vez no Market Watch
+  # Após symbol_select, consulta as cotações até o tick do ativo-objeto avançar e o nº de
+  # séries com tick parar de crescer.
+  quote_poll_seconds: 0.5
+  quote_min_wait_seconds: 1.5
+  quote_wait_timeout_seconds: 10.0
+  feed_cooldown_seconds: 15.0     # pausa antes de repetir um ativo com feed parado
+  # Na XP, os timestamps do MT5 vêm como "relógio de parede" de Brasília codificado como epoch.
+  server_timezone: America/Sao_Paulo
+
+paths:
+  snapshots_dir: data/snapshots
+  output_dir: output
+  logs_dir: logs
+  holidays_file: config/feriados_b3.csv
+  dividends_file: config/proventos.csv
+
+logging:
+  level: INFO
+  max_bytes: 5000000
+  backup_count: 5
+
+collector:
+  # Pré-filtro da coleta (evita selecionar dezenas de milhares de séries no Market Watch).
+  strike_range_pct_spot: 0.30     # só strikes entre spot × (1 − 30%) e spot × (1 + 30%)
+  history_retries: 3              # novas leituras do D1 quando faltam pregões (terminal sincronizando)
+  # Checagem do feed por ativo-objeto: sem cotação do ativo ou com fração de séries com tick
+  # abaixo do mínimo, pausa e repete; se persistir, a coleta é abortada (nada é gravado).
+  feed_retries: 3
+  # Coleta saudável em 17/09/2026: 71%–100% das séries com tick por ativo; com feed parado, 0%.
+  min_quoted_series_fraction: 0.30
+
+# Etapa 1 da seleção: filtro inicial pela liquidez do ativo-objeto (à vista).
+underlying_filter:
+  # Exposição a índice via BOVA11 (decisão de 17/09/2026). IBOV11 (opções sobre o índice) fica
+  # sempre fora: volume não comparável com ações e contrato com regras próprias.
+  excluded_underlyings: [IBOV11]
+  lookback_sessions: 20                    # pregões usados na média (D1)
+  min_avg_daily_turnover_brl: 100000000    # PROVISÓRIO: R$ 100 mi/dia de volume financeiro médio
+  max_underlyings: 20                      # mantém só os N mais líquidos que passarem no filtro
+  min_listed_series: 50                    # mínimo de séries de opção listadas no ativo
+
+# Etapa 2 da seleção: liquidez própria de cada série (decisão principal).
+series_liquidity:
+  max_spread_pct_mid: 0.10        # PROVISÓRIO: (ask - bid) / mid ≤ 10%
+  min_mid_price_brl: 0.05         # abaixo disso o tick de R$ 0,01 distorce o spread
+  min_turnover_brl: 50000         # PROVISÓRIO: volume financeiro no dia (session_volume × session_aw)
+  min_deals: 20                   # PROVISÓRIO: número de negócios no dia
+  # Open interest: a XP entrega session_interest zerado no MT5. null = filtro desativado
+  # até existir outra fonte de OI (ex.: arquivo público de posições em aberto da B3).
+  min_open_interest: null
+  max_quote_age_seconds: 120
+  # Pesos do score de liquidez da série. Sem fonte de OI, o peso de OI é redistribuído.
+  weights:
+    spread: 0.35
+    turnover: 0.30
+    deals: 0.25
+    open_interest: 0.10
+
+spreads:
+  lot_size: 100
+  dte_min_business_days: 5        # PROVISÓRIO
+  dte_max_business_days: 45       # PROVISÓRIO
+  max_width_pct_spot: 0.10        # PROVISÓRIO: largura máxima da trava em % do spot
+
+market:
+  # b3 = busca "TAXA CDI CETIP" nos Indicadores financeiros da B3 a cada coleta e grava no snapshot;
+  # yaml = usa risk_free_rate_annual. Se a B3 falhar, a coleta usa o YAML e registra o motivo.
+  risk_free_rate_source: b3
+  # CDI anual (composto 252) de fallback. Ref. B3 16/09/2026: 13,90%.
+  risk_free_rate_annual: 0.1390
+  b3_indicators_url: https://sistemaswebb3-derivativos.b3.com.br/financialIndicatorsProxy/FinancialIndicators/GetFinancialIndicators/
+  b3_cdi_description: TAXA CDI CETIP
+  b3_timeout_seconds: 15
+  max_rate_age_days: 7            # avisa se a data de referência da B3 for mais antiga que isso
+
+pricing:
+  # IV por brentq sobre o mid (Black-Scholes europeu). Fora da faixa → NaN e série excluída.
+  iv_lower_bound: 0.01            # 1% a.a.
+  iv_upper_bound: 5.0             # 500% a.a.
+  iv_tolerance: 1.0e-6
+  iv_max_iterations: 100
+  # IV ATM do vencimento (usada em σ e POP): só séries com book decente e strike perto do spot.
+  # Medido em 17/09/2026: BOVAU181W4 (bid 0,04 / ask 2,30) dava IV 14,6% contra ~23% das vizinhas.
+  atm_max_spread_pct_mid: 0.10
+  atm_max_strike_distance_pct: 0.05
+
+# Viés manual por ativo-objeto: "alta", "baixa" ou "neutro". PREVALECE sobre o sinal automático.
+# Ex.: {PETR4: alta, VALE3: neutro}. Ativos com viés final neutro não entram no ranking.
+bias: {}
+
+# Sinal automático (sugestão): em cada timeframe, alta se fechamento > EMA lenta e EMA rápida >
+# EMA lenta; baixa no espelho; senão neutro. Viés = D1 e H4 concordando; se discordarem, neutro.
+signals:
+  enabled: true
+  bars: 200                       # barras coletadas por timeframe
+  min_bars: 60                    # abaixo disso o timeframe fica neutro (EMA sem aquecimento)
+  timeframes:                     # PROVISÓRIO
+    d1: {ema_fast: 9, ema_slow: 21}
+    h4: {ema_fast: 9, ema_slow: 21}
+
+# Score (decisão de 17/09/2026). R/R, POP, débito/largura e distância em σ medem o mesmo trade-off
+# (correlação |ρ| ≥ 0,97 entre percentis nos dados reais), por isso o perfil vem de uma faixa de POP
+# e o score premia o que diferencia travas do mesmo perfil. Percentis calculados por estratégia
+# entre as travas dentro da faixa.
+scoring:
+  pop_min: 0.35
+  pop_max: 0.60
+  weights:
+    execution_cost: 0.40          # (débito realista − débito mid) / largura: menor é melhor
+    liquidity: 0.40               # pior liquidez entre as pernas: maior é melhor
+    reward_risk: 0.20             # maior é melhor
+
+early_exercise_alert:
+  min_extrinsic_pct_premium: 0.02
+  min_extrinsic_brl: 0.02
+
+check:
+  sample_underlyings: 5           # ativos com mais séries listadas usados na amostra
+  sample_series_per_underlying: 10  # séries mais próximas do ATM no vencimento mais curto

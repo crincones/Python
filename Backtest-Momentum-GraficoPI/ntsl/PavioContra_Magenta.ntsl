@@ -1,4 +1,10 @@
 //------------------------------------------------------------------
+// ATUALIZACAO 14/09/2026
+//   Remedido na base WINFUT_20PI_Robo.csv (132 pregoes): o filtro de
+//   pavio 25-90% segue reprovado, agora abaixo do acaso (percentil 2 a 8
+//   do sorteio; +0,9 pts por sinal contra +2,5 sem filtro). Ver
+//   PAVIO_CONTRA.md. Contagens abaixo: base antiga.
+//
 // PavioContra_Magenta  -  Grafico PI 20 (WINFUT)  -  NTSL
 //
 // Versao SIMPLES, sem Hull e sem EMA. Marca o candle CONTRA que aparece

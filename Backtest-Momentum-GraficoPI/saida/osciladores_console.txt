@@ -1,0 +1,110 @@
+==========================================================================
+MACD, ESTOCASTICO LENTO E IFR COMO FILTRO DO HULL + PAVIOS
+==========================================================================
+base: 50611 barras, 132 pregoes; sinais Hull + 2-4: 4700; Hull + pavios: 3703
+MACD (12, 26, 9)  estocastico lento (14, 3, 3)  IFR 14
+fechamento anda exatamente 100 pts em 100.00% das barras do mesmo pregao -> o IFR e a proporcao suavizada de candles de alta
+
+--- 1. quanto de cada conjunto a regra deixa passar (%) ---
+  h     M1   79  M2   62  M3   18  M4   10  E1    1  E2    0  E3    1  E4   95  I1   81  I2    1  I3   99  M5   20  E5   20  E6   20  I4   20  I5   20
+  cand  M1   78  M2   66  M3   20  M4   10  E1    1  E2    0  E3    1  E4   95  I1   82  I2    1  I3   99  M5   22  E5   16  E6   21  I4   18  I5   20
+  limites por quantil: hist_atr 0.19  k_min 48.60  kd -6.46  ifr_min 46.25  ifr 58.95
+  correlacoes: M1 x I1 0.72  M5 x E6 0.20  E5 x I4 0.40  I5 x M1 0.26
+
+--- 2. Hull + 2 a 4  (fechamento, 1:3 com parcial) ---
+  base: EV +7.5
+  M1 MACD acima de zero                         n= 3703 ( 79%)  dentro   +8.9  fora   +2.2  ganho  +1.4  p 0.118  tercos +9/+8/+10  antes +9.2 (base +6.5)  C +11.0 V +6.9  pct 93
+  M2 MACD acima da linha de sinal               n= 2923 ( 62%)  dentro   +7.0  fora   +8.2  ganho  -0.4  p 0.763  tercos +1/+6/+17  antes +3.9 (base +6.5)  C +5.9 V +8.2  pct 37
+  M3 Histograma do MACD subindo                 n=  825 ( 18%)  dentro   -2.1  fora   +9.5  ganho  -9.6  p 0.015  tercos -8/-4/+8  antes -2.3 (base +6.5)  C -2.2 V -2.0  pct 1
+  M4 MACD acima de zero e histograma subindo    n=  448 ( 10%)  dentro   +0.0  fora   +8.3  ganho  -7.5  p 0.191  tercos -3/+6/-1  antes +7.4 (base +6.5)  C +5.4 V -4.9  pct 9
+  E1 %K acima de %D                             n=   25 (  1%)  dentro   -8.0  fora   +7.6  ganho -15.5  p 0.568  tercos +8/+29/-100  antes +0.0 (base +6.5)  C -35.3 V +50.0  pct 24
+  E2 %K cruzou %D para cima no sinal            n=6  -
+  E3 %K abaixo de 20 na retracao                n=   70 (  1%)  dentro  +37.1  fora   +7.0  ganho +29.7  p 0.050  tercos +52/+32/+20  antes +40.4 (base +6.5)  C +46.9 V +28.9  pct 97
+  E4 %K abaixo de 80 no sinal                   n= 4449 ( 95%)  dentro   +7.7  fora   +4.0  ganho  +0.2  p 0.652  tercos +6/+6/+11  antes +7.0 (base +6.5)  C +8.1 V +7.3  pct 66
+  I1 IFR acima de 50                            n= 3784 ( 81%)  dentro   +8.1  fora   +4.9  ganho  +0.6  p 0.513  tercos +8/+7/+9  antes +8.3 (base +6.5)  C +10.3 V +5.9  pct 75
+  I2 IFR abaixo de 40 na retracao               n=   56 (  1%)  dentro  -10.7  fora   +7.7  ganho -18.2  p 0.294  tercos -50/+12/+17  antes -20.0 (base +6.5)  C -36.8 V +2.7  pct 13
+  I3 IFR abaixo de 70 no sinal                  n= 4653 ( 99%)  dentro   +7.3  fora  +25.5  ganho  -0.2  p 0.353  tercos +5/+7/+10  antes +6.4 (base +6.5)  C +7.8 V +6.8  pct 15
+  M5 Histograma no quintil mais alto            n=  940 ( 20%)  dentro   +3.9  fora   +8.4  ganho  -3.5  p 0.336  tercos -1/+9/+6  antes +3.8 (base +6.5)  C +3.8 V +4.1  pct 16
+  E5 Menor %K da retracao no quintil mais baixo n=  940 ( 20%)  dentro   +0.5  fora   +9.2  ganho  -7.0  p 0.060  tercos +6/-8/-0  antes -0.5 (base +6.5)  C -0.9 V +1.8  pct 3
+  E6 %K - %D no quintil mais alto               n=  940 ( 20%)  dentro   +8.1  fora   +7.3  ganho  +0.6  p 0.875  tercos -1/+6/+20  antes +2.3 (base +6.5)  C +10.5 V +5.6  pct 57
+  I4 Menor IFR da retracao no quintil mais baixo n=  940 ( 20%)  dentro   +4.7  fora   +8.2  ganho  -2.8  p 0.452  tercos -2/+1/+18  antes -1.1 (base +6.5)  C -0.8 V +9.9  pct 22
+  I5 IFR no quintil mais alto                   n=  940 ( 20%)  dentro  +12.4  fora   +6.2  ganho  +5.0  p 0.177  tercos +11/+10/+17  antes +10.9 (base +6.5)  C +16.5 V +8.6  pct 91
+  ganho nas 4 gestoes: M1 +1.4/+1.6/+1.6/+1.2  M2 -0.4/+0.1/-0.9/-0.9  M3 -9.6/-11.5/-11.0/-7.7  M4 -7.5/-7.6/-6.0/-7.4  E1 -15.5/-12.4/-23.8/-18.5  E3 +29.7/+37.3/+16.5/+22.1  E4 +0.2/+0.3/+0.5/+0.1  I1 +0.6/+0.9/+0.2/+0.4  I2 -18.2/-22.7/-22.1/-13.6  I3 -0.2/-0.3/-0.2/-0.1  M5 -3.5/-2.6/-2.9/-4.5  E5 -7.0/-7.7/-5.0/-6.3  E6 +0.6/+1.7/-2.2/-0.4  I4 -2.8/-4.1/-1.1/-1.5  I5 +5.0/+7.1/+3.4/+2.9
+
+--- 2. Hull + pavios (2-3 + fech ate 10%)  (fechamento, 1:3 com parcial) ---
+  base: EV +8.7
+  M1 MACD acima de zero                         n= 2904 ( 78%)  dentro  +10.2  fora   +3.0  ganho  +1.6  p 0.167  tercos +7/+10/+14  antes +9.3 (base +6.8)  C +13.1 V +7.5  pct 93
+  M2 MACD acima da linha de sinal               n= 2437 ( 66%)  dentro   +7.8  fora  +10.4  ganho  -0.9  p 0.546  tercos +1/+7/+18  antes +4.4 (base +6.8)  C +5.9 V +9.6  pct 28
+  M3 Histograma do MACD subindo                 n=  726 ( 20%)  dentro   -0.3  fora  +10.8  ganho  -8.9  p 0.030  tercos -6/-2/+10  antes -1.4 (base +6.8)  C -0.3 V -0.3  pct 1
+  M4 MACD acima de zero e histograma subindo    n=  388 ( 10%)  dentro   +1.7  fora   +9.5  ganho  -7.0  p 0.252  tercos -1/+7/+1  antes +8.0 (base +6.8)  C +8.8 V -5.0  pct 12
+  E1 %K acima de %D                             n=19  -
+  E2 %K cruzou %D para cima no sinal            n=4  -
+  E3 %K abaixo de 20 na retracao                n=   32 (  1%)  dentro  +43.8  fora   +8.4  ganho +35.1  p 0.132  tercos +57/+45/+14  antes +52.0 (base +6.8)  C +40.0 V +47.1  pct 93
+  E4 %K abaixo de 80 no sinal                   n= 3509 ( 95%)  dentro   +8.5  fora  +11.9  ganho  -0.2  p 0.727  tercos +5/+9/+13  antes +7.0 (base +6.8)  C +9.5 V +7.5  pct 35
+  I1 IFR acima de 50                            n= 3047 ( 82%)  dentro   +9.1  fora   +6.5  ganho  +0.5  p 0.648  tercos +7/+10/+12  antes +8.5 (base +6.8)  C +11.9 V +6.5  pct 69
+  I2 IFR abaixo de 40 na retracao               n=   35 (  1%)  dentro  -17.1  fora   +8.9  ganho -25.8  p 0.220  tercos -50/-10/+8  antes -25.0 (base +6.8)  C -33.3 V -8.7  pct 9
+  I3 IFR abaixo de 70 no sinal                  n= 3678 ( 99%)  dentro   +8.5  fora  +36.0  ganho  -0.2  p 0.296  tercos +4/+9/+14  antes +6.7 (base +6.8)  C +9.6 V +7.4  pct 12
+  M5 Histograma no quintil mais alto            n=  797 ( 22%)  dentro   +4.6  fora   +9.8  ganho  -4.0  p 0.306  tercos -3/+14/+6  antes +5.2 (base +6.8)  C +4.0 V +5.2  pct 15
+  E5 Menor %K da retracao no quintil mais baixo n=  597 ( 16%)  dentro   +2.7  fora   +9.8  ganho  -6.0  p 0.197  tercos +7/+0/-2  antes +2.1 (base +6.8)  C +4.8 V +0.7  pct 10
+  E6 %K - %D no quintil mais alto               n=  762 ( 21%)  dentro  +10.2  fora   +8.3  ganho  +1.6  p 0.679  tercos -1/+7/+26  antes +2.4 (base +6.8)  C +11.7 V +8.7  pct 64
+  I4 Menor IFR da retracao no quintil mais baixo n=  679 ( 18%)  dentro   +5.8  fora   +9.3  ganho  -2.9  p 0.515  tercos -7/+6/+24  antes -2.0 (base +6.8)  C +0.1 V +11.4  pct 26
+  I5 IFR no quintil mais alto                   n=  751 ( 20%)  dentro  +13.2  fora   +7.5  ganho  +4.5  p 0.294  tercos +8/+13/+21  antes +9.6 (base +6.8)  C +14.4 V +12.1  pct 86
+  ganho nas 4 gestoes: M1 +1.6/+1.9/+2.1/+1.3  M2 -0.9/-0.1/-1.8/-1.8  M3 -8.9/-11.8/-9.2/-6.1  M4 -7.0/-8.4/-3.1/-5.6  E3 +35.1/+26.3/+3.9/+43.9  E4 -0.2/-0.3/-0.0/-0.1  I1 +0.5/+0.9/+0.5/+0.1  I2 -25.8/-42.7/-48.6/-9.0  I3 -0.2/-0.2/-0.2/-0.1  M5 -4.0/-3.7/-3.3/-4.3  E5 -6.0/-8.4/-6.4/-3.6  E6 +1.6/+2.0/-1.1/+1.1  I4 -2.9/-5.3/-3.0/-0.4  I5 +4.5/+7.3/+3.6/+1.8
+
+--- 3. a busca: 16 regras x 2 sentidos, contra resultados embaralhados ---
+  h     1:3 com parcial  melhor I5 t=+1.21  ruido med +1.18 p95 +2.20  p=0.472
+        escolha antes -> original+depois  : M2~ teste -0.8 (n=399) x sem filtro +11.0
+        escolha T1+T2 -> T3               : M2~ teste +2.3 (n=555) x sem filtro +11.0
+        poder: filtro que mantem 50% so aparece acima de +5.1 pts
+  cand  1:3 com parcial  melhor I5 t=+0.97  ruido med +1.12 p95 +2.11  p=0.664
+        escolha antes -> original+depois  : M2~ teste +7.0 (n=270) x sem filtro +15.8
+        escolha T1+T2 -> T3               : M2~ teste +8.4 (n=383) x sem filtro +14.6
+        poder: filtro que mantem 50% so aparece acima de +5.8 pts
+  h     1:3 sem parcial  melhor I5 t=+1.20  ruido med +1.22 p95 +2.12  p=0.522
+        escolha antes -> original+depois  : I5 teste +20.7 (n=213) x sem filtro +13.6
+        escolha T1+T2 -> T3               : M2~ teste -1.8 (n=555) x sem filtro +13.0
+        poder: filtro que mantem 50% so aparece acima de +7.2 pts
+  cand  1:3 sem parcial  melhor I5 t=+1.09  ruido med +1.17 p95 +2.08  p=0.578
+        escolha antes -> original+depois  : I4~ teste +15.5 (n=634) x sem filtro +21.2
+        escolha T1+T2 -> T3               : M3~ teste +19.7 (n=883) x sem filtro +18.8
+        poder: filtro que mantem 50% so aparece acima de +8.2 pts
+  h     1:2 sem parcial  melhor M3 (complemento) t=+1.01  ruido med +1.22 p95 +2.19  p=0.654
+        escolha antes -> original+depois  : M2~ teste -1.3 (n=399) x sem filtro +8.3
+        escolha T1+T2 -> T3               : M2~ teste +1.4 (n=555) x sem filtro +9.0
+        poder: filtro que mantem 50% so aparece acima de +5.9 pts
+  cand  1:2 sem parcial  melhor M2 (complemento) t=+0.87  ruido med +1.17 p95 +2.09  p=0.786
+        escolha antes -> original+depois  : M2~ teste +9.3 (n=270) x sem filtro +13.6
+        escolha T1+T2 -> T3               : M2~ teste +10.4 (n=383) x sem filtro +14.1
+        poder: filtro que mantem 50% so aparece acima de +6.6 pts
+  h     1:1 sem parcial  melhor M3 (complemento) t=+1.03  ruido med +1.18 p95 +2.24  p=0.632
+        escolha antes -> original+depois  : M2~ teste +2.0 (n=399) x sem filtro +8.5
+        escolha T1+T2 -> T3               : M2~ teste +6.5 (n=555) x sem filtro +9.0
+        poder: filtro que mantem 50% so aparece acima de +4.1 pts
+  cand  1:1 sem parcial  melhor M2 (complemento) t=+1.21  ruido med +1.22 p95 +2.16  p=0.514
+        escolha antes -> original+depois  : M2~ teste +7.0 (n=270) x sem filtro +10.4
+        escolha T1+T2 -> T3               : M2~ teste +10.4 (n=383) x sem filtro +10.4
+        poder: filtro que mantem 50% so aparece acima de +4.6 pts
+
+--- 4. quintis das leituras (Hull + pavios, 1:3 com parcial) ---
+  MACD / ATR (a favor)               lim -0.03 0.30 0.59 0.95 |  +3.4   +3.7  +10.3   +9.8  +16.2
+  Histograma / ATR (a favor)         lim -0.07 0.02 0.10 0.20 | +10.9   +9.5   +5.7  +13.8   +3.4
+  %K lento no sinal (a favor)        lim 43.70 56.17 64.60 72.52 |  +5.1   +9.3   +7.2   +9.3  +12.6
+  %K - %D (a favor)                  lim -11.01 -9.25 -7.84 -6.41 |  +9.0   +4.7   +9.9   +9.7  +10.0
+  Menor %K da retracao (a favor)     lim 51.58 63.64 72.15 79.20 |  +4.6  +10.5   +3.9  +16.0   +8.4
+  IFR no sinal (a favor)             lim 50.36 53.16 55.60 58.99 |  +5.6   +3.8   +5.5  +15.9  +12.6
+  Menor IFR da retracao (a favor)    lim 46.56 49.57 52.21 55.85 |  +5.7   +4.1   +4.7  +15.9  +13.0
+
+--- 5. vizinhanca de parametros (ganho no Hull + pavios, 1:3 com parcial) ---
+  macd: M1@(8, 17, 9) +0.5  M2@(8, 17, 9) -4.2  M3@(8, 17, 9) -3.4  M4@(8, 17, 9) -1.6  M5@(8, 17, 9) -5.4  M1@(12, 26, 9) +1.6  M2@(12, 26, 9) -0.9  M3@(12, 26, 9) -8.9  M4@(12, 26, 9) -7.0  M5@(12, 26, 9) -4.0  M1@(19, 39, 9) +3.6  M2@(19, 39, 9) -0.4  M3@(19, 39, 9) -5.7  M4@(19, 39, 9) -8.1  M5@(19, 39, 9) +2.8
+  estoc: E1@(8, 3, 3) +28.8  E2@(8, 3, 3) +41.3  E3@(8, 3, 3) -0.8  E4@(8, 3, 3) +0.0  E5@(8, 3, 3) -4.5  E6@(8, 3, 3) -2.0  E3@(14, 3, 3) +35.1  E4@(14, 3, 3) -0.2  E5@(14, 3, 3) -6.0  E6@(14, 3, 3) +1.6  E1@(21, 3, 3) +14.7  E4@(21, 3, 3) -0.3  E5@(21, 3, 3) -0.5  E6@(21, 3, 3) +4.9
+  ifr: I1@9 +1.0  I2@9 +8.5  I3@9 -0.0  I4@9 -7.4  I5@9 +3.5  I1@14 +0.5  I2@14 -25.8  I3@14 -0.2  I4@14 -2.9  I5@14 +4.5  I1@21 +1.7  I2@21 -26.6  I3@21 -0.0  I4@21 -2.8  I5@21 +7.5
+
+--- 6. carteira, uma posicao por vez ---
+  h     1:3 com parcial  base  4373 tr   +35300 FL 1.17 DD  4700 | maior EV: E3    70 tr +37.1/tr    +2600 FL 2.04 DD   400
+  cand  1:3 com parcial  base  3479 tr   +31700 FL 1.19 DD  5100 | maior EV: E3    32 tr +43.8/tr    +1400 FL 2.75 DD   200
+  h     1:3 sem parcial  base  4373 tr   +40400 FL 1.13 DD  6200 | maior EV: E3    70 tr +45.7/tr    +3200 FL 1.73 DD   500
+  cand  1:3 sem parcial  base  3479 tr   +41400 FL 1.17 DD  6600 | maior EV: E3    32 tr +37.5/tr    +1200 FL 1.57 DD   500
+  h     1:2 sem parcial  base  4646 tr   +38000 FL 1.13 DD  6900 | maior EV: E3    70 tr +24.3/tr    +1700 FL 1.41 DD   900
+  cand  1:2 sem parcial  base  3673 tr   +32000 FL 1.14 DD  5800 | maior EV: E3    32 tr +12.5/tr     +400 FL 1.20 DD   500
+  h     1:1 sem parcial  base  4700 tr   +30500 FL 1.14 DD  4500 | maior EV: E3    70 tr +28.6/tr    +2000 FL 1.80 DD   400
+  cand  1:1 sem parcial  base  3703 tr   +22600 FL 1.13 DD  4900 | maior EV: E3    32 tr +50.0/tr    +1600 FL 3.00 DD   200

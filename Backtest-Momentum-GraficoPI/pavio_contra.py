@@ -409,6 +409,26 @@ def main():
                                      for cc in (0, 5, 10)}
     saida['custo'] = custo
 
+    # ------------------------------------------------ fora da amostra original
+    import periodos as PR
+    p('\n--- 7. fora da amostra original (06/08 a 11/09 = base antiga) -------')
+    blocos = {}
+    for ent in ENTRADAS:
+        for ges in GESTOES:
+            t = res[(ent, ges, 'normal')]
+            n24 = t['n_fav'].between(BARRAS_MIN, BARRAS_MAX)
+            for var, sel in (('padrao', t[t['no_padrao']]), ('sem_filtro', t[n24]),
+                             ('fora', t[n24 & ~t['no_padrao']])):
+                blocos[f'{ent}|{ges}|{var}'] = dict(sinais=PR.por_bloco(sel),
+                                                    meses=PR.por_mes(sel))
+    for ges in GESTOES:
+        for var in ('padrao', 'sem_filtro'):
+            b = blocos[f'fecha|{ges}|{var}']['sinais']
+            p(f"  {ROT_GESTAO[ges]:16s} {var:10s} antes {PR.linha_txt(b['antes'])} | "
+              f"original {PR.linha_txt(b['original'])}")
+    saida['blocos'] = blocos
+    saida['regime'] = PR.regime(d)
+
     with open(os.path.join(SAIDA, 'pavio_contra.json'), 'w', encoding='utf-8') as f:
         json.dump(_lim(saida), f, ensure_ascii=False)
     with open(os.path.join(SAIDA, 'pavio_contra_console.txt'), 'w',

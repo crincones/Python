@@ -1,4 +1,12 @@
 //==================================================================
+// ATUALIZACAO 14/09/2026 -- NAO LIGAR EM CONTA REAL
+//   Remedido na base WINFUT_20PI_Robo.csv (132 pregoes, 06/03 a 14/09).
+//   Os numeros abaixo sao da base antiga (26 pregoes). Nos meses que nao
+//   participaram da escolha dos filtros (06/03 a 05/08) o Ouro mede
+//   -7,4 pts por sinal; na base inteira, +2,0 por operacao (854 trades),
+//   que nao paga custo. A traducao continua conferida (valida_robo.py:
+//   1286 de 1286 sinais iguais a engine). Ver RESULTADOS.md e PLANO.md.
+//
 // MOMENTUMPI_OUROPRATA_ROBO  -  ProfitChart / NTSL  -  ESTRATEGIA
 //
 // WINFUT, grafico de 20 PI (Pontos de Inversao). Compra e venda.

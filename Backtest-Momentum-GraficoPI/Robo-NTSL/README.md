@@ -8,7 +8,7 @@ entrada no fechamento, 1:3 com parcial**, no WINFUT em grafico de **20 PI**.
 | `MomentumPI_OuroPrata_Robo.ntsl` | a estrategia, para o Editor de Estrategias / Automacao do Profit |
 | `valida_robo.py` | confere a traducao contra a engine do backteste |
 | `LogCandles_Console.ntsl` | estrategia sem ordens: registra data/hora, OHLC, agressao e duracao de cada candle com `ConsoleLog`; modo compacto empilha varios candles por linha |
-| `estrutura_export.py` | converte `WINFUT/WINFUT_20PI_Robo-Export` em `WINFUT/WINFUT_20PI_Robo.csv` (ISO, um candle por linha) e confere contra a exportacao direta do Profit |
+| `estrutura_export.py` | converte `WINFUT/WINFUT_20PI_Robo-Export` em `WINFUT/WINFUT_20PI_Robo.csv` (ISO, um candle por linha) e confere contra a exportacao direta do Profit. Esse csv e hoje a base de todos os estudos |
 | `decodifica_log.py` | le a exportacao do console (qualquer modo, blocos concatenados) e grava um CSV por candle, acusando linhas cortadas e buracos |
 
 ## O que o robo faz
@@ -21,12 +21,16 @@ entrada no fechamento, 1:3 com parcial**, no WINFUT em grafico de **20 PI**.
   operacao (com 50% em +100, e o proprio stop inicial); alvo 300; uma posicao por vez; encerra depois
   de 120 candles; nao abre depois de 18:15 e zera a partir de 18:20.
 
-## Numeros medidos (bruto, 26 pregoes)
+## Numeros medidos
 
-| Nivel | Trades | Pts/trade | Acerto | Fator de lucro | Rebaixamento |
-|:--|--:|--:|--:|--:|--:|
-| Ouro | 170 | +34,1 | 36,5% | 1,89 | 800 |
-| Ouro + Prata | 243 | +28,0 | 34,2% | 1,70 | 600 |
+> **Atualizacao 14/09/2026 -- nao ligar em conta real.** Remedido na base `WINFUT_20PI_Robo.csv`
+> (132 pregoes, 06/03 a 14/09). Os filtros do Ouro foram escolhidos na base antiga (06/08 a 11/09);
+> nos meses que nao participaram dessa escolha o setup nao se sustenta. Ver `RESULTADOS.md` e `PLANO.md`.
+
+| Nivel (carteira, bruto) | Base antiga, 26 pregoes | Base nova, 132 pregoes | Antes de 06/08 (por sinal) |
+|:--|--:|--:|--:|
+| Ouro | 170 trades, +34,1 pts/trade, FL 1,89 | 854 trades, +2,0 pts/trade, FL 1,04 | -7,4 |
+| Ouro + Prata | 243 trades, +28,0 pts/trade, FL 1,70 | 1.252 trades, +5,9 pts/trade, FL 1,13 | -0,7 |
 
 ## Validacao
 
@@ -34,8 +38,9 @@ entrada no fechamento, 1:3 com parcial**, no WINFUT em grafico de **20 PI**.
 python Robo-NTSL/valida_robo.py
 ```
 
-- Sinal: 248 de 248 barras iguais a engine (173 Ouro), sem nenhuma diferenca de nivel.
-- Sequenciamento: a maquina de estados do robo escolhe exatamente os 170 trades (Ouro) e os 243
+- Sinal (base de 132 pregoes): 1.286 de 1.286 barras iguais a engine (869 Ouro), sem nenhuma
+  diferenca de nivel. Na base antiga: 248 de 248.
+- Sequenciamento: a maquina de estados do robo escolhe exatamente os 854 trades (Ouro) e os 1.252
   (Ouro + Prata) da carteira do relatorio.
 
 ## Antes de ligar

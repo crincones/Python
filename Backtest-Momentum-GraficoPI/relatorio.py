@@ -60,80 +60,322 @@ def capa(D):
   <p class="sub">Retracao seguida de candle de continuacao, com Hull 50, EMA 21
   e canal de Keltner. {n(a['candles'])} candles, {a['dias']} pregoes, de
   {a['de'][8:]}/{a['de'][5:7]}/{a['de'][:4]} a {a['ate'][8:]}/{a['ate'][5:7]}/{a['ate'][:4]}
-  &mdash; a base inteira disponivel.</p>
+  &mdash; cinco vezes a base do primeiro estudo, que e o trecho final desta.</p>
   <div style="margin-top:18px">
     <span class="selo">Hull {P['hull']}</span>
     <span class="selo">EMA {P['ema']}</span>
     <span class="selo">Keltner {P['atr']} &plusmn; {n(P['desvio'], 1)} ATR</span>
     <span class="selo">stop {n(P['stop'])} &middot; alvo {n(P['alvo'])}</span>
     <span class="selo">parcial 50% em +{n(P['parcial_em'])}</span>
-    <span class="selo">{st['trades']} trades no padrao Ouro</span>
+    <span class="selo">teste fora da amostra</span>
   </div>
 </header>"""
+
+
+def _bl(D, chave, bloco, campo='ev'):
+    """Numero de um bloco do teste fora da amostra (sinais isolados)."""
+    return D['oos']['blocos'][chave]['sinais'][bloco][campo]
 
 
 def resumo(D):
     st = D['variantes'][D['escolhida']]['stats']
     base = D['variantes']['fecha|parcial|bronze']['stats']
     mc = D['monte_carlo'][D['escolhida']]
-    P = D['parametros']
+    O = D['oos']
+    ou_a = O['blocos']['fecha|parcial|ouro']['sinais']
+    pr_a = O['blocos']['fecha|parcial|prata']['sinais']
+    br_a = O['blocos']['fecha|parcial|bronze']['sinais']
+    an = O['antecipa']['parcial|prata']
+    C = D.get('candidato', {}).get('gestoes', {}).get('parcial')
+    custo_zero = next((c['custo'] for c in D['custos'] if c['ev'] <= 0), None)
     tiles = ''.join([
-        tile('Resultado, padrao Ouro', sn(st['lucro_liq']) + ' pts',
-             f"R$ {sn(st['lucro_liq_rs'])} com 1 contrato", cls(st['lucro_liq'])),
-        tile('Expectativa por trade', sn(st['exp_pts'], 1) + ' pts',
-             f"R$ {sn(st['exp_rs'], 2)} &middot; {st['trades']} trades",
-             cls(st['exp_pts'])),
-        tile('Acerto', n(st['winrate'], 1) + '%',
-             f"{st['vitorias']} ganhos &middot; {st['zeros']} zerados &middot; "
-             f"{st['derrotas']} perdas"),
-        tile('Fator de lucro', n(st['fator_lucro'], 2),
-             f"rebaixamento maximo {n(st['dd_max'])} pts"),
+        tile('Ouro, na janela em que foi escolhido', sn(ou_a['original']['ev'], 1) + ' pts',
+             f"por trade &middot; {n(ou_a['original']['n'])} sinais, 06/08 a 11/09",
+             cls(ou_a['original']['ev'])),
+        tile('Ouro, nos pregoes nunca vistos', sn(ou_a['fora']['ev'], 1) + ' pts',
+             f"por trade &middot; {n(ou_a['fora']['n'])} sinais, t = {sn(ou_a['fora']['t'], 2)}",
+             cls(ou_a['fora']['ev'])),
+        tile('Ouro, base inteira', sn(st['exp_pts'], 1) + ' pts',
+             f"{n(st['trades'])} trades &middot; fator {n(st['fator_lucro'], 2)} &middot; "
+             f"rebaix. {n(st['dd_max'])}", cls(st['exp_pts'])),
+        tile('Custo que zera o Ouro', (n(custo_zero) + ' pts') if custo_zero is not None else '&ndash;',
+             'por operacao, ida e volta', 'perda'),
     ])
+    cand = ''
+    if C:
+        b = C['busca_ampla']
+        cand = f"""
+        <li><b>Retracao profunda</b> (3+ candles, sem nenhum outro filtro) e o unico recorte
+            que mede bem nos dois blocos: {sn(C['blocos']['antes']['ev'], 1)} antes e
+            {sn(C['blocos']['original']['ev'], 1)} na janela original. Mas foi achado
+            <i>olhando</i> esta base, e a mesma busca em dado embaralhado acha algo tao bom
+            {n(b['p_valor'] * 100, 0)}% das vezes. <a href="#candidato">Hipotese, nao setup.</a></li>"""
     return f"""
 <section id="resumo">
-  <h2>O que a medicao achou</h2>
-  <p class="olho">A regra do CLAUDE.md, medida como esta escrita, ja mede positivo:
-  {sn(base['exp_pts'], 1)} pontos por trade em {base['trades']} operacoes. Tres filtros
-  &mdash; um veto de exaustao, a exigencia de uma retracao de verdade e a forma do
-  candle que retoma &mdash; levam isso a {sn(st['exp_pts'], 1)} pontos por trade, com
-  menos de um terco das operacoes. Esse recorte e o <b>padrao Ouro</b>.</p>
+  <h2>O que a base de {D['auditoria']['dias']} pregoes mostrou</h2>
+  <p class="olho">O estudo anterior mediu o padrao Ouro em +34 pontos por trade em 26
+  pregoes (06/08 a 11/09; a mesma janela, na base nova, mede {sn(ou_a['original']['ev'], 1)}). A base nova comeca cinco meses antes, e
+  esses meses <b>nunca foram vistos</b> quando os filtros foram escolhidos &mdash; sao o
+  primeiro teste de verdade do setup. Nesse teste o Ouro mede
+  <b>{sn(ou_a['fora']['ev'], 1)} pontos por trade</b>. O Prata, {sn(pr_a['fora']['ev'], 1)}; a
+  regra-base do CLAUDE.md, {sn(br_a['fora']['ev'], 1)}. Os filtros que criaram o Ouro nao
+  eram propriedade do padrao: eram propriedade de agosto e setembro.</p>
   <div class="grade g4">{tiles}</div>
 
   <div class="grade g3" style="margin-top:16px">
     <div class="card">
-      <h3>O que confirmou</h3>
+      <h3>O que caiu</h3>
       <ul class="enx">
-        <li>O padrao de dois candles funciona, e o alvo de {n(P['alvo'])} com stop de
-            {n(P['stop'])} e um <b>otimo local</b> da grade inteira.</li>
-        <li>Hull 50 bate Hull 21, 34 e 80 em <b>todas</b> as EMAs testadas.</li>
-        <li>A exaustao existe &mdash; so nao e a banda de Keltner sozinha.</li>
+        <li><b>O padrao Ouro e o Prata.</b> Positivos em agosto e setembro, negativos ou
+            zerados de marco a julho. No periodo inteiro, o Ouro nao paga
+            {n(custo_zero)} pontos de custo.</li>
+        <li><b>O veto de exaustao</b> nao separa mais nada, e a faixa de pavio
+            {n(D['parametros']['pavio_min'])}&ndash;{n(D['parametros']['pavio_max'])} mede quase
+            igual ao pavio curto: so a ponta acima de {n(D['parametros']['pavio_max'])} continua
+            ruim.</li>
+        <li><b>O alvo de 300</b> deixou de ser topo local: com stop de 100, o 1:1 mede mais que
+            o 1:3.</li>
       </ul>
     </div>
     <div class="card">
-      <h3>O que desmentiu</h3>
+      <h3>O que se manteve</h3>
       <ul class="enx">
-        <li>Exigir a Hull <b>concava</b> mede ao contrario: a metade concava rende
-            {sn(D['estudos']['concavidade'][1]['ev'], 1)} pts, a outra
-            {sn(D['estudos']['concavidade'][0]['ev'], 1)}.</li>
-        <li>Filtro de inclinacao da EMA 21: separa ao contrario, e e a mesma
-            informacao do esticamento (correlacao 0,78).</li>
-        <li>Entrar no meio do corpo com ordem limitada perde dinheiro no conjunto
-            sem filtro.</li>
+        <li><b>Hull 21 e o pior periodo</b> em qualquer EMA, como antes.</li>
+        <li><b>Pavio grande a favor</b> (acima de 10% do range) continua ruim nos tres
+            tercos.</li>
+        <li><b>Fluxo e forca de tendencia</b> continuam sem passar no controle de busca &mdash;
+            agora com poder para ver ganhos de ~{n(D['fluxo']['poder'][-1]['linhas'][0]['min_ganho'], 0)}
+            pts, e nao mais de 40.</li>{cand}
       </ul>
     </div>
     <div class="card">
-      <h3>O tamanho do teste</h3>
+      <h3>O que nao da para afirmar</h3>
       <ul class="enx">
-        <li><b>{D['auditoria']['dias']} pregoes.</b> E pouco. Tudo aqui foi medido em
-            tercos do periodo justamente por isso.</li>
-        <li>Monte Carlo: probabilidade de lucro
-            <b>{n(mc['prob_lucro'], 1)}%</b>, faixa de {sn(mc['total_p05'])} a
-            {sn(mc['total_p95'])} pts.</li>
-        <li>Resultado <b>bruto</b>. A {n(D['custos'][3]['custo'])} pts de custo ele cai
-            para {sn(D['custos'][3]['ev'], 1)} pts por trade.</li>
+        <li><b>A entrada antecipada</b> mede {sn(an['ev_conv'], 1)} pts por sinal &mdash; mas
+            em {n(an['ambiguos_pct'], 0)}% dos trades o resultado depende de em que ordem os
+            precos passaram dentro do candle, e isso o OHLC nao tem. Com um caminho
+            aleatorio vai a {sn(an['ev_aleat'], 1)}. <a href="#antecipada">Ver por que.</a></li>
+        <li>Monte Carlo do Ouro: probabilidade de lucro <b>{n(mc['prob_lucro'], 1)}%</b>
+            &mdash; com os trades todos, inclusive os de agosto e setembro.</li>
       </ul>
     </div>
   </div>
+</section>"""
+
+
+def fora_amostra(D):
+    """O teste que a base nova permite: antes x janela original x depois."""
+    O = D['oos']
+    lin = ''
+    for chave, rot in (('fecha|parcial|ouro', 'Ouro'), ('fecha|parcial|prata', 'Prata'),
+                       ('fecha|parcial|bronze', 'Bronze (regra-base)'),
+                       ('fecha|puro|ouro', 'Ouro, 1:3 sem parcial'), ('fecha|r2|ouro', 'Ouro, 1:2'),
+                       ('meio_lim|parcial|prata', 'Prata, limitada no meio'),
+                       ('antecipa|parcial|prata', 'Prata, antecipada*')):
+        if chave not in O['blocos']:
+            continue
+        s = O['blocos'][chave]['sinais']
+        cel = ''.join(
+            f'<td class="{cls(s[k]["ev"])}">{sn(s[k]["ev"], 1)}<br><small style="color:var(--mudo)">'
+            f'{n(s[k]["n"])} sinais &middot; t {sn(s[k]["t"], 1) if s[k]["t"] is not None else "&ndash;"}'
+            f'</small></td>' for k in ('antes', 'original', 'depois'))
+        lin += f'<tr><td>{rot}</td>{cel}<td class="{cls(s["total"]["ev"])}"><b>{sn(s["total"]["ev"], 1)}</b></td></tr>'
+    reg = ''.join(f'<tr><td>{r["mes"][5:]}/{r["mes"][:4]}</td><td>{r["dias"]}</td>'
+                  f'<td>{n(r["abre"])}</td><td>{n(r["fecha"])}</td>'
+                  f'<td class="{cls(r["var"])}">{sn(r["var"])}</td>'
+                  f'<td>{n(r["maxima"] - r["minima"])}</td></tr>' for r in O['regime'])
+    ff = O['filtros_fora']
+    pav = ' &middot; '.join(f"{r['faixa']}: <b class=\"{cls(r['ev'])}\">{sn(r['ev'], 1)}</b>" for r in ff['pavio'])
+    ret = ' &middot; '.join(f"{r['faixa']}: <b class=\"{cls(r['ev'])}\">{sn(r['ev'], 1)}</b>" for r in ff['retracao_candles'])
+    cz = {(c['concava'], c['esticado']): c for c in O['cruz_fora']}
+    vet = cz[(True, True)]; resto = [c for k, c in cz.items() if k != (True, True)]
+    ev_resto = sum(c['ev'] * c['n'] for c in resto) / sum(c['n'] for c in resto)
+    return f"""
+<section id="oos">
+  <h2>Fora da amostra: o teste que faltava</h2>
+  <p class="olho">Todos os cortes deste setup &mdash; o veto de exaustao em
+  {n(D['parametros']['estic_exaustao'], 2)} ATR, a retracao de {D['parametros']['n_ret_min']}+ candles,
+  o pavio de {n(D['parametros']['pavio_min'])} a {n(D['parametros']['pavio_max'])} pontos &mdash;
+  foram escolhidos na base antiga, de 06/08 a 11/09. A base nova vai de
+  {D['auditoria']['de'][8:]}/{D['auditoria']['de'][5:7]} a
+  {D['auditoria']['ate'][8:]}/{D['auditoria']['ate'][5:7]} e a contem inteira. Entao ela se divide
+  em tres blocos, e so os das pontas sao teste.</p>
+
+  <div class="card rolo">
+    <table>
+      <thead><tr><th>Variante</th><th>Antes<br><small>06/03 a 05/08 &middot; nunca vista</small></th>
+        <th>Janela original<br><small>06/08 a 11/09 &middot; onde as regras nasceram</small></th>
+        <th>Depois<br><small>12/09 em diante</small></th><th>Base inteira</th></tr></thead>
+      <tbody>{lin}</tbody>
+    </table>
+    <p class="nota">Valor esperado por sinal, em pontos, cada sinal resolvido isoladamente;
+    <b>t</b> e a estatistica t da media (acima de 2 em modulo, dificil de ser acaso). Na janela
+    original os numeros batem com os do estudo anterior (a base e a mesma, a menos de 25 candles
+    que a exportacao antiga tinha em ordem trocada). O bloco &ldquo;depois&rdquo; tem um pregao so.
+    * A antecipada tem uma ressalva propria, <a href="#antecipada">abaixo</a>.</p>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h3>Mes a mes</h3>
+    <div class="legenda">
+      <span><i class="chave q" style="background:var(--ouro)"></i>Ouro</span>
+      <span><i class="chave q" style="background:var(--prata)"></i>Prata</span>
+      <span><i class="chave q" style="background:var(--bronze)"></i>Bronze</span>
+    </div>
+    <figure><div id="oos_meses"></div>
+      <figcaption>Valor esperado por sinal em cada mes, entrada no fechamento, 1:3 com parcial.
+      Agosto e setembro sao os dois meses em que o Ouro passa de +20 &mdash; e sao
+      exatamente os meses da base antiga.</figcaption></figure>
+  </div>
+
+  <div class="grade g2" style="margin-top:16px">
+    <div class="card">
+      <h3>O mercado em cada mes</h3>
+      <div class="rolo"><table>
+        <thead><tr><th>Mes</th><th>Pregoes</th><th>Abertura</th><th>Fechamento</th>
+          <th>Variacao</th><th>Amplitude</th></tr></thead>
+        <tbody>{reg}</tbody></table></div>
+      <p class="nota">Pontos do WINFUT. A base antiga era um trecho so de um mercado; a nova
+      tem mes de alta, de queda forte (maio) e de variacao quase nula no fechamento.</p>
+    </div>
+    <div class="card">
+      <h3>Os filtros do Ouro, medidos so fora da janela original</h3>
+      <p style="color:var(--tinta2)"><b>Pavio do candle de continuacao</b> &mdash; {pav}.</p>
+      <p style="color:var(--tinta2)"><b>Candles de retracao</b> &mdash; {ret}.</p>
+      <p style="color:var(--tinta2);margin-bottom:0"><b>Veto de exaustao</b> &mdash; os sinais
+      vetados medem <b class="{cls(vet['ev'])}">{sn(vet['ev'], 1)}</b> ({n(vet['n'])}); os que ficam,
+      <b class="{cls(ev_resto)}">{sn(ev_resto, 1)}</b>.</p>
+      <p class="nota">Pontos por sinal, regra-base inteira, entrada no fechamento com parcial,
+      so os pregoes fora de 06/08 a 11/09.</p>
+    </div>
+  </div>
+</section>"""
+
+
+def antecipada(D):
+    A = D['oos']['antecipa']
+    lin = ''.join(
+        f"<tr><td>{D['rotulo'][k.split('|')[1]]}</td><td>{ROT_GESTAO[k.split('|')[0]]}</td>"
+        f"<td>{n(r['n'])}</td><td>{n(r['ambiguos_pct'], 1)}%</td>"
+        f"<td class=\"{cls(r['ev_conv'])}\">{sn(r['ev_conv'], 1)}</td>"
+        f"<td class=\"{cls(r['ev_aleat'])}\"><b>{sn(r['ev_aleat'], 1)}</b></td>"
+        f"<td class=\"{cls(r['ev_pess'])}\">{sn(r['ev_pess'], 1)}</td></tr>" for k, r in A.items())
+    a = A['parcial|prata']
+    return f"""
+<section id="antecipada">
+  <h2>A entrada antecipada nao pode ser medida com OHLC</h2>
+  <p class="olho">Na base nova, a ordem stop no meio do corpo, colocada no fechamento da
+  retracao, e a unica variante que mede bem nos dois blocos. Antes de levar isso a serio e
+  preciso olhar de onde vem o numero.</p>
+  <div class="bandeira">
+    <h3>O problema</h3>
+    <p>A ordem dispara 50 pontos a favor, dentro do candle seguinte. Se esse candle fecha a
+    favor mas tem um pavio contra de mais de 50 pontos, ha dois caminhos possiveis: o pavio veio
+    <b>antes</b> do disparo (o trade sobrevive) ou <b>depois</b> (o trade toma stop na propria
+    barra). O OHLC nao diz qual. A engine usa a convencao &ldquo;o pavio contra se forma
+    antes&rdquo;, que e conservadora para quem entra no fechamento &mdash; mas para quem entra
+    no meio do candle ela e a leitura <b>otimista</b>: nenhum desses trades toma stop.</p>
+    <p style="margin-bottom:0">Isso acontece em <b>{n(a['ambiguos_pct'], 0)}%</b> dos trades.
+    Um passeio aleatorio de ticks, condicionado ao candle fechar a favor com um pavio dessa
+    profundidade, dispara a ordem antes do pavio em 28% a 40% das vezes.</p>
+  </div>
+  <div class="card rolo" style="margin-top:16px">
+    <table>
+      <thead><tr><th>Nivel</th><th>Gestao</th><th>Sinais</th><th>Ambiguos</th>
+        <th>Convencao da engine</th><th>Caminho aleatorio</th><th>Todo ambiguo toma stop</th></tr></thead>
+      <tbody>{lin}</tbody>
+    </table>
+    <p class="nota">Pontos por sinal, base inteira. A resposta verdadeira esta entre as duas
+    ultimas colunas, e o cenario neutro fica perto de zero. Para decidir e preciso o tempo e
+    negocio de cada preco dentro do candle (tick a tick, ou um grafico de 1 PI), que esta base
+    nao tem. Ate la, a antecipada nao e evidencia de nada.</p>
+  </div>
+</section>"""
+
+
+def candidato(D):
+    C = D.get('candidato')
+    if not C:
+        return ''
+    G = C['gestoes']; g = G['parcial']; s = g['stats']; b = g['busca']; ba = g['busca_ampla']
+    lin = ''
+    for gn in ('parcial', 'puro', 'r2', 'r1'):
+        x = G[gn]; st = x['stats']; bl = x['blocos']
+        lin += (f"<tr><td>{C['rot_gestao'][gn]}</td><td>{n(st['trades'])}</td>"
+                f"<td class=\"{cls(st['lucro_liq'])}\">{sn(st['lucro_liq'])}</td>"
+                f"<td class=\"{cls(st['exp_pts'])}\">{sn(st['exp_pts'], 1)}</td>"
+                f"<td>{n(st['winrate'], 1)}%</td><td>{n(st['fator_lucro'], 2)}</td>"
+                f"<td>{n(st['dd_max'])}</td>"
+                f"<td class=\"{cls(bl['antes']['ev'])}\">{sn(bl['antes']['ev'], 1)}</td>"
+                f"<td class=\"{cls(bl['original']['ev'])}\">{sn(bl['original']['ev'], 1)}</td>"
+                f"<td>{n(x['mc'].get('prob_lucro'), 1)}%</td>"
+                f"<td class=\"{cls(x['custos'][2]['ev'])}\">{sn(x['custos'][2]['ev'], 1)}</td></tr>")
+    nr = ''.join(f"<tr><td>{r['faixa']}</td><td>{n(r['n'])}</td><td class=\"{cls(r['ev'])}\">"
+                 f"{sn(r['ev'], 1)}</td><td>{sn(r['t'], 2) if r['t'] is not None else '&ndash;'}</td></tr>"
+                 for r in g['n_ret'])
+    cortes = ''.join(f"<tr><td>{r['rotulo']}</td><td>{n(r['n'])}</td><td class=\"{cls(r['ev'])}\">"
+                     f"{sn(r['ev'], 1)}</td><td>{sn(r['t'], 2)}</td></tr>" for r in b['cortes'])
+    m = ba['melhor']
+    return f"""
+<section id="candidato">
+  <h2>Uma hipotese: a retracao profunda</h2>
+  <p class="olho">O CLAUDE.md pede para avaliar se o tamanho da retracao serve de filtro. Na base
+  de {D['auditoria']['dias']} pregoes, ele e o unico atributo da regra-base que mede bem nos tres
+  tercos, nos dois blocos e nos dois lados. Retracao de 1 ou 2 candles nao paga; de 3 ou mais,
+  paga. O recorte <b>Bronze + retracao de {C['n_ret_min']}+ candles</b>, sem nenhum outro filtro, faz
+  {n(s['trades'])} operacoes, {sn(s['lucro_liq'])} pontos, {sn(s['exp_pts'], 1)} por trade.</p>
+
+  <div class="grade g4">
+    {tile('Por trade', sn(s['exp_pts'], 1) + ' pts', f"{n(s['trades'])} trades &middot; {n(s['trades_dia'], 1)} por dia com sinal", cls(s['exp_pts']))}
+    {tile('Antes / janela original', sn(g['blocos']['antes']['ev'], 1) + ' / ' + sn(g['blocos']['original']['ev'], 1), 'pts por sinal')}
+    {tile('Tercos', ' / '.join(sn(x['ev'], 0) for x in g['tercos']), 'pts por sinal')}
+    {tile('Fator de lucro', n(s['fator_lucro'], 2), f"rebaixamento {n(s['dd_max'])} pts")}
+  </div>
+
+  <div class="bandeira">
+    <h3>Por que isto e hipotese e nao setup</h3>
+    <p>O corte de 3 candles foi escolhido <b>depois</b> de ver a tabela da retracao nesta mesma
+    base. Dois controles medem o quanto disso pode ser a busca:</p>
+    <ul class="enx" style="margin-bottom:0">
+      <li><b>So entre cortes de retracao</b> (2+, 3+, 4+ candles; mais de 1,0, 1,5 ou 2,0 ATR): o
+      melhor mede t = {sn(b['melhor']['t'], 2)}; em {b['perms']} embaralhamentos a mesma busca acha
+      t = {sn(b['ruido_mediana'], 2)} na mediana. p = {n(b['p_valor'], 3)}. Passa.</li>
+      <li><b>Entre todas as tabelas de filtro que foram olhadas</b> ({ba['atributos']} atributos,
+      {ba['cortes']} cortes): o melhor continua sendo a retracao ({m['col']} {m['sentido']} {n(m['thr'], 1)},
+      t = {sn(m['t'], 2)}), mas o ruido acha t = {sn(ba['ruido_mediana'], 2)} na mediana e
+      {sn(ba['ruido_p95'], 2)} no percentil 95. p = {n(ba['p_valor'], 2)}. <b>Nao passa.</b></li>
+    </ul>
+  </div>
+
+  <div class="card rolo" style="margin-top:16px">
+    <h3>Nas quatro gestoes</h3>
+    <table>
+      <thead><tr><th>Gestao</th><th>Trades</th><th>Pontos</th><th>Por trade</th><th>Acerto</th>
+        <th>Fator</th><th>Rebaix.</th><th>Antes</th><th>Original</th><th>MC lucro</th>
+        <th>Com 5 pts de custo</th></tr></thead>
+      <tbody>{lin}</tbody>
+    </table>
+    <p class="nota">Carteira de uma posicao por vez (os sinais quase nunca se sobrepoem).
+    Antes/Original: pontos por sinal nos dois blocos.</p>
+  </div>
+
+  <div class="grade g2" style="margin-top:16px">
+    <div class="card"><h3>Candles de retracao, regra-base</h3>
+      <div class="rolo"><table><thead><tr><th>Retracao</th><th>Sinais</th><th>EV</th><th>t</th></tr></thead>
+      <tbody>{nr}</tbody></table></div>
+      <p class="nota">Com 4 candles o EV e alto, mas sao poucos sinais; o grosso do candidato sao
+      os de 3 candles, que sozinhos medem t = {sn(g['n_ret'][2]['t'], 2)}.</p></div>
+    <div class="card"><h3>Mes a mes do candidato</h3>
+      <figure><div id="cand_meses"></div>
+        <figcaption>Pontos por sinal, 1:3 com parcial.</figcaption></figure></div>
+  </div>
+  <div class="card rolo" style="margin-top:16px"><h3>Os cortes de tamanho de retracao</h3>
+    <table><thead><tr><th>Corte</th><th>Sinais</th><th>EV</th><th>t</th></tr></thead>
+    <tbody>{cortes}</tbody></table></div>
+  <p class="nota">O que falta para virar setup: medir de novo em pregoes posteriores a
+  {D['auditoria']['ate'][8:]}/{D['auditoria']['ate'][5:7]}, sem mexer em nada. O plano
+  (<b>plano.html</b>) traz esse protocolo. No grafico trade a trade, o botao
+  &ldquo;{D['rotulo'].get('r3', 'Retracao 3+')}&rdquo; navega as operacoes do candidato.</p>
 </section>"""
 
 
@@ -152,23 +394,27 @@ def base_dados(D):
   <div class="grade g4">
     {tile('Candles', n(a['candles']), f"{n(a['barras_dia_media'])} por pregao")}
     {tile('Corpo de 100 pontos', n(a['corpo_100_pct'], 2) + '%',
-          'o unico candle fora e o fim de um pregao')}
+          f"menor {n(a['corpo_min'])}, maior {n(a['corpo_max'])}")}
     {tile('Abre no fechamento anterior', n(a['abre_no_fecha_pct'], 2) + '%',
           'o resto e virada de dia')}
     {tile('ATR 21 mediano', n(a['atr_mediana']) + ' pts',
           f"range mediano {n(a['range_mediano'])} pts")}
   </div>
   <div class="card" style="margin-top:16px">
-    <h3>Conferencia dos indicadores</h3>
-    <p style="margin-bottom:0">A EMA 21 calculada aqui foi conferida <b>contra a coluna
-    de EMA exportada pela propria Nelogica</b> nos {n(a['ema_conferidos'])} candles em
-    que ela existe: o erro maximo e de {n(a['ema_erro_p999'], 3)} ponto &mdash; o
-    arredondamento das duas casas do csv &mdash; em todos menos
-    {a['ema_divergentes']} candles, que sao falhas pontuais do proprio arquivo. A semente
-    e a media aritmetica dos 21 primeiros fechamentos, como na Nelogica. A Hull e
-    WMA(2&times;WMA(25) &minus; WMA(50), 7) e o canal de Keltner e a EMA 21 &plusmn; 2
-    ATR(21) exponencial, com a EMA do canal sendo <b>a mesma</b> media de tendencia,
-    como pede o CLAUDE.md.</p>
+    <h3>A base e os indicadores</h3>
+    <p>A base e <code>WINFUT/WINFUT_20PI_Robo.csv</code>: o log do robo
+    <code>LogCandles_Console.ntsl</code>, um candle por linha, na ordem do proprio Profit
+    (<i>CurrentBar</i>). Ela contem a base antiga (<code>WINFUT_20PI.csv</code>) inteira: nos
+    10.000 candles em comum o OHLC e identico, a menos de 25 candles que a exportacao antiga
+    listava em ordem trocada por terem o mesmo carimbo de milissegundo. Duas diferencas de
+    formato: a hora vem so ate o minuto (entao a duracao dos trades tem resolucao de minuto), e
+    nao ha a coluna de EMA da Nelogica.</p>
+    <p style="margin-bottom:0">Por isso a EMA 21 nao e conferida aqui &mdash; a formula e a
+    mesma que foi conferida na base antiga contra a coluna da Nelogica (erro maximo de 0,004
+    ponto). A semente e a media aritmetica dos 21 primeiros fechamentos. A Hull e
+    WMA(2&times;WMA(25) &minus; WMA(50), 7) e o canal de Keltner e a EMA 21 &plusmn; 2 ATR(21)
+    exponencial, com a EMA do canal sendo <b>a mesma</b> media de tendencia, como pede o
+    CLAUDE.md.</p>
   </div>
 </section>"""
 
@@ -303,13 +549,13 @@ def padrao(D):
   </div>
   <div class="grade g3" style="margin-top:16px">{cartoes}</div>
 
-  <h3 style="margin-top:36px">O veto de exaustao, que e o filtro que mais separa</h3>
-  <p class="olho">O CLAUDE.md ja desconfiava: <i>"quando a HULL se encontra perto da
-  banda superior, indica exaustao"</i>. A banda, sozinha, nao separa nada. Mas a
-  intuicao estava certa no alvo errado: o que separa e a <b>combinacao</b> de uma Hull
-  que esta abrindo a curva a favor do trade com um preco que <b>ja</b> se afastou da
-  EMA 21. Cada metade, isolada, quase nao diz nada; juntas marcam 272 dos
-  {D['n_sinais']['confirmados']} sinais e esses 272 nao pagam.</p>
+  <h3 style="margin-top:36px">O veto de exaustao</h3>
+  <p class="olho">O CLAUDE.md desconfiava: <i>"quando a HULL se encontra perto da
+  banda superior, indica exaustao"</i>. Na base antiga o que separava era a
+  <b>combinacao</b> de uma Hull abrindo a curva a favor do trade com um preco que ja se
+  afastou da EMA 21, e esse foi o veto que criou o Prata. Na base de
+  {D['auditoria']['dias']} pregoes ele marca {n(D['estudos']['extra']['n_veto'])} dos
+  {n(D['n_sinais']['confirmados'])} sinais, e a tabela abaixo mostra o que sobrou dele.</p>
   <div class="card rolo">
     <table>
       <thead><tr><th></th>
@@ -318,8 +564,10 @@ def padrao(D):
       </tr></thead>
       <tbody>{linhas_cz}</tbody>
     </table>
-    <p class="nota">Valor esperado por trade, no conjunto sem filtro nenhum. A celula de
-    baixo a direita e o que o veto joga fora.</p>
+    <p class="nota">Valor esperado por trade, no conjunto sem filtro nenhum, base inteira.
+    A celula de baixo a direita e o que o veto joga fora. Na base antiga ela media
+    &minus;1,5 contra +8 a +27 das outras; agora a diferenca e de poucos pontos, e nao no
+    sentido de um veto.</p>
   </div>
 </section>"""
 
@@ -424,7 +672,7 @@ def estatisticas(D):
     chaves = list(D['variantes'])
     ordem = ['fecha|parcial|ouro', 'fecha|parcial|prata', 'fecha|parcial|bronze',
              'fecha|puro|ouro', 'fecha|r2|ouro',
-             'meio_lim|parcial|prata', 'antecipa|parcial|prata']
+             'fecha|parcial|r3', 'meio_lim|parcial|prata', 'antecipa|parcial|prata']
     chaves = [k for k in ordem if k in chaves]
 
     abas = ''.join(
@@ -515,9 +763,8 @@ def patrimonio(D):
       <span><i class="chave" style="background:var(--bronze)"></i>Bronze</span>
     </div>
     <figure><div id="eq_niveis"></div>
-      <figcaption>Entrada no fechamento, com parcial. O Bronze termina mais alto
-      porque faz quase quatro vezes mais trades &mdash; e paga por isso com o dobro do
-      rebaixamento.</figcaption></figure>
+      <figcaption>Entrada no fechamento, com parcial. Repare onde as curvas sobem: quase
+      tudo o que os tres niveis ganham vem de agosto e setembro.</figcaption></figure>
   </div>
 
   <div class="grade g2" style="margin-top:16px">
@@ -538,7 +785,7 @@ def patrimonio(D):
         <span><i class="chave" style="background:var(--prata)"></i>Sem parcial</span>
       </div>
       <figure><div id="eq_gestao"></div>
-        <figcaption>Nivel Ouro. A parcial troca altura por suavidade.</figcaption></figure>
+        <figcaption>Nivel Ouro, entrada no fechamento.</figcaption></figure>
     </div>
   </div>
 
@@ -555,9 +802,10 @@ def distribuicao(D):
     return f"""
 <section id="distribuicao">
   <h2>Distribuicao dos resultados</h2>
-  <p class="olho">O perfil da estrategia e o de um alvo distante: erra a maioria das
-  vezes e vive das poucas que acerta. Com o alvo em {n(D['parametros']['alvo'])} e o
-  stop em {n(D['parametros']['stop'])}, {n(s['winrate'], 1)}% de acerto ja bastam.</p>
+  <p class="olho">O perfil e o de um alvo distante: erra a maioria das vezes e vive das
+  poucas que acerta. Com alvo em {n(D['parametros']['alvo'])}, stop em
+  {n(D['parametros']['stop'])} e a parcial, o empate fica perto de 25% de acerto; o Ouro
+  acerta {n(s['winrate'], 1)}% na base inteira.</p>
   <div class="card">
     <h3>Resultado por operacao</h3>
     <figure><div id="hist_pnl"></div>
@@ -605,50 +853,49 @@ def distribuicao(D):
 
 BLOCOS_FILTRO = [
     ('concavidade', 'A concavidade da Hull',
-     'O CLAUDE.md pede a Hull "preferivelmente concava". Medida, ela mede ao '
-     'contrario: a metade em que a Hull esta <b>fechando</b> a curva rende mais do '
-     'que a metade em que ela esta abrindo &mdash; e nos tres tercos do periodo. '
-     'Como filtro isolado, portanto, ela nao entra. O que entra e a combinacao dela '
-     'com o esticamento, que e o veto de exaustao.'),
+     'O CLAUDE.md pede a Hull "preferivelmente concava". Na base antiga ela media ao '
+     'contrario do pedido. Na base de 6 meses as duas metades medem quase igual, e nenhuma '
+     'e positiva nos tres tercos: a concavidade, sozinha, nao carrega informacao.'),
     ('esticamento', 'A distancia do preco a EMA 21',
-     'Entrar com o preco ainda colado na EMA 21 mede melhor do que entrar esticado. '
-     'E a metade util do veto de exaustao.'),
+     'Na base antiga, entrar com o preco colado na EMA media muito melhor. Agora as '
+     'faixas nao guardam ordem, e o terco que paga e sempre o ultimo.'),
     ('pavio', 'A geometria do candle que retoma &mdash; o pavio',
-     'Como o corpo e sempre 100 pontos, o pavio total <b>e</b> a forma do candle. '
-     'As duas pontas medem mal: o candle quase sem pavio e fino demais, e o de pavio '
-     'enorme e briga, nao continuacao. O miolo paga, e paga nos tres tercos. Este e '
-     'o filtro que separa o Ouro do Prata.'),
+     'Como o corpo e sempre 100 pontos, o pavio total <b>e</b> a forma do candle. O que '
+     'sobrevive da ideia do Ouro e so a ponta de cima: pavio acima de 90 pontos continua '
+     'ruim. O miolo de 25 a 90 ja nao se destaca do pavio curto.'),
     ('pavio_favor', 'O pavio a favor do movimento',
-     'Um pavio grande alem do fechamento significa que o movimento ja foi e voltou. '
-     'Acima de 6% do range o sinal deixa de pagar.'),
+     'Um pavio grande alem do fechamento significa que o movimento foi e voltou. Acima '
+     'de 10% do range o sinal perde nos tres tercos. A base antiga ja apontava isso '
+     '(acima de 6% deixava de pagar); a nova confirma com mais forca.'),
     ('pavio_contra', 'O pavio contra o movimento',
-     'Aqui o efeito e fraco e nao sobrevive a quebra por tercos: nao virou filtro.'),
+     'O candle de continuacao com pouco pavio contra mede melhor, mas o efeito some no '
+     'ultimo terco. Nao e filtro.'),
     ('retracao_candles', 'O tamanho da retracao, em candles',
-     'Um candle so de retracao nao e retracao, e ruido &mdash; e mede menos da '
-     'metade do que duas ou tres. Acima de quatro a amostra acaba. Este filtro entra '
-     'no nivel Prata.'),
+     'O achado mais forte da base nova: retracao de 1 ou 2 candles nao paga nada; de 3, '
+     'paga nos tres tercos; de 4, paga muito, com pouca amostra. O corte de 2 candles do '
+     'Prata estava no lugar errado. Ver a secao <a href="#candidato">Uma hipotese</a>.'),
     ('retracao_tamanho', 'O tamanho da retracao, em ATRs',
-     'A mesma ideia medida em profundidade em vez de contagem de candles. Diz a '
-     'mesma coisa; a contagem ficou por ser mais simples de ver no grafico.'),
+     'A mesma ideia medida em profundidade. A faixa acima de 2 ATR paga nos tres tercos; '
+     'o meio nao tem ordem. Diz o mesmo que a contagem de candles.'),
     ('inclinacao_hull', 'A inclinacao da Hull',
-     'Hull mais inclinada mede melhor, mas o ganho e pequeno e some quando somado '
-     'aos outros filtros. Nao entrou.'),
+     'Hull muito inclinada (acima de 0,16 ATR por candle) mede mal nos dois primeiros '
+     'tercos; o resto nao tem ordem. Indicio de exaustao, sem estabilidade para virar regra.'),
     ('inclinacao_ema', 'A inclinacao da EMA 21',
-     'O CLAUDE.md pede para avaliar. A resposta e que ela separa, sim, mas <b>ao contrario</b> do que um filtro de tendencia faria esperar: a EMA menos inclinada mede melhor. E nao ha o que ganhar ai, porque essa inclinacao tem correlacao de <b>0,78</b> com o esticamento do preco &mdash; e a mesma informacao, dita de outro jeito. Aplicado o veto de exaustao, o efeito some: as quatro faixas passam a medir +23,6 / +14,3 / +19,2 / +23,7 pontos, sem ordem nenhuma. Nao entrou.'),
+     'O CLAUDE.md pede para avaliar. As faixas nao seguem ordem e mudam de sinal de terco '
+     'para terco. E, como na base antiga, a inclinacao da EMA e quase a mesma variavel que '
+     'o esticamento do preco (correlacao {corr}). Nao e filtro.'),
     ('banda_keltner', 'A distancia da Hull a banda de Keltner',
-     'A leitura literal &mdash; "Hull perto da banda indica exaustao" &mdash; nao '
-     'aparece: a faixa mais perto da banda nao e a pior, e nem ha ordem. O canal, '
-     'sozinho, nao e filtro. A intuicao por tras dele sobrevive no veto de exaustao.'),
+     'A leitura literal &mdash; "Hull perto da banda indica exaustao" &mdash; nao aparece '
+     'tambem na base nova: nenhuma faixa se destaca e nenhuma e estavel.'),
     ('hull_colada', 'Ha quanto tempo a Hull esta colada na EMA',
-     'A outra intuicao do CLAUDE.md &mdash; "quando a hull passa muito tempo perto '
-     'da EMA 21 e sinal de consolidacao" &mdash; essa a medicao confirma, e com '
-     'forca. Mais de 8 candles colada e o pior balde do estudo inteiro. Nao virou '
-     'filtro oficial por causa do tamanho da amostra, mas esta anotado no plano '
-     'como veto de mesa.'),
+     'A outra intuicao do CLAUDE.md &mdash; "quando a hull passa muito tempo perto da EMA '
+     '21 e sinal de consolidacao". Na base antiga, mais de 8 candles colada era o pior '
+     'balde; na nova, esse balde muda de sinal de terco para terco. Nao se confirma.'),
     ('hora', 'O horario',
-     'Nenhuma faixa e boa ou ruim em todos os tercos, incluindo a hora seguinte a '
-     'abertura do mercado a vista. Com 26 pregoes nao da para separar horario de '
-     'sorte, e o filtro nao entrou.'),
+     'A hora antes da abertura do mercado a vista (9h-10h) e o fim do dia (depois das '
+     '15h) medem negativo nos dois primeiros tercos; das 10h as 12h, positivo. E o desenho '
+     'esperado para um padrao de continuacao, mas a diferenca e pequena e o 1&ordm; terco '
+     'perde tambem das 10h as 11h. Anotado, nao aplicado.'),
 ]
 
 
@@ -657,6 +904,7 @@ def filtros(D):
     for chave, titulo, texto in BLOCOS_FILTRO:
         if chave not in D['estudos']:
             continue
+        texto = texto.replace('{corr}', n(D['estudos']['extra']['corr_ema_estic'], 2))
         blocos += f"""
   <div class="card" style="margin-top:16px">
     <h3>{titulo}</h3>
@@ -679,17 +927,18 @@ def filtros(D):
 <section id="filtros">
   <h2>Cada filtro, medido</h2>
   <p class="olho">Tudo aqui foi medido no conjunto <b>sem filtro nenhum</b> &mdash; os
-  {D['n_sinais']['confirmados']} sinais da regra-base, entrada no fechamento, com
-  parcial. Ao lado de cada faixa vai o mesmo numero quebrado em tercos do periodo: e o
-  teste mais duro que 26 pregoes permitem. Faixa que so paga num terco nao e filtro, e
-  sorte, e nao entrou em nenhum nivel.</p>
+  {n(D['n_sinais']['confirmados'])} sinais da regra-base, entrada no fechamento, com
+  parcial, nos {D['auditoria']['dias']} pregoes. Ao lado de cada faixa vai o mesmo numero
+  quebrado em tercos do periodo (cada terco tem ~{D['auditoria']['dias'] // 3} pregoes, mais
+  que a base antiga inteira). Faixa que so paga num terco nao e filtro, e sorte.</p>
   <div class="bandeira">
-    <h3>Por que os filtros nao se somam</h3>
-    <p style="margin-bottom:0">Empilhar os quatro melhores filtros ao mesmo tempo deixa
-    16 sinais e valor esperado <b>negativo</b>. Nao e paradoxo: cada corte tira sinais,
-    e a partir de certo ponto o que sobra e uma amostra pequena demais para significar
-    qualquer coisa. Os niveis Ouro e Prata usam tres filtros, nao os oito que mediram
-    algo.</p>
+    <h3>Os tercos, desta vez, contam uma historia</h3>
+    <p style="margin-bottom:0">Na regra-base o 3&ordm; terco mede
+    {sn(D['niveis_terco'][2]['por_terco'][2]['ev'], 1)} pts por sinal, contra
+    {sn(D['niveis_terco'][2]['por_terco'][0]['ev'], 1)} e
+    {sn(D['niveis_terco'][2]['por_terco'][1]['ev'], 1)} nos dois primeiros. Nao e o filtro: e o
+    periodo. Por isso uma faixa que so fica boa no 3&ordm; terco nao diz nada &mdash; e foi
+    exatamente num pedaco desse terco que os filtros do Ouro foram escolhidos.</p>
   </div>
   {blocos}
 </section>"""
@@ -702,10 +951,12 @@ def gestao(D):
     return f"""
 <section id="gestao">
   <h2>Stop, alvo e a parcial</h2>
-  <p class="olho">A grade abaixo roda o nivel Ouro inteiro em 36 combinacoes de stop e
-  alvo. O quadro com contorno e o do CLAUDE.md. Ele nao e o maior numero da grade, mas
-  esta num <b>topo local</b> em alvo &mdash; 300 mede melhor que 250 e que 400 &mdash;
-  e e o melhor da coluna quando o resultado e dividido pelo risco assumido.</p>
+  <p class="olho">A grade abaixo roda o nivel Ouro inteiro em
+  {len(D['grade']['stops']) * len(D['grade']['alvos'])} combinacoes de stop e alvo. O
+  quadro com contorno e o do CLAUDE.md. Na base antiga ele era um topo local; na base de
+  {D['auditoria']['dias']} pregoes a grade inteira fica perto de zero, e o que mede
+  melhor e o alvo <b>curto</b> &mdash; {n(D['grade']['alvos'][0])} pontos &mdash; que so
+  compensa com acerto alto. Nenhuma celula paga custo com folga.</p>
   <div class="abas" data-abas="grade">
     <button class="aba" data-chave="puro" aria-pressed="true">Sem parcial</button>
     <button class="aba" data-chave="parcial" aria-pressed="false">Com parcial</button>
@@ -741,17 +992,19 @@ def gestao(D):
           <tr><td>Operacoes zeradas</td><td>{n(o['zeros'])}</td><td>{n(pu['zeros'])}</td></tr>
           <tr><td>Maior perda</td><td>{sn(o['maior_perda'])} pts</td><td>{sn(pu['maior_perda'])} pts</td></tr>
         </tbody></table></div>
-      <p class="nota">A parcial entrega {n(abs(pu['lucro_liq'] - o['lucro_liq']) / pu['lucro_liq'] * 100, 0)}%
-      do lucro em troca de um rebaixamento {n((1 - o['dd_max'] / pu['dd_max']) * 100, 0)}%
-      menor e de um fator de lucro melhor. E uma troca de conforto, e e uma escolha
-      de quem opera, nao um resultado do backteste.</p>
+      <p class="nota">Com a parcial o Ouro termina em {sn(o['lucro_liq'])} pts e rebaixamento
+      de {n(o['dd_max'])}; sem ela, {sn(pu['lucro_liq'])} e {n(pu['dd_max'])}. Nesta base a
+      parcial nao troca lucro por conforto: melhora os dois, porque o alvo de 300 e alcancado
+      poucas vezes fora de agosto e setembro.</p>
     </div>
     <div class="card">
       <h3>Periodos de media</h3>
       <p style="color:var(--tinta2)">A EMA e sempre a linha do meio do Keltner, como
-      manda o CLAUDE.md &mdash; entao ela e o ATR andam juntos. A Hull 50 ganha de
-      21, 34 e 80 em <b>todas</b> as EMAs testadas: o pico nao e uma celula sortuda,
-      e uma crista.</p>
+      manda o CLAUDE.md &mdash; entao ela e o ATR andam juntos. Na base antiga a Hull 50
+      ganhava em todas as EMAs. Na nova, nenhuma combinacao passa de
+      {sn(max(m['ev_ouro'] for m in D['medias']), 1)} pts por trade no Ouro, e a unica
+      regularidade que sobra e a <b>Hull 21 ser a pior</b> em qualquer EMA. Trocar o periodo
+      nao salva o setup.</p>
       <figure><div id="medias"></div>
         <figcaption>Valor esperado por trade no nivel Ouro.</figcaption></figure>
     </div>
@@ -804,11 +1057,10 @@ def risco_retorno(D):
       </tr></thead>
       <tbody><tr><td>Por operacao</td>{cels}</tr></tbody>
     </table>
-    <p class="nota">Nivel Ouro, sem parcial. O 1:2 mede <b>positivo</b> &mdash; nao e
-    uma opcao ruim &mdash; mas ao mesmo stop ele entrega
-    {sn(linha100[1]['ev'], 1)} pts contra {sn(linha100[2]['ev'], 1)} do 1:3, quase a
-    metade, e compra com isso {n(linha100[1]['wr'] - linha100[2]['wr'], 1)} pontos
-    percentuais de acerto. O 1:3 e o topo da linha, e por larga margem.</p>
+    <p class="nota">Nivel Ouro, sem parcial. Com stop de {n(P['stop'])}: 1:1
+    {sn(linha100[0]['ev'], 1)}, 1:2 {sn(linha100[1]['ev'], 1)}, 1:3 {sn(linha100[2]['ev'], 1)},
+    1:4 {sn(linha100[3]['ev'], 1)} pts por operacao. Na base antiga o 1:3 era o topo da linha
+    por larga margem; agora nenhuma razao risco:retorno transforma o Ouro num setup.</p>
   </div>
 
   <h3 style="margin-top:34px">As tres gestoes, na carteira</h3>
@@ -819,9 +1071,9 @@ def risco_retorno(D):
       <tbody>{comp}</tbody>
     </table>
     <p class="nota">Nivel Ouro, entrada no fechamento. O 1:2 termina com
-    {sn(o2['lucro_liq'])} pts contra {sn(o3['lucro_liq'])} do 1:3 puro, e com
-    rebaixamento maior ({n(o2['dd_max'])} contra {n(o3['dd_max'])}). Ele ganha em
-    uma coisa so: acerto, {n(o2['winrate'], 1)}% contra {n(o3['winrate'], 1)}%.
+    {sn(o2['lucro_liq'])} pts contra {sn(o3['lucro_liq'])} do 1:3 puro (rebaixamento
+    {n(o2['dd_max'])} contra {n(o3['dd_max'])}); acerto de {n(o2['winrate'], 1)}% contra
+    {n(o3['winrate'], 1)}%.
     {('Monte Carlo do 1:2: probabilidade de lucro ' + n(mc2['prob_lucro'], 1) + '%.'
       ) if mc2 else ''}</p>
   </div>
@@ -839,14 +1091,11 @@ def risco_retorno(D):
   <div class="bandeira">
     <h3>O que a diagonal mostra</h3>
     <ul class="enx" style="margin-bottom:0">
-      <li>Nenhuma celula da tabela e negativa. O setup nao depende de acertar a
-      relacao risco:retorno &mdash; ele paga em todas.</li>
-      <li>Por ponto de risco, o melhor da tabela inteira e o <b>1:3 com stop
-      curto</b> ({n(P['stop'])} ou menos). Stops largos rendem mais em pontos
-      absolutos e menos por unidade de risco &mdash; e exigem mais capital para o
-      mesmo numero de contratos.</li>
-      <li>O 1:1 e o que tem melhor acerto (perto de 60%) e o pior resultado por
-      risco em quase toda a tabela. Acerto alto nao e o objetivo.</li>
+      <li>{sum(1 for l in D['rr'] for c in l if c['ev'] < 0)} das
+      {sum(len(l) for l in D['rr'])} celulas sao negativas. Na base antiga, nenhuma era.</li>
+      <li>O melhor resultado por ponto de risco e {n(max(c['ev_risco'] for l in D['rr'] for c in l), 2)}
+      &mdash; menos de 5 centesimos de ponto por ponto arriscado, antes do custo.</li>
+      <li>Stops largos (250 e 300) medem negativo em todas as razoes.</li>
     </ul>
   </div>
 </section>"""
@@ -956,9 +1205,10 @@ def fluxo_sec(D):
     <b>exatamente o filtro de pavio do Ouro</b>, escrito ao contrario:
     <code>range = 100 + pavio</code>, entao <code>100/range</code> e monotonico em
     pavio (correlacao de posto medida: <b>{sn(EFR['geom']['rho'], 4)}</b>, ou seja,
-    a mesma informacao). Esse pedaco ja foi medido, ja paga, e ja e o degrau que
-    separa Ouro de Prata. O que restava testar era o esforco em <b>volume, negocios
-    e tempo</b>.</p>
+    a mesma informacao). Esse pedaco ja foi medido na secao de filtros. O que restava
+    testar era o esforco em <b>volume</b>. As variaveis de numero de negocios
+    ({', '.join(x['rotulo'] for x in EFR.get('ausentes', []))}) ficam de fora: a base do robo
+    nao traz negocios, e o volume dela ja e o agressor.</p>
   </div>
 
   <div class="grade g2" style="gap:22px;margin-top:16px">
@@ -969,12 +1219,10 @@ def fluxo_sec(D):
           <th>corr. duracao</th><th></th></tr></thead>
         <tbody>{nov}</tbody></table></div>
       <p class="nota">&ldquo;Esforco do par&rdquo; e sempre <b>continuacao dividida
-      pela retracao</b>: acima de 1, andar a favor saiu mais caro que andar contra.
-      As tres razoes do par sao ortogonais a tudo que a estrategia ja usa &mdash;
-      correlacao abaixo de 0,05 em modulo. Valia medir. Ja
-      &ldquo;volume da continuacao&rdquo; e literalmente <code>vol_cont</code>
-      (correlacao 1,00) e as outras duas replicam volume ou duracao, que reprovaram
-      na secao anterior.</p>
+      pela retracao</b>: acima de 1, andar a favor saiu mais caro que andar contra. Ele e
+      ortogonal a tudo que a estrategia ja usa. Ja &ldquo;volume da continuacao&rdquo; e
+      literalmente <code>vol_cont</code> (correlacao 1,00), e as outras duas replicam
+      volume ou duracao.</p>
     </div>
     <div class="card">
       <h3>A pergunta que decide a historia</h3>
@@ -982,9 +1230,10 @@ def fluxo_sec(D):
         <thead><tr><th>Faixa de esforco do par</th><th>Sinais</th><th>EV</th></tr></thead>
         <tbody>{qt}</tbody></table></div>
       <p class="nota">Se menos esforco fosse melhor, o quintil de <b>menor</b> esforco
-      seria o maior. Ele mede {sn(q1['ev'], 1)} &mdash; <b>abaixo</b> da base do Ouro,
-      que e {sn(EFR['base_ouro'], 1)}. Quem carrega o resultado e o segundo quintil,
-      sozinho.</p>
+      seria o maior. Ele mede {sn(q1['ev'], 1)}, contra {sn(EFR['base_ouro'], 1)} da base do
+      Ouro. O desenho e de U invertido &mdash; os quintis do meio medem melhor e as duas
+      pontas medem mal &mdash;, que nao e a historia de Wyckoff e que, sem ter sido previsto,
+      nao vale como filtro.</p>
     </div>
   </div>
 
@@ -1006,17 +1255,12 @@ def fluxo_sec(D):
           <th>ganho</th><th>1&ordm;</th><th>2&ordm;</th><th>3&ordm;</th>
           <th>p</th></tr></thead>
         <tbody>{ct}</tbody></table></div>
-      <p class="nota">E o achado mais bonito de tres rodadas de investigacao: no Ouro
-      com parcial da {sn(EFR['cortes'][1]['ganho'], 1)} pontos, positivo nos tres
-      tercos. Mesmo
-      assim <b>nao entra</b>: a analise de poder diz que um filtro que mantem
-      {n(pwe['frac'], 0)}% dos sinais so seria detectavel acima de
-      {sn(pwe['min_ganho'], 0)} pontos, e este alega {sn(pwe['observado'], 0)} &mdash;
-      metade do limiar. E ele <b>depende da gestao</b>: trocar o alvo 1:3 pelo 1:2
-      derruba o ganho para {sn(EFR['cortes'][-1]['ganho'], 1)} pontos. Um efeito de
-      fluxo nao pode depender de qual alvo se usa &mdash; a gestao muda o desfecho do
-      trade, nao a leitura do esforco. Somado a ausencia de monotonicidade, e um
-      balde sortudo, nao um efeito.</p>
+      <p class="nota">Na base antiga este corte parecia o achado mais bonito da
+      investigacao de fluxo. Na nova da {sn(EFR['cortes'][1]['ganho'], 1)} pontos no Ouro,
+      com p = {n(EFR['cortes'][1]['p_valor'], 2)}; um filtro que mantem {n(pwe['frac'], 0)}% dos
+      sinais precisaria de {sn(pwe['min_ganho'], 0)} pontos para aparecer. E ele continua
+      <b>dependendo da gestao</b>: no 1:2 o ganho vai a {sn(EFR['cortes'][-1]['ganho'], 1)}.
+      Era um balde sortudo, e a base maior confirmou.</p>
     </div>
   </div>"""
 
@@ -1024,12 +1268,14 @@ def fluxo_sec(D):
     return f"""
 <section id="fluxo">
   <h2>Agressao, tempo de barra e forca de tendencia</h2>
-  <p class="olho">A base ganhou quatro colunas novas &mdash; volume agressor comprador e
-  vendedor, duracao da barra, volume e numero de negocios. Num grafico de PI a duracao e
-  a unica medida de <i>pressa</i> que existe: como todo corpo vale 100 pontos,
-  100/duracao compara barra com barra direto. A mediana e {n(B['dur_mediana'])}&nbsp;s e
-  o quartil de cima {n(B['dur_p75'])}&nbsp;s. <b>Nenhuma das quatro entrou em nenhum
-  nivel</b>, e a razao esta abaixo.</p>
+  <p class="olho">A base do robo traz, por candle, o volume agressor comprador e vendedor e
+  a duracao da barra. Nao traz o volume total nem o numero de negocios: aqui o
+  &ldquo;volume&rdquo; e o volume <b>agressor</b> (compra + venda), que na base antiga tinha
+  correlacao de 0,995 com o volume total. Num grafico de PI a duracao e a unica medida de
+  <i>pressa</i>: como todo corpo vale 100 pontos, 100/duracao compara barra com barra. A
+  mediana e {n(B['dur_mediana'])}&nbsp;s e o quartil de cima {n(B['dur_p75'])}&nbsp;s.
+  <b>Nenhum atributo de fluxo passa no controle de busca</b>, agora com 5 vezes mais
+  sinais.</p>
 
   <div class="grade g3">
     {tile('Atributos testados', n(esp['feats']),
@@ -1051,8 +1297,9 @@ def fluxo_sec(D):
     <p style="margin-bottom:0">O melhor filtro real do Ouro mede
     t&nbsp;=&nbsp;{sn(o['melhor']['t'], 2)}. A busca em ruido acha
     t&nbsp;=&nbsp;{sn(o['ruido_mediana'], 2)} na <b>mediana</b> e
-    {sn(o['ruido_p90'], 2)} no percentil 90. O achado real e <i>pior</i> que o achado
-    tipico em ruido puro.</p>
+    {sn(o['ruido_p90'], 2)} no percentil 90. Nos tres niveis o achado real fica abaixo da
+    mediana do ruido (p de {n(min(r['p_valor'] for r in F['peneira']), 2)} a
+    {n(max(r['p_valor'] for r in F['peneira']), 2)}).</p>
   </div>
 
   <div class="card" style="margin-top:16px">
@@ -1064,10 +1311,11 @@ def fluxo_sec(D):
         <th>3&ordm; terco<br><small>com o filtro</small></th>
         <th>3&ordm; terco<br><small>sem filtro</small></th></tr></thead>
       <tbody>{lin}</tbody></table></div>
-    <p class="nota">As duas ultimas colunas sao a prova mais direta: o corte foi escolhido
-    usando <b>so</b> os dois primeiros tercos e depois aplicado ao terceiro, que ele nunca
-    viu. Nos dois niveis que importam ele transforma um terco lucrativo em prejuizo. Um
-    filtro inutil seria inofensivo; estes atrapalham.</p>
+    <p class="nota">As duas ultimas colunas: o corte foi escolhido usando <b>so</b> os dois
+    primeiros tercos e aplicado ao terceiro, que ele nunca viu. No Bronze e no Ouro ele piora
+    o terceiro terco; no Prata melhora, com {n(pen['prata']['fora']['n_t3'])} sinais &mdash; e
+    com um atributo diferente do escolhido no periodo inteiro. Nao ha um atributo que se
+    repita.</p>
   </div>
 
   <div class="grade g2" style="gap:22px;margin-top:16px">
@@ -1101,13 +1349,11 @@ def fluxo_sec(D):
       <thead><tr><th>Hipotese</th><th>Sinais</th><th>EV</th><th>ganho</th>
         <th>1&ordm;</th><th>2&ordm;</th><th>3&ordm;</th><th>p</th></tr></thead>
       <tbody>{hp}</tbody></table></div>
-    <p class="nota">&ldquo;Operacao contra a tendencia forte falha&rdquo; nao se confirma:
-    exigir o trade a favor da deriva de 20 ou de 50 barras nao paga, e o unico corte com p
-    baixo aponta para o lado <b>contrario</b> &mdash; o que, com 170 comparacoes ja feitas,
-    e exatamente o que o acaso produz. &ldquo;A retracao logo depois de um cruzamento
-    contundente&rdquo; tambem nao: o primeiro sinal apos o cruzamento mede praticamente
-    igual a base. Vale lembrar que a regra-base <b>ja</b> exige a Hull 50 no sentido do
-    trade &mdash; boa parte do filtro de tendencia que faltaria ja esta dentro dela.</p>
+    <p class="nota">Nenhuma hipotese tem p abaixo de 0,05, e todas tem o 1&ordm; terco
+    negativo &mdash; o que e o Ouro inteiro, nao a hipotese. A que chega mais perto e
+    &ldquo;a favor da deriva de 50 barras&rdquo;, com poucos sinais. Vale lembrar que a
+    regra-base <b>ja</b> exige a Hull 50 no sentido do trade: boa parte do filtro de
+    tendencia ja esta dentro dela.</p>
   </div>
 
   <div class="card" style="margin-top:16px">
@@ -1117,12 +1363,11 @@ def fluxo_sec(D):
         <th>Filtro que mantem 50%</th><th>mantem 33%</th><th>mantem 25%</th></tr></thead>
       <tbody>{pw}</tbody></table></div>
     <p class="nota">Menor ganho de valor esperado, em pontos por trade, que esta amostra
-    distingue de zero com 80% de poder a 5%. No Ouro, um filtro que corte dois tercos dos
-    sinais precisaria valer mais de 40 pontos por trade para aparecer &mdash; mais que o
-    proprio salto de Bronze para Ouro. <b>O resultado negativo desta secao nao e
-    &ldquo;fluxo nao importa&rdquo;; e &ldquo;26 pregoes nao respondem&rdquo;.</b> Com
-    alguns meses de agressao a pergunta volta a valer a pena, e o codigo que a responde
-    ja esta pronto em estudo_fluxo.py.</p>
+    distingue de zero com 80% de poder a 5%. Na base antiga, no Ouro, passava de 40 pontos.
+    Agora um filtro que mantenha metade do Bronze apareceria a partir de
+    {sn(F['poder'][0]['linhas'][0]['min_ganho'], 0)} pontos. <b>Com essa lente, o
+    &ldquo;nao&rdquo; ja nao e so falta de amostra:</b> se o fluxo acrescentasse 10 pontos
+    por trade a regra-base, esta base veria.</p>
   </div>
   {bloco_ef}
 </section>"""
@@ -1156,9 +1401,10 @@ def robustez(D):
     return f"""
 <section id="robustez">
   <h2>Robustez, e o tamanho do que nao da para saber</h2>
-  <p class="olho">Vinte e seis pregoes sao pouco. Nada aqui substitui uma base maior; o
-  que da para fazer e ser explicito sobre o que ainda nao foi testado, e e isso que esta
-  nesta secao.</p>
+  <p class="olho">A base de {D['auditoria']['dias']} pregoes ja respondeu a pergunta mais
+  importante &mdash; o Ouro nao se sustenta fora da janela em que foi escolhido (ver
+  <a href="#oos">Fora da amostra</a>). O que segue e o resto da bateria de robustez, com o
+  periodo inteiro.</p>
 
   <div class="grade g2">
     <div class="card">
@@ -1167,9 +1413,9 @@ def robustez(D):
         <thead><tr><th>Nivel</th><th>1&ordm; terco</th><th>2&ordm; terco</th>
           <th>3&ordm; terco</th><th>Periodo</th></tr></thead>
         <tbody>{linhas}</tbody></table></div>
-      <p class="nota">Valor esperado por trade, em pontos. Os tres niveis medem
-      positivo nos tres tercos &mdash; e o Ouro e o mais parelho dos tres, apesar de
-      ser o de menor amostra.</p>
+      <p class="nota">Valor esperado por trade, em pontos. Os tres niveis perdem nos dois
+      primeiros tercos e ganham no ultimo. O Ouro, que na base antiga era o mais parelho,
+      e agora o que mais oscila.</p>
     </div>
     <div class="card">
       <h3>Monte Carlo</h3>
@@ -1207,9 +1453,8 @@ def robustez(D):
       <li><b>Caminho dentro do candle.</b> Como so existe OHLC, assume-se que o pavio
       contra o sentido do candle se forma antes &mdash; a convencao conservadora. Num
       candle que bate stop e alvo, isso decide qual vale.</li>
-      <li><b>Outros regimes.</b> Agosto e setembro de 2026 no WINFUT foram um periodo
-      de alta. O padrao e de continuacao de tendencia; e de esperar que ele sofra em
-      mercado lateral, e a base nao tem lateral suficiente para medir isso.</li>
+      <li><b>Duracao com resolucao de minuto.</b> A base do robo nao tem segundos: a
+      duracao dos trades curtos sai arredondada.</li>
       <li><b>Um instrumento so, um contrato so.</b> Sem variacao de tamanho de posicao
       e sem outro ativo para confirmar.</li>
     </ul>
@@ -1225,8 +1470,8 @@ def trades(D):
             for v, r in opcoes)
 
     esc = D['escolhida'].split('|')
-    b_niv = grupo('nivel', [(k, D['rotulo'][k]) for k in ('ouro', 'prata', 'bronze')],
-                  esc[2])
+    b_niv = grupo('nivel', [(k, D['rotulo'][k]) for k in ('ouro', 'prata', 'bronze', 'r3')
+                            if k in D['rotulo']], esc[2])
     b_modo = grupo('modo', [('fecha', 'No fechamento'),
                             ('antecipa', 'No meio do corpo (ordem stop)')], esc[0])
     b_ges = grupo('gestao', [(k, v['rot']) for k, v in D['gestoes'].items()], esc[1])
@@ -1271,71 +1516,108 @@ def trades(D):
 def conclusao(D):
     s = D['variantes'][D['escolhida']]['stats']
     P = D['parametros']
+    ou = D['oos']['blocos']['fecha|parcial|ouro']['sinais']
+    C = D.get('candidato', {}).get('gestoes', {}).get('parcial')
+    cand = ''
+    if C:
+        cand = f"""
+        <li><b>Nao ha setup para operar agora.</b> O que existe e uma hipotese &mdash; a
+        retracao profunda, {sn(C['stats']['exp_pts'], 1)} pts por trade em
+        {n(C['stats']['trades'])} operacoes &mdash; que precisa ser medida em pregoes que ainda
+        nao aconteceram. O plano.html virou o protocolo desse teste.</li>"""
     return f"""
 <section id="conclusao">
   <h2>Conclusao</h2>
-  <p class="olho">Ha um setup aqui. Ele nao e exatamente o que o CLAUDE.md descreve
-  &mdash; um dos filtros pedidos mede ao contrario &mdash; mas o esqueleto da ideia,
-  retracao mais candle de continuacao com a Hull atras do preco, mede positivo antes
-  de qualquer ajuste, e isso e o mais importante deste relatorio.</p>
+  <p class="olho">O setup Ouro nao sobreviveu a base maior. Com 26 pregoes ele media
+  +34 pontos por trade; nos {n(ou['fora']['n'])} sinais que nao participaram da escolha dos
+  filtros, mede {sn(ou['fora']['ev'], 1)}. Na base inteira, {sn(s['exp_pts'], 1)} por trade,
+  que nao paga custo. Os tres filtros que o criaram &mdash; veto de exaustao, retracao de
+  2+ candles, pavio de {n(P['pavio_min'])} a {n(P['pavio_max'])} &mdash; descreviam agosto e
+  setembro de 2026, nao o padrao.</p>
 
   <div class="grade g2">
     <div class="card">
-      <h3>O setup, em uma frase</h3>
-      <p>Compra quando a Hull 50 esta subindo e atras do preco, depois de uma retracao
-      de <b>dois ou mais</b> candles cujos topos ficaram acima da Hull, com a EMA 21
-      cortando o par, no fechamento do candle de continuacao &mdash; desde que o preco
-      <b>nao</b> esteja esticado da EMA com a Hull acelerando, e que esse candle tenha
-      pavio total entre {n(P['pavio_min'])} e {n(P['pavio_max'])} pontos. Stop
-      {n(P['stop'])}, parcial de 50% em +{n(P['parcial_em'])}, alvo {n(P['alvo'])}.
-      Venda e o espelho.</p>
-      <p style="margin-bottom:0">Isso deu <b>{sn(s['exp_pts'], 1)} pontos por
-      operacao</b> em {s['trades']} operacoes ao longo de {s['dias']} pregoes,
-      {n(s['trades_dia'], 1)} operacoes por dia, com acerto de {n(s['winrate'], 1)}% e
-      rebaixamento maximo de {n(s['dd_max'])} pontos.</p>
+      <h3>O que a base maior ensinou</h3>
+      <ul class="enx" style="margin-bottom:0">
+        <li><b>Tercos dentro de 26 pregoes nao eram robustez.</b> Os tres tercos da base
+        antiga eram tres pedacos do mesmo mes e meio de mercado.</li>
+        <li><b>Fora da amostra e o unico teste que conta.</b> Todo filtro escolhido olhando
+        os dados precisa ser medido em dados que nao foram olhados.</li>
+        <li><b>A regra-base do CLAUDE.md, sem filtros, fica perto de zero</b>
+        ({sn(D['variantes']['fecha|parcial|bronze']['stats']['exp_pts'], 1)} pts por trade) na
+        base inteira.</li>
+        <li><b>A entrada antecipada so parece boa por uma convencao de caminho</b> que o OHLC
+        nao consegue confirmar.</li>
+      </ul>
     </div>
     <div class="card">
       <h3>O que fazer com isso</h3>
       <ul class="enx" style="margin-bottom:0">
-        <li>O plano operacional esta em <b>plano.html</b>, com os gatilhos na ordem em
-        que se olha para eles na tela.</li>
-        <li>Rodar em simulador por <b>pelo menos um mes</b> antes de qualquer dinheiro
-        real. A base testada nao chega a um trimestre.</li>
-        <li>Refazer esta medicao com uma base maior assim que houver &mdash; o roteiro
-        inteiro roda com <code>python rodar.py &amp;&amp; python relatorio.py</code>.</li>
-        <li>Se for operar, operar o <b>Ouro</b>. O Bronze faz quatro vezes mais trades
-        para ganhar o mesmo, com o dobro do rebaixamento e muito mais custo.</li>
+        <li><b>Nao operar o Ouro nem o Prata</b>, e nao ligar o robo
+        <code>Robo-NTSL/MomentumPI_OuroPrata_Robo.ntsl</code> em conta real.</li>{cand}
+        <li>Para decidir a entrada antecipada, exportar uma base com o caminho dentro do
+        candle (tick a tick ou grafico de 1 PI) &mdash; sem ela a pergunta nao tem resposta.</li>
+        <li>O estudo <code>hull_contra.html</code> (Hull a favor + retracao de 2 a 4 candles
+        contra ela) tambem foi refeito nesta base e e o unico cuja hipotese previa passou no
+        teste fora da amostra.</li>
       </ul>
     </div>
   </div>
 </section>
 
 <footer>
-  <p>Backteste gerado a partir de <code>WINFUT/WINFUT_20PI.csv</code>
+  <p>Backteste gerado a partir de <code>WINFUT/WINFUT_20PI_Robo.csv</code>
   ({n(D['auditoria']['candles'])} candles, {D['auditoria']['dias']} pregoes).
-  Resultados em pontos do WINFUT, brutos, com um contrato.
-  Rodar de novo: <code>python rodar.py &amp;&amp; python relatorio.py</code>.</p>
-  <p>Backteste nao e promessa. Resultado passado, ainda por cima medido em
-  {D['auditoria']['dias']} pregoes, nao garante resultado nenhum.</p>
+  Resultados em pontos do WINFUT, brutos, com um contrato. Rodar de novo:
+  <code>python rodar.py &amp;&amp; python candidato.py &amp;&amp; python relatorio.py</code>.</p>
+  <p>Backteste nao e promessa. Este relatorio e a demonstracao disso: o mesmo setup que
+  media +34 pontos por trade em 26 pregoes mede perto de zero em
+  {D['auditoria']['dias']}.</p>
 </footer>"""
 
 
+JS_OOS = r"""
+/* ----------------------------------------------- fora da amostra e candidato */
+function desenhaOOS(){
+  if(!D.oos) return;
+  const M=D.oos.meses, ks=['ouro','prata','bronze'].map(n=>'fecha|parcial|'+n);
+  const meses=M[ks[0]].map(m=>m.mes);
+  grupos('#oos_meses',meses.map((mes,i)=>({nome:mes.slice(5)+'/'+mes.slice(2,4),
+    v:ks.map(k=>{const r=M[k].find(x=>x.mes===mes); return r?r.ev:null;}),
+    n:ks.map(k=>{const r=M[k].find(x=>x.mes===mes); return r?r.n:0;})})),
+    ['Ouro','Prata','Bronze'],{cores:['ouro','prata','bronze'],altBarra:40,esq:60});
+  if(D.candidato&&document.querySelector('#cand_meses')){
+    const g=D.candidato.gestoes.parcial;
+    barrasH('#cand_meses',g.meses.map(m=>({nome:m.mes.slice(5)+'/'+m.mes.slice(2,4),v:m.ev,
+      cor:m.ev>=0?'ganho':'perda',
+      extra:'<span class="l">sinais</span> '+m.n+' &middot; <span class="l">acerto</span> '+fmt(m.wr,1)+'%'})),
+      {altBarra:26,esq:60});
+  }
+}
+desenhaOOS();
+document.getElementById('btema').addEventListener('click',()=>desenhaOOS());
+addEventListener('resize',()=>{clearTimeout(window._rzo);window._rzo=setTimeout(desenhaOOS,200);});
+"""
+
+
 SECOES = [
-    ('resumo', 'Resumo'), ('base', 'A base'), ('padrao', 'O padrao'),
+    ('resumo', 'Resumo'), ('oos', 'Fora da amostra'), ('base', 'A base'), ('padrao', 'O padrao'),
     ('galeria', 'Galeria'), ('estatisticas', 'Estatisticas'),
     ('patrimonio', 'Patrimonio'),
     ('distribuicao', 'Distribuicao'), ('duracao', 'Duracao'),
     ('filtros', 'Filtros'), ('gestao', 'Stop e alvo'),
     ('rr', 'Risco : retorno'), ('fluxo', 'Agressao e tendencia'),
+    ('antecipada', 'Antecipada'), ('candidato', 'Hipotese'),
     ('robustez', 'Robustez'), ('trades', 'Trade a trade'),
     ('conclusao', 'Conclusao'),
 ]
 
 
 def monta(D):
-    corpo = (capa(D) + resumo(D) + base_dados(D) + padrao(D) + galeria(D)
+    corpo = (capa(D) + resumo(D) + fora_amostra(D) + base_dados(D) + padrao(D) + galeria(D)
              + estatisticas(D) + patrimonio(D) + distribuicao(D) + filtros(D)
              + gestao(D) + risco_retorno(D) + fluxo_sec(D)
+             + antecipada(D) + candidato(D)
              + robustez(D) + trades(D)
              + conclusao(D))
     menu = ''.join(f'<li><a href="#{i}">{r}</a></li>' for i, r in SECOES)
@@ -1345,7 +1627,7 @@ def monta(D):
            .replace('{{corpo}}', corpo)
            .replace('__CSS__', molde.CSS)
            .replace('__KIT__', molde.JS_KIT)
-           .replace('__PAG__', molde.JS_PAG)
+           .replace('__PAG__', molde.JS_PAG + JS_OOS)
            .replace('__KAPP__', molde.JS_KLINE_APP)
            .replace('__KLINE__', open(VENDOR_KC, encoding='utf-8').read())
            .replace('__DADOS__', json.dumps(D, ensure_ascii=False, separators=(',', ':'))))

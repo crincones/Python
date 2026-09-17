@@ -1,17 +1,22 @@
 # -*- coding: utf-8 -*-
 """
-Escreve plano.html e PLANO.md -- o plano operacional do setup.
+Escreve plano.html e PLANO.md.
 
-    python rodar.py && python relatorio.py && python plano.py
+    python rodar.py && python candidato.py && python relatorio.py && python plano.py
 
 O relatorio responde "isso funciona?". O plano responde "o que eu faco na
-frente da tela?". Por isso ele e curto, esta na ordem em que se olha para
-o grafico, e nao repete estatistica que nao muda decisao.
+frente da tela?". Na base de 132 pregoes a resposta mudou: o padrao Ouro
+nao passou no teste fora da amostra, entao o plano virou (1) o aviso de
+suspensao e (2) o protocolo de teste, em simulador, da hipotese da
+retracao profunda (candidato.py). Nada aqui e digitado: os numeros saem
+de saida/resumo.json.
 """
 import json
+import math
 import os
 
-import molde
+import pandas as pd
+
 import molde_plano
 
 BASE = os.path.dirname(os.path.abspath(__file__))
@@ -29,126 +34,92 @@ def sn(v, c=0):
 
 
 # ============================================================== o conteudo
-def gatilhos(P):
-    """Os passos, na ordem em que se olha para a tela.
-
-    Cada passo e uma pergunta de sim ou nao. Se qualquer uma der nao, o
-    trade nao existe -- nao ha 'quase'.
-    """
+def gatilhos(P, C):
+    """Os passos, na ordem em que se olha para a tela."""
     return [
-        dict(
-            num=1, titulo='A Hull 50 esta no sentido do trade?',
-            regra='Para comprar, a Hull tem de estar <b>subindo</b> e ficar '
-                  '<b>abaixo</b> do preco. Para vender, descendo e acima.',
-            porque='E a unica coisa que define de que lado se opera. Sem ela nao '
-                   'ha "continuacao" de coisa nenhuma.',
-            veta='Hull plana, ou preco do lado errado dela.'),
-        dict(
-            num=2, titulo='Houve uma retracao de 2 ou mais candles?',
-            regra='Conte os candles <b>contra</b> a tendencia antes do candle atual. '
-                  f"Precisa de <b>{P['n_ret_min']} ou mais</b>.",
-            porque='Um candle so de retracao mede menos da metade de dois. '
-                   'Um candle contra e ruido; dois ja sao um movimento.',
-            veta='Retracao de um candle so. Espere a proxima.'),
-        dict(
-            num=3, titulo='Os dois extremos do par estao fora da Hull?',
-            regra='O topo do ultimo candle da retracao <b>e</b> o topo do candle de '
-                  'continuacao, os dois acima da Hull (numa compra). Na venda, os '
-                  'dois fundos abaixo dela.',
-            porque='E o que separa um pullback dentro da tendencia de uma virada '
-                   'que ja atravessou a media.',
-            veta='Qualquer um dos dois extremos do lado de dentro da Hull.'),
-        dict(
-            num=4, titulo='A EMA 21 passa entre os topos e os fundos do par?',
-            regra='A EMA 21 tem de estar <b>dentro</b> da faixa que vai do menor '
-                  'fundo ao maior topo dos dois candles.',
-            porque='E a forma de exigir que a retracao tenha ido ate a media -- nem '
-                   'menos (nao retraiu), nem mais (nao e mais retracao).',
-            veta='EMA acima do par inteiro ou abaixo dele.'),
-        dict(
-            num=5, titulo='NAO e exaustao?', veto=True,
-            regra='Descarte se as <b>duas</b> coisas forem verdade ao mesmo tempo: a '
-                  'Hull esta <b>abrindo a curva</b> a favor do trade (acelerando) '
-                  '<b>e</b> o fechamento ja esta a mais de '
-                  f"<b>{n(P['estic_exaustao'], 2)} ATR</b> da EMA 21 "
-                  f"(com ATR perto de 150, isso e mais ou menos "
-                  f"<b>{n(P['estic_exaustao'] * 150)} pontos</b>).",
-            porque='E o filtro que mais separa. Sozinha, nenhuma das duas metades '
-                   'diz quase nada; juntas marcam 4 de cada 10 sinais, e esses 4 '
-                   'nao pagam. E a intuicao da "Hull perto da banda", so que medida '
-                   'no lugar certo.',
-            veta='Hull acelerando E preco ja esticado. E o unico veto obrigatorio.'),
-        dict(
-            num=6, titulo='O candle de continuacao tem a forma certa?',
-            regra='Pavio total (range menos os 100 pontos do corpo) entre '
-                  f"<b>{n(P['pavio_min'])}</b> e <b>{n(P['pavio_max'])}</b> pontos. "
-                  'Na pratica: o range do candle entre '
-                  f"{n(100 + P['pavio_min'])} e {n(100 + P['pavio_max'])} pontos.",
-            porque='No grafico de PI o corpo e sempre 100 pontos, entao o pavio E a '
-                   'forma. Candle liso demais e fino demais para pagar; candle de '
-                   'pavio enorme e briga, nao continuacao.',
-            veta='Este e o que separa Ouro de Prata. Falhando so ele, o sinal ainda '
-                 'e Prata -- opere menor, ou nao opere.'),
+        dict(num=1, titulo='A Hull 50 esta no sentido do trade?',
+             regra='Para comprar, a Hull tem de estar <b>subindo</b> e <b>abaixo</b> da maxima do '
+                   'candle. Para vender, descendo e acima da minima.',
+             porque='Define de que lado se opera. No estudo hull_contra, refeito na base nova, a Hull a '
+                    'favor foi a unica hipotese previa que passou no teste fora da amostra.',
+             veta='Hull plana, ou do lado errado do preco.'),
+        dict(num=2, titulo=f"Houve uma retracao de {C['n_ret_min']} ou mais candles?",
+             regra=f"Conte os candles <b>seguidos contra</b> a Hull, no mesmo pregao, antes do candle atual. "
+                   f"Precisa de <b>{C['n_ret_min']} ou mais</b>.",
+             porque='E a hipotese em teste. Com 1 ou 2 candles de retracao a regra-base mediu perto de zero '
+                    'nos 132 pregoes; com 3 ou mais, positivo nos dois blocos e nos tres tercos.',
+             veta=f"Retracao de 1 ou 2 candles, ou que atravessa a virada do dia."),
+        dict(num=3, titulo='O candle atual FECHOU a favor?',
+             regra='Espere o candle <b>fechar</b>: alta na compra, baixa na venda. E o candle de continuacao.',
+             porque='Antes do fechamento o sinal nao existe, e a entrada antecipada nao pode ser medida com a '
+                    'base disponivel.',
+             veta='Candle ainda aberto.'),
+        dict(num=4, titulo='Os dois extremos do par estao fora da Hull?',
+             regra='O topo do ultimo candle da retracao <b>e</b> o topo do candle de continuacao acima da Hull '
+                   '(numa compra). Na venda, os dois fundos abaixo dela.',
+             porque='Separa um recuo dentro da tendencia de uma virada que ja atravessou a media.',
+             veta='Qualquer um dos dois extremos do lado de dentro da Hull.'),
+        dict(num=5, titulo='A EMA 21 passa entre os topos e os fundos do par?',
+             regra='A EMA 21 tem de estar <b>dentro</b> da faixa do menor fundo ao maior topo dos dois candles.',
+             porque='Exige que a retracao tenha ido ate a media.',
+             veta='EMA acima do par inteiro ou abaixo dele.'),
     ]
 
 
-def niveis_tabela(D):
-    out = []
-    for k in ('ouro', 'prata', 'bronze'):
-        v = D['variantes'][f'fecha|parcial|{k}']['stats']
-        nt = {x['nivel']: x for x in D['niveis_terco']}[k]
-        out.append(dict(
-            nivel=k, rot=D['rotulo'][k],
-            passos={'ouro': '1 a 6, todos', 'prata': '1 a 5 (falha so o 6)',
-                    'bronze': '1 a 4 (falha o veto de exaustao)'}[k],
-            ev=nt['ev'], n=nt['n'], wr=v['winrate'], dd=v['dd_max'],
-            dia=v['trades_dia'],
-            acao={'ouro': 'Opere.',
-                  'prata': 'Opere com metade do tamanho, ou deixe passar.',
-                  'bronze': 'Nao opere.'}[k]))
-    return out
-
-
-
-def galeria_enxuta(D, nivel='ouro'):
-    """So os candles que a galeria do plano precisa, reindexados.
-
-    O relatorio embute os 10.000 candles porque tem o grafico trade a
-    trade; o plano nao tem, e nao ha razao para ele carregar 1,3 MB para
-    desenhar seis miniaturas. Aqui ficam so as janelas dos exemplos, com
-    os indices remapeados para o recorte.
-    """
-    exs = D['galeria'].get(nivel, [])
-    if not exs:
+def galeria_r3(D, k=6):
+    """Seis operacoes do candidato espalhadas no tempo, com os candles do recorte."""
+    tr = D['variantes']['fecha|parcial|r3']['trades']
+    if not tr:
         return dict(candles={}, exemplos=[])
-
-    precisa = []
-    for ex in exs:
-        precisa.extend(range(ex['de'], ex['ate'] + 1))
-    ordem = sorted(set(precisa))
-    mapa = {velho: novo for novo, velho in enumerate(ordem)}
-
+    idx = sorted({round(j * (len(tr) - 1) / (k - 1)) for j in range(k)})
+    if not any(tr[i]['pts'] < 0 for i in idx):
+        idx[-2] = next(i for i in range(idx[-2], len(tr)) if tr[i]['pts'] < 0)
+    if not any(tr[i]['pts'] > 0 for i in idx):
+        idx[1] = next(i for i in range(idx[1], len(tr)) if tr[i]['pts'] > 0)
+    exs = []
+    for i in sorted(set(idx)):
+        t = tr[i]
+        exs.append(dict(de=max(0, t['i_ret'] - 11), ate=t['i_sai'] + 3, i_ret=t['i_ret'], i_sin=t['i_sin'],
+                        i_ent=t['i_ent'], i_sai=t['i_sai'], lado=t['lado'], pts=t['pts'],
+                        preco_ent=t['preco_ent'], data=t['data'][:5] + ' ' + t['data'][-5:],
+                        rot_saida=t['rot_saida'], n_ret=t['n_ret'], pav_tot=t['pav_tot'], nivel='r3'))
+    ordem = sorted({j for e in exs for j in range(e['de'], e['ate'] + 1)})
+    mapa = {v: j for j, v in enumerate(ordem)}
     C = D['candles']
-    campos = ['o', 'h', 'l', 'c', 'hma', 'ema', 'dt']
-    compacto = {k: [C[k][i] for i in ordem] for k in campos}
-    compacto['kc_sup'] = compacto['kc_inf'] = None
+    comp = {c: [C[c][j] for j in ordem] for c in ('o', 'h', 'l', 'c', 'hma', 'ema', 'dt')}
+    comp['kc_sup'] = comp['kc_inf'] = None
+    for e in exs:
+        for c in ('de', 'ate', 'i_ret', 'i_sin', 'i_ent', 'i_sai'):
+            e[c] = mapa[e[c]]
+    return dict(candles=comp, exemplos=exs)
 
-    saida = []
-    for ex in exs:
-        e = dict(ex)
-        for k in ('de', 'ate', 'i_ret', 'i_sin', 'i_ent', 'i_sai'):
-            e[k] = mapa[ex[k]]
-        saida.append(e)
-    return dict(candles=compacto, exemplos=saida)
+
+def protocolo(D, custo_suposto=5.0):
+    """Tamanho do teste e criterios de parada, calculados do proprio backteste."""
+    g = D['candidato']['gestoes']['parcial']
+    s = g['stats']
+    desvio = s['exp_pts'] / s['sharpe']
+    ev_min = s['exp_pts'] - custo_suposto          # o que sobraria depois de um custo tipico
+    # t = ev * sqrt(n) / desvio >= 2  =>  n >= (2 * desvio / ev)^2, arredondado para cima
+    n_conf = int(math.ceil(math.ceil((2 * desvio / ev_min) ** 2) / 25.0) * 25)
+    freq = s['trades'] / D['auditoria']['dias']
+    n_parcial = 100
+    z = s['exp_pts'] * math.sqrt(n_parcial) / desvio
+    p_falso = 0.5 * (1 + math.erf(-z / math.sqrt(2))) * 100
+    inicio = (pd.Timestamp(D['auditoria']['ate']) + pd.Timedelta(days=1)).strftime('%d/%m/%Y')
+    return dict(desvio=desvio, ev_min=ev_min, custo_suposto=custo_suposto, n_conf=n_conf,
+                pregoes_conf=n_conf / freq, n_parcial=n_parcial, p_falso_abandono=p_falso,
+                dd_limite=g['mc']['dd_p95'], seq_limite=2 * s['max_seq_perda'], inicio=inicio)
 
 
 def main():
     with open(os.path.join(SAIDA, 'resumo.json'), encoding='utf-8') as f:
         D = json.load(f)
+    if 'candidato' not in D:
+        raise SystemExit('rode antes: python candidato.py')
     P = D['parametros']
-    s = D['variantes'][D['escolhida']]['stats']
-    ctx = dict(D=D, P=P, s=s, gatilhos=gatilhos(P), niveis=niveis_tabela(D),
-               n=n, sn=sn, galeria=galeria_enxuta(D))
+    ctx = dict(D=D, P=P, n=n, sn=sn, gatilhos=gatilhos(P, D['candidato']),
+               galeria=galeria_r3(D), protocolo=protocolo(D))
 
     html = molde_plano.monta_html(ctx)
     with open(os.path.join(BASE, 'plano.html'), 'w', encoding='utf-8') as f:

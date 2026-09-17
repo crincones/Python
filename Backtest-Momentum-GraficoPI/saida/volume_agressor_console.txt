@@ -1,0 +1,105 @@
+==========================================================================
+VOLUME AGRESSOR (COMPRA + VENDA) COMO FILTRO DO HULL + PAVIOS
+==========================================================================
+base: 50611 barras, 132 pregoes; sinais Hull + 2-4: 4477; Hull + pavios: 3508
+11 leituras x 3 cortes x 2 sentidos = 66 filtros candidatos
+
+--- 0. correlacao de posto (Hull + pavios) ---
+           incl_hull  sep_hull  macd_atr      hora dur_sinal   ritmo_r
+  vrel_1       -0.13     -0.03     -0.10     +0.06     +0.61     +0.06
+  vrel_2       -0.11     -0.02     -0.08     +0.05     +0.49     +0.08
+  vrel_3       -0.09     -0.02     -0.07     +0.05     +0.39     +0.10
+  vrel_5       -0.06     -0.04     -0.06     +0.01     +0.29     +0.14
+  vpct_1       -0.06     -0.03     -0.06     +0.01     +0.38     -0.01
+  vpct_2       -0.08     -0.03     -0.07     +0.03     +0.42     -0.03
+  vpct_3       -0.09     +0.01     -0.05     +0.04     +0.44     -0.02
+  vpct_5       -0.09     -0.02     -0.07     +0.05     +0.46     -0.02
+  vmed_2       -0.08     -0.03     -0.07     +0.02     +0.46     -0.02
+  vmed_3       -0.10     -0.01     -0.07     +0.03     +0.51     -0.02
+  vmed_5       -0.11     -0.01     -0.08     +0.05     +0.55     -0.02
+
+--- 1. grade (Hull + pavios, 1:3 com parcial): ganho em pts por filtro ---
+  leitura       >q20    <=q20     >q50    <=q50     >q80    <=q80
+  vrel_1        -1.0     +4.5     +0.9     -0.9     +1.3     -0.3
+  vrel_2        +0.2     -1.0     -0.6     +0.6     -0.6     +0.1
+  vrel_3        +1.2     -5.2     +2.0     -2.0     -2.4     +0.6
+  vrel_5        +1.1     -5.2     +0.8     -0.9     +2.3     -0.6
+  vpct_1        +0.6     -2.3     +0.8     -0.8     -4.2     +1.0
+  vpct_2        -2.0     +7.7     -0.2     +0.2     -2.5     +0.6
+  vpct_3        -0.4     +1.4     -1.5     +1.4     -8.3     +1.9
+  vpct_5        +0.6     -2.5     -2.5     +2.4     -0.7     +0.2
+  vmed_2        -1.3     +5.1     -1.7     +1.6     +1.0     -0.2
+  vmed_3        -0.8     +3.3     -2.4     +2.3     -0.9     +0.2
+  vmed_5        -0.8     +3.3     -3.4     +3.3     +3.3     -0.8
+
+--- 2. acima da mediana (Hull + pavios, 1:3 com parcial) ---
+  R_vrel_1   n= 1743  dentro   +9.8  fora   +8.0  ganho  +0.9  p 0.694  tercos +3/+8/+19  antes +7.7 (base +7.0)  pct 66
+  R_vrel_2   n= 1749  dentro   +8.3  fora   +9.6  ganho  -0.6  p 0.758  tercos +2/+6/+18  antes +6.0 (base +7.0)  pct 36
+  R_vrel_3   n= 1768  dentro  +10.9  fora   +6.9  ganho  +2.0  p 0.337  tercos +4/+9/+22  antes +7.6 (base +7.0)  pct 83
+  R_vrel_5   n= 1783  dentro   +9.8  fora   +8.1  ganho  +0.8  p 0.687  tercos +9/+5/+15  antes +7.4 (base +7.0)  pct 66
+  R_vpct_1   n= 1735  dentro   +9.7  fora   +8.2  ganho  +0.8  p 0.718  tercos +2/+11/+18  antes +7.5 (base +7.0)  pct 63
+  R_vpct_2   n= 1719  dentro   +8.7  fora   +9.1  ganho  -0.2  p 0.916  tercos -0/+11/+17  antes +5.5 (base +7.0)  pct 45
+  R_vpct_3   n= 1706  dentro   +7.4  fora  +10.3  ganho  -1.5  p 0.494  tercos -1/+11/+15  antes +5.5 (base +7.0)  pct 23
+  R_vpct_5   n= 1730  dentro   +6.4  fora  +11.4  ganho  -2.5  p 0.243  tercos -2/+8/+16  antes +4.3 (base +7.0)  pct 12
+  R_vmed_2   n= 1725  dentro   +7.2  fora  +10.6  ganho  -1.7  p 0.429  tercos -1/+9/+15  antes +5.1 (base +7.0)  pct 21
+  R_vmed_3   n= 1715  dentro   +6.6  fora  +11.2  ganho  -2.4  p 0.290  tercos -2/+7/+15  antes +3.9 (base +7.0)  pct 13
+  R_vmed_5   n= 1710  dentro   +5.5  fora  +12.2  ganho  -3.4  p 0.115  tercos -3/+7/+15  antes +2.6 (base +7.0)  pct 5
+
+--- 3. a busca: 66 filtros contra resultados embaralhados (1.000x) ---
+  h     1:3 com parcial  melhor: vpct_2 no quintil de baixo (n=905, ganho +5.8) t=+1.38  ruido med +1.55 p95 +2.39  p=0.666  | so 10h-15h: ganho +8.2
+        escolha antes -> original+depois  : vpct_2 no quintil de baixo               teste +17.7 (n=209) x sem filtro +11.0
+        escolha T1+T2 -> T3               : vmed_5 abaixo da mediana                 teste +14.7 (n=702) x sem filtro +11.0
+  cand  1:3 com parcial  melhor: vpct_2 no quintil de baixo (n=716, ganho +7.7) t=+1.61  ruido med +1.55 p95 +2.44  p=0.448  | so 10h-15h: ganho +12.3
+        escolha antes -> original+depois  : vpct_2 no quintil de baixo               teste +22.9 (n=157) x sem filtro +15.8
+        escolha T1+T2 -> T3               : vmed_5 abaixo da mediana                 teste +14.6 (n=549) x sem filtro +14.6
+  h     1:3 sem parcial  melhor: vpct_2 no quintil de baixo (n=905, ganho +7.5) t=+1.25  ruido med +1.59 p95 +2.37  p=0.791  | so 10h-15h: ganho +10.3
+        escolha antes -> original+depois  : vpct_2 no quintil de baixo               teste +22.5 (n=209) x sem filtro +13.6
+        escolha T1+T2 -> T3               : vmed_5 abaixo da mediana                 teste +17.0 (n=702) x sem filtro +13.0
+  cand  1:3 sem parcial  melhor: vpct_2 no quintil de baixo (n=716, ganho +11.0) t=+1.61  ruido med +1.55 p95 +2.40  p=0.436  | so 10h-15h: ganho +16.3
+        escolha antes -> original+depois  : vpct_2 no quintil de baixo               teste +35.0 (n=157) x sem filtro +21.2
+        escolha T1+T2 -> T3               : vmed_5 abaixo da mediana                 teste +17.5 (n=549) x sem filtro +18.8
+  h     1:2 sem parcial  melhor: vrel_1 no quintil de baixo (n=900, ganho +6.1) t=+1.26  ruido med +1.57 p95 +2.44  p=0.768  | so 10h-15h: ganho +5.6
+        escolha antes -> original+depois  : vpct_2 no quintil de baixo               teste +11.5 (n=209) x sem filtro +8.3
+        escolha T1+T2 -> T3               : vrel_1 no quintil de baixo               teste +8.8 (n=274) x sem filtro +9.0
+  cand  1:2 sem parcial  melhor: vrel_1 no quintil de baixo (n=652, ganho +10.6) t=+1.85  ruido med +1.56 p95 +2.39  p=0.286  | so 10h-15h: ganho +11.1
+        escolha antes -> original+depois  : vpct_2 no quintil de baixo               teste +21.7 (n=157) x sem filtro +13.6
+        escolha T1+T2 -> T3               : vrel_1 no quintil de baixo               teste +19.6 (n=194) x sem filtro +14.1
+  h     1:1 sem parcial  melhor: vpct_2 no quintil de baixo (n=905, ganho +4.0) t=+1.22  ruido med +1.57 p95 +2.47  p=0.804  | so 10h-15h: ganho +6.0
+        escolha antes -> original+depois  : vpct_2 no quintil de baixo               teste +12.9 (n=209) x sem filtro +8.5
+        escolha T1+T2 -> T3               : vpct_5 abaixo da mediana                 teste +11.5 (n=716) x sem filtro +9.0
+  cand  1:1 sem parcial  melhor: vpct_5 abaixo da mediana (n=1778, ganho +2.8) t=+1.19  ruido med +1.58 p95 +2.44  p=0.823  | so 10h-15h: ganho +1.9
+        escolha antes -> original+depois  : vpct_2 no quintil de baixo               teste +10.8 (n=157) x sem filtro +10.4
+        escolha T1+T2 -> T3               : vpct_5 abaixo da mediana                 teste +12.8 (n=553) x sem filtro +10.4
+
+--- 4. quintis (Hull + pavios, 1:3 com parcial) ---
+  vrel_1   lim +0.40 +0.63 +0.96 +1.49 | +13.5   +5.7   +8.2   +5.7  +11.5
+  vrel_2   lim +0.54 +0.76 +1.03 +1.42 |  +8.8  +12.6   +4.1  +10.6   +8.5
+  vrel_3   lim +0.61 +0.83 +1.06 +1.40 |  +3.9   +9.9  +12.7  +12.0   +6.1
+  vrel_5   lim +0.69 +0.89 +1.10 +1.41 |  +5.3   +6.8  +15.1   +6.4  +11.0
+  vpct_1   lim -0.57 -0.24 +0.24 +1.16 |  +5.9   +6.8  +14.7   +9.1   +8.0
+  vpct_2   lim -0.59 -0.26 +0.23 +1.21 | +16.5   +9.7   +4.1   +8.6   +5.6
+  vpct_3   lim -0.60 -0.29 +0.19 +1.19 | +10.4  +10.8  +10.9  +12.8   -0.3
+  vpct_5   lim -0.59 -0.27 +0.26 +1.21 |  +6.1  +13.6  +11.9   +6.1   +7.0
+  vmed_2   lim -0.59 -0.31 +0.07 +0.76 | +15.2   +7.4   +6.2   +5.6  +10.3
+  vmed_3   lim -0.59 -0.33 +0.01 +0.67 | +12.0  +15.0   +4.8   +5.8   +7.0
+  vmed_5   lim -0.60 -0.35 -0.00 +0.60 | +12.5  +12.4   +6.0   +2.3  +11.4
+
+--- 4b. acima da mediana: todos os sinais x so 10h-15h (Hull + pavios) ---
+  R_vrel_1   ganho  +0.9  so 10h-15h  +2.5   sinais antes das 10h: 23% dentro x 24% fora
+  R_vrel_2   ganho  -0.6  so 10h-15h  -0.3   sinais antes das 10h: 25% dentro x 23% fora
+  R_vrel_3   ganho  +2.0  so 10h-15h  +4.0   sinais antes das 10h: 25% dentro x 22% fora
+  R_vrel_5   ganho  +0.8  so 10h-15h  -0.3   sinais antes das 10h: 27% dentro x 20% fora
+  R_vpct_1   ganho  +0.8  so 10h-15h  +2.9   sinais antes das 10h: 23% dentro x 25% fora
+  R_vpct_2   ganho  -0.2  so 10h-15h  +0.5   sinais antes das 10h: 23% dentro x 24% fora
+  R_vpct_3   ganho  -1.5  so 10h-15h  +0.9   sinais antes das 10h: 23% dentro x 24% fora
+  R_vpct_5   ganho  -2.5  so 10h-15h  -1.8   sinais antes das 10h: 22% dentro x 25% fora
+  R_vmed_2   ganho  -1.7  so 10h-15h  -0.4   sinais antes das 10h: 23% dentro x 24% fora
+  R_vmed_3   ganho  -2.4  so 10h-15h  +0.2   sinais antes das 10h: 23% dentro x 25% fora
+  R_vmed_5   ganho  -3.4  so 10h-15h  -1.0   sinais antes das 10h: 23% dentro x 25% fora
+
+--- 5. vizinhanca: media de referencia de 50 barras (Hull + pavios, 1:3 com parcial) ---
+  R_vrel_1@media de 20 barras +0.9  R_vrel_1@media de 50 barras +1.2  R_vrel_2@media de 20 barras -0.6  R_vrel_2@media de 50 barras -0.8  R_vrel_3@media de 20 barras +2.0  R_vrel_3@media de 50 barras +0.6  R_vrel_5@media de 20 barras +0.8  R_vrel_5@media de 50 barras +2.1
+
+--- 6. carteira (1:3 com parcial) ---
+  h     base 4168tr +8.2/tr | vrel_1 +9.2  vrel_2 +7.6  vrel_3 +9.6  vrel_5 +8.2  vpct_1 +8.0  vpct_2 +8.5  vpct_3 +6.4  vpct_5 +6.1  vmed_2 +8.0  vmed_3 +6.6  vmed_5 +4.8
+  cand  base 3296tr +9.3/tr | vrel_1 +9.9  vrel_2 +8.6  vrel_3 +11.1  vrel_5 +9.2  vpct_1 +9.9  vpct_2 +9.2  vpct_3 +7.8  vpct_5 +6.2  vmed_2 +8.0  vmed_3 +7.0  vmed_5 +5.6

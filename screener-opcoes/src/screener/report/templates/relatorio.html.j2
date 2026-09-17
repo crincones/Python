@@ -1,0 +1,533 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Travas de débito B3</title>
+<style>
+:root {
+  color-scheme: light;
+  --page: #f9f9f7;
+  --surface: #fcfcfb;
+  --surface-2: #f3f2ee;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted: #6f6e69;
+  --grid: #e1e0d9;
+  --axis: #c3c2b7;
+  --border: rgba(11, 11, 11, 0.10);
+  --accent: #2a78d6;
+  --gain: #2a78d6;
+  --loss: #e34948;
+  --gain-wash: rgba(42, 120, 214, 0.14);
+  --loss-wash: rgba(227, 73, 72, 0.14);
+  --warning: #fab219;
+  --row-hover: rgba(42, 120, 214, 0.07);
+  --row-selected: rgba(42, 120, 214, 0.14);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #0d0d0d;
+    --surface: #1a1a19;
+    --surface-2: #232322;
+    --text-primary: #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted: #9a9890;
+    --grid: #2c2c2a;
+    --axis: #383835;
+    --border: rgba(255, 255, 255, 0.10);
+    --accent: #3987e5;
+    --gain: #3987e5;
+    --loss: #e66767;
+    --gain-wash: rgba(57, 135, 229, 0.20);
+    --loss-wash: rgba(230, 103, 103, 0.20);
+    --row-hover: rgba(57, 135, 229, 0.10);
+    --row-selected: rgba(57, 135, 229, 0.22);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0d0d0d;
+  --surface: #1a1a19;
+  --surface-2: #232322;
+  --text-primary: #ffffff;
+  --text-secondary: #c3c2b7;
+  --text-muted: #9a9890;
+  --grid: #2c2c2a;
+  --axis: #383835;
+  --border: rgba(255, 255, 255, 0.10);
+  --accent: #3987e5;
+  --gain: #3987e5;
+  --loss: #e66767;
+  --gain-wash: rgba(57, 135, 229, 0.20);
+  --loss-wash: rgba(230, 103, 103, 0.20);
+  --row-hover: rgba(57, 135, 229, 0.10);
+  --row-selected: rgba(57, 135, 229, 0.22);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--page);
+  color: var(--text-primary);
+  font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+main { max-width: 1480px; margin: 0 auto; padding: 24px 16px 64px; }
+h1 { font-size: 22px; margin: 0 0 4px; }
+h2 { font-size: 18px; margin: 0; }
+h3 { font-size: 15px; margin: 0 0 8px; }
+p { margin: 0 0 8px; }
+.muted { color: var(--text-muted); }
+.secondary { color: var(--text-secondary); }
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  margin-top: 16px;
+}
+.meta { display: flex; flex-wrap: wrap; gap: 6px 20px; color: var(--text-secondary); }
+.meta b { color: var(--text-primary); font-weight: 600; }
+.notice {
+  border-left: 3px solid var(--warning);
+  background: var(--surface-2);
+  padding: 8px 12px;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  margin-top: 12px;
+}
+.section-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 16px; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin: 12px 0; }
+.controls label { display: inline-flex; gap: 6px; align-items: center; color: var(--text-secondary); }
+select, button.toggle {
+  font: inherit;
+  color: var(--text-primary);
+  background: var(--surface);
+  border: 1px solid var(--axis);
+  border-radius: 6px;
+  padding: 4px 8px;
+}
+.segmented { display: inline-flex; border: 1px solid var(--axis); border-radius: 6px; overflow: hidden; }
+.segmented button {
+  font: inherit; border: 0; background: var(--surface); color: var(--text-secondary);
+  padding: 4px 10px; cursor: pointer;
+}
+.segmented button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+.table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+th, td { padding: 6px 8px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--grid); }
+th:first-child, td:first-child, th.left, td.left { text-align: left; }
+thead th {
+  position: sticky; top: 0; background: var(--surface-2); color: var(--text-secondary);
+  font-weight: 600; font-size: 12px;
+}
+thead th button {
+  all: unset; cursor: pointer; display: inline-flex; gap: 4px; align-items: center;
+}
+thead th button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+th[aria-sort="ascending"] button::after { content: "▲"; font-size: 9px; }
+th[aria-sort="descending"] button::after { content: "▼"; font-size: 9px; }
+tbody tr { cursor: pointer; }
+tbody tr:hover { background: var(--row-hover); }
+tbody tr[aria-selected="true"] { background: var(--row-selected); }
+tbody tr:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+tbody tr.child td { color: var(--text-secondary); }
+tbody tr.child td:first-child { padding-left: 22px; }
+.expand {
+  font: inherit; font-size: 12px; border: 1px solid var(--axis); background: var(--surface);
+  color: var(--text-secondary); border-radius: 10px; padding: 0 6px; margin-left: 6px; cursor: pointer;
+}
+.sub { display: block; font-size: 11px; color: var(--text-muted); }
+.chip { display: inline-flex; align-items: center; gap: 4px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.dot.alta { background: var(--gain); }
+.dot.baixa { background: var(--loss); }
+.dot.neutro { background: var(--axis); }
+.alert { color: var(--text-primary); }
+.alert-icon { color: var(--warning); font-weight: 700; }
+.bias-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 8px; }
+.bias-item {
+  border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; background: var(--surface);
+}
+.bias-item .name { font-weight: 600; }
+.bias-item .detail { font-size: 12px; color: var(--text-muted); }
+.detail-panel { margin-top: 12px; display: none; }
+.detail-panel.open { display: block; }
+.detail-grid { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 16px; }
+@media (max-width: 900px) { .detail-grid { grid-template-columns: 1fr; } }
+.chart { width: 100%; height: 340px; }
+.kv { display: grid; grid-template-columns: auto auto; gap: 2px 16px; font-variant-numeric: tabular-nums; }
+.kv dt { color: var(--text-secondary); }
+.kv dd { margin: 0; text-align: right; }
+.legs td, .legs th { font-size: 12px; }
+.empty { padding: 16px; color: var(--text-secondary); }
+details summary { cursor: pointer; font-weight: 600; }
+details ul { padding-left: 18px; color: var(--text-secondary); }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Screener de travas de débito — B3</h1>
+    <div class="meta" id="meta"></div>
+    <div class="notice">
+      Ferramenta de apoio à decisão, não é recomendação. POP e distância em σ usam Black-Scholes
+      europeu (medida neutra ao risco, IV ATM do vencimento); calls americanas e ativos com
+      proventos são aproximações. Cotações do MT5 chegam com atraso de segundos a ~1 minuto.
+    </div>
+  </header>
+
+  <section class="card" aria-labelledby="vies-titulo">
+    <div class="section-head">
+      <h2 id="vies-titulo">Ativos-objeto e viés</h2>
+      <span class="muted">Viés manual (YAML) prevalece sobre o sinal automático D1/H4.</span>
+    </div>
+    <div class="bias-grid" id="vies" style="margin-top:12px"></div>
+  </section>
+
+  <section class="card" aria-labelledby="alta-titulo" id="secao-bull_call"></section>
+  <section class="card" aria-labelledby="baixa-titulo" id="secao-bear_put"></section>
+
+  <section class="card">
+    <details>
+      <summary>Metodologia</summary>
+      <ul id="metodologia"></ul>
+    </details>
+  </section>
+</main>
+
+<script type="application/json" id="dados">{{ data_json|safe }}</script>
+<script>{{ plotly_js|safe }}</script>
+<script>
+{% raw %}
+"use strict";
+const DATA = JSON.parse(document.getElementById("dados").textContent);
+
+// ---------- formatação pt-BR ----------
+const NF = (min, max) => new Intl.NumberFormat("pt-BR", { minimumFractionDigits: min, maximumFractionDigits: max });
+const nf0 = NF(0, 0), nf2 = NF(2, 2), nf1 = NF(1, 1);
+const DASH = "—";
+const num = (v, f = nf2) => (v == null ? DASH : f.format(v));
+const brl = (v) => (v == null ? DASH : "R$ " + nf2.format(v));
+const pct = (v, digits = 1) => (v == null ? DASH : NF(digits, digits).format(v * 100) + "%");
+const dateBR = (iso) => (iso ? iso.slice(8, 10) + "/" + iso.slice(5, 7) + "/" + iso.slice(0, 4) : DASH);
+const dateTimeBR = (iso) => {
+  if (!iso) return DASH;
+  const d = new Date(iso);
+  return d.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", dateStyle: "short", timeStyle: "short" });
+};
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const BIAS_LABEL = { alta: "Alta", baixa: "Baixa", neutro: "Neutro" };
+const STRATEGY = {
+  bull_call: { title: "Travas de alta (calls)", short: "alta", direction: "alta" },
+  bear_put: { title: "Travas de baixa (puts)", short: "baixa", direction: "baixa" },
+};
+const cssVar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+function rateSource(rate) {
+  if (!rate) return "";
+  if (rate.source === "b3") return "(B3, ref. " + dateBR(rate.reference_date) + ")";
+  return "(YAML" + (rate.note ? ": " + rate.note : "") + ")";
+}
+
+// ---------- cabeçalho ----------
+(function renderHeader() {
+  const c = DATA.counts;
+  const items = [
+    ["Snapshot", dateTimeBR(DATA.snapshot_time)],
+    ["Análise", dateTimeBR(DATA.analyzed_at)],
+    ["CDI", pct(DATA.risk_free_rate_annual, 2) + " a.a. " + rateSource(DATA.risk_free_rate)],
+    ["Séries elegíveis", num(c.series_eligible, nf0) + " de " + num(c.series_total, nf0)],
+    ["Travas válidas", num(c.spreads_valid, nf0)],
+    ["Faixa de POP", pct(DATA.pop_band[0], 0) + "–" + pct(DATA.pop_band[1], 0) + " (" + num(c.spreads_in_pop_band, nf0) + ")"],
+    ["Ranqueadas", num(c.ranked.bull_call, nf0) + " alta · " + num(c.ranked.bear_put, nf0) + " baixa"],
+  ];
+  document.getElementById("meta").innerHTML = items.map(([k, v]) => `<span>${esc(k)}: <b>${esc(v)}</b></span>`).join("");
+})();
+
+(function renderBias() {
+  const grid = document.getElementById("vies");
+  const rows = [...DATA.bias].sort((a, b) => a.underlying.localeCompare(b.underlying));
+  grid.innerHTML = rows.map((b) => {
+    const trend = (t) => (t ? BIAS_LABEL[t] || t : DASH);
+    return `<div class="bias-item">
+      <div class="name">${esc(b.underlying)} <span class="secondary">${b.price == null ? "" : brl(b.price)}</span></div>
+      <div class="chip"><span class="dot ${esc(b.bias)}" aria-hidden="true"></span>${esc(BIAS_LABEL[b.bias] || b.bias)}
+        <span class="muted">(${esc(b.bias_source)})</span></div>
+      <div class="detail">D1 ${esc(trend(b.d1_trend))} · H4 ${esc(trend(b.h4_trend))}${b.manual_bias ? " · manual " + esc(b.manual_bias) : ""}</div>
+    </div>`;
+  }).join("");
+})();
+
+(function renderMethod() {
+  const w = DATA.score_weights || {};
+  const tf = DATA.signals && DATA.signals.timeframes ? Object.entries(DATA.signals.timeframes)
+    .map(([k, v]) => `${k.toUpperCase()} EMA ${v.ema_fast}/${v.ema_slow}`).join(", ") : DASH;
+  const items = [
+    "Débito realista = ask da comprada − bid da vendida (usado em todas as métricas). Débito mid é informativo.",
+    `Valores por opção e por lote (${num(DATA.lot_size, nf0)} opções).`,
+    "Custo de execução = débito realista − débito mid, em % da largura.",
+    "R/R = ganho máximo / débito realista. Breakeven: alta = K comprado + débito; baixa = K comprado − débito.",
+    "Distância ao breakeven positiva = o ativo precisa andar a favor da trava; em σ usa IV ATM × √T × spot.",
+    "POP = probabilidade neutra ao risco (Black-Scholes europeu, IV ATM do vencimento) de terminar além do breakeven.",
+    `Score 0–100 = percentis por estratégia dentro da faixa de POP: custo de execução ${pct(w.execution_cost, 0)}, liquidez ${pct(w.liquidity, 0)}, R/R ${pct(w.reward_risk, 0)}.`,
+    `Viés automático: tendência por EMAs (${esc(tf)}); só vale quando os timeframes concordam. Viés manual prevalece.`,
+    "Liquidez da trava = pior liquidez entre as pernas (percentis de spread, volume financeiro e negócios dentro do ativo).",
+    "Alerta de exercício antecipado: vendida americana ITM com pouco valor extrínseco ou provento com data ex antes do vencimento. Não remove a trava do ranking.",
+  ];
+  document.getElementById("metodologia").innerHTML = items.map((t) => `<li>${esc(t)}</li>`).join("");
+})();
+
+// ---------- tabelas ----------
+const COLUMNS = [
+  { key: "rank", label: "#", cell: (r) => (r.ranked ? num(r.rank, nf0) : `<span class="muted">fora do viés</span>`) },
+  { key: "underlying", label: "Ativo", left: true, cell: (r) => esc(r.underlying) },
+  { key: "expiration_date", label: "Venc.", cell: (r) => dateBR(r.expiration_date) },
+  { key: "dte_business_days", label: "DU", cell: (r) => num(r.dte_business_days, nf0) },
+  { key: "long_strike", label: "Strikes (C → V)", cell: (r) => `${num(r.long_strike)} → ${num(r.short_strike)}<span class="sub">${esc(r.long_symbol)} / ${esc(r.short_symbol)}</span>` },
+  { key: "debit", label: "Débito real / mid", cell: (r) => `${num(r.debit)}<span class="sub">mid ${num(r.debit_mid)}</span>` },
+  { key: "debit_per_lot", label: "Débito/lote", cell: (r) => brl(r.debit_per_lot) },
+  { key: "debit_to_width", label: "Déb./larg.", cell: (r) => pct(r.debit_to_width) },
+  { key: "reward_risk", label: "R/R", cell: (r) => num(r.reward_risk) },
+  { key: "breakeven", label: "Breakeven", cell: (r) => num(r.breakeven) },
+  { key: "breakeven_distance_sigma", label: "Dist. σ / %", cell: (r) => `${num(r.breakeven_distance_sigma)}<span class="sub">${pct(r.breakeven_distance_pct)}</span>` },
+  { key: "pop", label: "POP", cell: (r) => pct(r.pop) },
+  { key: "long_iv", label: "IV C / V", cell: (r) => `${pct(r.long_iv)}<span class="sub">${pct(r.short_iv)}</span>` },
+  { key: "liquidity_score", label: "Liquidez", cell: (r) => num(r.liquidity_score) },
+  { key: "execution_cost_pct_width", label: "Custo exec.", cell: (r) => pct(r.execution_cost_pct_width, 2) },
+  { key: "early_exercise_alert", label: "Alerta", cell: (r) => (r.early_exercise_alert ? `<span class="alert" title="${esc(r.early_exercise_reason)}"><span class="alert-icon" aria-hidden="true">⚠</span> exercício</span>` : "") },
+  { key: "score", label: "Score", cell: (r) => num(r.score, nf1) },
+];
+
+function compare(key, dir) {
+  return (a, b) => {
+    const va = a[key], vb = b[key];
+    if (va == null && vb == null) return 0;
+    if (va == null) return 1;
+    if (vb == null) return -1;
+    const c = typeof va === "string" ? va.localeCompare(vb) : va - vb;
+    return dir === "asc" ? c : -c;
+  };
+}
+
+function createSection(strategy) {
+  const meta = STRATEGY[strategy];
+  const section = document.getElementById("secao-" + strategy);
+  const all = DATA.spreads.filter((r) => r.strategy === strategy);
+  const underlyings = [...new Set(all.map((r) => r.underlying))].sort();
+  const state = { sortKey: "score", sortDir: "desc", grouped: true, includeUnaligned: false, underlying: "", expanded: new Set(), selected: null };
+  const id = (s) => `${strategy}-${s}`;
+
+  section.innerHTML = `
+    <div class="section-head">
+      <h2 id="${meta.short}-titulo">${esc(meta.title)}</h2>
+      <span class="muted" id="${id("count")}"></span>
+    </div>
+    <div class="controls">
+      <label>Ativo <select id="${id("underlying")}"><option value="">Todos</option>${underlyings.map((u) => `<option>${esc(u)}</option>`).join("")}</select></label>
+      <div class="segmented" role="group" aria-label="Visualização">
+        <button type="button" id="${id("grouped")}" aria-pressed="true">Melhor por ativo e vencimento</button>
+        <button type="button" id="${id("flat")}" aria-pressed="false">Todas</button>
+      </div>
+      <label><input type="checkbox" id="${id("unaligned")}"> Incluir travas fora do viés (consulta)</label>
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr>${COLUMNS.map((c) => `<th scope="col" class="${c.left ? "left" : ""}" data-key="${c.key}"><button type="button">${esc(c.label)}</button></th>`).join("")}</tr></thead>
+      <tbody id="${id("body")}"></tbody>
+    </table></div>
+    <div class="detail-panel card" id="${id("detail")}" aria-live="polite"></div>`;
+
+  const body = section.querySelector("#" + id("body"));
+  const headers = section.querySelectorAll("thead th");
+
+  section.querySelector("#" + id("underlying")).addEventListener("change", (e) => { state.underlying = e.target.value; render(); });
+  section.querySelector("#" + id("unaligned")).addEventListener("change", (e) => { state.includeUnaligned = e.target.checked; render(); });
+  const btnGrouped = section.querySelector("#" + id("grouped"));
+  const btnFlat = section.querySelector("#" + id("flat"));
+  const setGrouped = (g) => { state.grouped = g; btnGrouped.setAttribute("aria-pressed", String(g)); btnFlat.setAttribute("aria-pressed", String(!g)); render(); };
+  btnGrouped.addEventListener("click", () => setGrouped(true));
+  btnFlat.addEventListener("click", () => setGrouped(false));
+  headers.forEach((th) => th.querySelector("button").addEventListener("click", () => {
+    const key = th.dataset.key;
+    if (state.sortKey === key) state.sortDir = state.sortDir === "asc" ? "desc" : "asc";
+    else { state.sortKey = key; state.sortDir = ["score", "reward_risk", "pop", "liquidity_score"].includes(key) ? "desc" : "asc"; }
+    render();
+  }));
+
+  function rowHtml(r, idx, cls, extra) {
+    const selected = state.selected === r ? "true" : "false";
+    return `<tr class="${cls}" tabindex="0" data-idx="${idx}" aria-selected="${selected}">${COLUMNS.map((c, i) => `<td class="${c.left ? "left" : ""}">${c.cell(r)}${i === 1 && extra ? extra : ""}</td>`).join("")}</tr>`;
+  }
+
+  let visible = [];
+  function render() {
+    let rows = all.filter((r) => (state.includeUnaligned || r.ranked) && (!state.underlying || r.underlying === state.underlying));
+    const cmp = compare(state.sortKey, state.sortDir);
+    headers.forEach((th) => th.setAttribute("aria-sort", th.dataset.key === state.sortKey ? (state.sortDir === "asc" ? "ascending" : "descending") : "none"));
+    visible = [];
+    let html = "";
+    if (state.grouped) {
+      const groups = new Map();
+      for (const r of rows) {
+        const k = r.underlying + "|" + r.expiration_date;
+        if (!groups.has(k)) groups.set(k, []);
+        groups.get(k).push(r);
+      }
+      const heads = [];
+      for (const [k, g] of groups) {
+        g.sort(compare("score", "desc"));
+        heads.push({ key: k, head: g[0], rest: g.slice(1) });
+      }
+      heads.sort((a, b) => cmp(a.head, b.head));
+      for (const h of heads) {
+        const open = state.expanded.has(h.key);
+        const extra = h.rest.length ? `<button type="button" class="expand" data-group="${esc(h.key)}" aria-expanded="${open}">${open ? "−" : "+"}${h.rest.length}</button>` : "";
+        visible.push(h.head);
+        html += rowHtml(h.head, visible.length - 1, "", extra);
+        if (open) for (const r of h.rest) { visible.push(r); html += rowHtml(r, visible.length - 1, "child", ""); }
+      }
+    } else {
+      rows = [...rows].sort(cmp);
+      for (const r of rows) { visible.push(r); html += rowHtml(r, visible.length - 1, "", ""); }
+    }
+    const ranked = all.filter((r) => r.ranked).length;
+    section.querySelector("#" + id("count")).textContent = `${nf0.format(ranked)} ranqueadas${state.includeUnaligned ? ` · ${nf0.format(all.length - ranked)} fora do viés` : ""}`;
+    if (!visible.length) {
+      const reason = ranked === 0
+        ? `Nenhum ativo com viés de ${meta.direction} e travas dentro da faixa de POP. Marque "Incluir travas fora do viés" para consultar.`
+        : "Nenhuma trava com os filtros atuais.";
+      html = `<tr><td colspan="${COLUMNS.length}" class="empty left">${esc(reason)}</td></tr>`;
+    }
+    body.innerHTML = html;
+  }
+
+  body.addEventListener("click", (e) => {
+    const btn = e.target.closest("button.expand");
+    if (btn) {
+      const k = btn.dataset.group;
+      state.expanded.has(k) ? state.expanded.delete(k) : state.expanded.add(k);
+      render();
+      return;
+    }
+    const tr = e.target.closest("tr[data-idx]");
+    if (tr) select(visible[Number(tr.dataset.idx)]);
+  });
+  body.addEventListener("keydown", (e) => {
+    const tr = e.target.closest("tr[data-idx]");
+    if (tr && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); select(visible[Number(tr.dataset.idx)]); }
+  });
+
+  function select(r) {
+    state.selected = r;
+    render();
+    showDetail(section.querySelector("#" + id("detail")), r, id("chart"));
+  }
+
+  render();
+  return { rerender: () => state.selected && showDetail(section.querySelector("#" + id("detail")), state.selected, id("chart")) };
+}
+
+// ---------- detalhe + payoff ----------
+function payoffPerLot(r, s) {
+  const intrinsic = r.strategy === "bull_call" ? s - r.long_strike : r.long_strike - s;
+  return (Math.min(Math.max(intrinsic, 0), r.width) - r.debit) * DATA.lot_size;
+}
+
+function showDetail(panel, r, chartId) {
+  const legs = [
+    ["Comprada", r.long_symbol, r.long_strike, r.long_exercise_style, r.long_bid, r.long_ask, r.long_mid, r.long_iv, r.long_liquidity_score],
+    ["Vendida", r.short_symbol, r.short_strike, r.short_exercise_style, r.short_bid, r.short_ask, r.short_mid, r.short_iv, r.short_liquidity_score],
+  ];
+  const style = { american: "americana", european: "europeia" };
+  panel.innerHTML = `
+    <h3>${esc(r.underlying)} · ${esc(STRATEGY[r.strategy].title.replace("Travas", "Trava"))} · venc. ${dateBR(r.expiration_date)} (${num(r.dte_business_days, nf0)} DU)</h3>
+    ${r.early_exercise_alert ? `<div class="notice"><span class="alert-icon" aria-hidden="true">⚠</span> Risco de exercício antecipado: ${esc(r.early_exercise_reason)}</div>` : ""}
+    <div class="detail-grid" style="margin-top:12px">
+      <div>
+        <div class="muted">Resultado no vencimento por lote (R$) em função do preço de ${esc(r.underlying)}</div>
+        <div class="chart" id="${chartId}" role="img" aria-label="Gráfico de payoff no vencimento"></div>
+      </div>
+      <div>
+        <dl class="kv">
+          <dt>Spot</dt><dd>${brl(r.spot)}</dd>
+          <dt>Débito realista (opção / lote)</dt><dd>${num(r.debit)} / ${brl(r.debit_per_lot)}</dd>
+          <dt>Débito mid</dt><dd>${num(r.debit_mid)}</dd>
+          <dt>Custo de execução</dt><dd>${pct(r.execution_cost_pct_width, 2)} da largura</dd>
+          <dt>Largura</dt><dd>${num(r.width)}</dd>
+          <dt>Ganho máximo / lote</dt><dd>${brl(r.max_gain_per_lot)}</dd>
+          <dt>Perda máxima / lote</dt><dd>${brl(r.max_loss_per_lot)}</dd>
+          <dt>R/R</dt><dd>${num(r.reward_risk)}</dd>
+          <dt>Breakeven</dt><dd>${num(r.breakeven)} (${pct(r.breakeven_distance_pct)} · ${num(r.breakeven_distance_sigma)} σ)</dd>
+          <dt>POP</dt><dd>${pct(r.pop)}</dd>
+          <dt>IV ATM do vencimento</dt><dd>${pct(r.atm_iv)}</dd>
+          <dt>Liquidez (pior perna)</dt><dd>${num(r.liquidity_score)}</dd>
+          <dt>Menor volume / negócios</dt><dd>${brl(r.min_turnover_brl)} / ${num(r.min_deals, nf0)}</dd>
+          <dt>Score</dt><dd>${num(r.score, nf1)}${r.ranked ? ` · #${num(r.rank, nf0)}` : " · fora do viés"}</dd>
+          <dt>Viés do ativo</dt><dd>${esc(BIAS_LABEL[r.bias] || r.bias)} (${esc(r.bias_source)})</dd>
+        </dl>
+      </div>
+    </div>
+    <div class="table-wrap legs" style="margin-top:12px"><table>
+      <thead><tr><th class="left">Perna</th><th class="left">Ticker</th><th>Strike</th><th class="left">Estilo</th><th>Bid</th><th>Ask</th><th>Mid</th><th>IV</th><th>Liquidez</th></tr></thead>
+      <tbody>${legs.map((l) => `<tr><td class="left">${l[0]}</td><td class="left">${esc(l[1])}</td><td>${num(l[2])}</td><td class="left">${esc(style[l[3]] || l[3])}</td><td>${num(l[4])}</td><td>${num(l[5])}</td><td>${num(l[6])}</td><td>${pct(l[7])}</td><td>${num(l[8])}</td></tr>`).join("")}</tbody>
+    </table></div>`;
+  panel.classList.add("open");
+  drawPayoff(chartId, r);
+  panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+function drawPayoff(chartId, r) {
+  const low = Math.min(r.long_strike, r.short_strike), high = Math.max(r.long_strike, r.short_strike);
+  const ref = [low, high, r.spot, r.breakeven];
+  const pad = Math.max(high - low, r.spot * 0.04);
+  const x0 = Math.min(...ref) - pad, x1 = Math.max(...ref) + pad;
+  const steps = 240;
+  const xs = [];
+  for (let i = 0; i <= steps; i++) xs.push(x0 + (x1 - x0) * i / steps);
+  xs.push(low, high, r.breakeven);
+  xs.sort((a, b) => a - b);
+  const ys = xs.map((s) => payoffPerLot(r, s));
+  const ink = cssVar("--text-primary"), secondary = cssVar("--text-secondary"), muted = cssVar("--text-muted");
+  const grid = cssVar("--grid"), axis = cssVar("--axis"), surface = cssVar("--surface");
+  const traces = [
+    { x: xs, y: ys.map((y) => Math.max(y, 0)), type: "scatter", mode: "lines", line: { width: 0 }, fill: "tozeroy", fillcolor: cssVar("--gain-wash"), hoverinfo: "skip", showlegend: false },
+    { x: xs, y: ys.map((y) => Math.min(y, 0)), type: "scatter", mode: "lines", line: { width: 0 }, fill: "tozeroy", fillcolor: cssVar("--loss-wash"), hoverinfo: "skip", showlegend: false },
+    { x: xs, y: ys, type: "scatter", mode: "lines", line: { width: 2, color: ink }, name: "Resultado", showlegend: false,
+      hovertemplate: "Preço no vencimento: R$ %{x:,.2f}<br>Resultado por lote: R$ %{y:,.2f}<extra></extra>" },
+  ];
+  const vline = (x, color, dash) => ({ type: "line", xref: "x", yref: "paper", x0: x, x1: x, y0: 0, y1: 1, line: { color, width: 1.5, dash } });
+  const label = (x, text, y) => ({ x, y, xref: "x", yref: "paper", text, showarrow: false, font: { size: 11, color: secondary }, bgcolor: surface, xanchor: "center" });
+  const layout = {
+    separators: ",.",
+    showlegend: false,
+    margin: { l: 64, r: 16, t: 28, b: 44 },
+    paper_bgcolor: surface, plot_bgcolor: surface,
+    font: { family: "system-ui, -apple-system, 'Segoe UI', sans-serif", color: secondary, size: 12 },
+    hovermode: "x",
+    hoverlabel: { bgcolor: surface, bordercolor: axis, font: { color: ink } },
+    xaxis: { title: { text: "Preço do ativo no vencimento (R$)", font: { color: muted } }, gridcolor: grid, zeroline: false, linecolor: axis, tickformat: ",.2f", showspikes: true, spikecolor: axis, spikethickness: 1, spikedash: "solid" },
+    yaxis: { title: { text: "R$ por lote", font: { color: muted } }, gridcolor: grid, zeroline: true, zerolinecolor: axis, zerolinewidth: 1.5, tickformat: ",.0f" },
+    shapes: [vline(r.spot, muted, "dash"), vline(r.breakeven, secondary, "dot")],
+    annotations: [label(r.spot, "Spot " + nf2.format(r.spot), 1.06), label(r.breakeven, "Breakeven " + nf2.format(r.breakeven), 0.96)],
+  };
+  // Ganho e perda também identificados por texto (não só pela cor da área): rótulo acima do
+  // patamar de ganho e abaixo do patamar de perda, com folga no eixo para não sobrepor a linha.
+  const gainY = r.max_gain_per_lot, lossY = -r.max_loss_per_lot;
+  const headroom = (gainY - lossY) * 0.18;
+  layout.yaxis.range = [lossY - headroom, gainY + headroom];
+  // Na trava de alta o ganho fica à direita; na de baixa, à esquerda.
+  const gainRight = r.strategy === "bull_call";
+  const edge = (right) => (right ? { x: 0.99, xanchor: "right" } : { x: 0.01, xanchor: "left" });
+  layout.annotations.push(
+    { ...edge(gainRight), y: gainY, xref: "paper", yref: "y", text: "ganho máx. " + brl(gainY), showarrow: false, yanchor: "bottom", yshift: 4, font: { size: 11, color: secondary } },
+    { ...edge(!gainRight), y: lossY, xref: "paper", yref: "y", text: "perda máx. " + brl(lossY), showarrow: false, yanchor: "top", yshift: -4, font: { size: 11, color: secondary } },
+  );
+  Plotly.react(chartId, traces, layout, { displayModeBar: false, responsive: true });
+}
+
+const sections = ["bull_call", "bear_put"].map(createSection);
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => sections.forEach((s) => s.rerender()));
+{% endraw %}
+</script>
+</body>
+</html>

@@ -1,4 +1,12 @@
 //------------------------------------------------------------------
+// ATUALIZACAO 14/09/2026
+//   Remedido na base WINFUT_20PI_Robo.csv (132 pregoes): pavios pequenos
+//   (1-25% do corpo) medem cerca de +5 pts por sinal, contra +2,5 do
+//   universo sem filtro -- melhor que a faixa do magenta, mas longe de
+//   pagar custo. Dentro da condicao Hull a favor, a faixa 5-25% nao separa
+//   (percentil 58). Ver PAVIO_CONTRA.md e HULL_CONTRA.md. Numeros abaixo:
+//   base antiga.
+//
 // PavioFavor_Verde  -  Grafico PI 20 (WINFUT)  -  NTSL
 //
 // Versao do PavioContra_Magenta reescrita com o que o backteste

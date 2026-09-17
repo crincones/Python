@@ -326,18 +326,73 @@ def detalhe(nome, d, sig, stop):
             'A_c5': psicologia(d, sig, stop, ('A',), custo=5.0),
         }
 
+    r['janela'] = janela(d, sig)
+
     tr = E.roda(d, mk, sig, carteira=True)
     if len(tr):
         tt = tr.copy()
         tt['mes'] = pd.to_datetime(tt.dia).dt.to_period('M').astype(str)
+        tt['per'] = _periodo(tt.dia)
         r['mes'] = [dict(mes=k, n=len(g), ev=round(g.pnl.mean(), 1),
                          total=round(float(g.pnl.sum())),
-                         acerto=round(100 * float((g.pnl > 0).mean()), 1))
+                         acerto=round(100 * float((g.pnl > 0).mean()), 1),
+                         calib=int((g.per == 'dentro').sum()),
+                         pregoes=int(g.dia.nunique()))
                     for k, g in tt.groupby('mes')]
         r['equity'] = [round(x) for x in tr.pnl.cumsum().tolist()]
         r['equity_setup'] = tr.setup.tolist()
     return r, tr
 
+
+
+PERIODOS = ('antes', 'dentro', 'depois', 'fora')
+
+
+def _periodo(dias):
+    """'antes' / 'dentro' / 'depois' da JANELA_CALIBRACAO, por pregao."""
+    ini, fim = (pd.Timestamp(x).date() for x in E.JANELA_CALIBRACAO)
+    dias = pd.Series(list(dias))
+    return np.where(dias < ini, 'antes', np.where(dias > fim, 'depois', 'dentro'))
+
+
+def janela(d, sig):
+    """O TESTE FORA DA AMOSTRA: a mesma configuracao, cortada pela janela em
+    que os parametros foram escolhidos.
+
+    Os trades sao simulados na base inteira e so depois separados pelo
+    pregao do sinal -- nenhum trade atravessa pregao, entao o corte nao
+    muda trade nenhum. 'fora' = 'antes' + 'depois'.
+    """
+    st0, c0 = E.STOP, E.CUSTO_PTS
+    dias = d.dia.to_numpy()
+    per = _periodo(dias)
+    out = {'janela': list(E.JANELA_CALIBRACAO), 'ordem': list(PERIODOS),
+           'pregoes': {p: int(len(set(dias[per == p] if p != 'fora'
+                                       else dias[per != 'dentro'])))
+                       for p in PERIODOS}}
+    mk3 = E.setups(d, sig, ativos=('A', 'B', 'C'))
+    mkA = E.setups(d, sig, ativos=('A',))
+    mkAB = E.setups(d, sig, ativos=('A', 'B'))
+    for stop in STOPS:
+        E.STOP = float(stop)
+        g = {}
+        for rot, custo, kw in (
+                ('cA', 0.0, dict(marca=mkA, carteira=True)),
+                ('cAB', 0.0, dict(marca=mkAB, carteira=True)),
+                ('cA_c5', 5.0, dict(marca=mkA, carteira=True)),
+                ('cAB_c5', 5.0, dict(marca=mkAB, carteira=True)),
+                ('setup_A', 0.0, dict(marca=mk3, carteira=False, setup='A')),
+                ('setup_B', 0.0, dict(marca=mk3, carteira=False, setup='B'))):
+            E.CUSTO_PTS = custo
+            tr = E.roda(d, kw['marca'], sig, carteira=kw['carteira'],
+                        setup=kw.get('setup'))
+            p = _periodo(tr.dia) if len(tr) else np.array([])
+            g[rot] = {q: E.metricas(tr[(p != 'dentro') if q == 'fora' else (p == q)]
+                                    if len(tr) else None)
+                      for q in PERIODOS}
+        out[str(stop)] = g
+    E.STOP, E.CUSTO_PTS = st0, c0
+    return out
 
 
 def psicologia(d, sig, stop, ativos=('A',), custo=0.0):
@@ -556,6 +611,17 @@ def principal():
         print('\n  custo por trade (stop %d)' % STOPS[0])
         for c in (0, 5, 10, 20):
             print(_l('custo de %d pts' % c, det['custo_%d' % c]))
+
+        jn = det['janela']
+        print('\n  FORA DA AMOSTRA -- janela de calibracao %s a %s  (pregoes: %s)'
+              % (jn['janela'][0], jn['janela'][1],
+                 ' · '.join('%s %d' % (p, jn['pregoes'][p]) for p in PERIODOS)))
+        print(_cab(34))
+        for stop in STOPS:
+            for rot, ch in (('so A', 'cA'), ('A + B', 'cAB'),
+                            ('so A, custo 5', 'cA_c5'), ('setup B isolado', 'setup_B')):
+                for p in PERIODOS:
+                    print(_l('stop %d · %s · %s' % (stop, rot, p), jn[str(stop)][ch][p], 34))
 
         if len(tr_out):
             tt = tr_out.copy()

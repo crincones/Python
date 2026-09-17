@@ -2,7 +2,9 @@
 """
 Engine de backtest - Momentum no grafico PI (Pontos de Inversao).
 
-Base: WINFUT/WINFUT_20PI.csv, grafico de 20 PI da Nelogica.
+Base: WINFUT/WINFUT_20PI_Robo.csv, grafico de 20 PI da Nelogica
+      (06/03 a 14/09/2026, 132 pregoes; a base antiga WINFUT_20PI.csv,
+      26 pregoes de ago-set, e o trecho final dela).
       20 PI = 20 ticks = 100 pontos. TODO candle fecha exatamente 100
       pontos acima ou abaixo da sua abertura, e a abertura de um candle
       e o fechamento do anterior (salvo virada de dia). O corpo, portanto,
@@ -37,7 +39,8 @@ import pandas as pd
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 DADOS = os.path.join(BASE, 'WINFUT')
-ARQUIVO = os.path.join(DADOS, 'WINFUT_20PI.csv')
+ARQUIVO = os.path.join(DADOS, 'WINFUT_20PI_Robo.csv')
+ARQUIVO_ANTIGO = os.path.join(DADOS, 'WINFUT_20PI.csv')   # 26 pregoes, ago-set/2026
 
 # ------------------------------------------------------------- instrumento
 TICK = 5.0             # tick do WIN, em pontos
@@ -99,17 +102,46 @@ FECHA_NO_DIA = True    # zera no ultimo candle do dia (day trade)
 
 
 # ============================================================ carga de dados
-def carrega(caminho=ARQUIVO):
-    """Le o csv exportado do Profit e devolve em ordem cronologica.
+def carrega(caminho=None):
+    """Le a base e devolve em ordem cronologica.
 
-    O arquivo vem do mais novo para o mais antigo, separado por TAB, com
-    virgula decimal. A coluna 'Media Movel E [21]' e a EMA calculada pela
-    propria Nelogica -- fica guardada so para conferencia (ver auditoria).
+    Dois formatos:
+
+    * WINFUT_20PI_Robo.csv (padrao) -- gerado por Robo-NTSL/estrutura_export.py
+      a partir do log do robo. Uma linha por candle, ja em ordem de
+      CurrentBar, com agressao e duracao. A hora vem so ate o minuto (o
+      NTSL nao da segundos). Nao traz a EMA da Nelogica: `ema_nl` sai NaN.
+    * WINFUT_20PI.csv (base antiga) -- exportacao direta do Profit, do mais
+      novo para o mais antigo, TAB, virgula decimal, com a EMA 21 da propria
+      Nelogica para conferencia.
+
+    A variavel de ambiente WINFUT_BASE troca o arquivo sem mexer no codigo.
     """
-    d = pd.read_csv(caminho, sep='\t', decimal=',', thousands='.')
-    d.columns = ['data', 'o', 'h', 'l', 'c', 'vwap', 'ema_nl']
-    d['data'] = pd.to_datetime(d['data'], format='%d/%m/%Y %H:%M:%S.%f')
-    d = d.sort_values('data').reset_index(drop=True)
+    caminho = caminho or os.environ.get('WINFUT_BASE') or ARQUIVO
+    if not os.path.isabs(caminho):
+        caminho = os.path.join(DADOS, caminho)
+    with open(caminho, encoding='utf-8', errors='replace') as f:
+        cab = f.readline()
+    if cab.startswith('barra,'):
+        r = pd.read_csv(caminho)
+        d = pd.DataFrame({
+            'data': pd.to_datetime(r['data_hora'], format='%Y-%m-%d %H:%M'),
+            'o': r['abertura'].astype(float), 'h': r['maxima'].astype(float),
+            'l': r['minima'].astype(float), 'c': r['fechamento'].astype(float),
+            'vwap': np.nan, 'ema_nl': np.nan,
+            'agr_c': r['agr_compra'].astype(float),
+            'agr_v': r['agr_venda'].astype(float),
+            'dur_barra_s': r['duracao_s'].astype(float),
+            'barra': r['barra'].astype(int),
+        })
+        # a ordem do arquivo E a cronologica (CurrentBar); ordenar por hora
+        # embaralharia os candles fechados no mesmo minuto
+        d = d.reset_index(drop=True)
+    else:
+        d = pd.read_csv(caminho, sep='\t', decimal=',', thousands='.')
+        d.columns = ['data', 'o', 'h', 'l', 'c', 'vwap', 'ema_nl']
+        d['data'] = pd.to_datetime(d['data'], format='%d/%m/%Y %H:%M:%S.%f')
+        d = d.sort_values('data').reset_index(drop=True)
     d['dia'] = d['data'].dt.normalize()
     return d
 

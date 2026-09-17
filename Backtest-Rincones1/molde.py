@@ -239,7 +239,7 @@ footer{margin-top:72px;padding-top:24px;border-top:1px solid var(--line);
       <span class="chip">stop na média da operação</span>
       <span class="chip">alvo <b>{{alvo}}</b></span>
       <span class="chip">entrada limitada no meio do candle</span>
-      <span class="chip">jun–ago/2026</span>
+      <span class="chip">{{periodo}}</span>
     </div>
   </div>
 </header>
@@ -256,7 +256,12 @@ footer{margin-top:72px;padding-top:24px;border-top:1px solid var(--line);
     <div class="tile"><div class="tile-k">EV por trade</div><div class="tile-v pos">{{evfu}}</div><div class="tile-s">WINFUT · pontos</div></div>
     <div class="tile"><div class="tile-k">Acerto</div><div class="tile-v">{{ac26}} / {{acfu}}</div><div class="tile-s">WINV26 / WINFUT</div></div>
     <div class="tile"><div class="tile-k">t (diário)</div><div class="tile-v">{{t26}} / {{tfu}}</div><div class="tile-s">{{n26}} e {{nfu}} trades</div></div>
-    <div class="tile"><div class="tile-k">Frequência</div><div class="tile-v">~5</div><div class="tile-s">trades por pregão</div></div>
+    <div class="tile"><div class="tile-k">Frequência</div><div class="tile-v">{{trades_preg}}</div><div class="tile-s">trades por pregão · a maior base</div></div>
+  </div>
+
+  <div class="note risk">
+    <div class="lab">Fora da amostra — seção 11</div>
+    <p>{{ver_oos}}</p>
   </div>
 
   <div class="note">
@@ -402,15 +407,15 @@ footer{margin-top:72px;padding-top:24px;border-top:1px solid var(--line);
   <p>Uma posição por vez, prioridade A &gt; B &gt; C, stop {{stop_pad}}. Adicionar o setup B <strong>soma mais pontos no total</strong> e <strong>dobra o drawdown</strong>. Adicionar C piora tudo nas duas bases.</p>
   {{cart26}}
   {{cartfu}}
-  <p>Não há resposta única. <strong>Se o seu limite é drawdown, é só A</strong> — melhor EV, melhor <code>t</code>, melhor PF e rebaixamento bem menor, a ~2,5 trades por pregão. Se é aproveitar o dia, é A + B.</p>
+  <p>Não há resposta única. <strong>Se o seu limite é drawdown, é só A</strong> — melhor EV por trade, melhor PF e rebaixamento bem menor. Se é aproveitar o dia, é A + B.</p>
 </section>
 
 <section>
   <h2><span class="n">10</span> Alvo e parcial</h2>
-  <h3>O alvo de 300 está no ponto</h3>
+  <h3>Onde fica o alvo</h3>
   <p>EV em pontos, carteira A + B, com a <strong>parcial acompanhando o stop de cada linha</strong>. A célula em destaque de cada linha é a melhor daquela linha.</p>
   <div class="charts">{{grade26}}{{gradefu}}</div>
-  <p><strong>O alvo de {{alvo}} é o melhor da linha em todas as seis linhas das duas tabelas.</strong> Não é um pico isolado: 200 é pior, 400 e 500 são piores.</p>
+  <p>{{ver_alvo}}</p>
 
   <div class="note">
     <div class="lab">Sobre a entrada</div>
@@ -423,14 +428,16 @@ footer{margin-top:72px;padding-top:24px;border-top:1px solid var(--line);
 
 <section>
   <h2><span class="n">11</span> Fora da amostra</h2>
-  <h3>Julho é o único mês que não foi visto</h3>
-  <p>As duas bases se sobrepõem — o WINFUT contém a janela inteira do WINV26 e mais julho. O único corte quase-independente é o calendário.</p>
+  <h3>O que acontece nos pregões que ninguém olhou</h3>
+  <p>Todo parâmetro deste relatório foi escolhido olhando a janela do WINFUT antigo — que é a mesma do WINV26 e está inteira dentro do WINFUT novo. O arquivo novo acrescenta pregões <strong>antes e depois</strong> dessa janela. Eles são o único teste fora da amostra que existe aqui, e o corte não mexe em trade nenhum: os trades são simulados na base inteira e só depois separados pelo pregão do sinal.</p>
+  <div class="note risk"><div class="lab">O veredito</div><p>{{ver_oos}}</p></div>
+  {{tab_oos}}
   <div class="scroll"><table>
-    <caption>WINFUT · carteira A + B · stop {{stop_pad}}</caption>
+    <caption>WINFUT · carteira A + B · stop {{stop_pad}} · mês a mês</caption>
     <thead><tr><th>mês</th><th class="num">n</th><th class="num">EV</th><th class="num">total</th><th class="num">acerto</th></tr></thead>
     <tbody>{{mes}}</tbody>
   </table></div>
-  <p>Julho — o pedaço de dados que não foi visto ao calibrar nada — mede acima da média do conjunto. É o mais próximo de teste fora da amostra que estes dados permitem, e <strong>não é um walk-forward</strong>: são dois meses, e os parâmetros de regime foram varridos olhando os dois arquivos.</p>
+  <p><strong>Não é um walk-forward</strong>: é um corte só, e o trecho depois da janela tem poucos pregões. Mas é a primeira vez que a estratégia encontra dados que não participaram de nenhuma escolha — e é o número que deveria pesar mais.</p>
 </section>
 
 <section>
@@ -507,11 +514,11 @@ footer{margin-top:72px;padding-top:24px;border-top:1px solid var(--line);
   <h2><span class="n">14</span> Ressalvas</h2>
   <h3>O que enfraquece tudo acima</h3>
   <div class="note risk"><div class="lab">Amostra pequena</div>
-    <p>{{pregfu}} pregões no WINFUT, {{preg26tr}} com trade no WINV26. Vários <code>t</code> ficam entre +1 e +2, que não é evidência forte. O setup C tem 7 e 19 trades — a conclusão sobre ele é “não há evidência a favor”, não “está provado que perde”.</p></div>
+    <p>{{pregfu}} pregões no WINFUT, {{preg26tr}} com trade no WINV26. Vários <code>t</code> ficam entre +1 e +2, que não é evidência forte. O setup C tem {{n_c}} trades — a conclusão sobre ele é “não há evidência a favor”, não “está provado que perde”.</p></div>
   <div class="note risk"><div class="lab">As bases não são independentes</div>
     <p>WINFUT contém WINV26. Quando as duas concordam, isso vale menos do que parece.</p></div>
   <div class="note risk"><div class="lab">Parâmetros varridos nas mesmas bases</div>
-    <p>Os cortes de regime — e agora também o período e a inclinação de cada média adaptativa — foram escolhidos olhando os dois arquivos. Há sobreajuste embutido; o corte de julho é o que existe contra isso, e é fraco. Isso vale <em>especialmente</em> para a comparação de médias da seção 05: cada família ganhou uma varredura própria.</p></div>
+    <p>Os cortes de regime — e agora também o período e a inclinação de cada média adaptativa — foram escolhidos olhando os dois arquivos. Há sobreajuste embutido — e a seção 11 mostra o tamanho dele: fora da janela de calibração a vantagem não se repete. Isso vale <em>especialmente</em> para a comparação de médias da seção 05: cada família ganhou uma varredura própria.</p></div>
   <div class="note risk"><div class="lab">Duas condições do regime ajudam menos do que parecem</div>
     <p>O leque mínimo mede melhor quanto <strong>menor</strong> — exigir leque aberto piora. E o toque na média é quase indiferente: sem exigir toque nenhum, o setup A mede praticamente igual. O que carrega o A é <strong>o alinhamento das médias mais o gatilho a favor</strong>, não a geometria fina do pullback.</p></div>
   <div class="note risk"><div class="lab">O filtro de “movimento rápido” é inerte</div>
@@ -524,10 +531,11 @@ footer{margin-top:72px;padding-top:24px;border-top:1px solid var(--line);
   <h2><span class="n">15</span> O que eu faria</h2>
   <h3>Em ordem</h3>
   <ol class="acoes">
+    <li>{{acao_oos}}</li>
     <li>{{acao_stop}}</li>
     <li>{{acao_carteira}}</li>
     <li>{{acao_ma}}</li>
-    <li><strong>Manter o alvo em {{alvo}}.</strong> Melhor da linha nas seis linhas das duas grades.</li>
+    <li><strong>Manter o alvo em {{alvo}}.</strong></li>
     <li><strong>Não ligar o setup C.</strong></li>
     <li><strong>Medir o custo real da sua corretora</strong> e refazer a seção 12 com o número verdadeiro antes de dimensionar posição.</li>
   </ol>

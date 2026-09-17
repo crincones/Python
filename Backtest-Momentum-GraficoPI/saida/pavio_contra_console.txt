@@ -1,96 +1,106 @@
 ==========================================================================
 BACKTESTE  PavioContra_Magenta  --  os pavios fazem sentido?
 ==========================================================================
-base: 10000 barras PI 20, 06/08/2026 a 11/09/2026, 26 pregoes
-universo: 4777 candles contra depois de 1+ no sentido oposto; 1354 no padrao (691 vendas, 663 compras)
-tercos: T1 ate 2026-08-18, T2 ate 2026-08-31, T3 depois
+base: 50611 barras PI 20, 06/03/2026 a 14/09/2026, 132 pregoes
+universo: 24640 candles contra depois de 1+ no sentido oposto; 6933 no padrao (3458 vendas, 3475 compras)
+tercos: T1 ate 2026-05-12, T2 ate 2026-07-14, T3 depois
 
 --- 1. EV por sinal (pts, isolado, bruto) ---------------------------
 entrada   gestao                     padrao    2-4 sem pavio   2-4 fora faixa          inverso
-fecha     1:3 com parcial       +4.5 (1354)      +5.8 (2171)      +7.9 ( 817)      -8.1 (1354)
-fecha     1:3 sem parcial       +4.2 (1354)      +5.9 (2171)      +8.7 ( 817)     -11.4 (1354)
-fecha     1:2 sem parcial       +3.2 (1354)      +4.2 (2171)      +5.9 ( 817)      -7.2 (1354)
-fecha     1:1 sem parcial       +4.8 (1354)      +5.7 (2171)      +7.1 ( 817)      -4.8 (1354)
-meio_lim  1:3 com parcial       -2.1 ( 885)      -1.1 (1441)      +0.6 ( 556)              n/a
-meio_lim  1:3 sem parcial       +9.5 ( 885)      +9.2 (1441)      +8.5 ( 556)              n/a
-meio_lim  1:2 sem parcial       +8.9 ( 885)      +8.0 (1441)      +6.7 ( 556)              n/a
-meio_lim  1:1 sem parcial      -13.8 ( 885)     -11.3 (1441)      -7.4 ( 556)              n/a
+fecha     1:3 com parcial       +0.9 (6933)     +2.5 (11083)      +5.3 (4150)      -3.9 (6933)
+fecha     1:3 sem parcial       -0.1 (6933)     +1.7 (11083)      +4.7 (4150)      -6.0 (6933)
+fecha     1:2 sem parcial       +0.3 (6933)     +2.3 (11083)      +5.6 (4150)      -3.2 (6933)
+fecha     1:1 sem parcial       +1.8 (6933)     +3.3 (11083)      +5.9 (4150)      -1.8 (6933)
+meio_lim  1:3 com parcial       -5.6 (4686)      -5.2 (7466)      -4.5 (2780)              n/a
+meio_lim  1:3 sem parcial       +2.1 (4686)      +2.1 (7466)      +2.1 (2780)              n/a
+meio_lim  1:2 sem parcial       +2.3 (4686)      +2.6 (7466)      +3.2 (2780)              n/a
+meio_lim  1:1 sem parcial      -13.4 (4686)     -12.5 (7466)     -11.0 (2780)              n/a
 
 --- 2. EV por faixa de pavio (2 a 4 barras antes, fechamento) -------
   [1:3 com parcial]
-    0%       n=  47  EV   -8.5  acerto 21.3%   tercos  +33.3 /  -14.3 /  -20.8
-    1-10%    n= 306  EV  +11.3  acerto 28.8%   tercos  +29.4 /   +1.4 /   +9.8
-    10-25%   n= 477  EV   +9.0  acerto 27.9%   tercos   +4.4 /  +17.5 /   +5.2
-    25-45%   n= 486  EV   +5.1  acerto 26.5%   tercos  -14.0 /   +7.3 /  +12.2
-    45-65%   n= 381  EV   +4.5  acerto 25.7%   tercos   +4.9 /   -7.4 /  +12.4
-    65-90%   n= 349  EV   +3.9  acerto 26.1%   tercos  +20.1 /   +0.9 /   -0.6
-    90-100%  n= 113  EV   -2.2  acerto 24.8%   tercos   +0.0 /  +10.8 /  -13.8
+    0%       n= 290  EV   +8.6  acerto 28.6%   tercos  +22.0 /  -21.5 /  +16.5
+    1-10%    n=1628  EV   +6.5  acerto 27.0%   tercos   +5.6 /   +1.8 /  +12.3
+    10-25%   n=2308  EV   +3.7  acerto 25.7%   tercos   +2.3 /   +3.7 /   +5.8
+    25-45%   n=2452  EV   +2.4  acerto 25.7%   tercos   +0.4 /   -0.1 /   +7.4
+    45-65%   n=1895  EV   +0.8  acerto 25.1%   tercos   -2.3 /   -0.7 /   +6.1
+    65-90%   n=1870  EV   -2.3  acerto 24.0%   tercos   -1.6 /   -9.8 /   +4.3
+    90-100%  n= 576  EV   +5.8  acerto 26.6%   tercos   +5.5 /   +3.9 /   +8.0
   [1:3 sem parcial]
-    0%       n=  47  EV  -14.9  acerto 21.3%   tercos  +33.3 /  -14.3 /  -33.3
-    1-10%    n= 306  EV  +14.1  acerto 28.4%   tercos  +35.3 /   +6.6 /   +9.1
-    10-25%   n= 477  EV   +9.4  acerto 27.7%   tercos   +0.0 /  +18.2 /   +7.3
-    25-45%   n= 486  EV   +6.4  acerto 26.5%   tercos  -12.0 /   +8.5 /  +13.1
-    45-65%   n= 381  EV   +1.8  acerto 25.7%   tercos   +4.9 /  -14.0 /  +11.2
-    65-90%   n= 349  EV   +3.4  acerto 25.8%   tercos  +32.8 /   -4.3 /   -3.0
-    90-100%  n= 113  EV   -2.7  acerto 23.9%   tercos  -17.2 /  +21.6 /  -12.8
+    0%       n= 290  EV  +12.4  acerto 28.3%   tercos  +25.8 /  -19.0 /  +21.5
+    1-10%    n=1628  EV   +7.1  acerto 26.9%   tercos   +7.7 /   -1.2 /  +13.9
+    10-25%   n=2308  EV   +1.4  acerto 25.4%   tercos   -3.2 /   +3.9 /   +5.5
+    25-45%   n=2452  EV   +2.8  acerto 25.7%   tercos   +0.7 /   -1.4 /   +9.7
+    45-65%   n=1895  EV   -0.4  acerto 25.1%   tercos   -2.3 /   -1.1 /   +2.7
+    65-90%   n=1870  EV   -4.7  acerto 23.9%   tercos   -1.2 /  -17.1 /   +3.1
+    90-100%  n= 576  EV   +5.6  acerto 26.4%   tercos   +5.1 /   -1.3 /  +12.4
   [1:2 sem parcial]
-    0%       n=  47  EV   +2.1  acerto 34.0%   tercos  +33.3 /   +7.1 /  -12.5
-    1-10%    n= 306  EV  +12.7  acerto 37.6%   tercos  +41.2 /   +1.9 /   +6.8
-    10-25%   n= 477  EV   +4.6  acerto 35.0%   tercos   -7.8 /  +14.3 /   +3.0
-    25-45%   n= 486  EV   +3.1  acerto 34.2%   tercos  -15.0 /   +1.8 /  +12.2
-    45-65%   n= 381  EV   -0.5  acerto 33.3%   tercos   -6.1 /   +1.7 /   +0.6
-    65-90%   n= 349  EV   +6.6  acerto 35.5%   tercos  +20.9 /  +12.8 /   -3.6
-    90-100%  n= 113  EV   -5.3  acerto 31.0%   tercos   -6.9 /  +16.2 /  -21.3
+    0%       n= 290  EV   +7.2  acerto 35.9%   tercos  +22.0 /  -35.4 /  +25.3
+    1-10%    n=1628  EV   +8.7  acerto 36.2%   tercos  +11.1 /   +1.2 /  +11.8
+    10-25%   n=2308  EV   +3.8  acerto 34.6%   tercos   +7.3 /   +0.2 /   +2.4
+    25-45%   n=2452  EV   -1.1  acerto 32.9%   tercos   -0.9 /   -5.9 /   +3.2
+    45-65%   n=1895  EV   +2.1  acerto 34.0%   tercos   +1.3 /   +3.3 /   +1.9
+    65-90%   n=1870  EV   -1.8  acerto 32.6%   tercos   +0.7 /  -12.7 /   +5.9
+    90-100%  n= 576  EV   +3.5  acerto 34.4%   tercos   +3.2 /   +3.2 /   +4.1
   [1:1 sem parcial]
-    0%       n=  47  EV   -2.1  acerto 48.9%   tercos  +33.3 /  -14.3 /   -8.3
-    1-10%    n= 306  EV   +8.5  acerto 54.2%   tercos  +23.5 /   -3.8 /  +10.6
-    10-25%   n= 477  EV   +8.6  acerto 54.3%   tercos   +8.9 /  +16.9 /   +3.0
-    25-45%   n= 486  EV   +3.9  acerto 51.4%   tercos  -16.0 /   +6.1 /  +11.3
-    45-65%   n= 381  EV   +7.1  acerto 53.5%   tercos   +4.9 /   -0.8 /  +13.5
-    65-90%   n= 349  EV   +4.3  acerto 52.1%   tercos   +7.5 /   +6.0 /   +1.8
-    90-100%  n= 113  EV   -1.8  acerto 48.7%   tercos  +17.2 /   +0.0 /  -14.9
+    0%       n= 290  EV   +4.8  acerto 52.4%   tercos  +18.2 /  -24.1 /  +11.4
+    1-10%    n=1628  EV   +6.0  acerto 52.9%   tercos   +3.6 /   +4.8 /  +10.7
+    10-25%   n=2308  EV   +6.1  acerto 52.9%   tercos   +7.8 /   +3.5 /   +6.2
+    25-45%   n=2452  EV   +2.0  acerto 50.8%   tercos   +0.1 /   +1.3 /   +5.1
+    45-65%   n=1895  EV   +2.0  acerto 50.9%   tercos   -2.2 /   -0.4 /   +9.6
+    65-90%   n=1870  EV   +0.1  acerto 49.9%   tercos   -2.0 /   -2.5 /   +5.6
+    90-100%  n= 576  EV   +6.1  acerto 53.0%   tercos   +5.9 /   +9.1 /   +3.6
   [1:3 com parcial, so compra]
-    0%       n=  18  EV  +22.2
-    1-10%    n= 148  EV   +6.8
-    10-25%   n= 249  EV   +6.2
-    25-45%   n= 248  EV  +16.1
-    45-65%   n= 175  EV  +13.1
-    65-90%   n= 174  EV   +9.2
-    90-100%  n=  56  EV  +10.7
+    0%       n= 144  EV   +6.6
+    1-10%    n= 797  EV   +4.4
+    10-25%   n=1143  EV   +5.8
+    25-45%   n=1233  EV   +4.5
+    45-65%   n= 963  EV   +5.2
+    65-90%   n= 927  EV   -4.0
+    90-100%  n= 303  EV   -4.0
   [1:3 com parcial, so venda]
-    0%       n=  29  EV  -27.6
-    1-10%    n= 158  EV  +15.5
-    10-25%   n= 228  EV  +12.1
-    25-45%   n= 238  EV   -6.3
-    45-65%   n= 206  EV   -2.9
-    65-90%   n= 175  EV   -1.4
-    90-100%  n=  57  EV  -14.9
+    0%       n= 146  EV  +10.6
+    1-10%    n= 831  EV   +8.6
+    10-25%   n=1165  EV   +1.8
+    25-45%   n=1219  EV   +0.2
+    45-65%   n= 932  EV   -3.9
+    65-90%   n= 943  EV   -0.6
+    90-100%  n= 273  EV  +16.7
 
 --- 3. EV por barras antes (pavio 25-90%, fechamento) ---------------
-    1   n=1376  EV   +4.3  acerto 25.7%
-    2   n= 729  EV   +7.4  acerto 27.4%
-    3   n= 390  EV  +10.3  acerto 27.9%
-    4   n= 235  EV  -14.0  acerto 19.6%
-    5+  n= 208  EV   -4.6  acerto 23.1%
+    1   n=7319  EV   +1.4  acerto 25.0%
+    2   n=3915  EV   +3.0  acerto 25.8%
+    3   n=1999  EV   -1.6  acerto 24.1%
+    4   n=1019  EV   -2.4  acerto 24.4%
+    5+  n=1013  EV   +5.0  acerto 26.0%
 
 --- 4. o padrao contra subconjuntos SORTEADOS do universo 2-4 -------
-  fecha     1:3 com parcial  padrao   +4.5  sorteio   +5.8 [  +2.4 a   +9.2]  percentil  26.8
-  fecha     1:3 sem parcial  padrao   +4.2  sorteio   +5.9 [  +1.2 a  +10.9]  percentil  28.0
-  fecha     1:2 sem parcial  padrao   +3.2  sorteio   +4.2 [  +0.4 a   +8.1]  percentil  33.2
-  fecha     1:1 sem parcial  padrao   +4.8  sorteio   +5.6 [  +2.9 a   +8.4]  percentil  30.2
-  meio_lim  1:3 com parcial  padrao   -2.1  sorteio   -1.1 [  -5.5 a   +3.2]  percentil  33.8
-  meio_lim  1:3 sem parcial  padrao   +9.5  sorteio   +9.2 [  +3.1 a  +15.3]  percentil  53.2
-  meio_lim  1:2 sem parcial  padrao   +8.9  sorteio   +8.0 [  +3.0 a  +12.8]  percentil  61.1
-  meio_lim  1:1 sem parcial  padrao  -13.8  sorteio  -11.3 [ -14.7 a   -8.0]  percentil  11.1
+  fecha     1:3 com parcial  padrao   +0.9  sorteio   +2.5 [  +1.0 a   +4.0]  percentil   3.2
+  fecha     1:3 sem parcial  padrao   -0.1  sorteio   +1.7 [  -0.4 a   +3.8]  percentil   7.5
+  fecha     1:2 sem parcial  padrao   +0.3  sorteio   +2.3 [  +0.6 a   +4.0]  percentil   2.6
+  fecha     1:1 sem parcial  padrao   +1.8  sorteio   +3.3 [  +2.1 a   +4.5]  percentil   1.9
+  meio_lim  1:3 com parcial  padrao   -5.6  sorteio   -5.2 [  -7.0 a   -3.4]  percentil  34.5
+  meio_lim  1:3 sem parcial  padrao   +2.1  sorteio   +2.1 [  -0.4 a   +4.7]  percentil  50.4
+  meio_lim  1:2 sem parcial  padrao   +2.3  sorteio   +2.6 [  +0.6 a   +4.7]  percentil  39.2
+  meio_lim  1:1 sem parcial  padrao  -13.4  sorteio  -12.5 [ -13.9 a  -11.1]  percentil  15.5
 
 --- 5. compra x venda (padrao, fechamento) --------------------------
-  1:3 com parcial  compra  +13.0 (663) [sem pavio  +10.5]   venda   -3.7 (691) [sem pavio   +1.1]
-  1:3 sem parcial  compra  +16.0 (663) [sem pavio  +12.3]   venda   -7.1 (691) [sem pavio   -0.4]
-  1:2 sem parcial  compra  +10.0 (663) [sem pavio   +7.1]   venda   -3.2 (691) [sem pavio   +1.5]
-  1:1 sem parcial  compra  +10.1 (663) [sem pavio   +8.8]   venda   -0.3 (691) [sem pavio   +2.6]
+  1:3 com parcial  compra   +2.7 (3475) [sem pavio   +3.0]   venda   -1.0 (3458) [sem pavio   +2.0]
+  1:3 sem parcial  compra   +2.2 (3475) [sem pavio   +2.3]   venda   -2.5 (3458) [sem pavio   +1.1]
+  1:2 sem parcial  compra   +2.0 (3475) [sem pavio   +2.9]   venda   -1.3 (3458) [sem pavio   +1.8]
+  1:1 sem parcial  compra   +3.3 (3475) [sem pavio   +3.7]   venda   +0.4 (3458) [sem pavio   +3.0]
 
 --- 6. carteira, uma posicao por vez (padrao) -----------------------
-  fecha     1:3 com parcial  trades 1059  liq    +1800  FL 1.04  acerto 25.1%  DD   2950
-  fecha     1:3 sem parcial  trades 1059  liq       +0  FL 1.00  acerto 25.0%  DD   4300
-  fecha     1:2 sem parcial  trades 1190  liq    +2700  FL 1.03  acerto 34.0%  DD   3100
-  fecha     1:1 sem parcial  trades 1354  liq    +6500  FL 1.10  acerto 52.2%  DD   2400
+  fecha     1:3 com parcial  trades 5357  liq    +6000  FL 1.02  acerto 25.1%  DD  12350
+  fecha     1:3 sem parcial  trades 5357  liq     -300  FL 1.00  acerto 25.0%  DD  18500
+  fecha     1:2 sem parcial  trades 6032  liq    +5900  FL 1.01  acerto 33.6%  DD  13700
+  fecha     1:1 sem parcial  trades 6933  liq   +12800  FL 1.04  acerto 50.8%  DD   8400
+
+--- 7. fora da amostra original (06/08 a 11/09 = base antiga) -------
+  1:3 com parcial  padrao     antes n= 5459 EV   -0.5 acerto 24.7% t -0.31 | original n= 1392 EV   +5.2 acerto 26.4% t +1.57
+  1:3 com parcial  sem_filtro antes n= 8735 EV   +1.4 acerto 25.2% t +1.11 | original n= 2223 EV   +6.2 acerto 26.9% t +2.36
+  1:3 sem parcial  padrao     antes n= 5459 EV   -1.7 acerto 24.6% t -0.74 | original n= 1392 EV   +5.1 acerto 26.4% t +1.09
+  1:3 sem parcial  sem_filtro antes n= 8735 EV   +0.3 acerto 25.1% t +0.14 | original n= 2223 EV   +6.5 acerto 26.7% t +1.73
+  1:2 sem parcial  padrao     antes n= 5459 EV   -0.8 acerto 33.0% t -0.39 | original n= 1392 EV   +3.9 acerto 34.6% t +1.02
+  1:2 sem parcial  sem_filtro antes n= 8735 EV   +1.6 acerto 33.8% t +1.06 | original n= 2223 EV   +4.8 acerto 34.9% t +1.58
+  1:1 sem parcial  padrao     antes n= 5459 EV   +0.7 acerto 50.2% t +0.53 | original n= 1392 EV   +5.2 acerto 52.4% t +1.96
+  1:1 sem parcial  sem_filtro antes n= 8735 EV   +2.6 acerto 51.2% t +2.45 | original n= 2223 EV   +5.9 acerto 52.8% t +2.79

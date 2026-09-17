@@ -44,6 +44,7 @@ ESTIC_EXAUSTAO = 0.45    # ATRs de distancia do fechamento a EMA 21
 N_RET_MIN = 2            # candles de retracao exigidos
 PAVIO_MIN = 25.0         # pontos de pavio total no candle de continuacao
 PAVIO_MAX = 90.0
+N_RET_R3 = 3             # candidato da base de 6 meses: retracao de 3+ candles
 
 NIVEIS = ('ouro', 'prata', 'bronze')   # do mais exigente ao menos
 ROTULO = {'ouro': 'Ouro', 'prata': 'Prata', 'bronze': 'Bronze'}
@@ -76,6 +77,9 @@ def anota(t):
 
     t['nivel'] = np.where(t['e_ouro'], 'ouro',
                           np.where(t['e_prata'], 'prata', 'bronze'))
+    # hipotese da base de 6 meses (candidato.py): retracao PROFUNDA, sem
+    # nenhum outro filtro. Nao entra nos niveis -- e medida a parte.
+    t['e_r3'] = t['n_ret'] >= N_RET_R3
     return t
 
 
@@ -88,6 +92,8 @@ def seleciona(t, nivel):
         return t[t['e_prata']]
     if nivel == 'ouro':
         return t[t['e_ouro']]
+    if nivel == 'r3':
+        return t[t['e_r3']]
     raise ValueError(nivel)
 
 

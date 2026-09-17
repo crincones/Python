@@ -1,6 +1,6 @@
 # Pavio contra -- o indicador magenta
 
-Backteste do `ntsl/PavioContra_Magenta.ntsl` no WINFUT, grafico de 20 PI, 10.000 candles, 26 pregoes (06/08/2026 a 11/09/2026). Resultado bruto. Graficos, curvas de patrimonio, MEP/MEN, duracao e trade a trade em `pavio_contra.html`.
+Backteste do `ntsl/PavioContra_Magenta.ntsl` no WINFUT, grafico de 20 PI, 50.611 candles, 132 pregoes (06/03/2026 a 14/09/2026). Resultado bruto. Graficos, curvas de patrimonio, MEP/MEN, duracao e trade a trade em `pavio_contra.html`.
 
 **O padrao** (venda; compra e o espelho): 2 a 4 candles de alta, depois 1 de baixa com pavio superior de 25% a 90% do corpo. Sinal a favor do candle contra.
 
@@ -10,15 +10,15 @@ O filtro de pavio 25-90% **piora** o sinal. Entrada no fechamento, 1:3 com parci
 
 | Conjunto | Sinais | Pts por sinal |
 |:--|--:|--:|
-| Padrao (pavio 25-90%) | 1.354 | +4,5 |
-| Mesmo universo (2-4 barras), sem filtro | 2.171 | +5,8 |
-| O que o filtro descarta | 817 | +7,9 |
-| Padrao invertido (a favor do movimento anterior) | 1.354 | -8,1 |
+| Padrao (pavio 25-90%) | 6.933 | +0,9 |
+| Mesmo universo (2-4 barras), sem filtro | 11.083 | +2,5 |
+| O que o filtro descarta | 4.150 | +5,3 |
+| Padrao invertido (a favor do movimento anterior) | 6.933 | -3,9 |
 
-- **Contra o sorteio:** entre 4.000 subconjuntos sorteados do mesmo universo, com o mesmo tamanho, o padrao cai no percentil 27 a 33 nas quatro gestoes com entrada no fechamento. Um filtro util ficaria acima de 95.
-- **As faixas andam ao contrario:** pavios de 1-25% rendem, em geral, mais que os de 25-90%, e nenhuma faixa se sustenta nos tres tercos do periodo.
-- **Compra e venda discordam:** na compra o pavio grande ajuda, na venda atrapalha.
-- **Nao paga custo:** o melhor valor esperado bruto entre todas as variantes e +9,5 pts; a 10 pts de custo a variante principal vai a -5,5.
+- **Contra o sorteio:** entre 4.000 subconjuntos sorteados do mesmo universo, com o mesmo tamanho, o padrao cai no percentil 2 a 8 nas quatro gestoes com entrada no fechamento: ele escolhe os candles piores.
+- **Fora do primeiro estudo** (06/03 a 05/08): padrao -0,5, sem filtro +1,4, descartado +4,7.
+- **As faixas andam ao contrario:** ate 90% do corpo, quanto menor o pavio do lado da abertura, melhor.
+- **Nao paga custo:** o melhor valor esperado bruto entre todas as variantes e +2,3 pts; a 10 pts de custo a variante principal vai a -9,1.
 
 Nenhuma variante e viavel, entao nao ha plano de trading.
 
@@ -26,14 +26,14 @@ Nenhuma variante e viavel, entao nao ha plano de trading.
 
 | Entrada | Gestao | Padrao | 2-4 sem filtro | Fora da faixa | Invertido | Percentil |
 |:--|:--|--:|--:|--:|--:|--:|
-| Fechamento | 1:3 com parcial | +4,5 (1.354) | +5,8 (2.171) | +7,9 (817) | -8,1 (1.354) | 27 |
-| Fechamento | 1:3 sem parcial | +4,2 (1.354) | +5,9 (2.171) | +8,7 (817) | -11,4 (1.354) | 28 |
-| Fechamento | 1:2 sem parcial | +3,2 (1.354) | +4,2 (2.171) | +5,9 (817) | -7,2 (1.354) | 33 |
-| Fechamento | 1:1 sem parcial | +4,8 (1.354) | +5,7 (2.171) | +7,1 (817) | -4,8 (1.354) | 30 |
-| Limitada no meio do corpo | 1:3 com parcial | -2,1 (885) | -1,1 (1.441) | +0,6 (556) | n/a | 34 |
-| Limitada no meio do corpo | 1:3 sem parcial | +9,5 (885) | +9,2 (1.441) | +8,5 (556) | n/a | 53 |
-| Limitada no meio do corpo | 1:2 sem parcial | +8,9 (885) | +8,0 (1.441) | +6,7 (556) | n/a | 61 |
-| Limitada no meio do corpo | 1:1 sem parcial | -13,8 (885) | -11,3 (1.441) | -7,4 (556) | n/a | 11 |
+| Fechamento | 1:3 com parcial | +0,9 (6.933) | +2,5 (11.083) | +5,3 (4.150) | -3,9 (6.933) | 3 |
+| Fechamento | 1:3 sem parcial | -0,1 (6.933) | +1,7 (11.083) | +4,7 (4.150) | -6,0 (6.933) | 8 |
+| Fechamento | 1:2 sem parcial | +0,3 (6.933) | +2,3 (11.083) | +5,6 (4.150) | -3,2 (6.933) | 3 |
+| Fechamento | 1:1 sem parcial | +1,8 (6.933) | +3,3 (11.083) | +5,9 (4.150) | -1,8 (6.933) | 2 |
+| Limitada no meio do corpo | 1:3 com parcial | -5,6 (4.686) | -5,2 (7.466) | -4,5 (2.780) | n/a | 34 |
+| Limitada no meio do corpo | 1:3 sem parcial | +2,1 (4.686) | +2,1 (7.466) | +2,1 (2.780) | n/a | 50 |
+| Limitada no meio do corpo | 1:2 sem parcial | +2,3 (4.686) | +2,6 (7.466) | +3,2 (2.780) | n/a | 39 |
+| Limitada no meio do corpo | 1:1 sem parcial | -13,4 (4.686) | -12,5 (7.466) | -11,0 (2.780) | n/a | 16 |
 
 Pts por sinal, cada sinal resolvido isoladamente; entre parenteses, o numero de sinais. Na limitada o invertido nao existe (a ordem ficaria acima do mercado).
 
@@ -43,25 +43,25 @@ Pts por sinal, cada sinal resolvido isoladamente; entre parenteses, o numero de 
 
 | Pavio | Sinais | Pts/sinal | Acerto | T1 | T2 | T3 | Compra | Venda |
 |:--|--:|--:|--:|--:|--:|--:|--:|--:|
-| 0% | 47 | -8,5 | 21,3% | +33,3 | -14,3 | -20,8 | +22,2 | -27,6 |
-| 1-10% | 306 | +11,3 | 28,8% | +29,4 | +1,4 | +9,8 | +6,8 | +15,5 |
-| 10-25% | 477 | +9,0 | 27,9% | +4,4 | +17,5 | +5,2 | +6,2 | +12,1 |
-| 25-45% * | 486 | +5,1 | 26,5% | -14,0 | +7,3 | +12,2 | +16,1 | -6,3 |
-| 45-65% * | 381 | +4,5 | 25,7% | +4,9 | -7,4 | +12,4 | +13,1 | -2,9 |
-| 65-90% * | 349 | +3,9 | 26,1% | +20,1 | +0,9 | -0,6 | +9,2 | -1,4 |
-| 90-100% | 113 | -2,2 | 24,8% | 0,0 | +10,8 | -13,8 | +10,7 | -14,9 |
+| 0% | 290 | +8,6 | 28,6% | +22,0 | -21,5 | +16,5 | +6,6 | +10,6 |
+| 1-10% | 1.628 | +6,5 | 27,0% | +5,6 | +1,8 | +12,3 | +4,4 | +8,6 |
+| 10-25% | 2.308 | +3,7 | 25,7% | +2,3 | +3,7 | +5,8 | +5,8 | +1,8 |
+| 25-45% * | 2.452 | +2,4 | 25,7% | +0,4 | -0,1 | +7,4 | +4,5 | +0,2 |
+| 45-65% * | 1.895 | +0,8 | 25,1% | -2,3 | -0,7 | +6,1 | +5,2 | -3,9 |
+| 65-90% * | 1.870 | -2,3 | 24,0% | -1,6 | -9,8 | +4,3 | -4,0 | -0,6 |
+| 90-100% | 576 | +5,8 | 26,6% | +5,5 | +3,9 | +8,0 | -4,0 | +16,7 |
 
 **1:1 sem parcial**
 
 | Pavio | Sinais | Pts/sinal | Acerto | T1 | T2 | T3 | Compra | Venda |
 |:--|--:|--:|--:|--:|--:|--:|--:|--:|
-| 0% | 47 | -2,1 | 48,9% | +33,3 | -14,3 | -8,3 | +11,1 | -10,3 |
-| 1-10% | 306 | +8,5 | 54,2% | +23,5 | -3,8 | +10,6 | +5,4 | +11,4 |
-| 10-25% | 477 | +8,6 | 54,3% | +8,9 | +16,9 | +3,0 | +7,6 | +9,6 |
-| 25-45% * | 486 | +3,9 | 51,4% | -16,0 | +6,1 | +11,3 | +14,5 | -7,1 |
-| 45-65% * | 381 | +7,1 | 53,5% | +4,9 | -0,8 | +13,5 | +8,6 | +5,8 |
-| 65-90% * | 349 | +4,3 | 52,1% | +7,5 | +6,0 | +1,8 | +8,0 | +0,6 |
-| 90-100% | 113 | -1,8 | 48,7% | +17,2 | 0,0 | -14,9 | +5,4 | -8,8 |
+| 0% | 290 | +4,8 | 52,4% | +18,2 | -24,1 | +11,4 | +1,4 | +8,2 |
+| 1-10% | 1.628 | +6,0 | 52,9% | +3,6 | +4,8 | +10,7 | +3,0 | +8,8 |
+| 10-25% | 2.308 | +6,1 | 52,9% | +7,8 | +3,5 | +6,2 | +8,5 | +3,8 |
+| 25-45% * | 2.452 | +2,0 | 50,8% | +0,1 | +1,3 | +5,1 | +4,2 | -0,3 |
+| 45-65% * | 1.895 | +2,0 | 50,9% | -2,2 | -0,4 | +9,6 | +5,1 | -1,3 |
+| 65-90% * | 1.870 | +0,1 | 49,9% | -2,0 | -2,5 | +5,6 | -2,0 | +2,2 |
+| 90-100% | 576 | +6,1 | 53,0% | +5,9 | +9,1 | +3,6 | +1,3 | +11,4 |
 
 `*` = faixa aceita pelo indicador.
 
@@ -69,46 +69,46 @@ Pts por sinal, cada sinal resolvido isoladamente; entre parenteses, o numero de 
 
 | Barras | Sinais | Pts/sinal | Acerto |
 |:--|--:|--:|--:|
-| 1 | 1.376 | +4,3 | 25,7% |
-| 2 | 729 | +7,4 | 27,4% |
-| 3 | 390 | +10,3 | 27,9% |
-| 4 | 235 | -14,0 | 19,6% |
-| 5+ | 208 | -4,6 | 23,1% |
+| 1 | 7.319 | +1,4 | 25,0% |
+| 2 | 3.915 | +3,0 | 25,8% |
+| 3 | 1.999 | -1,6 | 24,1% |
+| 4 | 1.019 | -2,4 | 24,4% |
+| 5+ | 1.013 | +5,0 | 26,0% |
 
 ## 4. Carteira, uma posicao por vez (padrao)
 
 | Entrada | Gestao | Trades | Pts | R$ | Pts/trade | Acerto | Fator | Rebaix. | Sem filtro: pts |
 |:--|:--|--:|--:|--:|--:|--:|--:|--:|--:|
-| Fechamento | 1:3 com parcial | 1.059 | +1.800 | +360,00 | +1,7 | 25,1% | 1,04 | 2.950 | +11.100 |
-| Fechamento | 1:3 sem parcial | 1.059 | 0 | 0,00 | 0,0 | 25,0% | 1,00 | 4.300 | +11.700 |
-| Fechamento | 1:2 sem parcial | 1.190 | +2.700 | +540,00 | +2,3 | 34,0% | 1,03 | 3.100 | +9.400 |
-| Fechamento | 1:1 sem parcial | 1.354 | +6.500 | +1.300,00 | +4,8 | 52,2% | 1,10 | 2.400 | +12.300 |
-| Limitada no meio do corpo | 1:3 com parcial | 780 | -1.450 | -290,00 | -1,9 | 27,8% | 0,97 | 4.300 | -2.550 |
-| Limitada no meio do corpo | 1:3 sem parcial | 780 | +7.900 | +1.580,00 | +10,1 | 27,6% | 1,14 | 2.600 | +8.600 |
-| Limitada no meio do corpo | 1:2 sem parcial | 855 | +7.300 | +1.460,00 | +8,5 | 36,1% | 1,13 | 1.900 | +9.650 |
-| Limitada no meio do corpo | 1:1 sem parcial | 885 | -12.250 | -2.450,00 | -13,8 | 42,9% | 0,76 | 12.600 | -16.150 |
+| Fechamento | 1:3 com parcial | 5.357 | +6.000 | +1.200,00 | +1,1 | 25,1% | 1,02 | 12.350 | +19.950 |
+| Fechamento | 1:3 sem parcial | 5.357 | -300 | -60,00 | -0,1 | 25,0% | 1,00 | 18.500 | +12.900 |
+| Fechamento | 1:2 sem parcial | 6.032 | +5.900 | +1.180,00 | +1,0 | 33,6% | 1,01 | 13.700 | +24.400 |
+| Fechamento | 1:1 sem parcial | 6.933 | +12.800 | +2.560,00 | +1,8 | 50,8% | 1,04 | 8.400 | +37.100 |
+| Limitada no meio do corpo | 1:3 com parcial | 4.113 | -25.475 | -5.095,00 | -6,2 | 25,6% | 0,89 | 29.725 | -40.025 |
+| Limitada no meio do corpo | 1:3 sem parcial | 4.113 | +6.250 | +1.250,00 | +1,5 | 25,5% | 1,02 | 7.000 | +1.100 |
+| Limitada no meio do corpo | 1:2 sem parcial | 4.476 | +8.700 | +1.740,00 | +1,9 | 34,0% | 1,03 | 6.100 | +15.550 |
+| Limitada no meio do corpo | 1:1 sem parcial | 4.686 | -62.750 | -12.550,00 | -13,4 | 43,2% | 0,76 | 64.200 | -93.250 |
 
 ## 5. Custo (pts por sinal, padrao)
 
 | Entrada | Gestao | Bruto | 5 pts | 10 pts |
 |:--|:--|--:|--:|--:|
-| Fechamento | 1:3 com parcial | +4,5 | -0,5 | -5,5 |
-| Fechamento | 1:3 sem parcial | +4,2 | -0,8 | -5,8 |
-| Fechamento | 1:2 sem parcial | +3,2 | -1,8 | -6,8 |
-| Fechamento | 1:1 sem parcial | +4,8 | -0,2 | -5,2 |
-| Limitada no meio do corpo | 1:3 com parcial | -2,1 | -7,1 | -12,1 |
-| Limitada no meio do corpo | 1:3 sem parcial | +9,5 | +4,5 | -0,5 |
-| Limitada no meio do corpo | 1:2 sem parcial | +8,9 | +3,9 | -1,1 |
-| Limitada no meio do corpo | 1:1 sem parcial | -13,8 | -18,8 | -23,8 |
+| Fechamento | 1:3 com parcial | +0,9 | -4,1 | -9,1 |
+| Fechamento | 1:3 sem parcial | -0,1 | -5,1 | -10,1 |
+| Fechamento | 1:2 sem parcial | +0,3 | -4,7 | -9,7 |
+| Fechamento | 1:1 sem parcial | +1,8 | -3,2 | -8,2 |
+| Limitada no meio do corpo | 1:3 com parcial | -5,6 | -10,6 | -15,6 |
+| Limitada no meio do corpo | 1:3 sem parcial | +2,1 | -2,9 | -7,9 |
+| Limitada no meio do corpo | 1:2 sem parcial | +2,3 | -2,7 | -7,7 |
+| Limitada no meio do corpo | 1:1 sem parcial | -13,4 | -18,4 | -23,4 |
 
 ## Conclusao
 
-- **O pavio de 25-90% nao e filtro.** Ele seleciona candles que rendem um pouco menos que o conjunto de onde sairam, e nenhuma faixa e estavel nos tres tercos.
-- **No PI, esse pavio e o normal.** O lado da abertura tem pavio em quase todo candle; a faixa 25-90% aceita 62% dos candles contra depois de 2-4 barras, e descarta sobretudo os pavios pequenos, que mediram melhor.
-- **A contagem merece mais atencao que o pavio:** com 4 barras antes o sinal mede -14,0 pts. Nao confirmado fora desta base.
-- **Compra x venda e o mercado:** periodo de alta. Compra +13,0, venda -3,7; sem filtro, +10,5 e +1,1.
-- **Nenhuma variante paga custo.** A 1:1 faz 1.354 operacoes em 26 pregoes (~52 por dia).
+- **O pavio de 25-90% nao e filtro -- e anti-filtro.** Seleciona candles que rendem menos que o conjunto de onde sairam, percentil 2 a 8 do sorteio.
+- **No PI, esse pavio e o normal.** A faixa aceita 63% dos candles contra depois de 2-4 barras e descarta sobretudo os pavios pequenos, que medem melhor.
+- **A contagem tambem nao se sustentou:** 4 barras antes mede -2,4 na base nova.
+- **O universo inteiro esta perto de zero:** +2,5 pts por sinal sem filtro nenhum.
+- **Nenhuma variante paga custo.** A 1:1 faz 6.933 operacoes em 132 pregoes (~53 por dia).
 
-> 26 pregoes, um instrumento, um regime de mercado, resultado bruto. O estudo diz que o filtro nao funcionou aqui; nao prova que nenhum filtro de pavio funcione.
+> 132 pregoes, um instrumento, resultado bruto. O estudo diz que este filtro nao funciona; nao prova que nenhum filtro de pavio funcione.
 
 Reproduzir: `python pavio_contra.py && python relatorio_pavio.py`.

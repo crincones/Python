@@ -110,8 +110,9 @@ def main():
     ema = d['ema'].to_numpy()
     # o .ntsl usa Media(PeriodoATR, TrueRange) -- a media ARITMETICA, que
     # e o idioma comprovado do acervo. A engine usa a exponencial. Medido:
-    # correlacao 0,90, diferenca mediana de 2,6 pts, e ZERO barras mudam
-    # de nivel -- o ATR aqui so escala um corte, nao decide sozinho.
+    # correlacao 0,90, diferenca mediana de 2,6 pts. Na base antiga (26
+    # pregoes) nenhuma barra mudava de nivel; na de 132 pregoes, 5 em ~1.290,
+    # todas com o esticamento a menos de 0,03 ATR do corte do veto.
     H = d['h'].to_numpy(); L = d['l'].to_numpy(); C = d['c'].to_numpy()
     pc = np.r_[C[0], C[:-1]]
     tr = np.maximum(H - L, np.maximum(np.abs(H - pc), np.abs(L - pc)))
@@ -174,8 +175,22 @@ def main():
                         k = j
                     else:
                         cont = False
-            causa = ('retracao cruza o fim do pregao'
-                     if n_eng != k else 'DIVERGENCIA NAO EXPLICADA')
+            # o veto de exaustao usa ATR aritmetico no .ntsl e exponencial na
+            # engine: um sinal com o esticamento colado no corte pode cair de
+            # um lado numa e do outro na outra
+            dist = (d['c'].iat[i] - ema[i]) * ld
+            lim = S.ESTIC_EXAUSTAO
+            atr_troca = (np.isfinite(atrV[i]) and
+                         (dist > lim * atrV[i]) != (dist > lim * d['atr'].iat[i]))
+            if n_eng != k:
+                causa = 'retracao cruza o fim do pregao'
+            elif i < 50 + 21 + 21 + 12:
+                causa = 'aquecimento: o indicador so comeca na barra 104'
+            elif atr_troca:
+                causa = (f"ATR aritmetico x exponencial no corte do veto "
+                         f"(esticamento {dist / atrV[i]:.3f} x {dist / d['atr'].iat[i]:.3f} ATR)")
+            else:
+                causa = 'DIVERGENCIA NAO EXPLICADA'
             if causa.startswith('DIVERG'):
                 problemas += 1
             print(f"    barra {i:5d} lado {ld:+d}  "
@@ -198,7 +213,8 @@ def main():
         print('OK -- o indicador e a engine classificam as MESMAS barras,')
         print('     com o mesmo nivel. As unicas diferencas de conjunto, se')
         print('     houver acima, sao a contagem da retracao parando no fim')
-        print('     do pregao -- comportamento proposital do indicador.')
+        print('     do pregao, o aquecimento das primeiras barras ou o ATR')
+        print('     aritmetico do indicador no corte exato do veto.')
     else:
         print(f'ATENCAO -- {problemas} divergencias sem explicacao.')
     print('=' * 70)

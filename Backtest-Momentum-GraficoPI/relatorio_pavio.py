@@ -76,6 +76,9 @@ def fatos(D):
     F['cart_p'] = D['carteira']['fecha|parcial|padrao']
     F['custo'] = D['custo']['fecha|parcial']
     F['ev_max'] = max(cp[k]['padrao']['ev'] for k in cp if cp[k]['padrao']['n'])
+    F['bl_pad'] = D['blocos']['fecha|parcial|padrao']['sinais']
+    F['bl_sem'] = D['blocos']['fecha|parcial|sem_filtro']['sinais']
+    F['bl_fora'] = D['blocos']['fecha|parcial|fora']['sinais']
     return F
 
 
@@ -118,14 +121,17 @@ def veredito(D, F):
   <div class="bandeira">
     <h3>O que sustenta a resposta</h3>
     <ul class="enx">
+      <li><b>A base maior confirmou a resposta antiga, com mais forca.</b> O estudo tinha sido
+      feito em 26 pregoes; esta base tem {D['base']['dias']}. Nos meses que nao estavam no primeiro
+      estudo (06/03 a 05/08) o padrao mede {sn(F['bl_pad']['antes']['ev'], 1)}, o universo sem filtro
+      {sn(F['bl_sem']['antes']['ev'], 1)} e o que o filtro descarta {sn(F['bl_fora']['antes']['ev'], 1)}.</li>
       <li><b>Contra o sorteio.</b> Sorteando 4.000 vezes subconjuntos do mesmo tamanho,
       o padrao fica no percentil {n(min(pct), 0)} a {n(max(pct), 0)} nas quatro gestoes
-      com entrada no fechamento. Um filtro util ficaria acima de 95.</li>
-      <li><b>As faixas de pavio andam ao contrario.</b> Pavios pequenos (1&ndash;25%)
-      rendem, em geral, mais que os da faixa escolhida, e nenhuma faixa se sustenta nos
-      tres tercos do periodo.</li>
-      <li><b>Compra e venda discordam.</b> Na compra o pavio grande ajuda; na venda
-      atrapalha. Um efeito real apareceria dos dois lados.</li>
+      com entrada no fechamento. Um filtro inutil ficaria perto de 50; este fica abaixo de 10
+      &mdash; ele escolhe, de fato, os candles <i>piores</i>.</li>
+      <li><b>As faixas de pavio andam ao contrario.</b> Ate 90% do corpo, quanto menor o pavio do
+      lado da abertura, melhor: {sn(F['fx']['1-10%']['ev'], 1)} com 1&ndash;10%, {sn(F['fx']['10-25%']['ev'], 1)}
+      com 10&ndash;25%, {sn(F['fx']['65-90%']['ev'], 1)} com 65&ndash;90%.</li>
       <li><b>O que sobra nao paga custo.</b> O melhor valor esperado entre todas as
       variantes medidas e {sn(F['ev_max'], 1)} pts brutos por sinal; a 10 pts de custo
       por operacao, o padrao na variante principal vai a {sn(F['custo']['10'], 1)}.</li>
@@ -228,9 +234,8 @@ def faixas(D, F):
     <span><i class="chave q" style="background:var(--perda)"></i>venda
     (2-4 altas, baixa com pavio superior)</span></div>
     <div id="g_faixa_lado"></div>
-    <figcaption>Na compra a faixa 25&ndash;90% rende mais que os pavios pequenos; na venda,
-    menos. Os dois lados apontam para lados opostos &mdash; e o desenho de ruido, nao de
-    regra.</figcaption></figure>
+    <figcaption>Na venda, pavio pequeno e claramente melhor; na compra, as faixas ate 65% medem
+    parecido e so as de cima pioram. Nenhum dos dois lados favorece a faixa do indicador.</figcaption></figure>
 </section>"""
 
 
@@ -239,9 +244,9 @@ def barras_horas(D, F):
 <section id="contagem">
   <h2>3. Barras antes e horario</h2>
   <p class="olho">Com o pavio na faixa 25&ndash;90%, entrada no fechamento, 1:3 com
-  parcial. A contagem tem um achado mais firme que o pavio: <b>4 barras antes</b> mede
-  {sn(F['nb']['4']['ev'], 1)} pts por sinal, contra {sn(F['nb']['2']['ev'], 1)} com 2 e
-  {sn(F['nb']['3']['ev'], 1)} com 3.</p>
+  parcial. Na base antiga, <b>4 barras antes</b> parecia o achado mais firme do estudo. Na base
+  de {D['base']['dias']} pregoes ele mede {sn(F['nb']['4']['ev'], 1)} pts por sinal, contra
+  {sn(F['nb']['2']['ev'], 1)} com 2 e {sn(F['nb']['3']['ev'], 1)} com 3.</p>
   <div class="grade g2">
     <figure class="card"><h3>Por barras no sentido anterior</h3><div id="g_nbar"></div></figure>
     <figure class="card"><h3>Por hora do sinal</h3><div id="g_horas"></div>
@@ -331,30 +336,24 @@ def conclusao(D, F):
 <section id="conclusao">
   <h2>Conclusao</h2>
   <ul class="enx">
-    <li><b>O pavio de 25&ndash;90% nao e filtro.</b> Ele seleciona candles que rendem um
-    pouco <i>menos</i> que o conjunto de onde sairam, em todas as gestoes com entrada no
-    fechamento, e nenhuma faixa de pavio e estavel nos tres tercos.</li>
-    <li><b>No PI, esse pavio e o normal.</b> O pavio do lado da abertura aparece em quase
-    todo candle (mediana de 35% do corpo); exigir 25&ndash;90% deixa passar
-    {n(F['pad']['n'] / (F['pad']['n'] + F['fora']['n']) * 100, 0)}% dos candles contra
-    depois de 2 a 4 barras. O que ele descarta sao sobretudo os pavios pequenos &mdash;
-    justamente os que mediram melhor.</li>
-    <li><b>Se algo merece ser olhado, e a contagem:</b> com 4 barras antes o sinal mede
-    {sn(F['nb']['4']['ev'], 1)} pts. So que isso vem de uma base de 26 pregoes e nao foi
-    confirmado fora dela.</li>
-    <li><b>A diferenca entre compra e venda e o mercado, nao o padrao.</b> O periodo foi de
-    alta: a compra rende {sn(F['lados']['compra']['ev'], 1)} e a venda
-    {sn(F['lados']['venda']['ev'], 1)} &mdash; e sem filtro nenhum a diferenca ja e parecida
-    ({sn(F['lados']['compra_sem']['ev'], 1)} contra {sn(F['lados']['venda_sem']['ev'], 1)}).</li>
+    <li><b>O pavio de 25&ndash;90% nao e filtro &mdash; e anti-filtro.</b> Ele seleciona candles que
+    rendem menos que o conjunto de onde sairam, em todas as gestoes com entrada no fechamento, no
+    percentil {n(min(F['pct']), 0)} a {n(max(F['pct']), 0)} do sorteio.</li>
+    <li><b>No PI, esse pavio e o normal.</b> A faixa 25&ndash;90% aceita
+    {n(F['pad']['n'] / (F['pad']['n'] + F['fora']['n']) * 100, 0)}% dos candles contra depois de 2 a 4
+    barras, e descarta sobretudo os pavios pequenos &mdash; justamente os que medem melhor.</li>
+    <li><b>A contagem de barras tambem nao se sustentou.</b> O &ldquo;4 barras antes&rdquo; da base antiga
+    mede {sn(F['nb']['4']['ev'], 1)} na base nova.</li>
+    <li><b>O universo inteiro esta perto de zero.</b> Todo candle contra depois de 2 a 4 barras, sem
+    filtro nenhum, mede {sn(F['sem']['ev'], 1)} pts por sinal. Nao ha muito o que um filtro de pavio
+    pudesse salvar.</li>
     <li><b>Nenhuma variante paga custo.</b> O melhor valor esperado bruto por sinal e
     {sn(F['ev_max'], 1)} pts, e com a variante 1:1 a carteira faz
     {n(F['cart_r1']['trades'])} operacoes em {F['cart_r1']['dias']} pregoes: cerca de
-    {n(F['cart_r1']['trades_dia'], 0)} por dia, cada uma pagando corretagem e
-    escorregamento.</li>
+    {n(F['cart_r1']['trades_dia'], 0)} por dia.</li>
   </ul>
-  <p class="nota">Ressalva de sempre: 26 pregoes, um instrumento, um regime de mercado,
-  resultado bruto. O estudo diz que o filtro nao funcionou <i>aqui</i>; nao prova que
-  nenhum filtro de pavio funcione.</p>
+  <p class="nota">Resultado bruto, um instrumento. Com {D['base']['dias']} pregoes e dois regimes de mercado,
+  o estudo diz com seguranca que este filtro nao funciona; nao prova que nenhum filtro de pavio funcione.</p>
 </section>
 <footer>Gerado por <code>pavio_contra.py</code> e <code>relatorio_pavio.py</code>.
 Indicador: <code>ntsl/PavioContra_Magenta.ntsl</code>.</footer>"""
@@ -632,10 +631,10 @@ def markdown(D, F):
           '',
           f"- **Contra o sorteio:** entre 4.000 subconjuntos sorteados do mesmo universo, com o "
           f"mesmo tamanho, o padrao cai no percentil {md_n(min(F['pct']))} a {md_n(max(F['pct']))} "
-          'nas quatro gestoes com entrada no fechamento. Um filtro util ficaria acima de 95.',
-          '- **As faixas andam ao contrario:** pavios de 1-25% rendem, em geral, mais que os de 25-90%, e '
-          'nenhuma faixa se sustenta nos tres tercos do periodo.',
-          '- **Compra e venda discordam:** na compra o pavio grande ajuda, na venda atrapalha.',
+          'nas quatro gestoes com entrada no fechamento: ele escolhe os candles piores.',
+          f"- **Fora do primeiro estudo** (06/03 a 05/08): padrao {md_sn(F['bl_pad']['antes']['ev'], 1)}, "
+          f"sem filtro {md_sn(F['bl_sem']['antes']['ev'], 1)}, descartado {md_sn(F['bl_fora']['antes']['ev'], 1)}.",
+          '- **As faixas andam ao contrario:** ate 90% do corpo, quanto menor o pavio do lado da abertura, melhor.',
           f"- **Nao paga custo:** o melhor valor esperado bruto entre todas as variantes e "
           f"{md_sn(F['ev_max'], 1)} pts; a 10 pts de custo a variante principal vai a "
           f"{md_sn(F['custo']['10'], 1)}.",
@@ -695,22 +694,17 @@ def markdown(D, F):
             L.append(f"| {D['rot_entrada'][ent]} | {D['rot_gestao'][ges]} | "
                      + ' | '.join(md_sn(c[k], 1) for k in ('0', '5', '10')) + ' |')
     L += ['', '## Conclusao', '',
-          '- **O pavio de 25-90% nao e filtro.** Ele seleciona candles que rendem um pouco menos '
-          'que o conjunto de onde sairam, e nenhuma faixa e estavel nos tres tercos.',
-          f"- **No PI, esse pavio e o normal.** O lado da abertura tem pavio em quase todo candle; "
-          f"a faixa 25-90% aceita {md_n(F['pad']['n'] / (F['pad']['n'] + F['fora']['n']) * 100)}% "
-          'dos candles contra depois de 2-4 barras, e descarta sobretudo os pavios pequenos, '
-          'que mediram melhor.',
-          f"- **A contagem merece mais atencao que o pavio:** com 4 barras antes o sinal mede "
-          f"{md_sn(F['nb']['4']['ev'], 1)} pts. Nao confirmado fora desta base.",
-          f"- **Compra x venda e o mercado:** periodo de alta. Compra {md_sn(F['lados']['compra']['ev'], 1)}, "
-          f"venda {md_sn(F['lados']['venda']['ev'], 1)}; sem filtro, {md_sn(F['lados']['compra_sem']['ev'], 1)} "
-          f"e {md_sn(F['lados']['venda_sem']['ev'], 1)}.",
+          '- **O pavio de 25-90% nao e filtro -- e anti-filtro.** Seleciona candles que rendem menos que o conjunto '
+          f"de onde sairam, percentil {md_n(min(F['pct']))} a {md_n(max(F['pct']))} do sorteio.",
+          f"- **No PI, esse pavio e o normal.** A faixa aceita {md_n(F['pad']['n'] / (F['pad']['n'] + F['fora']['n']) * 100)}% "
+          'dos candles contra depois de 2-4 barras e descarta sobretudo os pavios pequenos, que medem melhor.',
+          f"- **A contagem tambem nao se sustentou:** 4 barras antes mede {md_sn(F['nb']['4']['ev'], 1)} na base nova.",
+          f"- **O universo inteiro esta perto de zero:** {md_sn(F['sem']['ev'], 1)} pts por sinal sem filtro nenhum.",
           f"- **Nenhuma variante paga custo.** A 1:1 faz {md_n(F['cart_r1']['trades'])} operacoes em "
           f"{F['cart_r1']['dias']} pregoes (~{md_n(F['cart_r1']['trades_dia'])} por dia).",
           '',
-          '> 26 pregoes, um instrumento, um regime de mercado, resultado bruto. O estudo diz que '
-          'o filtro nao funcionou aqui; nao prova que nenhum filtro de pavio funcione.',
+          f"> {D['base']['dias']} pregoes, um instrumento, resultado bruto. O estudo diz que este filtro nao funciona; "
+          'nao prova que nenhum filtro de pavio funcione.',
           '',
           'Reproduzir: `python pavio_contra.py && python relatorio_pavio.py`.', '']
     return '\n'.join(L)
@@ -724,7 +718,7 @@ def main():
     D['gestoes'] = GESTOES_JS
     import datetime as _dt
     D['candles']['dt'] = [_dt.datetime.fromtimestamp(t / 1000, _dt.timezone.utc)
-                          .strftime('%d/%m %H:%M:%S') for t in D['candles']['t']]
+                          .strftime('%d/%m %H:%M') for t in D['candles']['t']]
     del D['candles']['t']
 
     corpo = ''.join([capa(D, F), veredito(D, F), metodo(D, F), controles(D, F),

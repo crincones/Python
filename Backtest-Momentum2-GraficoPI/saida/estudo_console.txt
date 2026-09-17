@@ -1,0 +1,41 @@
+[   0.6s] candles 50611 pregoes 132 corte 2026-07-01
+[   3.6s] sinais 2141
+[   4.4s] base fecha 9849.0
+[   5.1s] base meio -9423.0
+[   5.9s] base extremo 4326.0
+[   9.9s] filtros medidos
+[  10.2s] selecao fecha ['inversoes = 11 a +inf', 'dow != 5 antes a 15 depois'] [np.float64(9.5), np.float64(29.2), np.float64(27.3)]
+[  10.6s] selecao meio ['mesmo_nivel != primeira', 'macd_acima_sig = nao', 'incl_ema != 74.58 a +inf'] [np.float64(-2.3), np.float64(-1.5), np.float64(-0.2), np.float64(3.2)]
+[  10.9s] selecao extremo ['inversoes = 11 a +inf', 'n_trig_dia != 2a'] [np.float64(8.5), np.float64(19.5), np.float64(13.0)]
+[ 145.8s] gestao fecha
+[ 255.3s] gestao meio
+[ 279.3s] gestao extremo
+[ 284.3s] robustez fecha|base 9849 OOS 8268 pct aleat 99
+[ 289.0s] robustez fecha|gestao 35391 OOS 11862 pct aleat 91
+[ 290.8s] robustez fecha|filtrado 10890 OOS 5133 pct aleat 100
+[ 294.7s] robustez fecha|otimizado 16209 OOS 5979 pct aleat 100
+[ 300.0s] robustez meio|base -9423 OOS -1551 pct aleat 89
+[ 304.2s] robustez meio|gestao 12318 OOS 2025 pct aleat 95
+[ 304.9s] robustez meio|filtrado 5724 OOS 612 pct aleat 100
+[ 306.5s] robustez meio|otimizado 13857 OOS 1377 pct aleat 100
+[ 311.9s] robustez extremo|base 4326 OOS 6411 pct aleat 97
+[ 315.2s] robustez extremo|gestao 33186 OOS 13851 pct aleat 92
+[ 316.0s] robustez extremo|filtrado 6516 OOS 2088 pct aleat 99
+[ 318.3s] robustez extremo|otimizado 14451 OOS 6789 pct aleat 99
+[ 319.2s] robustez fecha|picado 10845 OOS 5817 pct aleat 100
+[ 320.0s] robustez fecha|picado400 16167 OOS 7503 pct aleat 100
+[ 322.1s] viz 2-3 <= 10% 15 sim 4.34
+[ 324.4s] viz 2-3 <= 10% 0 sim 3.71
+[ 327.4s] viz 2-3 <= 10% 30 sim 5.85
+[ 332.2s] viz 2-3 <= 10% 60 sim 7.38
+[ 337.5s] viz 2-3 <= 10% sem EMA sim 8.29
+[ 342.1s] viz 2-3 <= 10% 15 nao 3.73
+[ 347.7s] viz 2-3 <= 10% sem EMA nao 7.29
+[ 352.7s] viz 2-4 sem corte 15 sim 4.03
+[ 357.0s] viz 2-4 <= 10% 15 sim 4.14
+[ 360.2s] viz 2-3 sem corte 15 sim 3.41
+[ 364.8s] viz 2-3 <= 20% 15 sim 3.4
+[ 371.6s] viz 1-3 <= 10% 15 sim -0.13
+[ 374.1s] viz 3-3 <= 10% 15 sim -1.18
+[ 377.6s] viz 2-2 <= 10% 15 sim 6.81
+[ 381.3s] ok

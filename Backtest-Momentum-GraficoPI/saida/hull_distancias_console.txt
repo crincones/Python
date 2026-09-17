@@ -1,429 +1,429 @@
 ==========================================================================
 HULL 50 x EMA 21 e x BANDAS DE KELTNER
 ==========================================================================
-sinais Hull + 2-4: 922   candidato: 707
-identidade folga_banda_atr = 2 - sep_atr: erro maximo 1.06e-13
-Hull do lado errado da EMA: 37% dos sinais;  alem da banda: 8%;  colada >= 1 barra: 16%
+sinais Hull + 2-4: 4700   candidato: 3703
+identidade folga_banda_atr = 2 - sep_atr: erro maximo 1.10e-13
+Hull do lado errado da EMA: 38% dos sinais;  alem da banda: 7%;  colada >= 1 barra: 16%
 correlacoes: sep_pts x sep_atr 0.99  banda_pts x sep_pts -0.98  sep_abs x colada -0.32
 
 --- HULL + 2-4 | Hull - EMA 21, em ATR, no sentido do trade (= 2 - distancia a banda) ---
     limites: 0.00  1.00  2.00
   [fecha 1:3 com parcial]
-    Hull do lado errado da EMA     n= 343  EV  +18.4  acerto 31.5%  tercos  +23.4 /  +11.7 /  +21.4  C  +27.2 V   +9.4  pct  90
-    EMA ate meio canal (0-1 ATR)   n= 299  EV   +9.7  acerto 27.4%  tercos  -13.6 /  +20.8 /  +11.5  C  +12.6 V   +6.8  pct  38
-    meio canal ate banda (1-2 ATR) n= 205  EV   +7.3  acerto 26.3%  tercos  +44.9 /  -23.4 /   +8.7  C   +9.6 V   +5.0  pct  28
-    alem da banda (> 2 ATR)        n=  75  EV   -2.7  acerto 24.0%  tercos   +5.3 /   +4.0 /  -12.9  C   -5.4 V   +0.0  pct  14
+    Hull do lado errado da EMA     n=1782  EV   +3.3  acerto 26.3%  tercos   -2.4 /   -1.1 /  +16.1  C   +3.5 V   +3.1  pct   4
+    EMA ate meio canal (0-1 ATR)   n=1641  EV   +9.0  acerto 27.9%  tercos   +8.7 /  +11.2 /   +7.6  C  +11.4 V   +6.8  pct  75
+    meio canal ate banda (1-2 ATR) n= 967  EV  +10.7  acerto 27.4%  tercos  +12.6 /  +10.8 /   +8.3  C   +9.8 V  +11.6  pct  82
+    alem da banda (> 2 ATR)        n= 310  EV  +12.9  acerto 29.0%  tercos  +24.0 /   +4.9 /  +10.3  C  +13.2 V  +12.7  pct  78
   [fecha 1:3 sem parcial]
-    Hull do lado errado da EMA     n= 343  EV  +25.1  acerto 31.5%  tercos  +39.1 /  +18.3 /  +24.5  C  +37.0 V  +12.9  pct  93
-    EMA ate meio canal (0-1 ATR)   n= 299  EV  +10.0  acerto 27.4%  tercos  -18.6 /  +22.8 /  +12.9  C  +17.2 V   +2.7  pct  34
-    meio canal ate banda (1-2 ATR) n= 205  EV   +5.4  acerto 26.3%  tercos  +55.1 /  -43.8 /  +13.0  C   +7.7 V   +3.0  pct  22
-    alem da banda (> 2 ATR)        n=  75  EV   -4.0  acerto 24.0%  tercos   +5.3 /  +28.0 /  -35.5  C   -2.7 V   -5.3  pct  15
+    Hull do lado errado da EMA     n=1782  EV   +4.3  acerto 26.3%  tercos   -4.8 /   -0.6 /  +22.7  C   +5.6 V   +3.0  pct  11
+    EMA ate meio canal (0-1 ATR)   n=1641  EV  +11.2  acerto 27.8%  tercos  +12.5 /  +13.9 /   +6.7  C  +12.8 V   +9.6  pct  79
+    meio canal ate banda (1-2 ATR) n= 967  EV   +9.0  acerto 27.4%  tercos   +8.7 /  +11.6 /   +7.1  C   +8.8 V   +9.2  pct  53
+    alem da banda (> 2 ATR)        n= 310  EV  +16.1  acerto 29.0%  tercos  +28.0 /   +8.7 /  +12.1  C  +21.1 V  +11.4  pct  78
   [fecha 1:2 sem parcial]
-    Hull do lado errado da EMA     n= 343  EV  +10.8  acerto 37.0%  tercos  +14.1 /  +11.7 /   +8.8  C  +18.5 V   +2.9  pct  64
-    EMA ate meio canal (0-1 ATR)   n= 299  EV  +14.7  acerto 38.1%  tercos   -8.5 /  +27.7 /  +15.1  C  +11.9 V  +17.6  pct  82
-    meio canal ate banda (1-2 ATR) n= 205  EV   +3.9  acerto 34.6%  tercos  +46.9 /  -29.7 /   +4.3  C   +3.8 V   +4.0  pct  29
-    alem da banda (> 2 ATR)        n=  75  EV  -16.0  acerto 28.0%  tercos   -5.3 /   -4.0 /  -32.3  C   -2.7 V  -28.9  pct   5
+    Hull do lado errado da EMA     n=1782  EV   +4.1  acerto 34.7%  tercos   +3.6 /   -2.8 /  +11.4  C   +4.8 V   +3.4  pct   8
+    EMA ate meio canal (0-1 ATR)   n=1641  EV  +10.5  acerto 36.7%  tercos  +12.1 /   +8.6 /   +9.9  C  +13.0 V   +8.1  pct  82
+    meio canal ate banda (1-2 ATR) n= 967  EV   +7.5  acerto 35.9%  tercos  +13.1 /   +2.2 /   +5.2  C   +7.7 V   +7.4  pct  47
+    alem da banda (> 2 ATR)        n= 310  EV  +16.1  acerto 38.7%  tercos  +38.0 /   +7.8 /   +3.7  C  +16.4 V  +15.8  pct  84
   [fecha 1:1 sem parcial]
-    Hull do lado errado da EMA     n= 343  EV  +11.7  acerto 55.7%  tercos   +7.8 /   +5.0 /  +18.2  C  +17.3 V   +5.9  pct  69
-    EMA ate meio canal (0-1 ATR)   n= 299  EV   +9.4  acerto 54.5%  tercos   -8.5 /  +18.8 /  +10.1  C   +7.9 V  +10.8  pct  50
-    meio canal ate banda (1-2 ATR) n= 205  EV   +9.3  acerto 54.6%  tercos  +34.7 /   -3.1 /   +4.3  C  +11.5 V   +6.9  pct  47
-    alem da banda (> 2 ATR)        n=  75  EV   -1.3  acerto 49.3%  tercos   +5.3 /  -20.0 /   +9.7  C   -8.1 V   +5.3  pct  13
+    Hull do lado errado da EMA     n=1782  EV   +2.3  acerto 51.1%  tercos   +0.0 /   -1.6 /   +9.5  C   +1.4 V   +3.2  pct   1
+    EMA ate meio canal (0-1 ATR)   n=1641  EV   +6.9  acerto 53.3%  tercos   +4.9 /   +8.4 /   +8.5  C  +10.0 V   +4.0  pct  59
+    meio canal ate banda (1-2 ATR) n= 967  EV  +12.4  acerto 56.2%  tercos  +16.4 /  +10.1 /   +9.4  C  +10.8 V  +13.9  pct  98
+    alem da banda (> 2 ATR)        n= 310  EV   +9.7  acerto 54.8%  tercos  +20.0 /   +1.0 /   +8.4  C   +5.3 V  +13.9  pct  70
   [meio_lim 1:3 com parcial]
-    Hull do lado errado da EMA     n= 215  EV   +8.0  acerto 30.2%  tercos  -25.0 /  +19.2 /  +11.1  C  +14.8 V   +1.0  pct  65
-    EMA ate meio canal (0-1 ATR)   n= 192  EV   -1.0  acerto 26.6%  tercos  -48.7 /  +12.3 /  +10.3  C   +9.1 V  -12.5  pct  20
-    meio canal ate banda (1-2 ATR) n= 140  EV  +12.9  acerto 32.1%  tercos  +26.9 /   -8.7 /  +22.1  C   +6.0 V  +19.2  pct  79
-    alem da banda (> 2 ATR)        n=  52  EV   -3.8  acerto 26.9%  tercos  +21.4 /  +11.1 /  -35.0  C  +15.4 V  -23.1  pct  28
-  descarta menores (fecha parcial): 0% +11.4(922) | 20% +8.7(737) | 40% +5.1(553) | 60% +8.4(369)
-  descarta maiores (fecha parcial): 0% +11.4(922) | 20% +13.8(737) | 40% +13.4(553) | 60% +20.9(369)
+    Hull do lado errado da EMA     n=1227  EV   -2.5  acerto 27.1%  tercos   -5.6 /   -4.3 /   +4.2  C   -3.8 V   -1.1  pct  42
+    EMA ate meio canal (0-1 ATR)   n=1074  EV   -6.2  acerto 25.4%  tercos   -1.2 /   -4.7 /  -15.1  C   +4.0 V  -16.0  pct   8
+    meio canal ate banda (1-2 ATR) n= 621  EV   +6.0  acerto 29.5%  tercos   +5.0 /   +1.6 /  +10.6  C   +3.1 V   +8.6  pct  96
+    alem da banda (> 2 ATR)        n= 194  EV   +0.5  acerto 27.3%  tercos  -10.5 /   +0.0 /  +10.1  C   +3.2 V   -2.0  pct  60
+  descarta menores (fecha parcial): 0% +7.5(4700) | 20% +8.9(3760) | 40% +10.6(2820) | 60% +12.3(1880)
+  descarta maiores (fecha parcial): 0% +7.5(4700) | 20% +6.3(3760) | 40% +4.2(2820) | 60% +2.8(1880)
 
 --- HULL + 2-4 | Hull - EMA 21, em ATR, faixas finas (gradiente) ---
     limites: -1.00  -0.50  0.00  0.50  1.00  2.00
   [fecha 1:3 com parcial]
-    < -1 ATR                       n=  98  EV  +27.6  acerto 32.7%  tercos  +30.0 /  +20.6 /  +31.8  C  +26.9 V  +28.3  pct  90
-    -1 a -0,5                      n= 103  EV  +11.7  acerto 28.2%  tercos  -15.8 /  +11.4 /  +22.4  C  +26.9 V   -3.9  pct  49
-    -0,5 a 0                       n= 142  EV  +16.9  acerto 33.1%  tercos  +48.0 /   +5.9 /  +13.6  C  +27.5 V   +6.8  pct  70
-    0 a 0,5                        n= 148  EV   +5.4  acerto 27.7%  tercos   +0.0 /   +2.2 /   +9.6  C   +0.0 V   +9.6  pct  25
-    0,5 a 1                        n= 151  EV  +13.9  acerto 27.2%  tercos  -27.6 /  +35.7 /  +13.6  C  +22.1 V   +3.1  pct  59
-    1 a 2                          n= 205  EV   +7.3  acerto 26.3%  tercos  +44.9 /  -23.4 /   +8.7  C   +9.6 V   +5.0  pct  28
-    > 2 ATR                        n=  75  EV   -2.7  acerto 24.0%  tercos   +5.3 /   +4.0 /  -12.9  C   -5.4 V   +0.0  pct  14
+    < -1 ATR                       n= 511  EV   -6.1  acerto 22.7%  tercos  -25.7 /   -2.1 /  +18.9  C  -17.7 V   +6.0  pct   1
+    -1 a -0,5                      n= 522  EV   +8.7  acerto 27.2%  tercos  +13.6 /   -1.4 /  +11.3  C  +17.0 V   +0.0  pct  61
+    -0,5 a 0                       n= 749  EV   +5.9  acerto 28.0%  tercos   +2.1 /   -0.2 /  +17.5  C   +8.6 V   +3.2  pct  35
+    0 a 0,5                        n= 835  EV   +5.4  acerto 26.9%  tercos   +4.6 /   +8.6 /   +3.4  C   +5.1 V   +5.8  pct  30
+    0,5 a 1                        n= 806  EV  +12.8  acerto 28.9%  tercos  +12.6 /  +14.4 /  +11.7  C  +18.0 V   +7.9  pct  91
+    1 a 2                          n= 967  EV  +10.7  acerto 27.4%  tercos  +12.6 /  +10.8 /   +8.3  C   +9.8 V  +11.6  pct  82
+    > 2 ATR                        n= 310  EV  +12.9  acerto 29.0%  tercos  +24.0 /   +4.9 /  +10.3  C  +13.2 V  +12.7  pct  78
   [fecha 1:3 sem parcial]
-    < -1 ATR                       n=  98  EV  +30.6  acerto 32.7%  tercos  +60.0 /  +17.6 /  +27.3  C  +30.8 V  +30.4  pct  82
-    -1 a -0,5                      n= 103  EV  +12.6  acerto 28.2%  tercos  -15.8 /  +14.3 /  +22.4  C  +30.8 V   -5.9  pct  45
-    -0,5 a 0                       n= 142  EV  +30.3  acerto 33.1%  tercos  +64.0 /  +21.6 /  +24.2  C  +46.4 V  +15.1  pct  88
-    0 a 0,5                        n= 148  EV  +10.8  acerto 27.7%  tercos  +20.0 /   -2.2 /  +15.1  C  +10.8 V  +10.8  pct  40
-    0,5 a 1                        n= 151  EV   +9.3  acerto 27.2%  tercos  -58.6 /  +42.9 /  +10.6  C  +22.1 V   -7.7  pct  38
-    1 a 2                          n= 205  EV   +5.4  acerto 26.3%  tercos  +55.1 /  -43.8 /  +13.0  C   +7.7 V   +3.0  pct  22
-    > 2 ATR                        n=  75  EV   -4.0  acerto 24.0%  tercos   +5.3 /  +28.0 /  -35.5  C   -2.7 V   -5.3  pct  15
+    < -1 ATR                       n= 511  EV   -9.2  acerto 22.7%  tercos  -35.8 /   -0.7 /  +21.6  C  -21.5 V   +3.6  pct   1
+    -1 a -0,5                      n= 522  EV   +8.0  acerto 27.2%  tercos  +14.3 /   -7.5 /  +13.9  C  +19.5 V   -3.9  pct  48
+    -0,5 a 0                       n= 749  EV  +10.9  acerto 28.0%  tercos   +2.7 /   +4.5 /  +29.5  C  +14.6 V   +7.2  pct  65
+    0 a 0,5                        n= 835  EV   +7.3  acerto 26.8%  tercos   +6.8 /  +11.6 /   +3.6  C   +5.8 V   +8.7  pct  41
+    0,5 a 1                        n= 806  EV  +15.1  acerto 28.9%  tercos  +17.9 /  +16.9 /   +9.7  C  +20.1 V  +10.5  pct  88
+    1 a 2                          n= 967  EV   +9.0  acerto 27.4%  tercos   +8.7 /  +11.6 /   +7.1  C   +8.8 V   +9.2  pct  53
+    > 2 ATR                        n= 310  EV  +16.1  acerto 29.0%  tercos  +28.0 /   +8.7 /  +12.1  C  +21.1 V  +11.4  pct  78
   [fecha 1:2 sem parcial]
-    < -1 ATR                       n=  98  EV  +19.4  acerto 39.8%  tercos  +35.0 /  +23.5 /   +9.1  C  +15.4 V  +23.9  pct  77
-    -1 a -0,5                      n= 103  EV   +1.9  acerto 34.0%  tercos  -36.8 /  +11.4 /  +10.2  C  +21.2 V  -17.6  pct  29
-    -0,5 a 0                       n= 142  EV  +11.3  acerto 37.3%  tercos  +36.0 /   +3.9 /   +7.6  C  +18.8 V   +4.1  pct  58
-    0 a 0,5                        n= 148  EV  +11.5  acerto 37.2%  tercos   +0.0 /  +20.0 /  +11.0  C   +6.2 V  +15.7  pct  59
-    0,5 a 1                        n= 151  EV  +17.9  acerto 39.1%  tercos  -17.2 /  +33.9 /  +19.7  C  +16.3 V  +20.0  pct  82
-    1 a 2                          n= 205  EV   +3.9  acerto 34.6%  tercos  +46.9 /  -29.7 /   +4.3  C   +3.8 V   +4.0  pct  29
-    > 2 ATR                        n=  75  EV  -16.0  acerto 28.0%  tercos   -5.3 /   -4.0 /  -32.3  C   -2.7 V  -28.9  pct   5
+    < -1 ATR                       n= 511  EV   -4.3  acerto 31.9%  tercos  -18.8 /   -0.7 /  +13.5  C  -13.5 V   +5.2  pct   2
+    -1 a -0,5                      n= 522  EV   +9.2  acerto 36.4%  tercos  +22.3 /   -6.8 /   +5.3  C  +15.7 V   +2.4  pct  59
+    -0,5 a 0                       n= 749  EV   +6.3  acerto 35.5%  tercos   +5.7 /   -1.5 /  +14.3  C   +9.6 V   +2.9  pct  36
+    0 a 0,5                        n= 835  EV   +6.0  acerto 35.2%  tercos   +9.5 /   +3.2 /   +4.0  C   +6.1 V   +5.9  pct  34
+    0,5 a 1                        n= 806  EV  +15.1  acerto 38.3%  tercos  +14.5 /  +15.4 /  +15.8  C  +20.4 V  +10.3  pct  94
+    1 a 2                          n= 967  EV   +7.5  acerto 35.9%  tercos  +13.1 /   +2.2 /   +5.2  C   +7.7 V   +7.4  pct  47
+    > 2 ATR                        n= 310  EV  +16.1  acerto 38.7%  tercos  +38.0 /   +7.8 /   +3.7  C  +16.4 V  +15.8  pct  84
   [fecha 1:1 sem parcial]
-    < -1 ATR                       n=  98  EV  +24.5  acerto 62.2%  tercos   +0.0 /  +23.5 /  +36.4  C  +23.1 V  +26.1  pct  93
-    -1 a -0,5                      n= 103  EV  +10.7  acerto 55.3%  tercos  -15.8 /   +8.6 /  +22.4  C  +23.1 V   -2.0  pct  52
-    -0,5 a 0                       n= 142  EV   +3.5  acerto 51.4%  tercos  +32.0 /   -9.8 /   +3.0  C   +8.7 V   -1.4  pct  21
-    0 a 0,5                        n= 148  EV   +0.0  acerto 50.0%  tercos  -20.0 /   +6.7 /   +4.1  C  -10.8 V   +8.4  pct  10
-    0,5 a 1                        n= 151  EV  +18.5  acerto 58.9%  tercos   +3.4 /  +28.6 /  +16.7  C  +22.1 V  +13.8  pct  89
-    1 a 2                          n= 205  EV   +9.3  acerto 54.6%  tercos  +34.7 /   -3.1 /   +4.3  C  +11.5 V   +6.9  pct  47
-    > 2 ATR                        n=  75  EV   -1.3  acerto 49.3%  tercos   +5.3 /  -20.0 /   +9.7  C   -8.1 V   +5.3  pct  13
+    < -1 ATR                       n= 511  EV   -2.9  acerto 48.5%  tercos  -15.6 /   -3.4 /  +16.2  C  -13.8 V   +8.4  pct   1
+    -1 a -0,5                      n= 522  EV   +9.4  acerto 54.6%  tercos  +12.9 /   +4.8 /   +8.6  C  +14.6 V   +3.9  pct  76
+    -0,5 a 0                       n= 749  EV   +0.9  acerto 50.3%  tercos   +1.5 /   -5.0 /   +5.5  C   +2.7 V   -0.8  pct   4
+    0 a 0,5                        n= 835  EV   +3.6  acerto 51.6%  tercos   +2.4 /   +5.6 /   +3.2  C   +4.4 V   +2.8  pct  18
+    0,5 a 1                        n= 806  EV  +10.4  acerto 55.1%  tercos   +7.3 /  +11.9 /  +13.8  C  +16.0 V   +5.3  pct  88
+    1 a 2                          n= 967  EV  +12.4  acerto 56.2%  tercos  +16.4 /  +10.1 /   +9.4  C  +10.8 V  +13.9  pct  98
+    > 2 ATR                        n= 310  EV   +9.7  acerto 54.8%  tercos  +20.0 /   +1.0 /   +8.4  C   +5.3 V  +13.9  pct  70
   [meio_lim 1:3 com parcial]
-    < -1 ATR                       n=  51  EV  -15.2  acerto 21.6%  tercos  -30.0 /   -5.9 /  -15.6  C  -15.8 V  -14.3  pct  12
-    -1 a -0,5                      n=  69  EV  +15.2  acerto 31.9%  tercos  -35.7 /  +30.0 /  +26.7  C  +45.7 V  -16.2  pct  76
-    -0,5 a 0                       n=  95  EV  +15.3  acerto 33.7%  tercos   -8.3 /  +23.6 /  +14.9  C  +11.1 V  +19.0  pct  78
-    0 a 0,5                        n=  94  EV   +0.0  acerto 28.7%  tercos  -45.0 /   +7.4 /  +14.9  C   +6.4 V   -6.4  pct  33
-    0,5 a 1                        n=  98  EV   -2.0  acerto 24.5%  tercos  -52.6 /  +16.0 /   +5.2  C  +11.4 V  -19.2  pct  26
-    1 a 2                          n= 140  EV  +12.9  acerto 32.1%  tercos  +26.9 /   -8.7 /  +22.1  C   +6.0 V  +19.2  pct  79
-    > 2 ATR                        n=  52  EV   -3.8  acerto 26.9%  tercos  +21.4 /  +11.1 /  -35.0  C  +15.4 V  -23.1  pct  28
+    < -1 ATR                       n= 358  EV   -8.2  acerto 25.1%  tercos  -12.4 /  +10.0 /  -23.2  C  -23.5 V   +9.0  pct  16
+    -1 a -0,5                      n= 347  EV   -1.2  acerto 27.1%  tercos   -4.1 /  -15.2 /  +15.1  C   +8.8 V  -11.5  pct  54
+    -0,5 a 0                       n= 522  EV   +0.5  acerto 28.5%  tercos   -1.4 /   -7.6 /  +11.5  C   +1.9 V   -0.9  pct  70
+    0 a 0,5                        n= 545  EV   -4.5  acerto 26.1%  tercos   +3.9 /   -7.1 /  -14.1  C   +4.4 V  -14.0  pct  29
+    0,5 a 1                        n= 529  EV   -7.9  acerto 24.8%  tercos   -6.0 /   -1.5 /  -16.2  C   +3.6 V  -17.9  pct  11
+    1 a 2                          n= 621  EV   +6.0  acerto 29.5%  tercos   +5.0 /   +1.6 /  +10.6  C   +3.1 V   +8.6  pct  96
+    > 2 ATR                        n= 194  EV   +0.5  acerto 27.3%  tercos  -10.5 /   +0.0 /  +10.1  C   +3.2 V   -2.0  pct  60
 
 --- HULL + 2-4 | Hull - EMA 21, em pontos, no sentido do trade ---
-    limites: -87.51  10.96  103.58  208.70
+    limites: -87.23  9.19  90.65  188.46
   [fecha 1:3 com parcial]
-    Q1 (menor)                     n= 185  EV  +23.8  acerto 31.9%  tercos   +7.7 /  +21.5 /  +33.3  C  +25.0 V  +22.4  pct  93
-    Q2                             n= 184  EV  +15.8  acerto 32.1%  tercos  +42.3 /   +8.1 /  +13.5  C  +30.6 V   +3.0  pct  70
-    Q3                             n= 184  EV   +0.0  acerto 25.0%  tercos  -12.5 /   -5.3 /   +9.2  C   +0.0 V   +0.0  pct   8
-    Q4                             n= 184  EV  +16.3  acerto 28.3%  tercos  +37.8 /  +16.7 /   +5.3  C  +21.1 V  +11.2  pct  71
-    Q5 (maior)                     n= 185  EV   +1.1  acerto 24.9%  tercos  +14.3 /  -13.0 /   +2.4  C   +3.1 V   -1.1  pct  10
+    Q1 (menor)                     n= 940  EV   +0.5  acerto 24.6%  tercos   -9.4 /   -1.1 /  +16.4  C   -3.2 V   +4.4  pct   3
+    Q2                             n= 940  EV   +5.1  acerto 27.9%  tercos   +3.4 /   -5.7 /  +17.5  C   +9.4 V   +0.6  pct  26
+    Q3                             n= 940  EV   +8.8  acerto 28.1%  tercos   +9.3 /  +14.9 /   +2.3  C  +11.7 V   +6.1  pct  64
+    Q4                             n= 940  EV  +12.1  acerto 27.8%  tercos  +12.8 /  +13.2 /  +10.3  C  +14.6 V   +9.8  pct  90
+    Q5 (maior)                     n= 940  EV  +10.9  acerto 28.0%  tercos  +14.4 /   +8.6 /   +9.0  C   +8.7 V  +12.9  pct  83
   [fecha 1:3 sem parcial]
-    Q1 (menor)                     n= 185  EV  +27.6  acerto 31.9%  tercos  +23.1 /  +23.1 /  +33.3  C  +28.0 V  +27.1  pct  88
-    Q2                             n= 184  EV  +26.6  acerto 32.1%  tercos  +57.7 /  +19.4 /  +22.9  C  +51.8 V   +5.1  pct  87
-    Q3                             n= 184  EV   +0.5  acerto 25.0%  tercos  -10.0 /   -8.8 /  +11.5  C   +4.5 V   -3.2  pct  13
-    Q4                             n= 184  EV  +13.0  acerto 28.3%  tercos  +40.5 /  +11.1 /   +1.3  C  +17.9 V   +7.9  pct  47
-    Q5 (maior)                     n= 185  EV   -0.5  acerto 24.9%  tercos  +14.3 /  -11.1 /   -2.4  C   +4.2 V   -5.6  pct  11
+    Q1 (menor)                     n= 940  EV   -2.1  acerto 24.6%  tercos  -16.6 /   -3.0 /  +19.7  C   -5.0 V   +0.9  pct   2
+    Q2                             n= 940  EV  +10.5  acerto 27.9%  tercos   +6.8 /   -3.2 /  +28.8  C  +16.5 V   +4.5  pct  66
+    Q3                             n= 940  EV  +11.8  acerto 28.0%  tercos  +13.5 /  +19.2 /   +2.5  C  +14.8 V   +9.1  pct  74
+    Q4                             n= 940  EV  +10.5  acerto 27.8%  tercos  +11.0 /  +14.8 /   +6.2  C  +11.1 V  +10.0  pct  66
+    Q5 (maior)                     n= 940  EV  +11.5  acerto 28.0%  tercos  +14.9 /  +10.0 /   +8.8  C  +11.9 V  +11.1  pct  73
   [fecha 1:2 sem parcial]
-    Q1 (menor)                     n= 185  EV  +15.1  acerto 38.4%  tercos   +0.0 /  +24.6 /  +14.8  C  +17.0 V  +12.9  pct  75
-    Q2                             n= 184  EV   +8.7  acerto 36.4%  tercos  +30.8 /   +4.8 /   +5.2  C  +21.2 V   -2.0  pct  50
-    Q3                             n= 184  EV   +4.9  acerto 34.8%  tercos  -10.0 /   +5.3 /  +11.5  C   +2.2 V   +7.4  pct  35
-    Q4                             n= 184  EV  +19.0  acerto 39.7%  tercos  +45.9 /  +12.5 /  +12.0  C  +10.5 V  +28.1  pct  86
-    Q5 (maior)                     n= 185  EV   -5.9  acerto 31.4%  tercos  +10.2 /  -16.7 /   -8.5  C   +6.2 V  -19.1  pct   6
+    Q1 (menor)                     n= 940  EV   +2.1  acerto 34.0%  tercos   -1.0 /   -1.9 /  +10.6  C   -1.2 V   +5.7  pct   9
+    Q2                             n= 940  EV   +6.1  acerto 35.4%  tercos   +9.0 /   -5.5 /  +12.4  C  +11.8 V   +0.2  pct  34
+    Q3                             n= 940  EV   +9.1  acerto 36.3%  tercos  +11.2 /   +9.1 /   +6.4  C  +11.7 V   +6.8  pct  63
+    Q4                             n= 940  EV  +10.7  acerto 36.9%  tercos  +14.8 /   +6.0 /   +9.3  C  +14.8 V   +6.8  pct  76
+    Q5 (maior)                     n= 940  EV  +11.1  acerto 37.0%  tercos  +18.3 /   +6.8 /   +6.5  C   +8.2 V  +13.7  pct  78
   [fecha 1:1 sem parcial]
-    Q1 (menor)                     n= 185  EV  +20.0  acerto 60.0%  tercos   -7.7 /  +20.0 /  +33.3  C  +22.0 V  +17.6  pct  95
-    Q2                             n= 184  EV   +4.9  acerto 52.2%  tercos  +26.9 /   -3.2 /   +4.2  C   +9.4 V   +1.0  pct  24
-    Q3                             n= 184  EV   -0.5  acerto 49.5%  tercos  -15.0 /   -1.8 /   +6.9  C   -4.5 V   +3.2  pct   6
-    Q4                             n= 184  EV  +19.6  acerto 59.8%  tercos  +35.1 /  +22.2 /   +9.3  C  +24.2 V  +14.6  pct  94
-    Q5 (maior)                     n= 185  EV   +2.7  acerto 51.4%  tercos  +14.3 /  -14.8 /   +7.3  C   +2.1 V   +3.4  pct  15
+    Q1 (menor)                     n= 940  EV   +3.1  acerto 51.5%  tercos   -2.3 /   +0.7 /  +13.1  C   -1.4 V   +7.9  pct  13
+    Q2                             n= 940  EV   -0.4  acerto 49.7%  tercos   +0.0 /   -8.3 /   +6.2  C   +2.3 V   -3.2  pct   1
+    Q3                             n= 940  EV   +5.7  acerto 52.7%  tercos   +5.1 /  +10.6 /   +2.1  C   +8.6 V   +3.1  pct  39
+    Q4                             n= 940  EV  +13.7  acerto 56.8%  tercos  +14.5 /  +11.6 /  +14.5  C  +18.1 V   +9.5  pct  99
+    Q5 (maior)                     n= 940  EV  +10.3  acerto 55.1%  tercos  +13.8 /   +7.2 /   +9.2  C   +5.5 V  +14.8  pct  90
   [meio_lim 1:3 com parcial]
-    Q1 (menor)                     n= 109  EV   +0.7  acerto 26.6%  tercos  -33.3 /  +16.7 /   +4.9  C  +11.5 V  -14.1  pct  36
-    Q2                             n= 121  EV  +12.8  acerto 33.1%  tercos  -15.4 /  +25.0 /  +10.6  C  +14.8 V  +11.2  pct  76
-    Q3                             n= 122  EV   -2.9  acerto 27.0%  tercos  -50.0 /   +2.0 /  +17.4  C  +10.2 V  -18.3  pct  21
-    Q4                             n= 123  EV  +16.7  acerto 31.7%  tercos  +15.8 /  +16.7 /  +17.0  C  +18.9 V  +14.5  pct  86
-    Q5 (maior)                     n= 124  EV   -1.6  acerto 27.4%  tercos   +9.7 /  -13.2 /   +0.0  C   +0.0 V   -3.2  pct  25
-  descarta menores (fecha parcial): 0% +11.4(922) | 20% +8.3(737) | 40% +5.8(553) | 60% +8.7(369)
-  descarta maiores (fecha parcial): 0% +11.4(922) | 20% +14.0(737) | 40% +13.2(553) | 60% +19.8(369)
+    Q1 (menor)                     n= 641  EV   -5.1  acerto 26.2%  tercos   -8.4 /   -1.7 /   -3.3  C   -8.6 V   -1.2  pct  24
+    Q2                             n= 652  EV   -3.6  acerto 27.0%  tercos   -5.8 /  -12.2 /   +8.7  C   -4.3 V   -2.8  pct  35
+    Q3                             n= 616  EV   -0.3  acerto 27.6%  tercos   +9.8 /   -1.1 /  -14.6  C  +16.2 V  -16.9  pct  64
+    Q4                             n= 622  EV   +2.1  acerto 28.1%  tercos   +0.2 /   +7.0 /   +0.5  C   +1.9 V   +2.4  pct  81
+    Q5 (maior)                     n= 585  EV   -2.6  acerto 26.2%  tercos   -7.5 /   -5.8 /   +5.5  C   -1.1 V   -4.0  pct  44
+  descarta menores (fecha parcial): 0% +7.5(4700) | 20% +9.2(3760) | 40% +10.6(2820) | 60% +11.5(1880)
+  descarta maiores (fecha parcial): 0% +7.5(4700) | 20% +6.6(3760) | 40% +4.8(2820) | 60% +2.8(1880)
 
 --- HULL + 2-4 | |Hull - EMA 21| em ATR, sem sinal ---
-    limites: 0.32  0.64  1.02  1.57
+    limites: 0.29  0.60  0.95  1.49
   [fecha 1:3 com parcial]
-    Q1 (menor)                     n= 185  EV  +17.3  acerto 33.0%  tercos  +36.4 /  +23.3 /   +6.5  C  +18.9 V  +15.6  pct  75
-    Q2                             n= 184  EV   +8.7  acerto 28.3%  tercos   -3.1 /  -14.8 /  +28.6  C  +21.5 V   -1.0  pct  36
-    Q3                             n= 184  EV  +15.2  acerto 27.7%  tercos  -20.5 /  +37.1 /  +13.3  C  +22.3 V   +6.2  pct  67
-    Q4                             n= 184  EV   +8.7  acerto 26.6%  tercos  +62.2 /  -14.9 /   +3.8  C  +10.8 V   +6.6  pct  36
-    Q5 (maior)                     n= 185  EV   +7.0  acerto 26.5%  tercos   +8.0 /   +0.0 /  +10.8  C   +6.3 V   +7.8  pct  30
+    Q1 (menor)                     n= 940  EV   +8.7  acerto 28.7%  tercos   +2.0 /   +9.5 /  +17.4  C  +10.9 V   +6.5  pct  63
+    Q2                             n= 940  EV   +2.3  acerto 26.1%  tercos   +6.5 /   -5.1 /   +3.1  C   +5.0 V   -0.1  pct   8
+    Q3                             n= 940  EV  +10.9  acerto 27.6%  tercos  +11.2 /  +10.7 /  +10.7  C  +15.7 V   +5.9  pct  83
+    Q4                             n= 940  EV   +8.2  acerto 27.2%  tercos   +2.8 /   +8.5 /  +15.0  C   +4.2 V  +11.9  pct  58
+    Q5 (maior)                     n= 940  EV   +7.2  acerto 26.7%  tercos   +6.8 /   +6.3 /   +8.5  C   +4.3 V  +10.0  pct  47
   [fecha 1:3 sem parcial]
-    Q1 (menor)                     n= 185  EV  +30.8  acerto 33.0%  tercos  +57.6 /  +43.3 /  +13.0  C  +34.7 V  +26.7  pct  93
-    Q2                             n= 184  EV  +13.0  acerto 28.3%  tercos   +3.1 /  -21.3 /  +39.6  C  +39.2 V   -6.7  pct  47
-    Q3                             n= 184  EV  +10.9  acerto 27.7%  tercos  -38.5 /  +42.9 /   +6.7  C  +16.5 V   +3.7  pct  40
-    Q4                             n= 184  EV   +6.5  acerto 26.6%  tercos  +83.8 /  -28.4 /   +0.0  C   +7.5 V   +5.5  pct  26
-    Q5 (maior)                     n= 185  EV   +5.9  acerto 26.5%  tercos  +12.0 /   +0.0 /   +6.0  C   +9.5 V   +2.2  pct  26
+    Q1 (menor)                     n= 940  EV  +13.8  acerto 28.7%  tercos   +2.8 /  +16.0 /  +27.4  C  +16.4 V  +11.2  pct  85
+    Q2                             n= 940  EV   +3.8  acerto 26.0%  tercos  +10.0 /   -6.2 /   +4.0  C   +6.4 V   +1.4  pct  18
+    Q3                             n= 940  EV   +9.7  acerto 27.6%  tercos  +12.6 /   +8.3 /   +6.9  C  +14.5 V   +4.6  pct  60
+    Q4                             n= 940  EV   +8.3  acerto 27.2%  tercos   -3.1 /  +12.4 /  +19.7  C   +3.3 V  +12.9  pct  50
+    Q5 (maior)                     n= 940  EV   +6.6  acerto 26.7%  tercos   +6.0 /   +7.3 /   +6.6  C   +7.4 V   +5.8  pct  36
   [fecha 1:2 sem parcial]
-    Q1 (menor)                     n= 185  EV  +13.0  acerto 37.8%  tercos  +27.3 /  +28.3 /   -2.2  C  +13.7 V  +12.2  pct  68
-    Q2                             n= 184  EV  +11.4  acerto 37.0%  tercos   +6.2 /  -16.4 /  +31.9  C  +20.3 V   +4.8  pct  62
-    Q3                             n= 184  EV  +14.1  acerto 38.0%  tercos  -30.8 /  +41.4 /  +12.0  C  +16.5 V  +11.1  pct  72
-    Q4                             n= 184  EV   +4.3  acerto 34.8%  tercos  +62.2 /  -19.4 /   -2.5  C   +3.2 V   +5.5  pct  32
-    Q5 (maior)                     n= 185  EV   -1.1  acerto 33.0%  tercos   +8.0 /   -1.9 /   -6.0  C   +4.2 V   -6.7  pct  15
+    Q1 (menor)                     n= 940  EV   +6.8  acerto 35.6%  tercos   +3.8 /   +3.8 /  +13.9  C   +8.8 V   +4.8  pct  41
+    Q2                             n= 940  EV   +6.2  acerto 35.3%  tercos  +12.9 /   -5.1 /   +6.6  C  +11.7 V   +1.0  pct  35
+    Q3                             n= 940  EV  +11.6  acerto 37.1%  tercos  +15.6 /   +7.5 /   +9.7  C  +14.1 V   +9.0  pct  81
+    Q4                             n= 940  EV   +7.6  acerto 36.0%  tercos   +8.2 /   +6.6 /   +7.5  C   +6.9 V   +8.2  pct  48
+    Q5 (maior)                     n= 940  EV   +7.0  acerto 35.6%  tercos  +10.7 /   +2.1 /   +7.3  C   +3.1 V  +10.8  pct  43
   [fecha 1:1 sem parcial]
-    Q1 (menor)                     n= 185  EV   +3.8  acerto 51.9%  tercos  +15.2 /   +3.3 /   +0.0  C   +3.2 V   +4.4  pct  19
-    Q2                             n= 184  EV   +4.3  acerto 51.6%  tercos   -9.4 /   -8.2 /  +17.6  C   +3.8 V   +4.8  pct  20
-    Q3                             n= 184  EV  +19.6  acerto 59.8%  tercos   -2.6 /  +31.4 /  +20.0  C  +28.2 V   +8.6  pct  94
-    Q4                             n= 184  EV  +10.9  acerto 55.4%  tercos  +40.5 /   -1.5 /   +7.5  C  +14.0 V   +7.7  pct  59
-    Q5 (maior)                     n= 185  EV   +8.1  acerto 54.1%  tercos   +4.0 /   +0.0 /  +15.7  C   +3.2 V  +13.3  pct  41
+    Q1 (menor)                     n= 940  EV   +3.6  acerto 51.7%  tercos   +1.3 /   +3.0 /   +7.5  C   +5.5 V   +1.7  pct  17
+    Q2                             n= 940  EV   +0.9  acerto 50.2%  tercos   +2.9 /   -3.9 /   +2.2  C   +3.5 V   -1.6  pct   3
+    Q3                             n= 940  EV  +12.1  acerto 56.0%  tercos   +9.8 /  +13.1 /  +14.5  C  +16.8 V   +7.2  pct  97
+    Q4                             n= 940  EV   +8.1  acerto 54.0%  tercos   +8.8 /   +4.7 /  +10.2  C   +5.1 V  +10.8  pct  71
+    Q5 (maior)                     n= 940  EV   +7.8  acerto 53.8%  tercos   +7.7 /   +5.2 /  +10.4  C   +1.1 V  +14.1  pct  67
   [meio_lim 1:3 com parcial]
-    Q1 (menor)                     n= 120  EV   +1.2  acerto 29.2%  tercos  -47.1 /   +6.4 /  +10.9  C   -4.9 V   +7.6  pct  35
-    Q2                             n= 119  EV  +17.2  acerto 34.5%  tercos  -17.4 /  +25.6 /  +25.5  C  +45.2 V   -8.5  pct  87
-    Q3                             n= 121  EV   +3.3  acerto 25.6%  tercos  -42.3 /  +21.1 /  +11.0  C  +17.2 V  -13.9  pct  41
-    Q4                             n= 123  EV   +1.8  acerto 28.5%  tercos  +12.5 /   -8.7 /   +7.0  C   -6.1 V   +9.7  pct  37
-    Q5 (maior)                     n= 116  EV   +2.6  acerto 28.4%  tercos   +9.1 /   +6.1 /   -4.0  C   +5.1 V   +0.0  pct  40
-  descarta menores (fecha parcial): 0% +11.4(922) | 20% +9.9(737) | 40% +10.3(553) | 60% +7.9(369)
-  descarta maiores (fecha parcial): 0% +11.4(922) | 20% +12.5(737) | 40% +13.7(553) | 60% +13.0(369)
+    Q1 (menor)                     n= 632  EV   -2.1  acerto 27.4%  tercos   +2.2 /   -2.4 /   -8.5  C   +0.7 V   -5.0  pct  46
+    Q2                             n= 637  EV   -2.3  acerto 27.0%  tercos   -0.1 /  -14.9 /   +6.5  C  +12.3 V  -17.4  pct  45
+    Q3                             n= 622  EV   -6.4  acerto 25.1%  tercos   -6.2 /  -11.0 /   -2.9  C   -0.5 V  -12.2  pct  16
+    Q4                             n= 629  EV   +3.1  acerto 29.1%  tercos   -4.7 /  +13.8 /   +3.3  C   -6.1 V  +11.8  pct  87
+    Q5 (maior)                     n= 596  EV   -1.8  acerto 26.5%  tercos   -2.9 /   -1.2 /   -0.9  C   -4.1 V   +0.6  pct  51
+  descarta menores (fecha parcial): 0% +7.5(4700) | 20% +7.2(3760) | 40% +8.8(2820) | 60% +7.7(1880)
+  descarta maiores (fecha parcial): 0% +7.5(4700) | 20% +7.5(3760) | 40% +7.3(2820) | 60% +5.5(1880)
 
 --- HULL + 2-4 | Distancia da Hull a banda a favor, em pontos ---
-    limites: 92.96  194.12  283.53  386.22
+    limites: 105.86  205.30  289.39  386.28
   [fecha 1:3 com parcial]
-    Q1 (menor)                     n= 185  EV   +1.6  acerto 24.9%  tercos  +19.2 /  -12.3 /   +0.0  C   +3.1 V   +0.0  pct  11
-    Q2                             n= 184  EV  +20.1  acerto 29.9%  tercos  +35.3 /  +18.3 /  +15.2  C  +24.0 V  +15.5  pct  86
-    Q3                             n= 184  EV   -9.8  acerto 21.2%  tercos  -20.0 /  -12.3 /   -3.4  C  -15.1 V   -5.1  pct   0
-    Q4                             n= 184  EV  +21.7  acerto 33.7%  tercos  +57.1 /  +14.8 /  +15.8  C  +40.0 V   +7.7  pct  90
-    Q5 (maior)                     n= 185  EV  +23.2  acerto 32.4%  tercos   +0.0 /  +20.3 /  +35.7  C  +27.5 V  +18.1  pct  92
+    Q1 (menor)                     n= 940  EV  +11.6  acerto 28.2%  tercos  +15.9 /  +10.3 /   +7.8  C   +8.7 V  +14.4  pct  88
+    Q2                             n= 940  EV  +12.9  acerto 28.4%  tercos  +13.6 /  +11.2 /  +13.3  C  +16.8 V   +9.1  pct  93
+    Q3                             n= 940  EV   +5.8  acerto 26.9%  tercos   +3.8 /  +16.2 /   -0.9  C   +8.3 V   +3.4  pct  33
+    Q4                             n= 940  EV   +5.5  acerto 27.8%  tercos   +3.7 /   -5.2 /  +18.7  C   +8.6 V   +2.5  pct  30
+    Q5 (maior)                     n= 940  EV   +1.5  acerto 25.0%  tercos   -6.5 /   -2.3 /  +16.5  C   -1.1 V   +4.5  pct   5
   [fecha 1:3 sem parcial]
-    Q1 (menor)                     n= 185  EV   -0.5  acerto 24.9%  tercos  +15.4 /   -8.8 /   -5.3  C   +3.1 V   -4.5  pct  11
-    Q2                             n= 184  EV  +19.6  acerto 29.9%  tercos  +41.2 /  +12.7 /  +16.5  C  +24.0 V  +14.3  pct  68
-    Q3                             n= 184  EV  -14.7  acerto 21.2%  tercos  -20.0 /  -22.8 /   -6.9  C  -15.1 V  -14.3  pct   1
-    Q4                             n= 184  EV  +33.2  acerto 33.7%  tercos  +75.0 /  +27.9 /  +24.2  C  +61.2 V  +11.5  pct  95
-    Q5 (maior)                     n= 185  EV  +29.7  acerto 32.4%  tercos  +18.9 /  +25.0 /  +38.1  C  +33.3 V  +25.3  pct  91
+    Q1 (menor)                     n= 940  EV  +12.1  acerto 28.2%  tercos  +15.9 /  +12.1 /   +7.7  C  +10.6 V  +13.6  pct  76
+    Q2                             n= 940  EV  +13.3  acerto 28.4%  tercos  +14.1 /  +13.2 /  +12.3  C  +17.9 V   +8.9  pct  83
+    Q3                             n= 940  EV   +7.0  acerto 26.8%  tercos   +5.9 /  +19.9 /   -3.2  C   +8.3 V   +5.8  pct  40
+    Q4                             n= 940  EV  +10.2  acerto 27.8%  tercos   +6.6 /   -3.1 /  +28.7  C  +14.4 V   +6.2  pct  64
+    Q5 (maior)                     n= 940  EV   -0.4  acerto 25.0%  tercos  -12.9 /   -3.8 /  +20.4  C   -1.6 V   +0.9  pct   4
   [fecha 1:2 sem parcial]
-    Q1 (menor)                     n= 185  EV   -7.6  acerto 30.8%  tercos  +21.2 /  -26.3 /  -13.2  C   +2.1 V  -18.2  pct   4
-    Q2                             n= 184  EV  +22.3  acerto 40.8%  tercos  +14.7 /  +26.8 /  +21.5  C  +14.0 V  +32.1  pct  93
-    Q3                             n= 184  EV   -3.3  acerto 32.1%  tercos   -2.5 /   -5.3 /   -2.3  C  -11.6 V   +4.1  pct  10
-    Q4                             n= 184  EV  +15.2  acerto 38.6%  tercos  +42.9 /  +11.5 /   +9.5  C  +36.2 V   -1.0  pct  76
-    Q5 (maior)                     n= 185  EV  +15.1  acerto 38.4%  tercos   -2.7 /  +21.9 /  +17.9  C  +17.6 V  +12.0  pct  75
+    Q1 (menor)                     n= 940  EV  +11.9  acerto 37.3%  tercos  +20.3 /   +8.2 /   +5.3  C   +9.7 V  +14.0  pct  83
+    Q2                             n= 940  EV  +11.2  acerto 37.0%  tercos  +14.1 /   +3.6 /  +13.6  C  +14.6 V   +7.9  pct  79
+    Q3                             n= 940  EV   +8.1  acerto 36.0%  tercos   +6.9 /  +14.8 /   +3.6  C  +11.1 V   +5.2  pct  53
+    Q4                             n= 940  EV   +3.3  acerto 34.5%  tercos   +6.8 /   -9.5 /  +10.4  C   +6.6 V   +0.2  pct  14
+    Q5 (maior)                     n= 940  EV   +4.7  acerto 34.9%  tercos   +4.3 /   -2.3 /  +11.8  C   +3.3 V   +6.2  pct  22
   [fecha 1:1 sem parcial]
-    Q1 (menor)                     n= 185  EV   +3.8  acerto 51.9%  tercos  +23.1 /  -15.8 /   +5.3  C   +3.1 V   +4.5  pct  19
-    Q2                             n= 184  EV  +20.7  acerto 60.3%  tercos  +29.4 /  +23.9 /  +13.9  C  +24.0 V  +16.7  pct  96
-    Q3                             n= 184  EV   -4.9  acerto 47.3%  tercos  -20.0 /   -1.8 /   +0.0  C  -15.1 V   +4.1  pct   1
-    Q4                             n= 184  EV  +10.3  acerto 54.9%  tercos  +39.3 /   +1.6 /   +7.4  C  +18.8 V   +3.8  pct  56
-    Q5 (maior)                     n= 185  EV  +16.8  acerto 58.4%  tercos  -18.9 /  +15.6 /  +33.3  C  +21.6 V  +10.8  pct  86
+    Q1 (menor)                     n= 940  EV  +11.2  acerto 55.5%  tercos  +15.9 /   +8.5 /   +8.0  C   +6.8 V  +15.2  pct  94
+    Q2                             n= 940  EV  +12.4  acerto 56.2%  tercos  +13.1 /   +9.2 /  +14.3  C  +15.7 V   +9.4  pct  98
+    Q3                             n= 940  EV   +4.6  acerto 52.1%  tercos   +1.7 /  +12.5 /   +1.4  C   +8.3 V   +1.0  pct  25
+    Q4                             n= 940  EV   +0.7  acerto 50.2%  tercos   +0.7 /   -7.3 /   +8.6  C   +2.8 V   -1.2  pct   3
+    Q5 (maior)                     n= 940  EV   +3.5  acerto 51.7%  tercos   +0.0 /   -0.8 /  +12.5  C   -0.6 V   +8.0  pct  16
   [meio_lim 1:3 com parcial]
-    Q1 (menor)                     n= 125  EV   +2.4  acerto 28.8%  tercos  +19.4 /  -12.5 /   +3.7  C   +6.5 V   -1.6  pct  40
-    Q2                             n= 120  EV  +12.9  acerto 30.8%  tercos   +0.0 /  +21.7 /  +10.0  C  +15.9 V   +9.3  pct  77
-    Q3                             n= 127  EV   -7.5  acerto 25.2%  tercos  -53.6 /   +1.9 /   +8.1  C   -0.4 V  -14.7  pct  11
-    Q4                             n= 116  EV  +16.4  acerto 33.6%  tercos   -7.7 /  +29.3 /  +12.9  C  +16.7 V  +16.2  pct  84
-    Q5 (maior)                     n= 111  EV   +2.9  acerto 27.9%  tercos  -33.3 /   +7.9 /  +16.8  C  +17.3 V  -17.4  pct  43
-  descarta menores (fecha parcial): 0% +11.4(922) | 20% +13.8(737) | 40% +11.8(553) | 60% +22.5(369)
-  descarta maiores (fecha parcial): 0% +11.4(922) | 20% +8.4(737) | 40% +4.0(553) | 60% +10.8(369)
+    Q1 (menor)                     n= 582  EV   -2.1  acerto 26.5%  tercos   -9.8 /   -2.7 /   +6.9  C   -0.3 V   -3.9  pct  49
+    Q2                             n= 633  EV   +4.0  acerto 28.8%  tercos   +7.9 /   +3.8 /   -0.7  C   +3.4 V   +4.6  pct  90
+    Q3                             n= 609  EV   -5.3  acerto 26.1%  tercos   -0.4 /   -3.0 /  -14.8  C  +11.6 V  -21.8  pct  24
+    Q4                             n= 657  EV   -1.5  acerto 27.2%  tercos   +1.7 /  -12.8 /   +5.9  C   -1.2 V   -1.7  pct  55
+    Q5 (maior)                     n= 635  EV   -4.9  acerto 26.5%  tercos  -11.9 /   +0.9 /   -0.1  C   -9.2 V   +0.0  pct  26
+  descarta menores (fecha parcial): 0% +7.5(4700) | 20% +6.4(3760) | 40% +4.3(2820) | 60% +3.5(1880)
+  descarta maiores (fecha parcial): 0% +7.5(4700) | 20% +8.9(3760) | 40% +10.1(2820) | 60% +12.3(1880)
 
 --- HULL + 2-4 | Barras seguidas com Hull colada na EMA (< 0,25 ATR) ---
     limites: 0.50  2.50  5.50  10.50
   [fecha 1:3 com parcial]
-    0 (nao colada)                 n= 778  EV   +9.9  acerto 27.4%  tercos  +11.5 /   +4.5 /  +13.2  C  +13.8 V   +6.0  pct  19
-    1-2 barras                     n=  68  EV  +41.2  acerto 42.6%  tercos  +90.9 /  +43.5 /  +23.5  C  +61.8 V  +20.6  pct  97
-    3-5 barras                     n=  40  EV  +10.0  acerto 27.5%  tercos  +66.7 /   +0.0 /   +0.0  C  -21.7 V  +52.9  pct  45
-    6-10 barras                    n=  26  EV  -26.9  acerto 19.2%  tercos -100.0 /   +0.0 /   -7.7  C  +27.3 V  -66.7  pct   5
-    11+ barras                     n=  10  EV  +30.0  acerto 40.0%  tercos +100.0 / -100.0 /  +16.7  C  +20.0 V  +40.0  pct  64
+    0 (nao colada)                 n=3928  EV   +8.2  acerto 27.3%  tercos   +7.0 /   +6.5 /  +11.3  C   +8.9 V   +7.5  pct  79
+    1-2 barras                     n= 338  EV   +5.5  acerto 27.5%  tercos   -6.0 /   -7.4 /  +33.7  C  +11.5 V   +0.0  pct  38
+    3-5 barras                     n= 224  EV   +3.3  acerto 27.7%  tercos   +3.2 /  +10.7 /   -2.9  C   -3.8 V  +11.4  pct  29
+    6-10 barras                    n= 144  EV   -5.6  acerto 23.6%  tercos   +9.3 /   +4.3 /  -34.1  C   +0.0 V  -11.0  pct  10
+    11+ barras                     n=  66  EV  +18.2  acerto 31.8%  tercos   +3.6 /  +28.6 /  +29.4  C   +5.9 V  +31.2  pct  75
   [fecha 1:3 sem parcial]
-    0 (nao colada)                 n= 778  EV   +9.5  acerto 27.4%  tercos  +14.5 /   +2.6 /  +12.4  C  +15.8 V   +3.1  pct   6
-    1-2 barras                     n=  68  EV  +67.6  acerto 42.6%  tercos +118.2 /  +82.6 /  +41.2  C +100.0 V  +35.3  pct  99
-    3-5 barras                     n=  40  EV  +10.0  acerto 27.5%  tercos +100.0 /  -14.3 /   +0.0  C  -30.4 V  +64.7  pct  40
-    6-10 barras                    n=  26  EV  -23.1  acerto 19.2%  tercos -100.0 /  +14.3 /   -7.7  C  +45.5 V  -73.3  pct  11
-    11+ barras                     n=  10  EV  +60.0  acerto 40.0%  tercos +166.7 / -100.0 /  +33.3  C  +60.0 V  +60.0  pct  70
+    0 (nao colada)                 n=3928  EV   +8.6  acerto 27.2%  tercos   +6.8 /   +7.5 /  +12.0  C  +10.0 V   +7.1  pct  52
+    1-2 barras                     n= 338  EV   +8.9  acerto 27.5%  tercos  -12.1 /   -5.7 /  +52.5  C  +18.0 V   +0.6  pct  51
+    3-5 barras                     n= 224  EV   +9.4  acerto 27.7%  tercos   +9.7 /  +16.4 /   +2.9  C   +0.0 V  +20.0  pct  54
+    6-10 barras                    n= 144  EV   -5.6  acerto 23.6%  tercos  +11.1 /  +13.0 /  -45.5  C   +1.4 V  -12.3  pct  16
+    11+ barras                     n=  66  EV  +27.3  acerto 31.8%  tercos  +14.3 /  +33.3 /  +41.2  C   +5.9 V  +50.0  pct  78
   [fecha 1:2 sem parcial]
-    0 (nao colada)                 n= 778  EV   +6.9  acerto 35.6%  tercos   +9.7 /   +4.2 /   +7.8  C   +9.2 V   +4.7  pct  24
-    1-2 barras                     n=  68  EV  +30.9  acerto 44.1%  tercos  +63.6 /  +39.1 /  +14.7  C  +58.8 V   +2.9  pct  90
-    3-5 barras                     n=  40  EV  +12.5  acerto 37.5%  tercos +100.0 /   +7.1 /  -10.0  C  -21.7 V  +58.8  pct  52
-    6-10 barras                    n=  26  EV  -19.2  acerto 26.9%  tercos -100.0 /  +28.6 /   -7.7  C   +9.1 V  -40.0  pct  12
-    11+ barras                     n=  10  EV  +20.0  acerto 40.0%  tercos +100.0 / -100.0 /   +0.0  C  +20.0 V  +20.0  pct  50
+    0 (nao colada)                 n=3928  EV   +8.5  acerto 36.2%  tercos  +11.2 /   +3.3 /   +9.6  C   +9.6 V   +7.5  pct  75
+    1-2 barras                     n= 338  EV   +1.8  acerto 34.0%  tercos   -3.4 /  -11.4 /  +20.8  C  +13.7 V   -9.0  pct  20
+    3-5 barras                     n= 224  EV  +12.5  acerto 37.5%  tercos  +16.1 /   +8.2 /  +11.4  C   +0.8 V  +25.7  pct  68
+    6-10 barras                    n= 144  EV   -6.2  acerto 31.2%  tercos  +11.1 /   +4.3 /  -38.6  C   +1.4 V  -13.7  pct  11
+    11+ barras                     n=  66  EV  +13.6  acerto 37.9%  tercos   +7.1 /  +28.6 /   +5.9  C   -2.9 V  +31.2  pct  60
   [fecha 1:1 sem parcial]
-    0 (nao colada)                 n= 778  EV  +10.3  acerto 55.0%  tercos   +8.5 /   +6.4 /  +14.1  C  +11.7 V   +8.8  pct  72
-    1-2 barras                     n=  68  EV  +14.7  acerto 57.4%  tercos  +63.6 /   +4.3 /   +5.9  C  +23.5 V   +5.9  pct  64
-    3-5 barras                     n=  40  EV  +10.0  acerto 55.0%  tercos  +33.3 /  +14.3 /   +0.0  C  -13.0 V  +41.2  pct  46
-    6-10 barras                    n=  26  EV  -30.8  acerto 34.6%  tercos -100.0 /  -14.3 /   -7.7  C   +9.1 V  -60.0  pct   1
-    11+ barras                     n=  10  EV   +0.0  acerto 50.0%  tercos  +33.3 / -100.0 /   +0.0  C  -20.0 V  +20.0  pct  27
+    0 (nao colada)                 n=3928  EV   +7.8  acerto 53.8%  tercos   +7.3 /   +5.5 /  +10.6  C   +7.8 V   +7.8  pct  98
+    1-2 barras                     n= 338  EV   +2.1  acerto 50.9%  tercos   +0.0 /   -9.1 /  +14.9  C   +5.0 V   -0.6  pct  19
+    3-5 barras                     n= 224  EV   -2.7  acerto 48.7%  tercos   -3.2 /   +4.9 /   -8.6  C   -7.6 V   +2.9  pct   7
+    6-10 barras                    n= 144  EV   -5.6  acerto 47.2%  tercos   +7.4 /   -4.3 /  -22.7  C   -1.4 V   -9.6  pct   6
+    11+ barras                     n=  66  EV   +9.1  acerto 54.5%  tercos   -7.1 /  +23.8 /  +17.6  C   +5.9 V  +12.5  pct  55
   [meio_lim 1:3 com parcial]
-    0 (nao colada)                 n= 507  EV   +6.3  acerto 29.2%  tercos  -12.7 /  +12.6 /   +9.8  C  +12.6 V   -0.3  pct  66
-    1-2 barras                     n=  43  EV  +43.0  acerto 46.5%  tercos  +50.0 /  +16.7 /  +58.3  C  +34.8 V  +52.5  pct  98
-    3-5 barras                     n=  23  EV  -39.1  acerto 13.0%  tercos  -50.0 /  -66.7 /  -16.7  C  -50.0 V  -22.2  pct   3
-    6-10 barras                    n=  20  EV  -50.0  acerto 10.0%  tercos  -83.3 /   +0.0 /  -50.0  C   +0.0 V  -76.9  pct   2
-    11+ barras                     n=   6  EV   +0.0  acerto 33.3%  tercos -100.0 / +200.0 /  -25.0  C   +0.0 V   +0.0  pct  42
+    0 (nao colada)                 n=2587  EV   -1.5  acerto 27.0%  tercos   -3.4 /   -2.5 /   +2.2  C   +0.6 V   -3.5  pct  66
+    1-2 barras                     n= 233  EV   -0.1  acerto 29.2%  tercos   -4.7 /  -18.9 /  +25.8  C   -2.2 V   +1.9  pct  58
+    3-5 barras                     n= 149  EV   -9.6  acerto 25.5%  tercos   +7.9 /   +6.4 /  -51.2  C  -11.6 V   -7.2  pct  23
+    6-10 barras                    n= 102  EV   -8.6  acerto 22.5%  tercos  +12.1 /  +11.8 /  -51.5  C   +8.5 V  -23.2  pct  29
+    11+ barras                     n=  45  EV   +3.9  acerto 31.1%  tercos  +13.0 /  -18.8 /  +10.0  C  +37.0 V  -45.8  pct  62
 
 --- CANDIDATO | Hull - EMA 21, em ATR, no sentido do trade (= 2 - distancia a banda) ---
     limites: 0.00  1.00  2.00
   [fecha 1:3 com parcial]
-    Hull do lado errado da EMA     n= 277  EV  +23.5  acerto 33.2%  tercos  +24.5 /  +14.4 /  +29.1  C  +35.7 V  +10.9  pct  86
-    EMA ate meio canal (0-1 ATR)   n= 219  EV  +13.2  acerto 29.7%  tercos  -13.2 /  +23.0 /  +15.9  C  +16.1 V  +10.3  pct  31
-    meio canal ate banda (1-2 ATR) n= 163  EV   +8.6  acerto 27.0%  tercos  +51.4 /  -17.3 /   +5.4  C   +9.5 V   +7.6  pct  17
-    alem da banda (> 2 ATR)        n=  48  EV  +20.8  acerto 31.2%  tercos  +26.7 /  +35.3 /   +0.0  C   +9.5 V  +29.6  pct  57
+    Hull do lado errado da EMA     n=1453  EV   +4.6  acerto 27.0%  tercos   -2.1 /   +0.8 /  +18.8  C   +4.4 V   +4.9  pct   6
+    EMA ate meio canal (0-1 ATR)   n=1273  EV  +11.7  acerto 29.2%  tercos   +8.6 /  +15.5 /  +12.9  C  +15.8 V   +7.7  pct  85
+    meio canal ate banda (1-2 ATR) n= 757  EV   +8.3  acerto 26.8%  tercos   +5.5 /  +12.3 /   +8.4  C   +6.5 V   +9.9  pct  47
+    alem da banda (> 2 ATR)        n= 220  EV  +19.1  acerto 30.9%  tercos  +21.5 /  +14.9 /  +20.9  C  +22.8 V  +16.0  pct  90
   [fecha 1:3 sem parcial]
-    Hull do lado errado da EMA     n= 277  EV  +31.8  acerto 33.2%  tercos  +45.3 /  +22.2 /  +32.8  C  +49.3 V  +13.9  pct  86
-    EMA ate meio canal (0-1 ATR)   n= 219  EV  +19.2  acerto 29.7%  tercos  -15.8 /  +35.1 /  +20.6  C  +29.5 V   +8.4  pct  40
-    meio canal ate banda (1-2 ATR) n= 163  EV   +8.0  acerto 27.0%  tercos  +62.2 /  -38.5 /  +13.5  C   +9.5 V   +6.3  pct  12
-    alem da banda (> 2 ATR)        n=  48  EV  +25.0  acerto 31.2%  tercos  +33.3 /  +64.7 /  -25.0  C  +14.3 V  +33.3  pct  49
+    Hull do lado errado da EMA     n=1453  EV   +7.2  acerto 27.0%  tercos   -2.0 /   +1.8 /  +26.5  C   +8.3 V   +6.0  pct  13
+    EMA ate meio canal (0-1 ATR)   n=1273  EV  +16.4  acerto 29.1%  tercos  +13.1 /  +22.3 /  +16.0  C  +21.0 V  +12.0  pct  89
+    meio canal ate banda (1-2 ATR) n= 757  EV   +6.7  acerto 26.8%  tercos   -0.3 /  +15.8 /   +8.2  C   +6.3 V   +7.1  pct  23
+    alem da banda (> 2 ATR)        n= 220  EV  +23.6  acerto 30.9%  tercos  +21.5 /  +24.3 /  +25.4  C  +34.7 V  +14.3  pct  86
   [fecha 1:2 sem parcial]
-    Hull do lado errado da EMA     n= 277  EV  +15.5  acerto 38.6%  tercos  +15.1 /  +15.6 /  +15.7  C  +27.1 V   +3.6  pct  54
-    EMA ate meio canal (0-1 ATR)   n= 219  EV  +21.0  acerto 40.2%  tercos   -5.3 /  +29.7 /  +24.3  C  +18.8 V  +23.4  pct  78
-    meio canal ate banda (1-2 ATR) n= 163  EV   +6.7  acerto 35.6%  tercos  +62.2 /  -25.0 /   +1.4  C   +7.1 V   +6.3  pct  21
-    alem da banda (> 2 ATR)        n=  48  EV   +6.2  acerto 35.4%  tercos  +20.0 /  +23.5 /  -25.0  C  +14.3 V   +0.0  pct  30
+    Hull do lado errado da EMA     n=1453  EV   +4.3  acerto 34.8%  tercos   +2.0 /   -2.3 /  +14.0  C   +5.2 V   +3.3  pct   7
+    EMA ate meio canal (0-1 ATR)   n=1273  EV  +13.1  acerto 37.6%  tercos  +11.8 /  +10.7 /  +17.3  C  +17.3 V   +9.1  pct  91
+    meio canal ate banda (1-2 ATR) n= 757  EV   +5.4  acerto 35.1%  tercos   +3.9 /   +3.9 /   +8.6  C   +5.0 V   +5.8  pct  24
+    alem da banda (> 2 ATR)        n= 220  EV  +21.4  acerto 40.5%  tercos  +36.7 /   +9.5 /  +16.4  C  +24.8 V  +18.5  pct  92
   [fecha 1:1 sem parcial]
-    Hull do lado errado da EMA     n= 277  EV  +15.2  acerto 57.4%  tercos   +3.8 /   +6.7 /  +25.4  C  +22.1 V   +8.0  pct  78
-    EMA ate meio canal (0-1 ATR)   n= 219  EV   +7.3  acerto 53.4%  tercos  -10.5 /  +10.8 /  +11.2  C   +2.7 V  +12.1  pct  22
-    meio canal ate banda (1-2 ATR) n= 163  EV   +9.2  acerto 54.6%  tercos  +40.5 /   +3.8 /   -2.7  C   +9.5 V   +8.9  pct  35
-    alem da banda (> 2 ATR)        n=  48  EV  +16.7  acerto 58.3%  tercos  +20.0 /   +5.9 /  +25.0  C   +4.8 V  +25.9  pct  59
+    Hull do lado errado da EMA     n=1453  EV   +2.1  acerto 51.0%  tercos   -2.2 /   -0.3 /  +11.1  C   +0.5 V   +3.8  pct   3
+    EMA ate meio canal (0-1 ATR)   n=1273  EV   +7.0  acerto 53.3%  tercos   +4.1 /   +8.7 /   +9.8  C  +10.7 V   +3.4  pct  65
+    meio canal ate banda (1-2 ATR) n= 757  EV   +9.8  acerto 54.8%  tercos  +11.3 /   +8.9 /   +8.6  C   +6.6 V  +12.7  pct  87
+    alem da banda (> 2 ATR)        n= 220  EV  +14.5  acerto 57.3%  tercos  +21.5 /   +5.4 /  +16.4  C  +10.9 V  +17.6  pct  90
   [meio_lim 1:3 com parcial]
-    Hull do lado errado da EMA     n= 171  EV  +12.3  acerto 31.0%  tercos  -33.3 /  +25.4 /  +19.5  C  +15.3 V   +9.3  pct  45
-    EMA ate meio canal (0-1 ATR)   n= 143  EV   +5.2  acerto 29.4%  tercos  -40.0 /  +12.0 /  +16.8  C  +24.4 V  -17.0  pct  20
-    meio canal ate banda (1-2 ATR) n= 116  EV  +20.7  acerto 35.3%  tercos  +52.4 /   +0.0 /  +22.4  C   +9.1 V  +31.1  pct  74
-    alem da banda (> 2 ATR)        n=  32  EV  +28.1  acerto 37.5%  tercos  +18.2 /  +54.5 /  +10.0  C  +46.7 V  +11.8  pct  73
-  descarta menores (fecha parcial): 0% +16.7(707) | 20% +15.2(565) | 40% +10.8(424) | 60% +13.8(283)
-  descarta maiores (fecha parcial): 0% +16.7(707) | 20% +17.9(565) | 40% +18.6(424) | 60% +25.4(283)
+    Hull do lado errado da EMA     n=1011  EV   -1.7  acerto 27.0%  tercos   -5.2 /   -3.5 /   +5.8  C   -2.6 V   -0.8  pct  22
+    EMA ate meio canal (0-1 ATR)   n= 838  EV   -3.5  acerto 26.4%  tercos   +1.1 /   -5.5 /   -9.2  C  +11.3 V  -17.9  pct  12
+    meio canal ate banda (1-2 ATR) n= 499  EV   +9.4  acerto 30.7%  tercos   +5.0 /   +6.4 /  +16.9  C   +3.3 V  +15.1  pct  96
+    alem da banda (> 2 ATR)        n= 139  EV  +10.8  acerto 30.9%  tercos   +0.0 /   +0.0 /  +34.1  C  +20.3 V   +2.7  pct  82
+  descarta menores (fecha parcial): 0% +8.7(3703) | 20% +10.0(2962) | 40% +11.2(2222) | 60% +13.1(1481)
+  descarta maiores (fecha parcial): 0% +8.7(3703) | 20% +8.1(2962) | 40% +5.7(2222) | 60% +4.8(1481)
 
 --- CANDIDATO | Hull - EMA 21, em ATR, faixas finas (gradiente) ---
     limites: -1.00  -0.50  0.00  0.50  1.00  2.00
   [fecha 1:3 com parcial]
-    < -1 ATR                       n=  83  EV  +28.9  acerto 33.7%  tercos  +29.4 /  +28.0 /  +29.3  C  +37.2 V  +20.0  pct  81
-    -1 a -0,5                      n=  83  EV  +15.7  acerto 28.9%  tercos  -18.8 /   +3.8 /  +36.6  C  +35.0 V   -2.3  pct  45
-    -0,5 a 0                       n= 111  EV  +25.2  acerto 36.0%  tercos  +55.0 /  +12.8 /  +23.1  C  +35.1 V  +14.8  pct  77
-    0 a 0,5                        n= 109  EV   +1.8  acerto 27.5%  tercos   +5.3 /   +3.0 /   +0.0  C   -6.2 V   +8.2  pct   8
-    0,5 a 1                        n= 110  EV  +24.5  acerto 31.8%  tercos  -31.6 /  +39.0 /  +34.0  C  +32.8 V  +13.0  pct  75
-    1 a 2                          n= 163  EV   +8.6  acerto 27.0%  tercos  +51.4 /  -17.3 /   +5.4  C   +9.5 V   +7.6  pct  17
-    > 2 ATR                        n=  48  EV  +20.8  acerto 31.2%  tercos  +26.7 /  +35.3 /   +0.0  C   +9.5 V  +29.6  pct  57
+    < -1 ATR                       n= 427  EV   -4.2  acerto 23.4%  tercos  -27.1 /   +5.0 /  +20.0  C  -11.6 V   +3.3  pct   1
+    -1 a -0,5                      n= 431  EV  +10.1  acerto 27.8%  tercos  +16.9 /   -4.2 /  +13.6  C  +17.1 V   +2.8  pct  61
+    -0,5 a 0                       n= 595  EV   +7.1  acerto 28.9%  tercos   +1.5 /   +1.3 /  +21.8  C   +6.7 V   +7.4  pct  37
+    0 a 0,5                        n= 641  EV   +6.7  acerto 27.6%  tercos   +3.0 /  +14.6 /   +4.1  C   +8.5 V   +5.0  pct  33
+    0,5 a 1                        n= 632  EV  +16.8  acerto 30.9%  tercos  +13.7 /  +16.7 /  +21.7  C  +23.5 V  +10.5  pct  96
+    1 a 2                          n= 757  EV   +8.3  acerto 26.8%  tercos   +5.5 /  +12.3 /   +8.4  C   +6.5 V   +9.9  pct  47
+    > 2 ATR                        n= 220  EV  +19.1  acerto 30.9%  tercos  +21.5 /  +14.9 /  +20.9  C  +22.8 V  +16.0  pct  90
   [fecha 1:3 sem parcial]
-    < -1 ATR                       n=  83  EV  +34.9  acerto 33.7%  tercos  +64.7 /  +28.0 /  +26.8  C  +48.8 V  +20.0  pct  72
-    -1 a -0,5                      n=  83  EV  +15.7  acerto 28.9%  tercos  -25.0 /   +7.7 /  +36.6  C  +40.0 V   -7.0  pct  34
-    -0,5 a 0                       n= 111  EV  +41.4  acerto 36.0%  tercos  +85.0 /  +28.2 /  +34.6  C  +56.1 V  +25.9  pct  89
-    0 a 0,5                        n= 109  EV  +10.1  acerto 27.5%  tercos  +26.3 /   +9.1 /   +5.3  C   +8.3 V  +11.5  pct  22
-    0,5 a 1                        n= 110  EV  +28.2  acerto 31.8%  tercos  -57.9 /  +56.1 /  +38.0  C  +45.3 V   +4.3  pct  65
-    1 a 2                          n= 163  EV   +8.0  acerto 27.0%  tercos  +62.2 /  -38.5 /  +13.5  C   +9.5 V   +6.3  pct  12
-    > 2 ATR                        n=  48  EV  +25.0  acerto 31.2%  tercos  +33.3 /  +64.7 /  -25.0  C  +14.3 V  +33.3  pct  49
+    < -1 ATR                       n= 427  EV   -6.3  acerto 23.4%  tercos  -35.9 /   +5.8 /  +24.8  C  -13.0 V   +0.5  pct   2
+    -1 a -0,5                      n= 431  EV  +10.7  acerto 27.8%  tercos  +22.0 /  -11.7 /  +15.2  C  +21.9 V   -0.9  pct  48
+    -0,5 a 0                       n= 595  EV  +14.3  acerto 28.9%  tercos   +4.0 /   +9.0 /  +36.4  C  +13.7 V  +14.9  pct  69
+    0 a 0,5                        n= 641  EV  +10.1  acerto 27.5%  tercos   +5.6 /  +20.1 /   +6.5  C  +12.6 V   +7.7  pct  43
+    0,5 a 1                        n= 632  EV  +22.8  acerto 30.9%  tercos  +19.9 /  +25.0 /  +25.5  C  +29.6 V  +16.3  pct  96
+    1 a 2                          n= 757  EV   +6.7  acerto 26.8%  tercos   -0.3 /  +15.8 /   +8.2  C   +6.3 V   +7.1  pct  23
+    > 2 ATR                        n= 220  EV  +23.6  acerto 30.9%  tercos  +21.5 /  +24.3 /  +25.4  C  +34.7 V  +14.3  pct  86
   [fecha 1:2 sem parcial]
-    < -1 ATR                       n=  83  EV  +15.7  acerto 38.6%  tercos  +41.2 /  +20.0 /   +2.4  C  +18.6 V  +12.5  pct  50
-    -1 a -0,5                      n=  83  EV   +8.4  acerto 36.1%  tercos  -43.8 /  +15.4 /  +24.4  C  +35.0 V  -16.3  pct  32
-    -0,5 a 0                       n= 111  EV  +20.7  acerto 40.5%  tercos  +40.0 /  +12.8 /  +19.2  C  +28.1 V  +13.0  pct  68
-    0 a 0,5                        n= 109  EV  +12.8  acerto 37.6%  tercos  +10.5 /  +18.2 /  +10.5  C   +6.2 V  +18.0  pct  42
-    0,5 a 1                        n= 110  EV  +29.1  acerto 42.7%  tercos  -21.1 /  +39.0 /  +40.0  C  +28.1 V  +30.4  pct  87
-    1 a 2                          n= 163  EV   +6.7  acerto 35.6%  tercos  +62.2 /  -25.0 /   +1.4  C   +7.1 V   +6.3  pct  21
-    > 2 ATR                        n=  48  EV   +6.2  acerto 35.4%  tercos  +20.0 /  +23.5 /  -25.0  C  +14.3 V   +0.0  pct  30
+    < -1 ATR                       n= 427  EV   -4.4  acerto 31.9%  tercos  -22.1 /   +4.1 /  +12.8  C   -8.3 V   -0.5  pct   2
+    -1 a -0,5                      n= 431  EV  +11.1  acerto 37.1%  tercos  +24.2 /   -8.3 /  +10.4  C  +16.4 V   +5.7  pct  66
+    -0,5 a 0                       n= 595  EV   +5.5  acerto 35.3%  tercos   +2.9 /   -2.6 /  +17.6  C   +6.7 V   +4.4  pct  28
+    0 a 0,5                        n= 641  EV   +7.0  acerto 35.6%  tercos   +6.4 /   +6.3 /   +8.6  C   +8.2 V   +5.9  pct  37
+    0,5 a 1                        n= 632  EV  +19.3  acerto 39.7%  tercos  +16.8 /  +16.0 /  +26.1  C  +26.7 V  +12.3  pct  98
+    1 a 2                          n= 757  EV   +5.4  acerto 35.1%  tercos   +3.9 /   +3.9 /   +8.6  C   +5.0 V   +5.8  pct  24
+    > 2 ATR                        n= 220  EV  +21.4  acerto 40.5%  tercos  +36.7 /   +9.5 /  +16.4  C  +24.8 V  +18.5  pct  92
   [fecha 1:1 sem parcial]
-    < -1 ATR                       n=  83  EV  +22.9  acerto 61.4%  tercos   -5.9 /  +28.0 /  +31.7  C  +25.6 V  +20.0  pct  84
-    -1 a -0,5                      n=  83  EV  +15.7  acerto 57.8%  tercos  -12.5 /   +0.0 /  +36.6  C  +30.0 V   +2.3  pct  63
-    -0,5 a 0                       n= 111  EV   +9.0  acerto 54.1%  tercos  +25.0 /   -2.6 /  +11.5  C  +14.0 V   +3.7  pct  37
-    0 a 0,5                        n= 109  EV   -6.4  acerto 46.8%  tercos  -15.8 /   -3.0 /   -5.3  C  -20.8 V   +4.9  pct   1
-    0,5 a 1                        n= 110  EV  +20.9  acerto 60.0%  tercos   -5.3 /  +22.0 /  +30.0  C  +20.3 V  +21.7  pct  86
-    1 a 2                          n= 163  EV   +9.2  acerto 54.6%  tercos  +40.5 /   +3.8 /   -2.7  C   +9.5 V   +8.9  pct  35
-    > 2 ATR                        n=  48  EV  +16.7  acerto 58.3%  tercos  +20.0 /   +5.9 /  +25.0  C   +4.8 V  +25.9  pct  59
+    < -1 ATR                       n= 427  EV   -2.1  acerto 48.9%  tercos  -18.2 /   +4.1 /  +15.2  C  -10.2 V   +6.2  pct   3
+    -1 a -0,5                      n= 431  EV   +9.5  acerto 54.8%  tercos  +11.8 /   +3.3 /  +12.0  C  +12.3 V   +6.6  pct  77
+    -0,5 a 0                       n= 595  EV   -0.2  acerto 49.7%  tercos   -1.1 /   -6.4 /   +7.3  C   -0.3 V   +0.0  pct   5
+    0 a 0,5                        n= 641  EV   +3.3  acerto 51.5%  tercos   +0.4 /   +9.0 /   +1.6  C   +4.4 V   +2.2  pct  22
+    0,5 a 1                        n= 632  EV  +10.8  acerto 55.2%  tercos   +7.5 /   +8.3 /  +17.9  C  +17.3 V   +4.6  pct  90
+    1 a 2                          n= 757  EV   +9.8  acerto 54.8%  tercos  +11.3 /   +8.9 /   +8.6  C   +6.6 V  +12.7  pct  87
+    > 2 ATR                        n= 220  EV  +14.5  acerto 57.3%  tercos  +21.5 /   +5.4 /  +16.4  C  +10.9 V  +17.6  pct  90
   [meio_lim 1:3 com parcial]
-    < -1 ATR                       n=  45  EV  -13.3  acerto 20.0%  tercos  -22.2 /   +0.0 /  -17.4  C   -4.0 V  -25.0  pct   7
-    -1 a -0,5                      n=  55  EV  +13.6  acerto 30.9%  tercos  -54.5 /  +27.5 /  +33.3  C  +30.8 V   -1.7  pct  52
-    -0,5 a 0                       n=  71  EV  +27.5  acerto 38.0%  tercos  -20.0 /  +36.5 /  +34.3  C  +17.6 V  +36.5  pct  83
-    0 a 0,5                        n=  72  EV   +1.4  acerto 30.6%  tercos  -33.3 /   +0.0 /  +12.8  C  +22.2 V  -19.4  pct  19
-    0,5 a 1                        n=  71  EV   +9.2  acerto 28.2%  tercos  -46.2 /  +21.3 /  +21.8  C  +26.2 V  -14.2  pct  38
-    1 a 2                          n= 116  EV  +20.7  acerto 35.3%  tercos  +52.4 /   +0.0 /  +22.4  C   +9.1 V  +31.1  pct  74
-    > 2 ATR                        n=  32  EV  +28.1  acerto 37.5%  tercos  +18.2 /  +54.5 /  +10.0  C  +46.7 V  +11.8  pct  73
+    < -1 ATR                       n= 303  EV  -10.4  acerto 23.4%  tercos  -15.9 /   +5.9 /  -18.5  C  -21.0 V   +1.0  pct   6
+    -1 a -0,5                      n= 288  EV   -1.6  acerto 26.7%  tercos   -2.6 /  -15.7 /  +12.8  C   +5.8 V   -9.2  pct  37
+    -0,5 a 0                       n= 420  EV   +4.4  acerto 29.8%  tercos   +1.3 /   -1.7 /  +16.2  C   +5.1 V   +3.7  pct  75
+    0 a 0,5                        n= 424  EV   -4.2  acerto 26.4%  tercos   -1.4 /   -1.4 /  -11.7  C  +11.1 V  -20.4  pct  20
+    0,5 a 1                        n= 414  EV   -2.8  acerto 26.3%  tercos   +3.4 /  -10.7 /   -6.6  C  +11.4 V  -15.5  pct  28
+    1 a 2                          n= 499  EV   +9.4  acerto 30.7%  tercos   +5.0 /   +6.4 /  +16.9  C   +3.3 V  +15.1  pct  96
+    > 2 ATR                        n= 139  EV  +10.8  acerto 30.9%  tercos   +0.0 /   +0.0 /  +34.1  C  +20.3 V   +2.7  pct  82
 
 --- CANDIDATO | Hull - EMA 21, em pontos, no sentido do trade ---
-    limites: -93.49  3.02  93.45  200.00
+    limites: -91.88  4.00  85.93  181.82
   [fecha 1:3 com parcial]
-    Q1 (menor)                     n= 142  EV  +21.8  acerto 31.7%  tercos   +3.4 /  +15.6 /  +33.8  C  +32.4 V  +10.3  pct  70
-    Q2                             n= 141  EV  +29.1  acerto 36.2%  tercos  +50.0 /  +21.3 /  +27.1  C  +41.2 V  +17.8  pct  89
-    Q3                             n= 141  EV   +3.5  acerto 27.7%  tercos  -12.5 /   +0.0 /  +10.7  C   +5.8 V   +1.4  pct   8
-    Q4                             n= 141  EV  +19.9  acerto 30.5%  tercos  +46.4 /  +14.0 /  +12.5  C  +18.4 V  +21.5  pct  61
-    Q5 (maior)                     n= 142  EV   +9.2  acerto 26.8%  tercos  +21.1 /   +4.8 /   +4.8  C  +11.4 V   +6.9  pct  21
+    Q1 (menor)                     n= 741  EV   +2.0  acerto 25.4%  tercos   -9.8 /   +3.3 /  +17.3  C   +0.1 V   +3.8  pct   5
+    Q2                             n= 740  EV   +8.1  acerto 28.9%  tercos   +5.6 /   -3.6 /  +23.5  C   +8.8 V   +7.4  pct  44
+    Q3                             n= 741  EV   +6.3  acerto 27.8%  tercos   +1.9 /  +14.2 /   +5.2  C  +11.4 V   +1.6  pct  28
+    Q4                             n= 740  EV  +17.3  acerto 30.3%  tercos  +14.7 /  +16.8 /  +21.8  C  +23.5 V  +11.4  pct  98
+    Q5 (maior)                     n= 741  EV   +9.6  acerto 27.4%  tercos   +8.4 /  +14.5 /   +6.6  C   +5.3 V  +13.5  pct  59
   [fecha 1:3 sem parcial]
-    Q1 (menor)                     n= 142  EV  +26.8  acerto 31.7%  tercos  +24.1 /  +15.6 /  +35.3  C  +40.5 V  +11.8  pct  64
-    Q2                             n= 141  EV  +42.6  acerto 36.2%  tercos  +70.8 /  +40.4 /  +34.3  C  +60.3 V  +26.0  pct  93
-    Q3                             n= 141  EV  +11.3  acerto 27.7%  tercos   +0.0 /   +4.8 /  +18.7  C  +23.2 V   +0.0  pct  22
-    Q4                             n= 141  EV  +22.0  acerto 30.5%  tercos  +57.1 /  +12.3 /  +14.3  C  +21.1 V  +23.1  pct  49
-    Q5 (maior)                     n= 142  EV   +7.0  acerto 26.8%  tercos  +15.8 /   +4.8 /   +3.2  C  +14.3 V   +0.0  pct  13
+    Q1 (menor)                     n= 741  EV   +1.1  acerto 25.4%  tercos  -14.4 /   +2.4 /  +21.8  C   +2.4 V   -0.3  pct   4
+    Q2                             n= 740  EV  +14.6  acerto 28.9%  tercos  +10.9 /   -1.0 /  +35.8  C  +14.6 V  +14.6  pct  71
+    Q3                             n= 741  EV  +10.7  acerto 27.7%  tercos   +5.1 /  +20.7 /   +9.0  C  +16.9 V   +4.7  pct  45
+    Q4                             n= 740  EV  +20.8  acerto 30.3%  tercos  +15.6 /  +24.9 /  +25.5  C  +28.7 V  +13.2  pct  95
+    Q5 (maior)                     n= 741  EV   +9.0  acerto 27.4%  tercos   +5.3 /  +19.0 /   +4.3  C   +6.0 V  +11.7  pct  35
   [fecha 1:2 sem parcial]
-    Q1 (menor)                     n= 142  EV  +12.0  acerto 37.3%  tercos   +3.4 /  +20.0 /  +10.3  C  +21.6 V   +1.5  pct  39
-    Q2                             n= 141  EV  +22.7  acerto 41.1%  tercos  +29.2 /  +19.1 /  +22.9  C  +33.8 V  +12.3  pct  76
-    Q3                             n= 141  EV  +13.5  acerto 37.6%  tercos   +0.0 /   +7.1 /  +21.3  C  +14.5 V  +12.5  pct  46
-    Q4                             n= 141  EV  +21.3  acerto 40.4%  tercos  +50.0 /  +15.8 /  +12.5  C  +10.5 V  +33.8  pct  72
-    Q5 (maior)                     n= 142  EV   +3.5  acerto 34.5%  tercos  +26.3 /   -7.1 /   -3.2  C  +15.7 V   -8.3  pct  14
+    Q1 (menor)                     n= 741  EV   +2.7  acerto 34.3%  tercos   -2.9 /   +1.4 /  +11.8  C   +1.9 V   +3.5  pct  10
+    Q2                             n= 740  EV   +7.2  acerto 35.8%  tercos   +7.6 /   -5.6 /  +18.6  C   +9.3 V   +5.0  pct  38
+    Q3                             n= 741  EV   +7.0  acerto 35.6%  tercos   +5.1 /   +5.3 /  +11.3  C  +11.9 V   +2.4  pct  36
+    Q4                             n= 740  EV  +16.6  acerto 38.8%  tercos  +15.9 /  +12.4 /  +21.3  C  +24.9 V   +8.7  pct  96
+    Q5 (maior)                     n= 741  EV   +9.3  acerto 36.4%  tercos  +11.6 /   +7.7 /   +8.1  C   +4.0 V  +14.0  pct  55
   [fecha 1:1 sem parcial]
-    Q1 (menor)                     n= 142  EV  +16.9  acerto 58.5%  tercos  -17.2 /  +15.6 /  +32.4  C  +24.3 V   +8.8  pct  75
-    Q2                             n= 141  EV  +15.6  acerto 57.4%  tercos  +29.2 /   +2.1 /  +20.0  C  +22.1 V   +9.6  pct  70
-    Q3                             n= 141  EV   -4.3  acerto 47.5%  tercos  -25.0 /   -4.8 /   +2.7  C  -11.6 V   +2.8  pct   1
-    Q4                             n= 141  EV  +17.7  acerto 58.9%  tercos  +35.7 /  +15.8 /  +10.7  C  +15.8 V  +20.0  pct  78
-    Q5 (maior)                     n= 142  EV  +11.3  acerto 55.6%  tercos  +26.3 /   +4.8 /   +6.5  C   +8.6 V  +13.9  pct  47
+    Q1 (menor)                     n= 741  EV   +2.8  acerto 51.4%  tercos   -5.1 /   +4.3 /  +12.7  C   -2.1 V   +7.9  pct  15
+    Q2                             n= 740  EV   +1.6  acerto 50.7%  tercos   +0.3 /   -6.1 /  +11.3  C   +2.9 V   +0.3  pct   9
+    Q3                             n= 741  EV   +2.0  acerto 50.9%  tercos   -1.3 /   +7.7 /   +1.4  C   +5.8 V   -1.6  pct  11
+    Q4                             n= 740  EV  +13.8  acerto 56.8%  tercos  +13.9 /   +8.6 /  +18.1  C  +18.2 V   +9.5  pct  99
+    Q5 (maior)                     n= 741  EV  +10.3  acerto 55.1%  tercos  +11.6 /  +10.0 /   +8.9  C   +4.6 V  +15.3  pct  90
   [meio_lim 1:3 com parcial]
-    Q1 (menor)                     n=  88  EV   -4.0  acerto 23.9%  tercos  -38.9 /   +8.3 /   +2.5  C   +4.3 V  -13.4  pct   8
-    Q2                             n=  85  EV  +33.5  acerto 40.0%  tercos  -25.0 /  +43.1 /  +43.2  C  +33.3 V  +33.7  pct  93
-    Q3                             n=  96  EV   -3.6  acerto 29.2%  tercos  -52.9 /   +6.0 /   +7.5  C  +15.2 V  -25.0  pct   8
-    Q4                             n=  98  EV  +25.5  acerto 33.7%  tercos  +33.3 /  +27.5 /  +20.9  C  +28.8 V  +21.7  pct  84
-    Q5 (maior)                     n=  95  EV  +15.8  acerto 33.7%  tercos  +28.0 /   -3.7 /  +20.9  C  +14.0 V  +17.3  pct  58
-  descarta menores (fecha parcial): 0% +16.7(707) | 20% +15.4(565) | 40% +10.8(424) | 60% +14.5(283)
-  descarta maiores (fecha parcial): 0% +16.7(707) | 20% +18.6(565) | 40% +18.2(424) | 60% +25.4(283)
+    Q1 (menor)                     n= 514  EV   -7.6  acerto 24.7%  tercos  -11.5 /   -4.2 /   -4.9  C   -9.2 V   -5.8  pct   5
+    Q2                             n= 513  EV   +3.2  acerto 29.0%  tercos   -1.5 /   -4.8 /  +20.3  C   +2.7 V   +3.8  pct  68
+    Q3                             n= 500  EV   -4.4  acerto 26.6%  tercos   +1.8 /   +0.9 /  -19.1  C  +16.8 V  -25.6  pct  16
+    Q4                             n= 489  EV  +10.7  acerto 30.7%  tercos  +12.2 /   -0.6 /  +18.3  C  +12.2 V   +9.4  pct  97
+    Q5 (maior)                     n= 471  EV   +1.5  acerto 27.8%  tercos   -6.2 /   -1.5 /  +12.7  C   +0.4 V   +2.4  pct  55
+  descarta menores (fecha parcial): 0% +8.7(3703) | 20% +10.3(2962) | 40% +11.1(2222) | 60% +13.5(1481)
+  descarta maiores (fecha parcial): 0% +8.7(3703) | 20% +8.4(2962) | 40% +5.5(2222) | 60% +5.0(1481)
 
 --- CANDIDATO | |Hull - EMA 21| em ATR, sem sinal ---
-    limites: 0.32  0.64  1.03  1.56
+    limites: 0.30  0.60  0.96  1.46
   [fecha 1:3 com parcial]
-    Q1 (menor)                     n= 142  EV  +12.0  acerto 31.7%  tercos  +40.9 /  +25.0 /   -5.6  C  +13.3 V  +10.4  pct  30
-    Q2                             n= 141  EV  +20.6  acerto 32.6%  tercos   +0.0 /   -9.3 /  +45.2  C  +36.9 V   +6.6  pct  64
-    Q3                             n= 141  EV  +23.4  acerto 31.2%  tercos  -10.0 /  +29.4 /  +35.0  C  +32.4 V  +13.4  pct  75
-    Q4                             n= 141  EV  +11.3  acerto 27.7%  tercos  +73.1 /   -7.7 /   +1.6  C  +13.5 V   +9.0  pct  27
-    Q5 (maior)                     n= 142  EV  +16.2  acerto 29.6%  tercos  +15.0 /  +20.5 /  +14.3  C  +14.5 V  +17.8  pct  48
+    Q1 (menor)                     n= 741  EV   +9.5  acerto 29.1%  tercos   +1.2 /  +17.1 /  +14.8  C  +11.7 V   +7.2  pct  58
+    Q2                             n= 740  EV   +4.3  acerto 27.2%  tercos   +5.8 /   -5.4 /  +11.2  C   +6.3 V   +2.3  pct  14
+    Q3                             n= 741  EV  +14.4  acerto 29.3%  tercos  +15.0 /   +9.3 /  +17.9  C  +19.7 V   +8.7  pct  92
+    Q4                             n= 740  EV   +8.2  acerto 27.4%  tercos   -3.8 /  +11.9 /  +21.6  C   +5.9 V  +10.4  pct  46
+    Q5 (maior)                     n= 741  EV   +7.0  acerto 26.7%  tercos   +2.7 /  +12.2 /   +7.3  C   +4.1 V   +9.5  pct  33
   [fecha 1:3 sem parcial]
-    Q1 (menor)                     n= 142  EV  +25.4  acerto 31.7%  tercos  +63.6 /  +45.8 /   +0.0  C  +28.0 V  +22.4  pct  61
-    Q2                             n= 141  EV  +30.5  acerto 32.6%  tercos  +16.0 /   -7.0 /  +57.5  C  +63.1 V   +2.6  pct  72
-    Q3                             n= 141  EV  +24.8  acerto 31.2%  tercos  -20.0 /  +41.2 /  +33.3  C  +35.1 V  +13.4  pct  57
-    Q4                             n= 141  EV  +10.6  acerto 27.7%  tercos +100.0 /  -23.1 /   +1.6  C  +13.5 V   +7.5  pct  20
-    Q5 (maior)                     n= 142  EV  +18.3  acerto 29.6%  tercos  +20.0 /  +23.1 /  +14.3  C  +21.7 V  +15.1  pct  38
+    Q1 (menor)                     n= 741  EV  +15.5  acerto 29.1%  tercos   +3.1 /  +25.2 /  +25.0  C  +16.6 V  +14.4  pct  76
+    Q2                             n= 740  EV   +8.2  acerto 27.0%  tercos  +10.6 /   -3.0 /  +15.3  C  +12.6 V   +4.2  pct  30
+    Q3                             n= 741  EV  +16.6  acerto 29.3%  tercos  +19.7 /   +9.3 /  +18.3  C  +23.2 V   +9.5  pct  82
+    Q4                             n= 740  EV   +9.2  acerto 27.4%  tercos  -10.3 /  +18.4 /  +27.8  C   +5.6 V  +12.4  pct  35
+    Q5 (maior)                     n= 741  EV   +6.6  acerto 26.7%  tercos   -0.7 /  +15.4 /   +7.5  C   +9.4 V   +4.1  pct  20
   [fecha 1:2 sem parcial]
-    Q1 (menor)                     n= 142  EV  +11.3  acerto 37.3%  tercos  +36.4 /  +29.2 /   -8.3  C  +12.0 V  +10.4  pct  37
-    Q2                             n= 141  EV  +24.1  acerto 41.1%  tercos   +0.0 /   -9.3 /  +52.1  C  +36.9 V  +13.2  pct  81
-    Q3                             n= 141  EV  +23.4  acerto 41.1%  tercos  -20.0 /  +41.2 /  +30.0  C  +29.7 V  +16.4  pct  77
-    Q4                             n= 141  EV   +6.4  acerto 35.5%  tercos  +84.6 /  -19.2 /   -4.8  C   +5.4 V   +7.5  pct  21
-    Q5 (maior)                     n= 142  EV   +7.7  acerto 35.9%  tercos  +20.0 /  +15.4 /   -4.8  C  +13.0 V   +2.7  pct  24
+    Q1 (menor)                     n= 741  EV   +6.2  acerto 35.5%  tercos   +0.3 /   +9.4 /  +12.0  C   +8.4 V   +3.9  pct  30
+    Q2                             n= 740  EV   +7.7  acerto 35.8%  tercos  +11.6 /   -7.9 /  +16.7  C  +12.4 V   +3.4  pct  42
+    Q3                             n= 741  EV  +15.9  acerto 38.6%  tercos  +20.0 /   +6.2 /  +18.3  C  +19.3 V  +12.3  pct  94
+    Q4                             n= 740  EV   +5.9  acerto 35.4%  tercos   +0.0 /   +7.0 /  +13.2  C   +8.2 V   +3.9  pct  29
+    Q5 (maior)                     n= 741  EV   +7.0  acerto 35.6%  tercos   +5.1 /   +6.3 /  +10.2  C   +2.8 V  +10.8  pct  36
   [fecha 1:1 sem parcial]
-    Q1 (menor)                     n= 142  EV   -1.4  acerto 49.3%  tercos  +18.2 /   +4.2 /  -11.1  C   -1.3 V   -1.5  pct   3
-    Q2                             n= 141  EV  +10.6  acerto 54.6%  tercos  -16.0 /  -11.6 /  +32.9  C  +10.8 V  +10.5  pct  43
-    Q3                             n= 141  EV  +22.0  acerto 61.0%  tercos   +0.0 /  +17.6 /  +36.7  C  +29.7 V  +13.4  pct  91
-    Q4                             n= 141  EV  +12.1  acerto 56.0%  tercos  +46.2 /   +7.7 /   +1.6  C  +13.5 V  +10.4  pct  50
-    Q5 (maior)                     n= 142  EV  +14.1  acerto 57.0%  tercos  +10.0 /  +17.9 /  +14.3  C   +7.2 V  +20.5  pct  61
+    Q1 (menor)                     n= 741  EV   +3.5  acerto 51.7%  tercos   -0.6 /   +8.9 /   +4.6  C   +6.9 V   +0.0  pct  21
+    Q2                             n= 740  EV   +0.3  acerto 49.9%  tercos   +0.9 /   -7.9 /   +7.2  C   +0.0 V   +0.5  pct   4
+    Q3                             n= 741  EV  +12.1  acerto 56.0%  tercos  +10.3 /   +9.3 /  +17.4  C  +16.2 V   +7.8  pct  96
+    Q4                             n= 740  EV   +7.3  acerto 53.6%  tercos   +2.6 /   +5.5 /  +15.4  C   +6.2 V   +8.3  pct  64
+    Q5 (maior)                     n= 741  EV   +7.3  acerto 53.6%  tercos   +6.1 /   +9.0 /   +7.1  C   -1.1 V  +14.9  pct  63
   [meio_lim 1:3 com parcial]
-    Q1 (menor)                     n=  95  EV   +4.7  acerto 31.6%  tercos  -54.5 /  +11.3 /  +13.2  C   -6.4 V  +15.6  pct  23
-    Q2                             n=  86  EV  +23.8  acerto 37.2%  tercos  -23.5 /  +30.2 /  +39.4  C  +54.0 V   -7.7  pct  78
-    Q3                             n=  94  EV  +12.2  acerto 27.7%  tercos  -30.0 /  +18.1 /  +28.9  C  +32.7 V  -10.0  pct  46
-    Q4                             n=  99  EV  +12.1  acerto 31.3%  tercos  +41.7 /   +8.3 /   +7.8  C   +8.0 V  +16.3  pct  45
-    Q5 (maior)                     n=  88  EV  +14.8  acerto 33.0%  tercos  +14.8 /  +21.7 /  +10.5  C   +7.1 V  +21.7  pct  53
-  descarta menores (fecha parcial): 0% +16.7(707) | 20% +17.9(565) | 40% +17.0(424) | 60% +13.8(283)
-  descarta maiores (fecha parcial): 0% +16.7(707) | 20% +16.8(565) | 40% +18.6(424) | 60% +16.3(283)
+    Q1 (menor)                     n= 510  EV   +2.2  acerto 28.8%  tercos   +3.3 /   +6.7 /   -4.3  C   +9.1 V   -4.7  pct  63
+    Q2                             n= 498  EV   -2.4  acerto 27.1%  tercos   -1.5 /  -11.5 /   +5.9  C  +12.4 V  -18.0  pct  28
+    Q3                             n= 494  EV   -3.0  acerto 25.9%  tercos   +1.6 /  -22.0 /   +6.4  C   +3.6 V   -9.7  pct  23
+    Q4                             n= 510  EV   +6.7  acerto 30.0%  tercos   -6.0 /  +18.0 /  +14.3  C   +1.0 V  +11.9  pct  88
+    Q5 (maior)                     n= 475  EV   -0.7  acerto 26.7%  tercos   -2.1 /   -3.6 /   +3.8  C   -5.4 V   +3.7  pct  41
+  descarta menores (fecha parcial): 0% +8.7(3703) | 20% +8.5(2962) | 40% +9.9(2222) | 60% +7.6(1481)
+  descarta maiores (fecha parcial): 0% +8.7(3703) | 20% +9.1(2962) | 40% +9.4(2222) | 60% +6.9(1481)
 
 --- CANDIDATO | Distancia da Hull a banda a favor, em pontos ---
-    limites: 95.85  196.29  293.51  389.07
+    limites: 111.61  207.02  291.67  386.81
   [fecha 1:3 com parcial]
-    Q1 (menor)                     n= 142  EV  +11.3  acerto 27.5%  tercos  +28.6 /   +2.3 /   +5.3  C  +10.1 V  +12.3  pct  27
-    Q2                             n= 141  EV  +24.1  acerto 32.6%  tercos  +40.9 /  +20.0 /  +21.9  C  +29.5 V  +17.5  pct  77
-    Q3                             n= 141  EV   -3.5  acerto 24.1%  tercos  -19.2 /   -4.7 /   +2.8  C  -10.1 V   +2.8  pct   2
-    Q4                             n= 141  EV  +27.0  acerto 35.5%  tercos  +65.2 /  +19.1 /  +19.7  C  +40.9 V  +14.7  pct  85
-    Q5 (maior)                     n= 142  EV  +24.6  acerto 33.1%  tercos   +0.0 /  +17.8 /  +40.3  C  +37.3 V  +10.4  pct  79
+    Q1 (menor)                     n= 741  EV   +9.0  acerto 27.1%  tercos   +7.8 /  +13.5 /   +6.3  C   +5.6 V  +12.0  pct  52
+    Q2                             n= 740  EV  +17.8  acerto 30.8%  tercos  +13.8 /  +17.3 /  +23.9  C  +25.7 V  +10.5  pct  99
+    Q3                             n= 741  EV   +4.3  acerto 26.9%  tercos   +2.4 /   +9.9 /   +1.7  C   +5.3 V   +3.3  pct  14
+    Q4                             n= 740  EV   +9.6  acerto 29.6%  tercos   +5.8 /   +1.0 /  +23.6  C  +12.3 V   +7.1  pct  58
+    Q5 (maior)                     n= 741  EV   +2.6  acerto 25.4%  tercos   -8.1 /   +3.9 /  +16.9  C   +0.7 V   +4.7  pct   7
   [fecha 1:3 sem parcial]
-    Q1 (menor)                     n= 142  EV   +9.9  acerto 27.5%  tercos  +23.8 /   +2.3 /   +5.3  C  +10.1 V   +9.6  pct  18
-    Q2                             n= 141  EV  +30.5  acerto 32.6%  tercos  +63.6 /  +23.6 /  +25.0  C  +38.5 V  +20.6  pct  72
-    Q3                             n= 141  EV   -2.8  acerto 24.1%  tercos  -23.1 /   -7.0 /   +6.9  C   +0.0 V   -5.6  pct   4
-    Q4                             n= 141  EV  +39.7  acerto 35.5%  tercos  +95.7 /  +31.9 /  +26.8  C  +59.1 V  +22.7  pct  90
-    Q5 (maior)                     n= 142  EV  +32.4  acerto 33.1%  tercos  +20.0 /  +24.4 /  +43.3  C  +49.3 V  +13.4  pct  76
+    Q1 (menor)                     n= 741  EV   +8.0  acerto 27.1%  tercos   +4.1 /  +16.7 /   +4.8  C   +6.3 V   +9.4  pct  28
+    Q2                             n= 740  EV  +22.8  acerto 30.8%  tercos  +15.4 /  +27.2 /  +29.6  C  +34.4 V  +12.0  pct  98
+    Q3                             n= 741  EV   +7.0  acerto 26.7%  tercos   +6.1 /  +14.9 /   +0.5  C   +6.6 V   +7.4  pct  23
+    Q4                             n= 740  EV  +17.3  acerto 29.6%  tercos  +10.9 /   +5.5 /  +38.2  C  +20.7 V  +14.1  pct  84
+    Q5 (maior)                     n= 741  EV   +1.1  acerto 25.4%  tercos  -13.0 /   +1.9 /  +20.5  C   +1.6 V   +0.6  pct   4
   [fecha 1:2 sem parcial]
-    Q1 (menor)                     n= 142  EV   +5.6  acerto 35.2%  tercos  +35.7 /   -9.3 /   -5.3  C  +17.4 V   -5.5  pct  19
-    Q2                             n= 141  EV  +25.5  acerto 41.8%  tercos  +22.7 /  +25.5 /  +26.6  C  +19.2 V  +33.3  pct  83
-    Q3                             n= 141  EV   +5.0  acerto 34.8%  tercos   +3.8 /   -2.3 /   +9.7  C   -7.2 V  +16.7  pct  18
-    Q4                             n= 141  EV  +22.7  acerto 41.1%  tercos  +47.8 /  +19.1 /  +16.9  C  +42.4 V   +5.3  pct  76
-    Q5 (maior)                     n= 142  EV  +14.1  acerto 38.0%  tercos   +0.0 /  +20.0 /  +16.4  C  +24.0 V   +3.0  pct  47
+    Q1 (menor)                     n= 741  EV   +8.5  acerto 36.2%  tercos   +8.4 /   +9.3 /   +7.8  C   +6.0 V  +10.7  pct  48
+    Q2                             n= 740  EV  +17.7  acerto 39.2%  tercos  +18.5 /   +8.9 /  +23.9  C  +26.0 V   +9.9  pct  97
+    Q3                             n= 741  EV   +5.5  acerto 35.1%  tercos   +4.6 /   +5.3 /   +7.3  C   +5.6 V   +5.5  pct  25
+    Q4                             n= 740  EV   +6.4  acerto 35.5%  tercos   +6.7 /   -5.5 /  +17.0  C  +10.1 V   +2.9  pct  32
+    Q5 (maior)                     n= 741  EV   +4.7  acerto 35.0%  tercos   -0.3 /   +2.9 /  +13.7  C   +4.7 V   +4.7  pct  20
   [fecha 1:1 sem parcial]
-    Q1 (menor)                     n= 142  EV  +12.7  acerto 56.3%  tercos  +33.3 /   +2.3 /   +5.3  C  +10.1 V  +15.1  pct  54
-    Q2                             n= 141  EV  +17.7  acerto 58.9%  tercos  +18.2 /  +16.4 /  +18.8  C  +20.5 V  +14.3  pct  78
-    Q3                             n= 141  EV   -4.3  acerto 47.5%  tercos  -15.4 /   -2.3 /   -1.4  C  -20.3 V  +11.1  pct   1
-    Q4                             n= 141  EV  +14.2  acerto 56.7%  tercos  +34.8 /   +6.4 /  +12.7  C  +22.7 V   +6.7  pct  63
-    Q5 (maior)                     n= 142  EV  +16.9  acerto 58.5%  tercos  -20.0 /  +11.1 /  +37.3  C  +25.3 V   +7.5  pct  75
+    Q1 (menor)                     n= 741  EV  +10.0  acerto 54.9%  tercos  +11.5 /  +10.2 /   +7.8  C   +4.9 V  +14.5  pct  88
+    Q2                             n= 740  EV  +12.8  acerto 56.4%  tercos  +12.2 /   +7.3 /  +18.3  C  +17.0 V   +8.9  pct  98
+    Q3                             n= 741  EV   +1.6  acerto 50.6%  tercos   -1.2 /   +4.8 /   +2.9  C   +4.0 V   -0.8  pct   8
+    Q4                             n= 740  EV   +1.9  acerto 50.8%  tercos   +0.6 /   -3.5 /   +9.0  C   +3.9 V   +0.0  pct  10
+    Q5 (maior)                     n= 741  EV   +4.2  acerto 52.1%  tercos   -3.2 /   +5.8 /  +13.2  C   -0.3 V   +8.9  pct  27
   [meio_lim 1:3 com parcial]
-    Q1 (menor)                     n=  93  EV  +17.2  acerto 34.4%  tercos  +34.6 /   +0.0 /  +17.9  C  +14.3 V  +19.6  pct  62
-    Q2                             n=  98  EV  +22.4  acerto 33.7%  tercos   +7.1 /  +29.7 /  +21.3  C  +27.8 V  +15.9  pct  77
-    Q3                             n=  97  EV   -0.5  acerto 28.9%  tercos  -41.2 /   +2.5 /  +11.5  C  +19.1 V  -22.3  pct  11
-    Q4                             n=  88  EV  +26.1  acerto 37.5%  tercos  -27.3 /  +32.3 /  +34.8  C  +17.9 V  +32.7  pct  83
-    Q5 (maior)                     n=  86  EV   +1.2  acerto 25.6%  tercos  -36.8 /  +17.2 /   +7.9  C  +13.0 V  -12.5  pct  16
-  descarta menores (fecha parcial): 0% +16.7(707) | 20% +18.1(565) | 40% +16.0(424) | 60% +25.8(283)
-  descarta maiores (fecha parcial): 0% +16.7(707) | 20% +14.7(565) | 40% +10.6(424) | 60% +17.7(283)
+    Q1 (menor)                     n= 469  EV   +0.7  acerto 27.7%  tercos   -8.7 /   -0.6 /  +13.0  C   +0.1 V   +1.2  pct  51
+    Q2                             n= 503  EV  +11.1  acerto 30.8%  tercos  +14.9 /   +3.1 /  +12.7  C  +14.3 V   +8.2  pct  98
+    Q3                             n= 490  EV   -6.1  acerto 25.9%  tercos   -2.4 /   -6.8 /  -11.5  C  +13.3 V  -27.2  pct  10
+    Q4                             n= 517  EV   +3.3  acerto 29.0%  tercos   +2.9 /   -5.4 /  +13.1  C   +5.5 V   +1.1  pct  71
+    Q5 (maior)                     n= 508  EV   -6.2  acerto 25.2%  tercos  -11.8 /   +0.0 /   -3.2  C  -10.8 V   -1.2  pct   9
+  descarta menores (fecha parcial): 0% +8.7(3703) | 20% +8.6(2962) | 40% +5.5(2222) | 60% +6.1(1481)
+  descarta maiores (fecha parcial): 0% +8.7(3703) | 20% +10.2(2962) | 40% +10.4(2222) | 60% +13.4(1481)
 
 --- CANDIDATO | Barras seguidas com Hull colada na EMA (< 0,25 ATR) ---
     limites: 0.50  2.50  5.50  10.50
   [fecha 1:3 com parcial]
-    0 (nao colada)                 n= 598  EV  +17.7  acerto 30.4%  tercos  +18.9 /  +10.1 /  +22.8  C  +22.4 V  +13.0  pct  69
-    1-2 barras                     n=  53  EV  +41.5  acerto 43.4%  tercos +100.0 /  +58.8 /  +14.3  C  +55.2 V  +25.0  pct  92
-    3-5 barras                     n=  27  EV  -11.1  acerto 18.5%  tercos  -50.0 /   +0.0 /  -13.3  C  -35.3 V  +30.0  pct  11
-    6-10 barras                    n=  20  EV  -40.0  acerto 15.0%  tercos -100.0 /  -33.3 /  -27.3  C  +25.0 V  -83.3  pct   1
-    11+ barras                     n=   9  EV  +11.1  acerto 33.3%  tercos +100.0 / -100.0 /  -20.0  C  -25.0 V  +40.0  pct  41
+    0 (nao colada)                 n=3106  EV   +9.5  acerto 28.0%  tercos   +5.8 /   +8.4 /  +16.1  C  +10.8 V   +8.4  pct  83
+    1-2 barras                     n= 264  EV   +4.9  acerto 28.0%  tercos   -9.5 /   -4.4 /  +33.8  C  +11.2 V   -0.7  pct  30
+    3-5 barras                     n= 165  EV   +2.1  acerto 27.3%  tercos   -8.1 /  +23.9 /   -2.1  C   -5.9 V  +12.7  pct  26
+    6-10 barras                    n= 119  EV   -1.7  acerto 25.2%  tercos  +21.3 /   +7.9 /  -44.1  C  +10.0 V  -13.6  pct  18
+    11+ barras                     n=  49  EV  +20.4  acerto 32.7%  tercos   -4.5 /  +71.4 /   +7.7  C   +0.0 V  +45.5  pct  73
   [fecha 1:3 sem parcial]
-    0 (nao colada)                 n= 598  EV  +21.7  acerto 30.4%  tercos  +26.8 /  +12.6 /  +26.1  C  +30.4 V  +13.0  pct  47
-    1-2 barras                     n=  53  EV  +69.8  acerto 43.4%  tercos +150.0 / +100.0 /  +28.6  C  +93.1 V  +41.7  pct  97
-    3-5 barras                     n=  27  EV  -25.9  acerto 18.5%  tercos -100.0 /  -20.0 /  -20.0  C  -52.9 V  +20.0  pct   5
-    6-10 barras                    n=  20  EV  -40.0  acerto 15.0%  tercos -100.0 /  -33.3 /  -27.3  C  +50.0 V -100.0  pct   3
-    11+ barras                     n=   9  EV  +33.3  acerto 33.3%  tercos +166.7 / -100.0 /  -20.0  C   +0.0 V  +60.0  pct  45
+    0 (nao colada)                 n=3106  EV  +11.6  acerto 28.0%  tercos   +5.9 /  +12.0 /  +19.3  C  +14.6 V   +8.6  pct  57
+    1-2 barras                     n= 264  EV  +11.0  acerto 28.0%  tercos  -11.2 /   +0.0 /  +52.5  C  +20.8 V   +2.2  pct  49
+    3-5 barras                     n= 165  EV   +7.3  acerto 27.3%  tercos   -5.4 /  +34.1 /   +2.1  C   -7.4 V  +26.8  pct  39
+    6-10 barras                    n= 119  EV   +0.8  acerto 25.2%  tercos  +27.7 /  +15.8 /  -52.9  C  +13.3 V  -11.9  pct  25
+    11+ barras                     n=  49  EV  +30.6  acerto 32.7%  tercos   +9.1 /  +71.4 /  +23.1  C   +3.7 V  +63.6  pct  74
   [fecha 1:2 sem parcial]
-    0 (nao colada)                 n= 598  EV  +15.1  acerto 38.3%  tercos  +18.9 /   +8.5 /  +18.0  C  +19.1 V  +11.0  pct  58
-    1-2 barras                     n=  53  EV  +34.0  acerto 45.3%  tercos  +87.5 /  +52.9 /   +7.1  C  +55.2 V   +8.3  pct  83
-    3-5 barras                     n=  27  EV   +0.0  acerto 33.3%  tercos  +50.0 /  +20.0 /  -20.0  C  -29.4 V  +50.0  pct  25
-    6-10 barras                    n=  20  EV  -25.0  acerto 25.0%  tercos -100.0 /   +0.0 /  -18.2  C  +12.5 V  -50.0  pct   7
-    11+ barras                     n=   9  EV   +0.0  acerto 33.3%  tercos +100.0 / -100.0 /  -40.0  C  -25.0 V  +20.0  pct  26
+    0 (nao colada)                 n=3106  EV   +9.5  acerto 36.5%  tercos   +8.9 /   +3.5 /  +15.8  C  +11.3 V   +7.7  pct  80
+    1-2 barras                     n= 264  EV   -0.4  acerto 33.3%  tercos   -9.5 /  -11.8 /  +22.5  C  +12.8 V  -12.2  pct  14
+    3-5 barras                     n= 165  EV   +7.3  acerto 35.8%  tercos   +1.4 /  +15.9 /   +8.5  C   -4.3 V  +22.5  pct  44
+    6-10 barras                    n= 119  EV   +3.4  acerto 34.5%  tercos  +27.7 /  +10.5 /  -38.2  C  +15.0 V   -8.5  pct  32
+    11+ barras                     n=  49  EV  +16.3  acerto 38.8%  tercos   -4.5 /  +71.4 /   -7.7  C  -11.1 V  +50.0  pct  60
   [fecha 1:1 sem parcial]
-    0 (nao colada)                 n= 598  EV  +13.7  acerto 56.7%  tercos  +11.0 /   +7.5 /  +19.5  C  +14.4 V  +13.0  pct  92
-    1-2 barras                     n=  53  EV  +13.2  acerto 56.6%  tercos  +50.0 /  +17.6 /   +0.0  C  +17.2 V   +8.3  pct  50
-    3-5 barras                     n=  27  EV   +3.7  acerto 51.9%  tercos   +0.0 /  +20.0 /   -6.7  C  -17.6 V  +40.0  pct  29
-    6-10 barras                    n=  20  EV  -40.0  acerto 30.0%  tercos -100.0 /  -33.3 /  -27.3  C   +0.0 V  -66.7  pct   1
-    11+ barras                     n=   9  EV  -11.1  acerto 44.4%  tercos  +33.3 / -100.0 /  -20.0  C  -50.0 V  +20.0  pct  15
+    0 (nao colada)                 n=3106  EV   +7.5  acerto 53.7%  tercos   +5.6 /   +4.8 /  +12.8  C   +6.9 V   +8.1  pct  97
+    1-2 barras                     n= 264  EV   -1.1  acerto 49.2%  tercos   -7.8 /   -8.8 /  +15.0  C   +1.6 V   -3.6  pct  11
+    3-5 barras                     n= 165  EV   -3.0  acerto 48.5%  tercos  -10.8 /  +13.6 /   -6.4  C   -4.3 V   -1.4  pct  10
+    6-10 barras                    n= 119  EV   -4.2  acerto 47.9%  tercos  +14.9 /   +0.0 /  -35.3  C   +6.7 V  -15.3  pct  11
+    11+ barras                     n=  49  EV  +10.2  acerto 55.1%  tercos  -18.2 /  +71.4 /   -7.7  C   -3.7 V  +27.3  pct  56
   [meio_lim 1:3 com parcial]
-    0 (nao colada)                 n= 390  EV  +15.6  acerto 32.3%  tercos   -3.8 /  +20.3 /  +20.8  C  +23.5 V   +7.8  pct  81
-    1-2 barras                     n=  34  EV  +45.6  acerto 47.1%  tercos   +0.0 /  +15.0 /  +66.7  C  +15.8 V  +83.3  pct  93
-    3-5 barras                     n=  16  EV  -43.8  acerto 12.5%  tercos   +0.0 /  -66.7 /  -33.3  C  -60.0 V  -16.7  pct   3
-    6-10 barras                    n=  16  EV  -50.0  acerto 12.5%  tercos -100.0 /   +0.0 /  -55.6  C  +20.0 V  -81.8  pct   1
-    11+ barras                     n=   6  EV   +0.0  acerto 33.3%  tercos -100.0 / +200.0 /  -25.0  C   +0.0 V   +0.0  pct  36
+    0 (nao colada)                 n=2067  EV   +0.8  acerto 27.6%  tercos   -1.5 /   -3.8 /   +8.6  C   +3.9 V   -2.2  pct  56
+    1-2 barras                     n= 187  EV   +3.5  acerto 29.9%  tercos   -3.7 /   -6.6 /  +25.0  C   +3.8 V   +3.2  pct  63
+    3-5 barras                     n= 113  EV   -4.6  acerto 27.4%  tercos   +1.9 /  +24.2 /  -50.0  C   -3.6 V   -6.0  pct  32
+    6-10 barras                    n=  85  EV  -10.3  acerto 23.5%  tercos  +10.8 /   +3.4 /  -50.0  C   +8.1 V  -24.5  pct  23
+    11+ barras                     n=  35  EV  +17.1  acerto 34.3%  tercos  +15.8 /  +33.3 /  +10.0  C  +43.5 V  -33.3  pct  77

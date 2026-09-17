@@ -1,4 +1,11 @@
 //------------------------------------------------------------------
+// ATUALIZACAO 14/09/2026 -- LEIA ANTES DE USAR
+//   Remedido na base WINFUT_20PI_Robo.csv (132 pregoes, 06/03 a 14/09).
+//   Os numeros abaixo sao da base antiga (26 pregoes). Nos meses que nao
+//   participaram da escolha dos filtros (06/03 a 05/08) o Ouro mede
+//   -7,4 pts por sinal e o Prata -0,7. O setup NAO passou no teste fora
+//   da amostra: use so para estudo. Ver RESULTADOS.md e PLANO.md.
+//
 // MomentumPI_OuroPrata  -  Grafico PI 20 (WINFUT)  -  NTSL
 //
 // Trigger do setup de CONTINUACAO medido em Backtest-Momentum-GraficoPI:

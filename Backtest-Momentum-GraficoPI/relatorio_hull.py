@@ -41,6 +41,8 @@ def fatos(D):
     F['cart'] = D['carteira'][f'fecha|parcial|{FINAL}']
     F['cart_h'] = D['carteira']['fecha|parcial|h']
     F['cart_sem'] = D['carteira']['fecha|parcial|sem']
+    F['hull_ev'] = c['hull']['ev']
+    F['hull_puro'] = D['comparacao']['fecha|puro']['hull']['ev']
     F['per'] = {b['faixa']: b for b in D['periodos']['fecha|parcial']}
     F['fech'] = {b['faixa']: b for b in D['pavio_fech']['fecha|parcial']}
     return F
@@ -186,50 +188,88 @@ def capa(D, F):
 
 
 def resposta(D, F):
-    fin = F['fin']['parcial']; ct = F['cart']
+    fin = F['fin']['parcial']; ct = F['cart']; ch = F['cart_h']
+    bh = D['blocos']['fecha|parcial|h']['sinais']; bc = D['blocos']['fecha|parcial|contra']['sinais']
+    bs = D['blocos']['fecha|parcial|sem']['sinais']; bf = D['blocos'][f'fecha|parcial|{FINAL}']['sinais']
     return f"""
 <section id="resposta">
-  <h2>Resposta curta: a Hull muda o jogo</h2>
-  <p class="olho">A inclinacao da Hull 50 e o primeiro filtro deste estudo que separa os
-  sinais de forma consistente. Com 2 a 4 candles e 1 contra, entrada no fechamento, 1:3 com
-  parcial: <b>{sn(F['hull']['ev'], 1)}</b> pts por sinal com a Hull a favor, contra
-  <b>{sn(F['contra']['ev'], 1)}</b> com ela contra e <b>{sn(F['sem']['ev'], 1)}</b> sem
-  olhar a Hull.</p>
+  <h2>Resposta curta: a Hull a favor passou no teste; o resto, nao</h2>
+  <p class="olho">Este estudo foi feito primeiro em 26 pregoes (06/08 a 11/09). A base nova tem
+  {D['base']['dias']} pregoes e comeca cinco meses antes &mdash; meses que nao participaram de nenhuma
+  escolha. Neles, a Hull 50 a favor mede <b>{sn(bh['antes']['ev'], 1)}</b> pts por sinal (t =
+  {sn(bh['antes']['t'], 2)}), contra <b>{sn(bc['antes']['ev'], 1)}</b> com a Hull contra e
+  <b>{sn(bs['antes']['ev'], 1)}</b> sem olhar a Hull. A hipotese previa se confirma. O tamanho, nao:
+  na base antiga a Hull a favor media {sn(bh['original']['ev'], 1)}.</p>
   <div class="grade g4">
-    {tile('Hull a favor', sn(F['hull']['ev'], 1), f"pts por sinal &middot; {n(F['hull']['n'])} sinais", cls(F['hull']['ev']))}
-    {tile('Hull contra', sn(F['contra']['ev'], 1), f"pts por sinal &middot; {n(F['contra']['n'])} sinais", cls(F['contra']['ev']))}
-    {tile('Percentil contra o sorteio', f"{n(min(F['pct']))}&ndash;{n(max(F['pct']))}", 'nas 4 gestoes, entrada no fechamento')}
-    {tile('Com os 2 cortes a mais', sn(fin['ev'], 1), f"pts por sinal &middot; {n(fin['n'])} sinais", cls(fin['ev']))}
+    {tile('Hull a favor, fora da amostra', sn(bh['antes']['ev'], 1), f"pts por sinal &middot; {n(bh['antes']['n'])} sinais", cls(bh['antes']['ev']))}
+    {tile('Hull contra, fora da amostra', sn(bc['antes']['ev'], 1), f"pts por sinal &middot; {n(bc['antes']['n'])} sinais", cls(bc['antes']['ev']))}
+    {tile('Percentil contra o sorteio', f"{n(min(F['pct']))}&ndash;{n(max(F['pct']))}", 'base inteira, 4 gestoes, fechamento')}
+    {tile('A 10 pts de custo', sn(F['hull']['ev'] - 10, 1), 'pts por sinal, Hull + 2 a 4, 1:3 com parcial', cls(F['hull']['ev'] - 10))}
   </div>
   <div class="bandeira">
-    <h3>O que o estudo encontrou</h3>
+    <h3>O que a base de {D['base']['dias']} pregoes mostrou</h3>
     <ul class="enx">
-      <li><b>A Hull a favor funciona</b> nas 8 combinacoes de entrada e gestao, nos dois
-      lados (compra {sn(F['lados']['compra']['ev'], 1)}, venda {sn(F['lados']['venda']['ev'], 1)}),
-      e com Hull 34 tambem. Hull 21 e 80 medem pior.</li>
-      <li><b>3 barras antes e o melhor, 4 e ruim</b> ({sn(F['nb']['3']['ev'], 1)} contra
-      {sn(F['nb']['4']['ev'], 1)}) &mdash; o mesmo que ja tinha aparecido sem a Hull.</li>
-      <li><b>Pavio do lado da abertura: nao entrou.</b> A faixa do magenta (25&ndash;90%) mede bem
-      no fechamento, mas so na compra ({sn(F['reg']['magenta']['compra']['ev'], 1)} contra
-      {sn(F['reg']['magenta']['venda']['ev'], 1)} na venda) e perde na limitada; a do verde
-      (5&ndash;25%) nao separa. Num periodo de alta, efeito so na compra nao e confiavel.</li>
-      <li><b>Pavio do lado do fechamento: serve.</b> Ate 10% do corpo mede
-      {sn(F['reg']['fech10']['ev'], 1)}; acima disso, {sn(F['reg']['fech10']['fora']['ev'], 1)}.
-      Vale nos dois lados e fica entre os percentis {n(min(F['reg_pct']['fech10']))} e
-      {n(max(F['reg_pct']['fech10']))} do sorteio.</li>
-      <li><b>O tamanho da inclinacao nao e filtro.</b> O que vale e a Hull estar subindo ou
-      descendo; subindo forte ou devagar nao separa de forma estavel (secao 5).</li>
-      <li><b>Separacao da Hull para EMA e Keltner: nao entrou.</b> Hull alem da banda confirma a
-      exaustao no conjunto base, mas o efeito some dentro do candidato; Hull ainda do outro lado da EMA e o melhor
-      lugar, mas com gradiente irregular (secao 6).</li>
-      <li><b>Juntando tudo</b> (Hull + 2 a 3 barras + pavio do fechamento ate 10%): a carteira
-      faz {n(ct['trades'])} operacoes, {sn(ct['lucro_liq'])} pts, fator de lucro
-      {n(ct['fator_lucro'], 2)}, rebaixamento de {n(ct['dd_max'])} pts. A 10 pts de custo sobram
-      cerca de {sn(fin['ev'] - 10, 1)} pts por sinal.</li>
+      <li><b>A Hull a favor funciona</b> nas quatro gestoes com entrada no fechamento, nos dois
+      lados (compra {sn(F['lados']['compra']['ev'], 1)}, venda {sn(F['lados']['venda']['ev'], 1)}), em
+      todos os meses (nenhum negativo) e no percentil {n(min(F['pct']))} do sorteio. Hull 50 e 80 medem
+      parecido; 34 pior; 21 nao separa.</li>
+      <li><b>Barras antes:</b> 2, 3 e 4 medem igual ({sn(F['nb']['2']['ev'], 1)}, {sn(F['nb']['3']['ev'], 1)},
+      {sn(F['nb']['4']['ev'], 1)}); 1 e 5+ nao pagam. O &ldquo;4 e ruim&rdquo; da base antiga nao se repete.</li>
+      <li><b>Pavio do lado da abertura:</b> a faixa do magenta (25&ndash;90%) mede <i>pior</i> que o que
+      ela descarta (percentil {n(min(F['reg_pct']['magenta']))}&ndash;{n(max(F['reg_pct']['magenta']))}); a
+      do verde nao separa.</li>
+      <li><b>Pavio do lado do fechamento ate 10%:</b> {sn(F['reg']['fech10']['ev'], 1)} contra
+      {sn(F['reg']['fech10']['fora']['ev'], 1)} acima. O efeito existe, mas vem quase todo dos poucos
+      candles com pavio acima de 25%.</li>
+      <li><b>Os dois cortes do candidato nao passaram fora da amostra.</b> Hull + 2 a 3 barras + pavio
+      do fechamento ate 10% mede {sn(bf['antes']['ev'], 1)} nos meses nunca vistos, contra
+      {sn(bh['antes']['ev'], 1)} da Hull + 2 a 4 sem corte nenhum. Na janela em que foram escolhidos,
+      {sn(bf['original']['ev'], 1)} contra {sn(bh['original']['ev'], 1)}.</li>
+      <li><b>O tamanho da inclinacao nao e filtro</b> (secao 5), e a <b>distancia da Hull a EMA</b> mede
+      ao contrario do que a base antiga sugeria (secao 6).</li>
+      <li><b>Carteira</b> (Hull + 2 a 4, 1:3 com parcial): {n(ch['trades'])} operacoes, cerca de
+      {n(ch['trades_dia'], 0)} por pregao, {sn(ch['lucro_liq'])} pts brutos, fator de lucro
+      {n(ch['fator_lucro'], 2)}, rebaixamento {n(ch['dd_max'])}. O setup vive do custo: a 5 pts por
+      operacao sobram {sn(F['hull']['ev'] - 5, 1)} por sinal; a 10, {sn(F['hull']['ev'] - 10, 1)}.</li>
     </ul>
   </div>
-  <p class="nota">Ha um plano de trading para o candidato em <code>plano_hull.html</code>.
-  Ele e provisorio: os dois cortes a mais foram escolhidos olhando estes mesmos 26 pregoes.</p>
+  <p class="nota">O plano (<code>plano_hull.html</code>) foi refeito com a regra que passou no teste &mdash;
+  Hull a favor + 2 a 4 candles, sem os cortes de pavio e de contagem &mdash; e continua provisorio: so vale
+  se o custo real por operacao ficar bem abaixo do valor por sinal.</p>
+</section>"""
+
+
+def fora_amostra(D, F):
+    lin = ''
+    for g in GES:
+        for var, rot in (('sem', 'Sem olhar a Hull'), ('contra', 'Hull contra'), ('h', 'Hull + 2 a 4'),
+                         ('h23f10', 'Candidato: Hull + 2-3 + fech ate 10%')):
+            b = D['blocos'][f'fecha|{g}|{var}']['sinais']
+            d_ = ' class="destaque"' if (var == 'h' and g == 'parcial') else ''
+            lin += (f'<tr{d_}><td>{D["rot_gestao"][g]}</td><td style="text-align:left">{rot}</td>'
+                    + ''.join(f'<td class="{cls(b[k]["ev"])}">{sn(b[k]["ev"], 1)}<br><small style="color:var(--mudo)">'
+                              f'{n(b[k]["n"])} &middot; t {sn(b[k]["t"], 1) if b[k]["t"] is not None else "&ndash;"}</small></td>'
+                              for k in ('antes', 'original', 'depois'))
+                    + f'<td class="{cls(b["total"]["ev"])}"><b>{sn(b["total"]["ev"], 1)}</b></td></tr>')
+    return f"""
+<section id="oos">
+  <h2>Fora da amostra</h2>
+  <p class="olho">A Hull a favor era hipotese definida antes do primeiro estudo. &ldquo;2 a 3 barras&rdquo; e
+  &ldquo;pavio do fechamento ate 10%&rdquo; foram escolhidos olhando a base antiga (06/08 a 11/09). Os blocos
+  das pontas nunca participaram de escolha nenhuma.</p>
+  <div class="card rolo" style="max-height:560px"><table>
+    <thead><tr><th>Gestao</th><th>Regra</th><th>Antes<br><small>06/03 a 05/08</small></th>
+      <th>Janela original<br><small>06/08 a 11/09</small></th><th>Depois<br><small>12/09 em diante</small></th>
+      <th>Base inteira</th></tr></thead>
+    <tbody>{lin}</tbody></table>
+    <p class="nota">Pts por sinal, entrada no fechamento, cada sinal resolvido isoladamente; embaixo, numero de
+    sinais e estatistica t. O bloco &ldquo;depois&rdquo; tem um pregao.</p></div>
+  <figure class="card" style="margin-top:16px"><h3>Mes a mes, 1:3 com parcial</h3>
+    <div class="legenda"><span><i class="chave q" style="background:var(--ouro)"></i>Hull + 2 a 4</span>
+    <span><i class="chave q" style="background:var(--prata)"></i>Candidato</span>
+    <span><i class="chave q" style="background:var(--bronze)"></i>Hull contra</span></div>
+    <div id="g_meses"></div>
+    <figcaption>A Hull a favor nao tem mes negativo; a Hull contra nao tem mes bom.</figcaption></figure>
 </section>"""
 
 
@@ -368,7 +408,7 @@ def barras_pavios(D, F):
       <div class="legenda"><span><i class="chave q" style="background:var(--ganho)"></i>compra</span>
       <span><i class="chave q" style="background:var(--perda)"></i>venda</span></div>
       <div id="g_fech_l"></div>
-      <figcaption>nos dois lados, 10&ndash;25% e o pior</figcaption></figure>
+      <figcaption>nos dois lados, so a faixa acima de 25% e ruim</figcaption></figure>
     <figure class="card"><h3>Abertura, por terco</h3><div id="g_abre_t"></div></figure>
     <figure class="card"><h3>Fechamento, por terco</h3><div id="g_fech_t"></div></figure>
   </div>
@@ -401,8 +441,9 @@ def combinacoes(D, F):
     return f"""
 <section id="combinacoes">
   <h2>4. Juntando os achados</h2>
-  <p class="olho">Sempre dentro de Hull a favor + 2 a 4 barras. <b>2 a 3 barras</b> vem do "4 e
-  ruim", que apareceu em dois estudos; <b>fechamento ate 10%</b>, do pavio do fechamento acima.
+  <p class="olho">Sempre dentro de Hull a favor + 2 a 4 barras. <b>2 a 3 barras</b> e <b>fechamento ate
+  10%</b> foram escolhidos na base antiga (o &ldquo;4 e ruim&rdquo; e o pavio do fechamento); aqui sao medidos
+  na base inteira, e na secao <a href="#oos">Fora da amostra</a>, onde nao acrescentam nada.
   Pct = percentil contra sorteios da condicao Hull + 2 a 4.</p>
   <div class="card rolo" style="max-height:520px"><table>
     <thead><tr><th>Entrada</th><th>Gestao</th><th>Regra</th><th>Sinais</th><th>Pts/sinal</th>
@@ -417,9 +458,10 @@ def combinacoes(D, F):
     <figure class="card"><h3>Barras antes</h3><div id="g_viz_b"></div></figure>
     <figure class="card"><h3>Periodo da Hull</h3><div id="g_viz_h"></div></figure>
   </div>
-  <p class="nota">O pavio do fechamento forma plato de 5% a 15%; <b>0%</b> (candle que fecha
-  exatamente no extremo) mede pior. Barras: 2, 3 e 2&ndash;3 parecidos; incluir 1 ou 4 dilui.
-  Hull: 34 e 50 parecidos, 21 e 80 piores.</p>
+  <p class="nota">Pavio do fechamento: de 0% a 15% o resultado quase nao muda &mdash; o corte so tira os
+  poucos candles de pavio grande. Barras: incluir a de 1 candle derruba; 2, 3 e 4 medem parecido. Hull: 50 e 80
+  parecidos, 34 e 21 piores. E um plato, mas plato baixo: nenhum ponto da vizinhanca muda o setup de
+  tamanho.</p>
 </section>"""
 
 
@@ -466,19 +508,17 @@ def inclinacao(D, F):
       <li><b>As faixas nao seguem ordem.</b> Na inclinacao de 1 barra, a faixa mais plana mede
       {sn(X['q1_1_h']['ev'], 1)}, a do meio {sn(X['q3_1_h']['ev'], 1)}, a quarta
       {sn(X['q4_1_h']['ev'], 1)} e a mais inclinada {sn(X['q5_1_h']['ev'], 1)} (Hull + 2&ndash;4,
-      1:3 com parcial). Sobe e desce, e muda de forma em cada gestao e em cada medida.</li>
-      <li><b>Compra e venda discordam de novo.</b> Hull muito inclinada rende
-      {sn(X['q5_1_h']['compra'], 1)} na compra e {sn(X['q5_1_h']['venda'], 1)} na venda &mdash; o
-      desenho de um periodo de alta, nao de uma regra.</li>
+      1:3 com parcial). A diferenca entre elas e menor que o ruido de cada uma.</li>
+      <li><b>Compra e venda discordam.</b> Hull muito inclinada rende
+      {sn(X['q5_1_h']['compra'], 1)} na compra e {sn(X['q5_1_h']['venda'], 1)} na venda.</li>
       <li><b>Cortar pela inclinacao quase nao muda nada.</b> No candidato, descartar os 20%, 40% ou
       60% de Hull mais plana leva de {sn(X['min1_c'][0]['ev'], 1)} para
       {sn(X['min1_c'][1]['ev'], 1)}, {sn(X['min1_c'][2]['ev'], 1)} e {sn(X['min1_c'][3]['ev'], 1)}
       pts por sinal, jogando fora ate 60% das operacoes.</li>
-      <li><b>O unico indicio:</b> a Hull quase plana <i>na media de 5 barras</i> (menos de
-      ~{n(X['lim5_c'][0], 0)} pts por barra) e a faixa mais fraca em todas as gestoes, no percentil
-      {n(min(X['q1_5_pct_c']))}&ndash;{n(max(X['q1_5_pct_c']))} do sorteio no candidato. Mas nos
-      tercos ela oscila, sao so {n(X['q1_5_c']['n'])} sinais, e a mesma faixa medida em 1 barra nao
-      e fraca. Fica como hipotese para testar fora desta amostra, nao como regra.</li>
+      <li><b>O indicio da base antiga nao se confirmou.</b> A Hull quase plana na media de 5 barras era a
+      faixa mais fraca; na base nova ela mede parecido com uma faixa do meio (percentil
+      {n(min(X['q1_5_pct_c']))}&ndash;{n(max(X['q1_5_pct_c']))} no candidato), e as faixas de 5 barras vao e
+      voltam.</li>
     </ul>
   </div>
   <p class="nota">"Grau" em angulo nao tem medida objetiva &mdash; o angulo na tela depende da escala do
@@ -558,33 +598,25 @@ def distancias(D, F):
   </div>
 
   <div class="bandeira">
-    <h3>Resposta</h3>
+    <h3>Resposta: a base antiga apontava para o lado errado</h3>
     <ul class="enx">
-      <li><b>Hull alem da banda a favor: confirma a exaustao &mdash; so no conjunto base.</b> Com a Hull
-      mais de 2 ATR alem da EMA ({n(X['B']['pct_alem'], 0)}% dos sinais) o resultado e negativo nas 4
-      gestoes ({', '.join(sn(v, 1) for v in X['alem_h'])}), percentil
-      {n(min(X['alem_h_pct']))}&ndash;{n(max(X['alem_h_pct']))} do sorteio. Mas dentro do candidato essa
-      faixa mede {sn(X['alem_c']['ev'], 1)} ({n(X['alem_c']['n'])} sinais): o efeito some quando os
-      outros filtros estao aplicados. Nao acrescenta nada a regra.</li>
-      <li><b>Hull ainda do lado oposto da EMA e o melhor lugar.</b> {n(X['B']['pct_errado'], 0)}% dos
-      sinais tem a Hull virada a favor mas ainda do outro lado da EMA (compra com a Hull abaixo dela):
-      {sn(Z[0]['ev'], 1)} pts por sinal, contra {sn(Z[1]['ev'], 1)}, {sn(Z[2]['ev'], 1)} e
-      {sn(Z[3]['ev'], 1)} nas zonas seguintes. A faixa mais extrema (mais de 1 ATR do outro lado) mede
-      {', '.join(sn(v, 1) for v in X['m1_c'])} no candidato, positiva nos tres tercos e nos dois lados.
-      <i>Porem</i>: nas faixas finas o gradiente vai e volta (0 a 0,5 ATR mede
-      {sn(fc[3]['ev'], 1)}, 0,5 a 1 ATR {sn(fc[4]['ev'], 1)}), e na limitada a faixa extrema inverte
-      ({sn(X['m1_c_lim'], 1)}). E um indicio forte de "Hull que acabou de virar", nao uma regra pronta.</li>
-      <li><b>Em pontos, nao ha ordem.</b> A distancia a banda em pontos vai de {sn(bd[0]['ev'], 1)} (mais
-      perto) a {sn(bd[1]['ev'], 1)}, {sn(bd[2]['ev'], 1)}, {sn(bd[3]['ev'], 1)}, {sn(bd[4]['ev'], 1)}
-      &mdash; zigue-zague.</li>
+      <li><b>Hull do lado do trade em relacao a EMA e melhor; do lado oposto, pior.</b> Com a Hull ainda do
+      outro lado da EMA ({n(X['B']['pct_errado'], 0)}% dos sinais) o sinal mede {sn(Z[0]['ev'], 1)} pts,
+      negativo nos dois primeiros tercos; nas zonas seguintes, {sn(Z[1]['ev'], 1)}, {sn(Z[2]['ev'], 1)} e
+      {sn(Z[3]['ev'], 1)}. A faixa mais extrema (mais de 1 ATR do lado errado) e a pior do estudo. Na base
+      antiga essa mesma faixa era a melhor &mdash; e o texto a registrava como &ldquo;indicio forte&rdquo;.</li>
+      <li><b>Exaustao pela banda: nao se confirma.</b> Hull alem da banda a favor
+      ({n(X['B']['pct_alem'], 0)}% dos sinais) mede {', '.join(sn(v, 1) for v in X['alem_h'])} nas quatro
+      gestoes. Em pontos, quanto <i>mais perto</i> da banda, melhor: de {sn(bd[0]['ev'], 1)} (mais perto) a
+      {sn(bd[4]['ev'], 1)} (mais longe).</li>
       <li><b>Consolidacao: nao confirmada.</b> A Hull mais proxima da EMA (sem olhar o lado) mede
-      {sn(ab[0]['ev'], 1)}, melhor que a mais afastada ({sn(ab[4]['ev'], 1)}). Tempo colada: 6 a 10
-      barras mede {sn(co[3]['ev'], 1)}, na direcao da intuicao, mas sao {n(co[3]['n'])} sinais, e 11+
-      barras mede {sn(co[4]['ev'], 1)} ({n(co[4]['n'])} sinais).</li>
-      <li><b>O corte tentador.</b> No candidato, ficar so com os 40% de Hull mais "atrasada" em relacao a
-      EMA leva de {sn(X['corte_c'][0]['ev'], 1)} para {sn(X['corte_c'][3]['ev'], 1)} pts por sinal
-      ({n(X['corte_c'][3]['n'])} sinais). Escolhido olhando esta amostra, com o gradiente irregular:
-      hipotese para o proximo teste, fora destes 26 pregoes.</li>
+      {sn(ab[0]['ev'], 1)}; a mais afastada, {sn(ab[4]['ev'], 1)} &mdash; mas a mais afastada mistura os dois
+      lados. Tempo colada: 6 a 10 barras mede {sn(co[3]['ev'], 1)} ({n(co[3]['n'])} sinais) e 11+ mede
+      {sn(co[4]['ev'], 1)} ({n(co[4]['n'])}).</li>
+      <li><b>O corte tentador de antes agora piora o resultado.</b> No candidato, ficar so com os 40% de Hull mais
+      &ldquo;atrasada&rdquo; em relacao a EMA leva de {sn(X['corte_c'][0]['ev'], 1)} para
+      {sn(X['corte_c'][3]['ev'], 1)} pts por sinal. O oposto &mdash; Hull ja do lado do trade &mdash; e uma
+      hipotese nova, achada nesta base, e so pregoes futuros decidem.</li>
     </ul>
   </div>
 
@@ -623,7 +655,7 @@ def carteira(D, F):
   <p class="olho">Sinais que aparecem com posicao aberta sao descartados. Os botoes valem para
   as estatisticas, as curvas, as distribuicoes e o grafico trade a trade.</p>
   <div style="position:sticky;top:44px;z-index:20;background:var(--plano);padding:8px 0">
-    {grupo('abas_c', 'c', [('h23f10', 'Candidato: Hull + 2-3 + fech ate 10%'), ('h', 'Hull + 2-4')], FINAL)}
+    {grupo('abas_c', 'c', [('h', 'Hull + 2-4'), ('h23f10', 'Candidato: Hull + 2-3 + fech ate 10%')], 'h')}
     {grupo('abas_e', 'e', [('fecha', 'Fechamento'), ('meio_lim', 'Limitada no meio')], 'fecha')}
     {grupo('abas_gc', 'g', [(g, D['rot_gestao'][g]) for g in GES], 'parcial')}
   </div>
@@ -652,8 +684,8 @@ def carteira(D, F):
   <h3 style="margin-top:32px">Horario do sinal</h3>
   <figure class="card"><div id="g_horas"></div>
     <figcaption>Hull + 2 a 4, fechamento, gestao escolhida. 10h e a abertura do mercado a vista.
-    O horario nao entrou como regra: com esta base, cada hora tem poucas dezenas de sinais
-    depois das 12h.</figcaption></figure>
+    O horario nao entrou como regra: foi so medido, e nenhum corte de horario foi testado fora da
+    amostra.</figcaption></figure>
 </section>
 
 <section id="kline">
@@ -673,38 +705,28 @@ def carteira(D, F):
 
 
 def conclusao(D, F):
-    fin = F['fin']
+    bh = D['blocos']['fecha|parcial|h']['sinais']; bf = D['blocos'][f'fecha|parcial|{FINAL}']['sinais']
     return f"""
 <section id="conclusao">
   <h2>Conclusao</h2>
   <ul class="enx">
-    <li><b>A Hull 50 a favor e o filtro que faltava.</b> Ela sozinha praticamente dobra o valor
-    por sinal em relacao ao padrao sem filtro, em todas as entradas e gestoes e nos dois lados;
-    com entrada no fechamento, tambem nos tres tercos. E a Hull contra quase zera o resultado: a
-    informacao esta na inclinacao.</li>
-    <li><b>Pavio do lado da abertura continua sem regra confiavel</b>: a faixa do magenta so
-    funciona na compra e se inverte na limitada.</li>
-    <li><b>Pavio do lado do fechamento serve</b>: o candle contra que deixa um pavio de mais de
-    10% alem do fechamento &mdash; rejeitado no fim &mdash; rende menos nos dois lados.</li>
-    <li><b>O candidato</b> (Hull + 2 a 3 barras + fechamento ate 10%, entrada no fechamento)
-    mede {sn(fin['parcial']['ev'], 1)} pts por sinal no 1:3 com parcial e
-    {sn(fin['r1']['ev'], 1)} no 1:1, positivo nos tres tercos e nos dois lados, e os cortes
-    formam plato.</li>
-    <li><b>Vale o sentido da Hull, nao o grau.</b> O tamanho da inclinacao &mdash; em 1 barra, em 5
-    barras ou relativo ao ATR &mdash; nao ordena os resultados, e compra e venda discordam.</li>
-    <li><b>EMA 21 e Keltner nao acrescentam regra ao candidato.</b> A exaustao (Hull alem da banda)
-    existe no conjunto base mas some dentro do candidato; a consolidacao (Hull colada na EMA) nao se
-    confirma. Fica uma hipotese: sinais com a Hull ainda do lado oposto da EMA.</li>
-    <li><b>Entrada no fechamento, nao na limitada.</b> A limitada perde o primeiro terco em
-    quase todas as combinacoes.</li>
+    <li><b>A Hull 50 a favor e real.</b> Era hipotese definida antes de medir, e nos {n(bh['antes']['n'])}
+    sinais que nunca participaram de nada ela mede {sn(bh['antes']['ev'], 1)} pts (t =
+    {sn(bh['antes']['t'], 2)}), sem mes negativo, nos dois lados; a Hull contra mede negativo.</li>
+    <li><b>E pequena.</b> {sn(F['hull']['ev'], 1)} pts brutos por sinal na base inteira, com
+    {n(F['cart_h']['trades_dia'], 0)} operacoes por pregao &mdash; a janela da base antiga media
+    {sn(bh['original']['ev'], 1)} &mdash;, e perto do custo de uma operacao com escorregamento.</li>
+    <li><b>Os cortes escolhidos na base antiga nao acrescentam nada</b>: o candidato mede
+    {sn(bf['antes']['ev'], 1)} fora da amostra, igual a regra sem eles.</li>
+    <li><b>Pavio da abertura, grau de inclinacao, distancia a banda:</b> nenhum e filtro. A distancia da Hull a
+    EMA mede ao contrario do que a base antiga sugeria.</li>
+    <li><b>Entrada no fechamento, nao na limitada.</b> A limitada com parcial perde dinheiro.</li>
   </ul>
   <div class="bandeira">
     <h3>O que ainda falta</h3>
-    <p style="margin:0">26 pregoes, um instrumento, periodo de alta (a compra rende mais que a
-    venda em tudo). Os dois cortes a mais foram escolhidos nesta mesma amostra, entao o numero
-    do candidato e otimista. A Hull a favor &mdash; que era hipotese sua, definida antes de
-    medir &mdash; e a parte mais confiavel. O proximo passo e rodar o plano em simulador e
-    medir de novo com pregoes que nao entraram aqui.</p>
+    <p style="margin:0">Medir o custo real por operacao (corretagem, emolumentos e o escorregamento do stop a
+    mercado). Com {sn(F['hull']['ev'], 1)} pts brutos, e ele que decide se ha setup. O plano provisorio em
+    <code>plano_hull.html</code> traz a regra que passou no teste e o limite de custo.</p>
   </div>
 </section>
 <footer>Gerado por <code>hull_contra.py</code> e <code>relatorio_hull.py</code>.</footer>"""
@@ -720,7 +742,7 @@ bt.addEventListener('click',()=>{
   document.documentElement.dataset.tema=temaAtual()==='escuro'?'claro':'escuro';
   desenha(); if(typeof desenhaIncl==='function') desenhaIncl(); if(typeof desenhaDist==='function') desenhaDist(); pintaKline();});
 
-let gG='parcial', sC='h23f10', sE='fecha', sG='parcial';
+let gG='parcial', sC='h', sE='fecha', sG='parcial';
 function grupoAbas(id,attr,fn){
   const g=document.getElementById(id);
   g.addEventListener('click',ev=>{const b=ev.target.closest('.aba'); if(!b) return;
@@ -975,7 +997,14 @@ function desenhaDist(){
     {rotV:'por sinal',casas:1,esq:170});
 }
 
-desenha(); desenhaIncl(); desenhaDist(); preencheLista(); iniciaKline();
+function desenhaMeses(){
+  const K=['h','h23f10','contra'].map(v=>D.blocos['fecha|parcial|'+v].meses);
+  grupos('#g_meses',K[0].map((m,i)=>({nome:m.mes.slice(5)+'/'+m.mes.slice(2,4),
+    v:K.map(L=>L[i]?L[i].ev:null),n:K.map(L=>L[i]?L[i].n:0)})),
+    ['Hull + 2 a 4','Candidato','Hull contra'],{cores:['ouro','prata','bronze'],esq:60,altBarra:38});
+}
+bt.addEventListener('click',()=>desenhaMeses());
+desenha(); desenhaIncl(); desenhaDist(); desenhaMeses(); preencheLista(); iniciaKline();
 """
 
 HTML = r"""<!doctype html>
@@ -997,7 +1026,7 @@ __SCRIPTS__
 </html>
 """
 
-MENU = [('resposta', 'Resposta'), ('padrao', 'Pavio avaliado'), ('metodo', 'Metodo'), ('controles', 'Hull'),
+MENU = [('resposta', 'Resposta'), ('oos', 'Fora da amostra'), ('padrao', 'Pavio avaliado'), ('metodo', 'Metodo'), ('controles', 'Hull'),
         ('barras', 'Barras'), ('pavios', 'Pavios'), ('combinacoes', 'Combinacoes'), ('inclinacao', 'Inclinacao'), ('distancias', 'EMA e Keltner'),
         ('carteira', 'Carteira'), ('kline', 'Trade a trade'), ('conclusao', 'Conclusao')]
 
@@ -1018,7 +1047,7 @@ def markdown(D, F):
          '**O padrao** (compra; venda e o espelho): Hull 50 subindo no fechamento do candle contra, '
          '2 a 4 candles de baixa, depois 1 de alta. Compra no fechamento dele.', '',
          '## Qual pavio e avaliado', '', DIAGRAMA_MD, '',
-         '## Resposta curta: a Hull muda o jogo', '',
+         '## Resposta curta: a Hull a favor passou no teste fora da amostra; o resto, nao', '',
          '| Entrada no fechamento, 1:3 com parcial | Sinais | Pts/sinal |', '|:--|--:|--:|',
          f"| Hull a favor | {md_n(F['hull']['n'])} | {md_sn(F['hull']['ev'], 1)} |",
          f"| Sem olhar a Hull | {md_n(F['sem']['n'])} | {md_sn(F['sem']['ev'], 1)} |",
@@ -1034,10 +1063,25 @@ def markdown(D, F):
          f"- **Pavio do lado do fechamento ate 10%:** {md_sn(F['reg']['fech10']['ev'], 1)} contra "
          f"{md_sn(F['reg']['fech10']['fora']['ev'], 1)} acima disso; percentil "
          f"{md_n(min(F['reg_pct']['fech10']))} a {md_n(max(F['reg_pct']['fech10']))}.",
-         f"- **Carteira do candidato** (1:3 com parcial): {md_n(ct['trades'])} trades, {md_sn(ct['lucro_liq'])} pts "
-         f"(R$ {md_sn(ct['lucro_liq_rs'], 2)}), fator {md_n(ct['fator_lucro'], 2)}, acerto {md_n(ct['winrate'], 1)}%, "
-         f"rebaixamento {md_n(ct['dd_max'])} pts.",
-         '', '## 1. Hull contra os controles', '',
+         f"- **Carteira Hull + 2-4** (1:3 com parcial): {md_n(F['cart_h']['trades'])} trades "
+         f"(~{md_n(F['cart_h']['trades_dia'])} por pregao), {md_sn(F['cart_h']['lucro_liq'])} pts brutos, fator "
+         f"{md_n(F['cart_h']['fator_lucro'], 2)}, rebaixamento {md_n(F['cart_h']['dd_max'])}. A 5 pts de custo sobram "
+         f"{md_sn(F['hull']['ev'] - 5, 1)} por sinal; a 10, {md_sn(F['hull']['ev'] - 10, 1)}.",
+         '', '## Fora da amostra', '',
+         'A Hull a favor era hipotese previa; "2 a 3 barras" e "fechamento ate 10%" foram escolhidos na base antiga '
+         '(06/08 a 11/09). Pts por sinal, fechamento (t entre parenteses):', '',
+         '| Gestao | Regra | Antes (06/03-05/08) | Original (06/08-11/09) | Depois | Base inteira |',
+         '|:--|:--|--:|--:|--:|--:|']
+    for g in GES:
+        for var, rot in (('sem', 'Sem Hull'), ('contra', 'Hull contra'), ('h', 'Hull + 2-4'), ('h23f10', 'Candidato')):
+            b = D['blocos'][f'fecha|{g}|{var}']['sinais']
+            L.append(f"| {D['rot_gestao'][g]} | {rot} | " + ' | '.join(
+                f"{md_sn(b[k]['ev'], 1)} ({md_sn(b[k]['t'], 1)})" for k in ('antes', 'original', 'depois'))
+                + f" | {md_sn(b['total']['ev'], 1)} |")
+    L += ['', 'Mes a mes (1:3 com parcial): ' + '; '.join(
+        f"{rot} " + ' / '.join(f"{m['mes'][5:]} {md_sn(m['ev'], 1)}" for m in D['blocos'][f'fecha|parcial|{v}']['meses'])
+        for v, rot in (('h', 'Hull + 2-4'), ('contra', 'Hull contra'))) + '.',
+          '', '## 1. Hull contra os controles', '',
          '| Entrada | Gestao | Hull a favor | Tercos | Sem Hull | Hull contra | Invertido | Percentil |',
          '|:--|:--|--:|:--|--:|--:|--:|--:|']
     for ent in ENT:
@@ -1122,10 +1166,9 @@ def markdown(D, F):
         L += ['',
               f"- As faixas nao seguem ordem, e compra e venda discordam (Hull muito inclinada: compra "
               f"{md_sn(X['q5_1_h']['compra'], 1)}, venda {md_sn(X['q5_1_h']['venda'], 1)}).",
-              f"- Unico indicio: Hull quase plana na media de 5 barras (menos de ~{md_n(X['lim5_c'][0])} pts/barra) "
-              f"e a faixa mais fraca em todas as gestoes (percentil {md_n(min(X['q1_5_pct_c']))}-"
-              f"{md_n(max(X['q1_5_pct_c']))}), mas oscila nos tercos e so tem {md_n(X['q1_5_c']['n'])} sinais. "
-              'Hipotese para testar fora da amostra, nao regra.', '']
+              f"- O indicio da base antiga (Hull quase plana na media de 5 barras e a pior faixa) nao se confirmou: "
+              f"percentil {md_n(min(X['q1_5_pct_c']))}-{md_n(max(X['q1_5_pct_c']))} no candidato, e as faixas de 5 barras "
+              'vao e voltam.', '']
     T = D.get('dist')
     if T:
         X = fatos_dist(T)
@@ -1150,13 +1193,13 @@ def markdown(D, F):
                              + f" | {md_sn(b['compra'], 1)} | {md_sn(b['venda'], 1)} | "
                              + (md_n(b['sorteio']['percentil']) if b['sorteio'] else '-') + ' |')
                 L.append('')
-        L += [f"- **Hull alem da banda a favor** ({md_n(X['B']['pct_alem'])}% dos sinais): negativa nas 4 gestoes no "
-              f"conjunto base ({', '.join(md_sn(v, 1) for v in X['alem_h'])}); no candidato, {md_sn(X['alem_c']['ev'], 1)}. "
-              'Confirma exaustao no conjunto base, mas o efeito some dentro do candidato.',
-              f"- **Hull ainda do lado oposto da EMA** ({md_n(X['B']['pct_errado'])}% dos sinais): a melhor zona "
-              f"({md_sn(X['zona_h'][0]['ev'], 1)}). A faixa mais extrema (< -1 ATR) mede {', '.join(md_sn(v, 1) for v in X['m1_c'])} "
-              f"no candidato, mas o gradiente fino vai e volta e na limitada inverte ({md_sn(X['m1_c_lim'], 1)}). Hipotese, nao regra.",
-              '- **Em pontos:** sem ordem (zigue-zague).',
+        L += [f"- **Hull alem da banda a favor** ({md_n(X['B']['pct_alem'])}% dos sinais): "
+              f"{', '.join(md_sn(v, 1) for v in X['alem_h'])} nas 4 gestoes -- a exaustao pela banda nao se confirma.",
+              f"- **Hull ainda do lado oposto da EMA** ({md_n(X['B']['pct_errado'])}% dos sinais): a PIOR zona "
+              f"({md_sn(X['zona_h'][0]['ev'], 1)}); a faixa mais extrema (< -1 ATR) mede "
+              f"{', '.join(md_sn(v, 1) for v in X['m1_c'])} no candidato. Na base antiga era a melhor: a hipotese se inverteu.",
+              f"- **Em pontos:** quanto mais perto da banda a favor, melhor ({md_sn(X['banda_h'][0]['ev'], 1)} a "
+              f"{md_sn(X['banda_h'][4]['ev'], 1)}).",
               f"- **Consolidacao:** nao confirmada; Hull mais proxima da EMA mede {md_sn(X['abs_h'][0]['ev'], 1)}, "
               f"mais afastada {md_sn(X['abs_h'][4]['ev'], 1)}; tempo colada tem poucos casos.", '']
     L += ['', '## 7. Carteira, uma posicao por vez', '',
@@ -1169,105 +1212,100 @@ def markdown(D, F):
                 L.append(f"| {D['rot_entrada'][ent]} | {D['rot_gestao'][g]} | {rot} | {md_n(s['trades'])} | "
                          f"{md_sn(s['lucro_liq'])} | {md_n(s['fator_lucro'], 2)} | {md_n(s['winrate'], 1)}% | "
                          f"{md_n(s['dd_max'])} | {md_n(s['mc'].get('p_lucro'), 0)}% | {md_n(s['mc'].get('dd_p95'))} |")
+    bh = D['blocos']['fecha|parcial|h']['sinais']; bf = D['blocos'][f'fecha|parcial|{FINAL}']['sinais']
     L += ['', '## Conclusao', '',
-          '- **A Hull 50 a favor e o filtro que faltava:** praticamente dobra o valor por sinal, em todas as entradas '
-          'e gestoes e nos dois lados (no fechamento, tambem nos tres tercos); com a Hull contra o resultado quase zera.',
-          '- **Pavio do lado da abertura:** sem regra confiavel; a faixa do magenta so funciona na compra e se inverte na limitada.',
-          '- **Pavio do lado do fechamento ate 10%:** serve, nos dois lados.',
-          f"- **Candidato** (Hull + 2-3 + fechamento ate 10%, entrada no fechamento): {md_sn(fin['parcial']['ev'], 1)} pts "
-          f"por sinal no 1:3 com parcial, {md_sn(fin['r1']['ev'], 1)} no 1:1; cortes em plato.",
-          '- **Vale o sentido da Hull, nao o grau:** o tamanho da inclinacao nao ordena os resultados.',
-          '- **EMA 21 e Keltner nao acrescentam regra ao candidato:** exaustao (alem da banda) some dentro do candidato; consolidacao nao confirmada; hipotese aberta: Hull ainda do lado oposto da EMA.',
-          '- **Entrada no fechamento**, nao na limitada (que perde o primeiro terco).',
+          f"- **A Hull 50 a favor e real:** hipotese previa, mede {md_sn(bh['antes']['ev'], 1)} pts por sinal "
+          f"(t = {md_sn(bh['antes']['t'], 2)}) nos meses que nunca participaram de nada, sem mes negativo, nos dois lados.",
+          f"- **E pequena:** {md_sn(F['hull']['ev'], 1)} pts brutos por sinal na base inteira "
+          f"(a janela antiga media {md_sn(bh['original']['ev'], 1)}), com ~{md_n(F['cart_h']['trades_dia'])} operacoes por pregao. "
+          'O custo real decide se ha setup.',
+          f"- **Os cortes do candidato nao acrescentam nada fora da amostra:** {md_sn(bf['antes']['ev'], 1)} contra "
+          f"{md_sn(bh['antes']['ev'], 1)} sem eles.",
+          '- **Pavio da abertura, grau de inclinacao, distancia a banda:** nenhum e filtro. A distancia da Hull a EMA '
+          'mede ao contrario do que a base antiga sugeria.',
+          '- **Entrada no fechamento**, nao na limitada.',
           '',
-          '> 26 pregoes, um instrumento, periodo de alta, resultado bruto. Os dois cortes a mais foram escolhidos '
-          'nesta amostra; a Hull a favor, hipotese definida antes de medir, e a parte mais confiavel.',
-          '', 'Reproduzir: `python hull_contra.py && python relatorio_hull.py`.', '']
+          f"> {B['dias']} pregoes, um instrumento, resultado bruto. O plano provisorio (`PLANO_HULL.md`) usa a regra "
+          'que passou no teste -- Hull a favor + 2 a 4 candles -- e so vale com custo real bem abaixo do valor por sinal.',
+          '', 'Reproduzir: `python hull_contra.py && python hull_inclinacao.py && python hull_distancias.py && '
+          'python relatorio_hull.py`.', '']
     return '\n'.join(L)
 
 
 # ==================================================================== PLANO
 def plano(D, F):
-    ct = F['cart']; fin = F['fin']['parcial']; mc = ct['mc']
+    ct = F['cart_h']; mc = ct['mc']; hv = F['hull']
+    pu = D['carteira']['fecha|puro|h']
+    bh = D['blocos']['fecha|parcial|h']['sinais']
     passos = [
         ('1', 'A Hull 50 esta inclinada a favor do trade?',
          'Para <b>comprar</b>, a Hull 50 tem de estar <b>subindo</b> no fechamento do candle de sinal '
          '(valor atual maior que o do candle anterior). Para <b>vender</b>, descendo. Nao importa se o '
          'preco esta acima ou abaixo dela.',
-         f"E o filtro que sustenta o setup: com a Hull contra, o mesmo padrao mede "
-         f"{sn(F['contra']['ev'], 1)} pts por sinal; a favor, {sn(F['hull']['ev'], 1)}.",
+         f"E o filtro que passou no teste fora da amostra: nos meses que nao participaram de nenhuma escolha, "
+         f"{sn(bh['antes']['ev'], 1)} pts por sinal com a Hull a favor; "
+         f"{sn(D['blocos']['fecha|parcial|contra']['sinais']['antes']['ev'], 1)} com ela contra.",
          'Hull plana ou inclinada contra.'),
-        ('2', 'Vieram 2 ou 3 candles seguidos CONTRA a Hull?',
-         'Na compra: 2 ou 3 candles seguidos de <b>baixa</b>, no mesmo pregao, imediatamente antes do '
-         'candle de sinal. Na venda: 2 ou 3 de alta.',
-         f"3 antes mediu {sn(F['nb']['3']['ev'], 1)}, 2 antes {sn(F['nb']['2']['ev'], 1)}; 1 so e fraco "
-         f"({sn(F['nb']['1']['ev'], 1)}) e 4 perde ({sn(F['nb']['4']['ev'], 1)}).",
-         '1 candle, ou 4 ou mais. Retracao que atravessa a virada do dia.'),
+        ('2', 'Vieram de 2 a 4 candles seguidos CONTRA a Hull?',
+         'Na compra: 2, 3 ou 4 candles seguidos de <b>baixa</b>, no mesmo pregao, imediatamente antes do '
+         'candle de sinal. Na venda: 2 a 4 de alta.',
+         f"2, 3 e 4 antes mediram parecido ({sn(F['nb']['2']['ev'], 1)}, {sn(F['nb']['3']['ev'], 1)}, "
+         f"{sn(F['nb']['4']['ev'], 1)}); 1 so ({sn(F['nb']['1']['ev'], 1)}) e 5 ou mais ({sn(F['nb']['5+']['ev'], 1)}) nao pagam.",
+         '1 candle, ou 5 ou mais. Retracao que atravessa a virada do dia.'),
         ('3', 'O candle de sinal fechou A FAVOR da Hull?',
          'O candle atual fecha no sentido da Hull: <b>alta</b> na compra, <b>baixa</b> na venda. Espere o '
-         'candle <b>fechar</b>: antes disso o lado dele nao esta definido.',
-         'E o primeiro candle que devolve o movimento para o lado da Hull.',
+         'candle <b>fechar</b>.',
+         'E o primeiro candle que devolve o movimento para o lado da Hull. A entrada e no fechamento dele.',
          'Candle ainda aberto.'),
-        ('4', 'O pavio do lado do fechamento e pequeno?',
-         'Na compra, o pavio de <b>cima</b> do candle de sinal (maxima menos fechamento) ate <b>10 pontos</b> '
-         '(10% do corpo). Na venda, o de <b>baixo</b> (fechamento menos minima). O pavio do outro lado '
-         '(o da abertura) nao importa.',
-         f"Ate 10% mediu {sn(F['reg']['fech10']['ev'], 1)} pts por sinal; acima, "
-         f"{sn(F['reg']['fech10']['fora']['ev'], 1)}. Pavio grande alem do fechamento e o preco rejeitado "
-         'justamente no sentido do trade.',
-         'Pavio do lado do fechamento acima de 10 pontos.'),
     ]
     html_passos = ''.join(f"""
   <div class="passo"><div class="n">{p_[0]}</div><div>
     <h3>{p_[1]}</h3><p class="regra">{p_[2]}</p><p class="por">{p_[3]}</p>
     <p class="nao">Nao vale se: {p_[4]}</p></div></div>""" for p_ in passos)
-    chk = ['Hull 50 inclinada a favor do trade', '2 ou 3 candles seguidos contra a Hull, no mesmo pregao',
-           'Candle de sinal FECHADO a favor da Hull', 'Pavio do lado do fechamento ate 10 pontos',
-           'Nenhuma posicao aberta agora', 'Stop de 100 pontos definido ANTES de entrar']
+    chk = ['Hull 50 inclinada a favor do trade', '2 a 4 candles seguidos contra a Hull, no mesmo pregao',
+           'Candle de sinal FECHADO a favor da Hull', 'Nenhuma posicao aberta agora',
+           'Stop de 100 pontos definido ANTES de entrar', 'Custo real da operacao anotado']
     itens = ''.join(f'<li><span class="cx"></span><span>{t}</span></li>' for t in chk)
     B = D['base']
+    custo_lim = hv['ev'] / 2
     corpo = f"""
 <header class="capa">
   <div class="chapeu">Plano de trading &middot; WINFUT &middot; grafico de 20 PI &middot; provisorio</div>
   <h1>Hull a favor, retracao curta</h1>
-  <p class="sub">Quatro perguntas de sim ou nao, na ordem em que se olha para a tela. Se qualquer
+  <p class="sub">Tres perguntas de sim ou nao, na ordem em que se olha para a tela. Se qualquer
   uma der nao, o trade nao existe.</p>
   <div style="margin-top:18px">
-    <span class="selo">Hull 50</span><span class="selo">2 ou 3 candles contra</span>
+    <span class="selo">Hull 50</span><span class="selo">2 a 4 candles contra</span>
     <span class="selo">entrada no fechamento</span><span class="selo">stop 100 &middot; alvo 300</span>
     <span class="selo">parcial 50% em +100</span>
   </div>
   <div class="bandeira" style="margin-top:24px">
     <h3>Leia isto antes</h3>
-    <p style="margin-bottom:0">Sai de um backteste de <b>{B['dias']} pregoes</b> ({B['ini']} a
-    {B['fim']}), todo em mercado de alta, <b>bruto</b>. A Hull a favor era hipotese definida antes
-    de medir; os passos 2 e 4 foram ajustados nesta mesma amostra, entao os numeros abaixo sao um
-    teto. <b>Rode em simulador</b> antes de dinheiro real e compare com a tabela da secao
-    "Quando parar".</p>
+    <p style="margin-bottom:0">Backteste de <b>{B['dias']} pregoes</b> ({B['ini']} a {B['fim']}), <b>bruto</b>.
+    A regra deste plano e a que passou no teste fora da amostra; os cortes de pavio e de contagem do plano
+    anterior sairam, porque nao acrescentaram nada nos meses nunca vistos. O valor por sinal e pequeno
+    ({sn(hv['ev'], 1)} pts) e a frequencia e alta (~{n(ct['trades_dia'], 0)} operacoes por pregao):
+    <b>o custo real decide tudo</b>. Rode em simulador, meca o custo por operacao, e so continue se ele ficar
+    abaixo de {n(custo_lim, 1)} pontos.</p>
   </div>
 </header>
 
 <section id="setup">
   <h2>O setup</h2>
-  <p class="olho">Com a Hull 50 inclinada, o preco devolve 2 ou 3 candles contra ela. O primeiro
-  candle que volta a favor da Hull, fechando sem rejeicao, e a entrada.</p>
+  <p class="olho">Com a Hull 50 inclinada, o preco devolve 2 a 4 candles contra ela. O primeiro candle que
+  volta a favor da Hull e a entrada.</p>
   <div class="grade g4">
     {tile('Por operacao', sn(ct['exp_pts'], 1) + ' pts', f"R$ {sn(ct['exp_rs'], 2)} por contrato, bruto", 'pos')}
     {tile('Acerto', n(ct['winrate'], 1) + '%', 'alvo 300, stop 100, parcial em +100')}
     {tile('Frequencia', n(ct['trades_dia'], 1), 'operacoes por pregao')}
     {tile('Rebaixamento maximo', n(ct['dd_max']) + ' pts', f"Monte Carlo p95: {n(mc['dd_p95'])} pts")}
   </div>
-  <p class="nota">Carteira de uma posicao por vez, {n(ct['trades'])} operacoes. Com 10 pts de custo
-  por operacao, o valor por sinal cai de {sn(fin['ev'], 1)} para {sn(fin['ev'] - 10, 1)}.</p>
-</section>
-
-<section id="pavio">
-  <h2>Qual pavio olhar</h2>
-  {diagrama_pavio(titulo=False)}
+  <p class="nota">Carteira de uma posicao por vez, {n(ct['trades'])} operacoes. Com 5 pts de custo por operacao, o
+  valor por sinal cai de {sn(hv['ev'], 1)} para {sn(hv['ev'] - 5, 1)}; com 10, para {sn(hv['ev'] - 10, 1)}.</p>
 </section>
 
 <section id="passos">
-  <h2>As 4 perguntas</h2>
+  <h2>As 3 perguntas</h2>
   {html_passos}
 </section>
 
@@ -1275,7 +1313,7 @@ def plano(D, F):
   <h2>A gestao</h2>
   <div class="regua">
     <div class="faixa"><div class="vlr">Entrada</div><div>A mercado, no <b>fechamento</b> do candle de
-      sinal. Nao use limitada no meio do corpo: ela perdeu o primeiro terco do periodo.</div></div>
+      sinal. Nao use limitada no meio do corpo: com parcial, ela perde dinheiro.</div></div>
     <div class="faixa"><div class="vlr neg">Stop 100</div><div>100 pontos contra a entrada, colocado junto
       com a entrada.</div></div>
     <div class="faixa"><div class="vlr pos">+100</div><div>Sai <b>metade</b>. O stop do restante fica na
@@ -1287,10 +1325,9 @@ def plano(D, F):
     <div class="faixa"><div class="vlr">1 por vez</div><div>Sinal que aparece com posicao aberta e
       ignorado.</div></div>
   </div>
-  <p class="nota">Sem parcial (1:3 puro) o valor por sinal sobe para {sn(F['fin']['puro']['ev'], 1)}, mas o
-  rebaixamento vai de {n(ct['dd_max'])} para {n(D['carteira']['fecha|puro|h23f10']['dd_max'])} pts e a
-  maior sequencia de perdas de {ct['max_seq_perda']} para
-  {D['carteira']['fecha|puro|h23f10']['max_seq_perda']}.</p>
+  <p class="nota">Sem parcial (1:3 puro) o valor por sinal vai a {sn(F['hull_puro'], 1)}, mas o rebaixamento
+  vai de {n(ct['dd_max'])} para {n(pu['dd_max'])} pts e a maior sequencia de perdas de {ct['max_seq_perda']} para
+  {pu['max_seq_perda']}.</p>
 </section>
 
 <section id="checklist">
@@ -1303,10 +1340,10 @@ def plano(D, F):
   <div class="card rolo"><table>
     <thead><tr><th>Sinal de alerta</th><th>Referencia do backteste</th></tr></thead>
     <tbody>
+      <tr><td>Custo real medio por operacao acima de</td><td>{n(custo_lim, 1)} pts (metade do valor por sinal)</td></tr>
       <tr><td>Rebaixamento acima de</td><td>{n(mc['dd_p95'])} pts (p95 do Monte Carlo)</td></tr>
-      <tr><td>Perdas seguidas acima de</td><td>{ct['max_seq_perda']} (maximo medido)</td></tr>
-      <tr><td>Acerto, depois de 100 operacoes, abaixo de</td><td>25% (medido: {n(ct['winrate'], 1)}%)</td></tr>
-      <tr><td>Valor por operacao, depois de 100, abaixo de</td><td>o custo real por operacao</td></tr>
+      <tr><td>Perdas seguidas acima de</td><td>{2 * ct['max_seq_perda']} (o dobro do maximo medido)</td></tr>
+      <tr><td>Valor por operacao, depois de 300, abaixo de</td><td>o custo real por operacao</td></tr>
     </tbody></table>
     <p class="nota">Qualquer um desses: pare, volte ao simulador e meca de novo com a base nova.</p></div>
 </section>
@@ -1314,10 +1351,9 @@ def plano(D, F):
 <section id="naofazer">
   <h2>O que nao fazer</h2>
   <ul class="enx">
-    <li><b>Entrar antes do candle fechar.</b> O lado do candle e o pavio so existem no fechamento.</li>
-    <li><b>Filtrar pelo pavio da abertura.</b> O efeito medido aparece so na compra e se inverte
-    na limitada &mdash; nao e regra.</li>
-    <li><b>Aceitar 4 candles de retracao.</b> Mediu negativo.</li>
+    <li><b>Entrar antes do candle fechar.</b> O lado do candle so existe no fechamento.</li>
+    <li><b>Filtrar pelo pavio.</b> Nenhum corte de pavio passou no teste fora da amostra.</li>
+    <li><b>Exigir a Hull longe da banda ou do lado oposto da EMA.</b> Mediu ao contrario na base nova.</li>
     <li><b>Operar com a Hull plana ou contra.</b> E o que tira o resultado do zero.</li>
   </ul>
 </section>
@@ -1325,19 +1361,19 @@ def plano(D, F):
 Estudo completo em <code>hull_contra.html</code>.</footer>"""
 
     md = ['# Plano de trading -- Hull a favor, retracao curta (provisorio)', '',
-          f"WINFUT, grafico de 20 PI. Backteste de {B['dias']} pregoes ({B['ini']} a {B['fim']}), bruto, "
-          'mercado de alta. A Hull a favor era hipotese previa; os passos 2 e 4 foram ajustados nesta amostra. '
+          f"WINFUT, grafico de 20 PI. Backteste de {B['dias']} pregoes ({B['ini']} a {B['fim']}), bruto. A regra e a que "
+          'passou no teste fora da amostra (os cortes de pavio e de contagem do plano anterior sairam). '
+          f"**O custo real decide:** so continue se ficar abaixo de {md_n(custo_lim, 1)} pts por operacao. "
           '**Rode em simulador antes de dinheiro real.**', '',
           '## O setup', '',
           f"- Por operacao: {md_sn(ct['exp_pts'], 1)} pts brutos (R$ {md_sn(ct['exp_rs'], 2)} por contrato); "
-          f"com 10 pts de custo, {md_sn(fin['ev'] - 10, 1)} por sinal",
+          f"com 5 pts de custo, {md_sn(hv['ev'] - 5, 1)} por sinal; com 10, {md_sn(hv['ev'] - 10, 1)}",
           f"- Acerto: {md_n(ct['winrate'], 1)}%",
           f"- Frequencia: {md_n(ct['trades_dia'], 1)} operacoes por pregao",
           f"- Rebaixamento maximo: {md_n(ct['dd_max'])} pts (Monte Carlo p95: {md_n(mc['dd_p95'])})", '',
-          '## Qual pavio olhar', '', DIAGRAMA_MD, '',
-          '## As 4 perguntas (compra; venda e o espelho)', '']
+          '## As 3 perguntas (compra; venda e o espelho)', '']
     for p_ in passos:
-        strip = lambda s: s.replace('<b>', '**').replace('</b>', '**')
+        strip = lambda t: t.replace('<b>', '**').replace('</b>', '**')
         md += [f"### {p_[0]}. {p_[1]}", '', strip(p_[2]), '', f"> {strip(p_[3])}", '',
                f"**Nao vale se:** {p_[4]}", '']
     md += ['## Gestao', '',
@@ -1348,13 +1384,14 @@ Estudo completo em <code>hull_contra.html</code>.</footer>"""
            '- **Fim do dia:** zera no ultimo candle do pregao. Uma posicao por vez.', '',
            '## Checklist', ''] + [f'- [ ] {t}' for t in chk] + [
            '', '## Quando parar', '',
+           f"- Custo real medio acima de {md_n(custo_lim, 1)} pts por operacao",
            f"- Rebaixamento acima de {md_n(mc['dd_p95'])} pts (p95 do Monte Carlo)",
-           f"- Mais de {ct['max_seq_perda']} perdas seguidas",
-           f"- Acerto abaixo de 25% depois de 100 operacoes (medido: {md_n(ct['winrate'], 1)}%)",
-           '- Valor por operacao abaixo do custo real depois de 100 operacoes', '',
+           f"- Mais de {2 * ct['max_seq_perda']} perdas seguidas",
+           '- Valor por operacao abaixo do custo real depois de 300 operacoes', '',
            '## O que nao fazer', '',
-           '- Entrar antes do candle fechar.', '- Filtrar pelo pavio da abertura (efeito so na compra, se inverte na limitada).',
-           '- Aceitar 4 candles de retracao.', '- Operar com a Hull plana ou contra.', '']
+           '- Entrar antes do candle fechar.', '- Filtrar pelo pavio (nenhum corte passou fora da amostra).',
+           '- Exigir a Hull longe da banda ou do lado oposto da EMA (mediu ao contrario).',
+           '- Operar com a Hull plana ou contra.', '']
     return corpo, '\n'.join(md)
 
 
@@ -1372,11 +1409,11 @@ def main():
     if os.path.exists(pd_):
         with open(pd_, encoding='utf-8') as f:
             D['dist'] = json.load(f)
-    D['candles']['dt'] = [dt.datetime.fromtimestamp(t / 1000, dt.timezone.utc).strftime('%d/%m %H:%M:%S')
+    D['candles']['dt'] = [dt.datetime.fromtimestamp(t / 1000, dt.timezone.utc).strftime('%d/%m %H:%M')
                           for t in D['candles']['t']]
     del D['candles']['t']
 
-    corpo = ''.join([capa(D, F), resposta(D, F), padrao(D, F), metodo(D, F), controles(D, F),
+    corpo = ''.join([capa(D, F), resposta(D, F), fora_amostra(D, F), padrao(D, F), metodo(D, F), controles(D, F),
                      barras_pavios(D, F), combinacoes(D, F), inclinacao(D, F), distancias(D, F), carteira(D, F), conclusao(D, F)])
     with open(VENDOR_KC, encoding='utf-8') as f:
         kline = f.read()
@@ -1397,7 +1434,7 @@ bt.addEventListener('click',()=>{const t=document.documentElement.dataset.tema;
   document.documentElement.dataset.tema=escuro?'claro':'escuro';});
 </script>"""
     ph = monta('Plano Hull Retracao', molde.CSS + molde_plano.CSS_EXTRA,
-               [('setup', 'Setup'), ('pavio', 'Qual pavio'), ('passos', '4 perguntas'), ('gestao', 'Gestao'),
+               [('setup', 'Setup'), ('passos', '3 perguntas'), ('gestao', 'Gestao'),
                 ('checklist', 'Checklist'), ('parar', 'Quando parar'), ('naofazer', 'Nao fazer')],
                pc, js_tema)
     with open(os.path.join(BASE, 'plano_hull.html'), 'w', encoding='utf-8') as f:

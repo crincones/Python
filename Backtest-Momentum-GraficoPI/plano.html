@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Plano de trading &middot; momentum no grafico PI</title>
+<title>Plano Momentum PI</title>
 <style>
 :root{
   color-scheme: light;
@@ -236,312 +236,248 @@ nav.indice a:hover{background:var(--card2); color:var(--tinta)}
 </style>
 </head>
 <body>
-<nav class="indice"><div class="wrap"><ul><li><a href="#setup">O setup</a></li><li><a href="#gatilhos">Os 6 passos</a></li><li><a href="#niveis">Ouro, Prata, Bronze</a></li><li><a href="#gestao">Gestao</a></li><li><a href="#regras">Regras de mesa</a></li><li><a href="#galeria">Como se parece</a></li><li><a href="#checklist">Folha de checagem</a></li></ul></div></nav>
+<nav class="indice"><div class="wrap"><ul><li><a href="#status">Status</a></li><li><a href="#porque">Por que parou</a></li><li><a href="#hipotese">A hipotese</a></li><li><a href="#passos">Os 5 passos</a></li><li><a href="#gestao">Gestao</a></li><li><a href="#protocolo">Protocolo de teste</a></li><li><a href="#galeria">Como se parece</a></li><li><a href="#checklist">Folha de registro</a></li></ul></div></nav>
 <div class="wrap">
 
 <header class="capa">
   <div class="chapeu">Plano de trading &middot; WINFUT &middot; grafico de 20 PI</div>
-  <h1>Momentum de continuacao</h1>
-  <p class="sub">Seis perguntas de sim ou nao, na ordem em que se olha para a tela.
-  Se qualquer uma der nao, o trade nao existe &mdash; nao ha "quase".</p>
+  <h1>Plano suspenso,<br>hipotese em teste</h1>
+  <p class="sub">O setup Ouro deste plano nao passou no teste fora da amostra da base de
+  132 pregoes. Este documento substitui o plano anterior: diz o que nao operar,
+  e como testar, sem dinheiro, a unica hipotese que sobrou.</p>
   <div style="margin-top:18px">
-    <span class="selo">Hull 50</span>
-    <span class="selo">EMA 21</span>
-    <span class="selo">Keltner 21 &plusmn; 2,0 ATR</span>
-    <span class="selo">stop 100</span>
-    <span class="selo">alvo 300</span>
-    <span class="selo">parcial 50% em +100</span>
-  </div>
-  <div class="bandeira" style="margin-top:24px">
-    <h3>Leia isto antes</h3>
-    <p style="margin-bottom:0">Este plano sai de um backteste de
-    <b>26 pregoes</b> &mdash; pouco mais de um mes, todo ele em
-    mercado de alta. Os numeros sao <b>brutos</b>, sem corretagem e sem slippage.
-    Rode em simulador por pelo menos um mes antes de qualquer dinheiro real, e refaca
-    a medicao quando houver base maior. Ver <code>RESULTADOS.md</code> para o que o
-    teste nao mediu.</p>
+    <span class="selo">Ouro e Prata: nao operar</span>
+    <span class="selo">retracao de 3+ candles</span>
+    <span class="selo">so em simulador</span>
+    <span class="selo">stop 100 &middot; alvo 300</span>
   </div>
 </header>
 
-<section id="setup">
-  <h2>O setup</h2>
-  <p class="olho">No grafico de <b>20 PI</b> do WINFUT, todo candle fecha exatamente
-  100 pontos acima ou abaixo da sua abertura. O que se procura e uma <b>retracao</b>
-  contra a tendencia seguida de um candle de <b>continuacao</b> a favor, com a Hull 50
-  atras do preco e a EMA 21 cortando o par. A venda e o espelho exato da compra.</p>
-  <div class="grade g4">
-    <div class="tile"><div class="rot">Por operacao</div>
-      <div class="num pos">+34,1 pts</div>
-      <div class="pe">R$ +6,82 com 1 contrato</div></div>
-    <div class="tile"><div class="rot">Acerto</div>
-      <div class="num">36,5%</div>
-      <div class="pe">alvo de 300 com stop de 100</div></div>
-    <div class="tile"><div class="rot">Frequencia</div>
-      <div class="num">6,8</div>
-      <div class="pe">operacoes por pregao</div></div>
-    <div class="tile"><div class="rot">Rebaixamento maximo</div>
-      <div class="num">800 pts</div>
-      <div class="pe">R$ 160 &middot; a pior sequencia medida</div></div>
+<section id="status">
+  <h2>Status</h2>
+  <div class="grade g3">
+    <div class="tile"><div class="rot">Padrao Ouro</div><div class="num neg">Suspenso</div>
+      <div class="pe">-7,4 pts por trade fora da amostra</div></div>
+    <div class="tile"><div class="rot">Robo MomentumPI_OuroPrata</div><div class="num neg">Desligar</div>
+      <div class="pe">opera exatamente o Ouro e o Prata</div></div>
+    <div class="tile"><div class="rot">Retracao profunda</div><div class="num">Em teste</div>
+      <div class="pe">simulador, a partir de 15/09/2026</div></div>
   </div>
-  <p class="nota">Padrao Ouro, entrada no fechamento, com parcial. Medido em
-  170 operacoes ao longo de 25 pregoes.</p>
 </section>
 
-<section id="gatilhos">
-  <h2>Os seis passos</h2>
-  <p class="olho">Na ordem. O passo 5 e o unico <b>veto</b>: ele nao aprova nada,
-  so reprova &mdash; e e o que mais separa trade bom de trade ruim.</p>
+<section id="porque">
+  <h2>Por que o plano anterior parou</h2>
+  <p class="olho">Os filtros do Ouro foram escolhidos em 26 pregoes, de 06/08 a 11/09. A base nova tem
+  os cinco meses anteriores, que nunca participaram da escolha. Neles:</p>
+  <div class="card rolo"><table>
+    <thead><tr><th>Nivel</th><th>Antes (06/03 a 05/08)<br><small>nunca visto</small></th>
+      <th>Janela original (06/08 a 11/09)<br><small>onde as regras nasceram</small></th></tr></thead>
+    <tbody><tr><td>Ouro</td><td class="neg">-7,4<br><small style="color:var(--mudo)">678 sinais</small></td><td class="pos">+34,8<br><small style="color:var(--mudo)">181 sinais</small></td></tr><tr><td>Prata</td><td class="neg">-0,7<br><small style="color:var(--mudo)">1.016 sinais</small></td><td class="pos">+28,3<br><small style="color:var(--mudo)">258 sinais</small></td></tr><tr><td>Bronze</td><td class="neg">-0,2<br><small style="color:var(--mudo)">2.819 sinais</small></td><td class="pos">+11,4<br><small style="color:var(--mudo)">679 sinais</small></td></tr></tbody></table>
+    <p class="nota">Pontos por sinal, entrada no fechamento, 1:3 com parcial, brutos. Detalhe completo
+    em <code>relatorio.html</code>, secao &ldquo;Fora da amostra&rdquo;.</p></div>
+</section>
+
+<section id="hipotese">
+  <h2>A hipotese</h2>
+  <p class="olho">A mesma regra-base do CLAUDE.md &mdash; retracao, candle de continuacao, Hull 50 atras
+  do preco, EMA 21 cortando o par &mdash; com <b>uma</b> exigencia a mais: a retracao tem <b>3 ou
+  mais candles</b>. Sem veto de exaustao, sem filtro de pavio, sem horario.</p>
+  <div class="grade g4">
+    <div class="tile"><div class="rot">Medido por trade</div><div class="num pos">+15,0 pts</div>
+      <div class="pe">419 trades em 132 pregoes, bruto</div></div>
+    <div class="tile"><div class="rot">Acerto</div><div class="num">29,4%</div>
+      <div class="pe">fator de lucro 1,35</div></div>
+    <div class="tile"><div class="rot">Frequencia</div><div class="num">3,2</div>
+      <div class="pe">operacoes por pregao, em media</div></div>
+    <div class="tile"><div class="rot">Rebaixamento</div><div class="num">1.100 pts</div>
+      <div class="pe">Monte Carlo p95: 2.500 pts</div></div>
+  </div>
+  <div class="bandeira">
+    <h3>Por que isto nao e um setup ainda</h3>
+    <p style="margin-bottom:0">O corte de 3 candles foi escolhido depois de olhar esta mesma base.
+    Ele mede bem nos dois blocos (+15,3 antes, +14,8
+    na janela original) e nos tres tercos, mas quando a busca e refeita em dados embaralhados, considerando
+    todas as tabelas de filtro que foram olhadas, algo tao bom aparece
+    17% das vezes. So pregoes que ainda nao aconteceram decidem.</p>
+  </div>
+  <div class="card rolo" style="margin-top:16px"><table>
+    <thead><tr><th>Gestao</th><th>Por trade</th><th>Acerto</th><th>Fator</th><th>Rebaix.</th>
+      <th>Antes</th><th>Original</th></tr></thead><tbody><tr><td>1:3 com parcial</td><td>+15,0</td><td>29,4%</td><td>1,35</td><td>1.100</td><td>+15,3</td><td>+14,8</td></tr><tr><td>1:3 sem parcial</td><td>+16,5</td><td>29,4%</td><td>1,23</td><td>1.800</td><td>+16,2</td><td>+18,5</td></tr><tr><td>1:2 sem parcial</td><td>+17,7</td><td>39,4%</td><td>1,29</td><td>1.700</td><td>+22,5</td><td>-3,7</td></tr><tr><td>1:1 sem parcial</td><td>+13,6</td><td>56,8%</td><td>1,31</td><td>1.100</td><td>+14,4</td><td>+11,1</td></tr></tbody></table>
+    <p class="nota">As quatro gestoes medem parecido. O teste usa a do CLAUDE.md (1:3 com parcial) para nao
+    escolher gestao olhando o resultado.</p></div>
+</section>
+
+<section id="passos">
+  <h2>Os cinco passos</h2>
+  <p class="olho">Na ordem em que se olha para a tela. Qualquer &ldquo;nao&rdquo;, o sinal nao existe.</p>
   
   <div class="passo">
     <div class="n">1</div>
     <div>
       <h3>A Hull 50 esta no sentido do trade?</h3>
-      <p class="regra">Para comprar, a Hull tem de estar <b>subindo</b> e ficar <b>abaixo</b> do preco. Para vender, descendo e acima.</p>
-      <p class="por">E a unica coisa que define de que lado se opera. Sem ela nao ha "continuacao" de coisa nenhuma.</p>
-      <p class="nao">Nao vale se: Hull plana, ou preco do lado errado dela.</p>
+      <p class="regra">Para comprar, a Hull tem de estar <b>subindo</b> e <b>abaixo</b> da maxima do candle. Para vender, descendo e acima da minima.</p>
+      <p class="por">Define de que lado se opera. No estudo hull_contra, refeito na base nova, a Hull a favor foi a unica hipotese previa que passou no teste fora da amostra.</p>
+      <p class="nao">Nao vale se: Hull plana, ou do lado errado do preco.</p>
     </div>
   </div>
   <div class="passo">
     <div class="n">2</div>
     <div>
-      <h3>Houve uma retracao de 2 ou mais candles?</h3>
-      <p class="regra">Conte os candles <b>contra</b> a tendencia antes do candle atual. Precisa de <b>2 ou mais</b>.</p>
-      <p class="por">Um candle so de retracao mede menos da metade de dois. Um candle contra e ruido; dois ja sao um movimento.</p>
-      <p class="nao">Nao vale se: Retracao de um candle so. Espere a proxima.</p>
+      <h3>Houve uma retracao de 3 ou mais candles?</h3>
+      <p class="regra">Conte os candles <b>seguidos contra</b> a Hull, no mesmo pregao, antes do candle atual. Precisa de <b>3 ou mais</b>.</p>
+      <p class="por">E a hipotese em teste. Com 1 ou 2 candles de retracao a regra-base mediu perto de zero nos 132 pregoes; com 3 ou mais, positivo nos dois blocos e nos tres tercos.</p>
+      <p class="nao">Nao vale se: Retracao de 1 ou 2 candles, ou que atravessa a virada do dia.</p>
     </div>
   </div>
   <div class="passo">
     <div class="n">3</div>
     <div>
-      <h3>Os dois extremos do par estao fora da Hull?</h3>
-      <p class="regra">O topo do ultimo candle da retracao <b>e</b> o topo do candle de continuacao, os dois acima da Hull (numa compra). Na venda, os dois fundos abaixo dela.</p>
-      <p class="por">E o que separa um pullback dentro da tendencia de uma virada que ja atravessou a media.</p>
-      <p class="nao">Nao vale se: Qualquer um dos dois extremos do lado de dentro da Hull.</p>
+      <h3>O candle atual FECHOU a favor?</h3>
+      <p class="regra">Espere o candle <b>fechar</b>: alta na compra, baixa na venda. E o candle de continuacao.</p>
+      <p class="por">Antes do fechamento o sinal nao existe, e a entrada antecipada nao pode ser medida com a base disponivel.</p>
+      <p class="nao">Nao vale se: Candle ainda aberto.</p>
     </div>
   </div>
   <div class="passo">
     <div class="n">4</div>
     <div>
-      <h3>A EMA 21 passa entre os topos e os fundos do par?</h3>
-      <p class="regra">A EMA 21 tem de estar <b>dentro</b> da faixa que vai do menor fundo ao maior topo dos dois candles.</p>
-      <p class="por">E a forma de exigir que a retracao tenha ido ate a media -- nem menos (nao retraiu), nem mais (nao e mais retracao).</p>
-      <p class="nao">Nao vale se: EMA acima do par inteiro ou abaixo dele.</p>
-    </div>
-  </div>
-  <div class="passo veto">
-    <div class="n">&times;</div>
-    <div>
-      <h3>NAO e exaustao?</h3>
-      <p class="regra">Descarte se as <b>duas</b> coisas forem verdade ao mesmo tempo: a Hull esta <b>abrindo a curva</b> a favor do trade (acelerando) <b>e</b> o fechamento ja esta a mais de <b>0,45 ATR</b> da EMA 21 (com ATR perto de 150, isso e mais ou menos <b>68 pontos</b>).</p>
-      <p class="por">E o filtro que mais separa. Sozinha, nenhuma das duas metades diz quase nada; juntas marcam 4 de cada 10 sinais, e esses 4 nao pagam. E a intuicao da "Hull perto da banda", so que medida no lugar certo.</p>
-      <p class="nao">Nao vale se: Hull acelerando E preco ja esticado. E o unico veto obrigatorio.</p>
+      <h3>Os dois extremos do par estao fora da Hull?</h3>
+      <p class="regra">O topo do ultimo candle da retracao <b>e</b> o topo do candle de continuacao acima da Hull (numa compra). Na venda, os dois fundos abaixo dela.</p>
+      <p class="por">Separa um recuo dentro da tendencia de uma virada que ja atravessou a media.</p>
+      <p class="nao">Nao vale se: Qualquer um dos dois extremos do lado de dentro da Hull.</p>
     </div>
   </div>
   <div class="passo">
-    <div class="n">6</div>
+    <div class="n">5</div>
     <div>
-      <h3>O candle de continuacao tem a forma certa?</h3>
-      <p class="regra">Pavio total (range menos os 100 pontos do corpo) entre <b>25</b> e <b>90</b> pontos. Na pratica: o range do candle entre 125 e 190 pontos.</p>
-      <p class="por">No grafico de PI o corpo e sempre 100 pontos, entao o pavio E a forma. Candle liso demais e fino demais para pagar; candle de pavio enorme e briga, nao continuacao.</p>
-      <p class="nao">Nao vale se: Este e o que separa Ouro de Prata. Falhando so ele, o sinal ainda e Prata -- opere menor, ou nao opere.</p>
+      <h3>A EMA 21 passa entre os topos e os fundos do par?</h3>
+      <p class="regra">A EMA 21 tem de estar <b>dentro</b> da faixa do menor fundo ao maior topo dos dois candles.</p>
+      <p class="por">Exige que a retracao tenha ido ate a media.</p>
+      <p class="nao">Nao vale se: EMA acima do par inteiro ou abaixo dele.</p>
     </div>
-  </div>
-</section>
-
-<section id="niveis">
-  <h2>Ouro, Prata e Bronze</h2>
-  <p class="olho">Quando um passo falha, o sinal nao vira lixo automaticamente: ele
-  cai de nivel. A tabela diz o que fazer com cada um.</p>
-  <div class="card rolo">
-    <table>
-      <thead><tr><th>Nivel</th><th>Passos que cumpre</th><th>Por operacao</th>
-        <th>Acerto</th><th>Por dia</th><th>Rebaix.</th><th>O que fazer</th></tr></thead>
-      <tbody><tr><td><span class="tag"><span class="pt" style="background:var(--ouro)"></span>Ouro</span></td><td style="text-align:left">1 a 6, todos</td><td>+34,1 pts</td><td>36,5%</td><td>6,8</td><td>800 pts</td><td style="text-align:left"><b>Opere.</b></td></tr><tr><td><span class="tag"><span class="pt" style="background:var(--prata)"></span>Prata</span></td><td style="text-align:left">1 a 5 (falha so o 6)</td><td>+27,4 pts</td><td>34,2%</td><td>9,3</td><td>600 pts</td><td style="text-align:left"><b>Opere com metade do tamanho, ou deixe passar.</b></td></tr><tr><td><span class="tag"><span class="pt" style="background:var(--bronze)"></span>Bronze</span></td><td style="text-align:left">1 a 4 (falha o veto de exaustao)</td><td>+11,5 pts</td><td>29,3%</td><td>21,9</td><td>1.700 pts</td><td style="text-align:left"><b>Nao opere.</b></td></tr></tbody>
-    </table>
-    <p class="nota">"Por operacao" e o valor esperado medido no backteste, em pontos.
-    O Bronze aparece na tabela para que fique claro <b>quanto</b> se perde operando
-    tudo: quatro vezes mais trades para ganhar o mesmo, com o dobro do rebaixamento
-    &mdash; e isso antes de custo, que multiplica por quatro tambem.</p>
   </div>
 </section>
 
 <section id="gestao">
-  <h2>Gestao da operacao</h2>
-  <p class="olho">Fixa. Nao se negocia stop no meio do trade.</p>
+  <h2>Gestao</h2>
   <div class="regua">
-    <div class="faixa"><div class="vlr">Entrada</div>
-      <div>A mercado, no <b>fechamento</b> do candle de continuacao. Nao antecipe:
-      entrar no meio do corpo com ordem limitada mede pior, porque perde justamente
-      os trades que nao voltam &mdash; e sao eles que pagam.</div></div>
-    <div class="faixa"><div class="vlr">Stop 100</div>
-      <div>100 pontos da entrada, posicionado <b>antes</b> de a ordem de
-      entrada ser enviada. Um candle de PI inteiro e 100 pontos: o stop equivale a
-      um candio contra.</div></div>
-    <div class="faixa"><div class="vlr">Parcial +100</div>
-      <div>Sai <b>metade</b> da posicao em +100. O stop do restante
-      <b>nao se move</b>: com meia posicao e a parcial na mesma distancia do stop, o
-      preco em que o lucro ja realizado cancela a perda do restante <i>e</i> o stop
-      inicial. Mudou o risco, nao o preco &mdash; e por isso o "zero a zero" aqui e
-      zero de verdade.</div></div>
-    <div class="faixa"><div class="vlr">Alvo 300</div>
-      <div>O restante sai em +300. Nao mexa no alvo com a operacao aberta:
-      a grade inteira de stop e alvo foi medida, e 300 e um topo local &mdash; 250 e
-      400 medem pior.</div></div>
-    <div class="faixa"><div class="vlr">1:2, se quiser</div>
-      <div>Trocar o alvo de 300 por <b>200</b> sem parcial
-      sobe o acerto de 36,5% para <b>41,6%</b> &mdash;
-      e derruba a expectativa de +34,1 para
-      <b>+24,3</b> pontos por operacao, com rebaixamento
-      <b>maior</b> (1.400 contra 800). Mede positivo, mas
-      paga para errar menos. Se a sequencia de perdas do 1:3 for o que te tira do
-      plano, o 1:2 e um preco honesto por isso; fora dessa razao, nao compensa.</div></div>
-    <div class="faixa"><div class="vlr">Fim do pregao</div>
-      <div>Zera no ultimo candle do dia. Day trade, sem excecao.</div></div>
-    <div class="faixa"><div class="vlr">Uma por vez</div>
-      <div>Enquanto houver posicao aberta, sinal novo e ignorado. Todos os numeros
-      deste plano foram medidos assim.</div></div>
+    <div class="faixa"><div class="vlr">Entrada</div><div>A mercado, no <b>fechamento</b> do candle de
+      continuacao. Nao antecipe: a entrada antecipada nao pode ser medida com a base disponivel.</div></div>
+    <div class="faixa"><div class="vlr neg">Stop 100</div><div>100 pontos, junto com
+      a entrada.</div></div>
+    <div class="faixa"><div class="vlr pos">+100</div><div>Sai <b>metade</b>. O stop do
+      restante fica na media da operacao &mdash; com metade realizada em +100, e o proprio stop
+      inicial: se voltar, zero a zero.</div></div>
+    <div class="faixa"><div class="vlr pos">Alvo 300</div><div>Sai o restante.</div></div>
+    <div class="faixa"><div class="vlr">Fim do dia</div><div>Zera o que estiver aberto no ultimo candle do
+      pregao.</div></div>
+    <div class="faixa"><div class="vlr">1 por vez</div><div>Sinal com posicao aberta e ignorado (e
+      anotado).</div></div>
   </div>
 </section>
 
-<section id="regras">
-  <h2>Regras de mesa</h2>
-  <div class="grade g2">
-    <div class="card">
-      <h3>O que o backteste apoia</h3>
-      <ul class="enx" style="margin-bottom:0">
-        <li>Operar compra e venda &mdash; os dois lados medem parecido
-        (40,5% de acerto na compra, 33,0% na venda).</li>
-        <li>Operar o dia inteiro. Nenhuma faixa de horario se mostrou boa ou ruim de
-        forma estavel, inclusive a hora seguinte a abertura do mercado a vista.</li>
-        <li>Tamanho de posicao constante. Nada no teste apoia aumentar depois de ganho
-        ou depois de perda.</li>
-      </ul>
-    </div>
-    <div class="card">
-      <h3>O que fica a criterio, com medicao a favor</h3>
-      <ul class="enx" style="margin-bottom:0">
-        <li><b>Hull colada na EMA.</b> Quando a Hull passa mais de 8 candles colada na
-        EMA 21, o setup mediu muito mal &mdash; e a consolidacao. A amostra e pequena
-        (31 sinais) e por isso o filtro nao entrou na regra, mas se voce ve o cacho
-        embolado na tela, tem medicao a seu favor para deixar passar.</li>
-        <li><b>Sem a parcial.</b> Rende mais (+44,7
-        contra +34,1 por trade) e balanca mais
-        (1.200 contra 800 pontos de rebaixamento). E
-        escolha de conforto, nao de backteste.</li>
-      </ul>
-    </div>
+<section id="protocolo">
+  <h2>Protocolo de teste</h2>
+  <p class="olho">As regras acima ficam <b>congeladas</b> durante o teste. Mudar um corte no meio
+  zera a contagem: o teste passa a ser de outra hipotese.</p>
+  <div class="regua">
+    <div class="faixa"><div class="vlr">Onde</div><div>Simulador, 1 contrato, a partir de
+      15/09/2026. Em paralelo, exportar a base do robo toda semana e rodar
+      <code>python rodar.py &amp;&amp; python candidato.py</code>: o bloco &ldquo;depois&rdquo; mede a mesma
+      regra nos pregoes novos, sem erro de execucao.</div></div>
+    <div class="faixa"><div class="vlr">Quanto</div><div><b>625 operacoes</b> (cerca de
+      197 pregoes). E o numero em que um valor real de +10 pontos por trade
+      apareceria com t acima de 2, com o desvio medido de 125 pontos.</div></div>
+    <div class="faixa"><div class="vlr pos">Confirma</div><div>Depois de 625 operacoes: valor
+      por trade <b>ja descontado o custo real</b> acima de zero, com t &ge; 2. So entao vale escrever um plano
+      de dinheiro real &mdash; com os numeros do teste, nao os do backteste.</div></div>
+    <div class="faixa"><div class="vlr neg">Abandona</div><div>Qualquer um: valor por trade &le; 0 depois de
+      100 operacoes (se a hipotese fosse verdadeira, isso aconteceria
+      12% das vezes); rebaixamento acima de 2.500 pontos (p95 do
+      Monte Carlo); mais de 16 perdas seguidas (o dobro do maximo medido).</div></div>
+    <div class="faixa"><div class="vlr">Inconclusivo</div><div>Positivo mas com t &lt; 2 em
+      625 operacoes: continua em simulador ate 1.250.</div></div>
   </div>
 </section>
 
 <section id="galeria">
-  <h2>Como o Ouro se parece</h2>
-  <p class="olho">Seis exemplos reais, espalhados pelo periodo do backteste. A faixa
-  clara e o par <b>retracao + continuacao</b>; a seta e a entrada; as linhas sao stop,
-  parcial e alvo. A <b>Hull 50</b> e a linha amarela, a <b>EMA 21</b> a azul. Todos os
-  seis cumprem os seis passos &mdash; o que muda de um para o outro e so o desfecho,
-  que nao se sabe na hora de entrar.</p>
+  <h2>Como a hipotese se parece</h2>
+  <p class="olho">Seis operacoes reais do backteste, espalhadas pelo periodo. A faixa clara vai do primeiro
+  candle da retracao ao candle de continuacao; a seta e a entrada; as linhas sao stop, parcial e alvo. A
+  <b>Hull 50</b> e a linha amarela, a <b>EMA 21</b> a azul.</p>
   <div class="grade g3 galeria">
       <figure class="ex">
         <div class="ex-topo">
-          <span class="ex-data">07/08 09:30 &middot;
-            compra</span>
-          <span class="ex-res pos">+200 pts</span>
+          <span class="ex-data">06/03 10:19 &middot; venda</span>
+          <span class="ex-res neg">-100 pts</span>
         </div>
         <div id="gal_0" class="ex-viz"></div>
-        <figcaption>Retracao de 3 candles,
-          pavio de 70 pts. Saiu no alvo &mdash;
-          ganhou.</figcaption>
+        <figcaption>Retracao de 3 candles. Saiu no stop &mdash;
+          perdeu.</figcaption>
       </figure>
       <figure class="ex">
         <div class="ex-topo">
-          <span class="ex-data">19/08 10:36 &middot;
-            compra</span>
+          <span class="ex-data">27/03 10:59 &middot; venda</span>
           <span class="ex-res neg">-100 pts</span>
         </div>
         <div id="gal_1" class="ex-viz"></div>
-        <figcaption>Retracao de 2 candles,
-          pavio de 80 pts. Saiu no stop &mdash;
+        <figcaption>Retracao de 3 candles. Saiu no stop &mdash;
           perdeu.</figcaption>
       </figure>
       <figure class="ex">
         <div class="ex-topo">
-          <span class="ex-data">27/08 09:20 &middot;
-            compra</span>
-          <span class="ex-res ">0 pts</span>
+          <span class="ex-data">04/05 10:01 &middot; venda</span>
+          <span class="ex-res neg">-100 pts</span>
         </div>
         <div id="gal_2" class="ex-viz"></div>
-        <figcaption>Retracao de 2 candles,
-          pavio de 40 pts. Saiu no zero a zero &mdash;
-          empatou.</figcaption>
+        <figcaption>Retracao de 3 candles. Saiu no stop &mdash;
+          perdeu.</figcaption>
       </figure>
       <figure class="ex">
         <div class="ex-topo">
-          <span class="ex-data">01/09 14:06 &middot;
-            compra</span>
+          <span class="ex-data">16/06 16:32 &middot; venda</span>
           <span class="ex-res pos">+200 pts</span>
         </div>
         <div id="gal_3" class="ex-viz"></div>
-        <figcaption>Retracao de 2 candles,
-          pavio de 30 pts. Saiu no alvo &mdash;
+        <figcaption>Retracao de 3 candles. Saiu no alvo &mdash;
           ganhou.</figcaption>
       </figure>
       <figure class="ex">
         <div class="ex-topo">
-          <span class="ex-data">08/09 14:40 &middot;
-            compra</span>
-          <span class="ex-res ">0 pts</span>
+          <span class="ex-data">06/08 10:05 &middot; venda</span>
+          <span class="ex-res neg">-100 pts</span>
         </div>
         <div id="gal_4" class="ex-viz"></div>
-        <figcaption>Retracao de 2 candles,
-          pavio de 40 pts. Saiu no zero a zero &mdash;
-          empatou.</figcaption>
+        <figcaption>Retracao de 3 candles. Saiu no stop &mdash;
+          perdeu.</figcaption>
       </figure>
       <figure class="ex">
         <div class="ex-topo">
-          <span class="ex-data">11/09 11:30 &middot;
-            venda</span>
-          <span class="ex-res neg">-100 pts</span>
+          <span class="ex-data">14/09 11:30 &middot; venda</span>
+          <span class="ex-res ">0 pts</span>
         </div>
         <div id="gal_5" class="ex-viz"></div>
-        <figcaption>Retracao de 3 candles,
-          pavio de 75 pts. Saiu no stop &mdash;
-          perdeu.</figcaption>
+        <figcaption>Retracao de 4 candles. Saiu no zero a zero &mdash;
+          empatou.</figcaption>
       </figure></div>
-  <p class="nota">Com acerto de 36%, a maioria dos exemplos de
-  qualquer amostra honesta vai ser de perda &mdash; e por isso eles estao aqui. O que
-  ha para decorar e o <b>desenho</b>: onde a Hull passa, quantos candles a retracao
-  tem, e o tamanho do pavio do candle que retoma.</p>
+  <p class="nota">Com acerto perto de 29%, a maioria das operacoes de qualquer amostra honesta
+  e de perda. O que ha para decorar e o desenho.</p>
 </section>
 
 <section id="checklist">
-  <h2>Folha de checagem</h2>
-  <p class="olho">Para imprimir e deixar do lado do monitor. Todas marcadas, envia.
-  Uma so em branco, nao envia.</p>
-  <div class="card">
-    <ul class="lista-chk"><li><span class="cx"></span><span>Hull 50 no sentido do trade e atras do preco</span></li><li><span class="cx"></span><span>Retracao de 2 ou mais candles</span></li><li><span class="cx"></span><span>Os dois extremos do par fora da Hull</span></li><li><span class="cx"></span><span>EMA 21 entre os topos e os fundos do par</span></li><li><span class="cx x"></span><span>NAO e exaustao (Hull acelerando + preco esticado)</span></li><li><span class="cx"></span><span>Pavio total do candle entre 25 e 90 pontos</span></li><li><span class="cx"></span><span>Stop de 100 pontos ja posicionado ANTES de entrar</span></li><li><span class="cx"></span><span>Nao ha posicao aberta neste momento</span></li></ul>
-  </div>
-  <div class="bandeira">
-    <h3>Os tres erros que este plano tenta impedir</h3>
-    <ol class="enx" style="margin-bottom:0">
-      <li><b>Entrar esticado.</b> O passo 5 existe so para isso, e e o filtro que
-      mais separa.</li>
-      <li><b>Chamar um candle de retracao.</b> O passo 2 pede dois.</li>
-      <li><b>Operar todo sinal que aparece.</b> O Bronze existe na tabela para
-      mostrar o preco disso.</li>
-    </ol>
-  </div>
+  <h2>Folha de registro, por operacao</h2>
+  <div class="card"><ul class="lista-chk"><li><span class="cx"></span><span>Data, hora e lado do sinal</span></li><li><span class="cx"></span><span>Quantos candles de retracao (3 ou mais)</span></li><li><span class="cx"></span><span>Hull 50 no sentido do trade e atras do extremo dos dois candles do par</span></li><li><span class="cx"></span><span>EMA 21 entre o menor fundo e o maior topo do par</span></li><li><span class="cx"></span><span>Preco de entrada (fechamento do candle de continuacao) e preco de saida</span></li><li><span class="cx"></span><span>Motivo da saida: stop, zero a zero, alvo ou fim do pregao</span></li><li><span class="cx"></span><span>Custo real da operacao (corretagem, emolumentos e escorregamento)</span></li><li><span class="cx"></span><span>Sinal que apareceu com posicao aberta: anotado como ignorado</span></li></ul></div>
 </section>
 
 <footer>
-  <p>Plano gerado do backteste em <code>relatorio.html</code> / <code>RESULTADOS.md</code>.
-  Base: 10.000 candles de 20 PI, 26
-  pregoes (2026-08-06 a 2026-09-11).</p>
-  <p>Backteste nao e promessa. 26 pregoes de mercado em alta
-  nao garantem resultado nenhum.</p>
+  <p>Gerado por <code>plano.py</code> a partir de <code>saida/resumo.json</code>. Base:
+  50.611 candles de 20 PI, 132 pregoes
+  (2026-03-06 a 2026-09-14).</p>
+  <p>Backteste nao e promessa. O plano anterior e a prova.</p>
 </footer>
 </div>
 <button class="tema" id="btema" title="Alternar tema" aria-label="Alternar tema">&#9681;</button>
-<script>const D={"candles":{"o":[175320.0,175420.0,175520.0,175420.0,175520.0,175420.0,175320.0,175420.0,175520.0,175620.0,175720.0,175820.0,175720.0,175620.0,175520.0,175620.0,175720.0,175820.0,175920.0,175820.0,175920.0,172135.0,172035.0,172135.0,172035.0,172135.0,172035.0,172135.0,172235.0,172335.0,172235.0,172335.0,172435.0,172335.0,172235.0,172335.0,172235.0,172335.0,172435.0,177170.0,177270.0,177170.0,177270.0,177370.0,177470.0,177370.0,177270.0,177170.0,177070.0,177170.0,177270.0,177170.0,177070.0,177170.0,177270.0,177170.0,177270.0,177170.0,177070.0,176970.0,176870.0,182890.0,182990.0,183090.0,182990.0,182890.0,182990.0,183090.0,182990.0,183090.0,183190.0,183090.0,183190.0,183090.0,182990.0,183090.0,183190.0,183290.0,183390.0,183290.0,183190.0,189880.0,189780.0,189880.0,189980.0,189880.0,189980.0,190080.0,190180.0,190080.0,189980.0,190080.0,190180.0,190080.0,189980.0,190080.0,190180.0,190080.0,189980.0,190080.0,190180.0,188960.0,189060.0,189160.0,189260.0,189360.0,189260.0,189160.0,189060.0,188960.0,188860.0,188760.0,188660.0,188760.0,188860.0,188960.0,188860.0,188960.0,188860.0,188760.0],"h":[175485.0,175550.0,175565.0,175535.0,175595.0,175420.0,175425.0,175550.0,175625.0,175730.0,175855.0,175870.0,175730.0,175630.0,175640.0,175735.0,175830.0,175925.0,175945.0,175920.0,176035.0,172135.0,172135.0,172150.0,172140.0,172150.0,172140.0,172240.0,172345.0,172345.0,172335.0,172440.0,172515.0,172410.0,172340.0,172350.0,172335.0,172435.0,172545.0,177270.0,177280.0,177275.0,177370.0,177470.0,177570.0,177375.0,177270.0,177260.0,177175.0,177285.0,177320.0,177195.0,177170.0,177280.0,177345.0,177280.0,177285.0,177180.0,177105.0,177010.0,176925.0,183005.0,183100.0,183145.0,183000.0,183055.0,183090.0,183095.0,183095.0,183200.0,183235.0,183190.0,183220.0,183115.0,183095.0,183195.0,183295.0,183390.0,183390.0,183340.0,183195.0,189890.0,189880.0,189980.0,189995.0,189980.0,190085.0,190185.0,190215.0,190160.0,190085.0,190180.0,190270.0,190125.0,190085.0,190185.0,190215.0,190085.0,190100.0,190180.0,190290.0,189060.0,189165.0,189285.0,189365.0,189380.0,189295.0,189190.0,189100.0,188970.0,188890.0,188810.0,188780.0,188885.0,188960.0,189025.0,188960.0,188960.0,188960.0,188780.0],"l":[175315.0,175360.0,175320.0,175335.0,175300.0,175320.0,175300.0,175360.0,175495.0,175620.0,175720.0,175710.0,175615.0,175470.0,175470.0,175570.0,175655.0,175775.0,175815.0,175740.0,175870.0,172015.0,171995.0,172030.0,171935.0,172035.0,172035.0,172080.0,172220.0,172230.0,172220.0,172315.0,172325.0,172225.0,172160.0,172215.0,172190.0,172290.0,172345.0,177100.0,177170.0,177105.0,177190.0,177330.0,177350.0,177260.0,177160.0,177070.0,177065.0,177105.0,177160.0,177050.0,177030.0,177095.0,177165.0,177165.0,177165.0,177065.0,176955.0,176865.0,176750.0,182815.0,182960.0,182985.0,182890.0,182855.0,182990.0,182990.0,182960.0,183065.0,183060.0,183025.0,183090.0,182980.0,182965.0,183065.0,183180.0,183215.0,183285.0,183185.0,183090.0,189775.0,189780.0,189775.0,189880.0,189870.0,189945.0,190015.0,190080.0,189980.0,189975.0,190070.0,190080.0,189945.0,189945.0,190055.0,190075.0,189980.0,189895.0,190050.0,190165.0,188905.0,189025.0,189090.0,189190.0,189250.0,189150.0,189055.0,188955.0,188830.0,188755.0,188650.0,188640.0,188760.0,188850.0,188850.0,188845.0,188860.0,188755.0,188655.0],"c":[175420.0,175520.0,175420.0,175520.0,175420.0,175320.0,175420.0,175520.0,175620.0,175720.0,175820.0,175720.0,175620.0,175520.0,175620.0,175720.0,175820.0,175920.0,175820.0,175920.0,176020.0,172035.0,172135.0,172035.0,172135.0,172035.0,172135.0,172235.0,172335.0,172235.0,172335.0,172435.0,172335.0,172235.0,172335.0,172235.0,172335.0,172435.0,172535.0,177270.0,177170.0,177270.0,177370.0,177470.0,177370.0,177270.0,177170.0,177070.0,177170.0,177270.0,177170.0,177070.0,177170.0,177270.0,177170.0,177270.0,177170.0,177070.0,176970.0,176870.0,176770.0,182990.0,183090.0,182990.0,182890.0,182990.0,183090.0,182990.0,183090.0,183190.0,183090.0,183190.0,183090.0,182990.0,183090.0,183190.0,183290.0,183390.0,183290.0,183190.0,183090.0,189780.0,189880.0,189980.0,189880.0,189980.0,190080.0,190180.0,190080.0,189980.0,190080.0,190180.0,190080.0,189980.0,190080.0,190180.0,190080.0,189980.0,190080.0,190180.0,190280.0,189060.0,189160.0,189260.0,189360.0,189260.0,189160.0,189060.0,188960.0,188860.0,188760.0,188660.0,188760.0,188860.0,188960.0,188860.0,188960.0,188860.0,188760.0,188660.0],"hma":[175440.39,175428.39,175415.99,175407.27,175399.48,175390.19,175382.73,175379.33,175382.0,175392.55,175412.11,175435.91,175459.55,175478.72,175495.79,175513.23,175533.58,175559.43,175587.32,175619.75,175658.46,172227.65,172230.27,172227.96,172224.34,172217.31,172211.19,172209.09,172213.07,172218.39,172227.24,172240.77,172254.56,172264.6,172273.78,172279.26,172285.01,172294.04,172308.95,176867.32,176873.51,176885.44,176904.56,176932.35,176964.28,176996.66,177025.83,177049.31,177070.39,177092.2,177111.89,177127.53,177142.9,177160.73,177176.96,177193.7,177207.14,177214.73,177214.01,177202.84,177180.24,183107.97,183101.05,183092.82,183081.12,183069.48,183060.54,183050.4,183042.0,183038.21,183036.15,183038.79,183042.21,183043.5,183046.14,183052.47,183064.54,183084.17,183106.44,183127.72,183144.73,189547.6,189558.55,189576.83,189597.64,189622.41,189652.4,189688.98,189727.92,189764.98,189802.53,189842.69,189881.09,189914.26,189945.6,189978.18,190008.64,190033.62,190056.38,190080.19,190107.21,189002.36,189010.62,189024.8,189046.95,189072.34,189097.14,189117.95,189131.38,189134.88,189126.81,189106.32,189079.45,189051.36,189026.3,189001.69,188980.97,188961.01,188938.97,188912.21],"ema":[175630.54,175620.5,175602.27,175594.79,175578.9,175555.36,175543.06,175540.96,175548.15,175563.77,175587.06,175599.15,175601.04,175593.68,175596.07,175607.34,175626.67,175653.34,175668.49,175691.35,175721.23,172136.71,172136.56,172127.32,172128.02,172119.57,172120.97,172131.34,172149.85,172157.59,172173.72,172197.47,172209.97,172212.25,172223.41,172224.46,172234.51,172252.74,172278.4,177143.95,177146.32,177157.56,177176.87,177203.52,177218.66,177223.32,177218.48,177204.98,177201.8,177208.0,177204.54,177192.31,177190.28,177197.53,177195.03,177201.84,177198.95,177187.23,177167.48,177140.44,177106.76,182998.44,183006.76,183005.24,182994.76,182994.33,183003.03,183001.84,183009.86,183026.23,183032.03,183046.39,183050.36,183044.87,183048.97,183061.79,183082.54,183110.49,183126.81,183132.55,183128.68,189837.43,189841.3,189853.91,189856.28,189867.53,189886.84,189913.49,189928.63,189933.3,189946.64,189967.85,189978.05,189978.23,189987.48,190004.98,190011.8,190008.91,190015.37,190030.34,190053.03,189079.96,189087.23,189102.94,189126.31,189138.46,189140.42,189133.11,189117.37,189093.98,189063.61,189026.92,189002.66,188989.69,188986.99,188975.44,188974.04,188963.67,188945.16,188919.23],"dt":["07/08 09:30:03","07/08 09:30:03","07/08 09:30:03","07/08 09:30:04","07/08 09:30:04","07/08 09:30:05","07/08 09:30:05","07/08 09:30:05","07/08 09:30:06","07/08 09:30:08","07/08 09:30:10","07/08 09:30:10","07/08 09:30:12","07/08 09:30:13","07/08 09:30:13","07/08 09:30:13","07/08 09:30:14","07/08 09:30:25","07/08 09:30:27","07/08 09:30:35","07/08 09:30:39","19/08 10:32:07","19/08 10:32:08","19/08 10:32:19","19/08 10:32:30","19/08 10:33:02","19/08 10:33:27","19/08 10:33:43","19/08 10:34:02","19/08 10:34:26","19/08 10:34:29","19/08 10:34:50","19/08 10:35:06","19/08 10:35:27","19/08 10:36:04","19/08 10:36:20","19/08 10:36:34","19/08 10:37:22","19/08 10:38:01","27/08 09:09:33","27/08 09:10:07","27/08 09:10:16","27/08 09:11:19","27/08 09:13:24","27/08 09:14:18","27/08 09:16:13","27/08 09:16:37","27/08 09:16:39","27/08 09:17:47","27/08 09:18:18","27/08 09:19:51","27/08 09:20:17","27/08 09:20:28","27/08 09:21:01","27/08 09:22:44","27/08 09:23:24","27/08 09:23:51","27/08 09:25:22","27/08 09:25:30","27/08 09:26:41","27/08 09:27:43","01/09 13:36:46","01/09 13:38:49","01/09 13:39:12","01/09 13:41:26","01/09 13:42:37","01/09 13:43:34","01/09 13:43:36","01/09 13:45:36","01/09 13:46:17","01/09 13:46:35","01/09 13:51:54","01/09 14:02:15","01/09 14:04:44","01/09 14:06:55","01/09 14:08:06","01/09 14:11:30","01/09 14:15:49","01/09 14:17:28","01/09 14:18:00","01/09 14:20:00","08/09 14:01:21","08/09 14:03:46","08/09 14:04:38","08/09 14:08:55","08/09 14:13:45","08/09 14:17:10","08/09 14:18:27","08/09 14:22:10","08/09 14:24:01","08/09 14:25:54","08/09 14:29:13","08/09 14:30:01","08/09 14:34:50","08/09 14:40:22","08/09 14:43:03","08/09 14:44:27","08/09 14:46:00","08/09 14:47:32","08/09 14:55:46","08/09 15:00:37","11/09 11:17:08","11/09 11:17:56","11/09 11:18:29","11/09 11:19:59","11/09 11:21:28","11/09 11:21:56","11/09 11:23:04","11/09 11:23:15","11/09 11:24:09","11/09 11:24:24","11/09 11:25:11","11/09 11:28:10","11/09 11:28:21","11/09 11:29:22","11/09 11:30:15","11/09 11:32:07","11/09 11:32:25","11/09 11:33:14","11/09 11:36:10"],"kc_sup":null,"kc_inf":null},"parametros":{"ema":21,"hull":50,"atr":21,"desvio":2.0,"stop":100.0,"alvo":300.0,"parcial_em":100.0,"frac":0.5,"apos":"media","max_barras":120,"fecha_dia":1,"val_ponto":0.2,"pi":100.0,"estic_exaustao":0.45,"n_ret_min":2,"pavio_min":25.0,"pavio_max":90.0},"galeria_ex":[{"de":0,"ate":20,"i_ret":11,"i_sin":14,"i_ent":14,"i_sai":17,"lado":1,"pts":200.0,"preco_ent":175620.0,"data":"07/08 09:30","rot_saida":"alvo","n_ret":3,"pav_tot":70.0,"motivo":"cumpre os seis passos","nivel":"ouro"},{"de":21,"ate":38,"i_ret":32,"i_sin":34,"i_ent":34,"i_sai":35,"lado":1,"pts":-100.0,"preco_ent":172335.0,"data":"19/08 10:36","rot_saida":"stop","n_ret":2,"pav_tot":80.0,"motivo":"cumpre os seis passos","nivel":"ouro"},{"de":39,"ate":60,"i_ret":50,"i_sin":52,"i_ent":52,"i_sai":57,"lado":1,"pts":0.0,"preco_ent":177170.0,"data":"27/08 09:20","rot_saida":"zero a zero","n_ret":2,"pav_tot":40.0,"motivo":"cumpre os seis passos","nivel":"ouro"},{"de":61,"ate":80,"i_ret":72,"i_sin":74,"i_ent":74,"i_sai":77,"lado":1,"pts":200.0,"preco_ent":183090.0,"data":"01/09 14:06","rot_saida":"alvo","n_ret":2,"pav_tot":30.0,"motivo":"cumpre os seis passos","nivel":"ouro"},{"de":81,"ate":100,"i_ret":92,"i_sin":94,"i_ent":94,"i_sai":97,"lado":1,"pts":0.0,"preco_ent":190080.0,"data":"08/09 14:40","rot_saida":"zero a zero","n_ret":2,"pav_tot":40.0,"motivo":"cumpre os seis passos","nivel":"ouro"},{"de":101,"ate":119,"i_ret":112,"i_sin":115,"i_ent":115,"i_sai":116,"lado":-1,"pts":-100.0,"preco_ent":188860.0,"data":"11/09 11:30","rot_saida":"stop","n_ret":3,"pav_tot":75.0,"motivo":"cumpre os seis passos","nivel":"ouro"}]};</script>
+<script>const D={"candles":{"o":[182900.0,183000.0,182900.0,183000.0,182900.0,183000.0,182900.0,183000.0,182900.0,182800.0,182700.0,182600.0,182700.0,182800.0,182900.0,182800.0,182900.0,183000.0,182900.0,183300.0,183200.0,183100.0,183000.0,182900.0,182800.0,182900.0,182800.0,182700.0,182800.0,182700.0,182600.0,182700.0,182800.0,182900.0,182800.0,182900.0,183000.0,182900.0,190190.0,190290.0,190390.0,190490.0,190390.0,190290.0,190390.0,190290.0,190190.0,190090.0,189990.0,189890.0,189990.0,190090.0,190190.0,190090.0,190190.0,190090.0,190190.0,169975.0,169875.0,169975.0,169875.0,169975.0,169875.0,169975.0,169875.0,169775.0,169675.0,169575.0,169475.0,169575.0,169675.0,169775.0,169675.0,169575.0,169475.0,169375.0,169275.0,169375.0,176900.0,176800.0,176900.0,177000.0,176900.0,177000.0,176900.0,176800.0,176900.0,176800.0,176700.0,176600.0,176700.0,176800.0,176900.0,176800.0,176900.0,176800.0,176900.0,186500.0,186600.0,186700.0,186600.0,186500.0,186400.0,186300.0,186400.0,186300.0,186200.0,186100.0,186000.0,186100.0,186200.0,186300.0,186400.0,186300.0,186200.0,186100.0,186200.0,186300.0,186400.0,186300.0,186400.0],"h":[183000.0,183005.0,183005.0,183000.0,183010.0,183090.0,183000.0,183085.0,182915.0,182840.0,182735.0,182705.0,182800.0,182910.0,182905.0,182920.0,183000.0,183040.0,183005.0,183345.0,183200.0,183125.0,183000.0,183000.0,182900.0,182915.0,182835.0,182805.0,182855.0,182740.0,182700.0,182805.0,182905.0,182930.0,182900.0,183000.0,183085.0,182905.0,190290.0,190400.0,190495.0,190520.0,190480.0,190395.0,190445.0,190295.0,190210.0,190175.0,190000.0,189995.0,190095.0,190195.0,190200.0,190190.0,190275.0,190195.0,190310.0,169985.0,169975.0,169990.0,169975.0,169990.0,169980.0,169990.0,169890.0,169805.0,169755.0,169620.0,169590.0,169685.0,169800.0,169795.0,169765.0,169665.0,169505.0,169390.0,169380.0,169420.0,176985.0,176900.0,177005.0,177040.0,177005.0,177060.0,176905.0,176905.0,176930.0,176800.0,176775.0,176725.0,176805.0,176910.0,176955.0,176900.0,176955.0,176900.0,177010.0,186600.0,186705.0,186715.0,186615.0,186530.0,186430.0,186400.0,186415.0,186300.0,186210.0,186120.0,186100.0,186205.0,186315.0,186400.0,186435.0,186300.0,186210.0,186200.0,186300.0,186410.0,186470.0,186405.0,186505.0],"l":[182895.0,182890.0,182855.0,182890.0,182815.0,182890.0,182880.0,182900.0,182795.0,182700.0,182570.0,182550.0,182610.0,182785.0,182800.0,182740.0,182900.0,182895.0,182870.0,183180.0,183085.0,182995.0,182900.0,182800.0,182775.0,182795.0,182695.0,182675.0,182695.0,182595.0,182595.0,182615.0,182725.0,182795.0,182775.0,182875.0,182895.0,182795.0,190120.0,190225.0,190350.0,190390.0,190290.0,190240.0,190285.0,190190.0,190085.0,189990.0,189890.0,189850.0,189965.0,190050.0,190085.0,190070.0,190085.0,190050.0,190110.0,169865.0,169845.0,169875.0,169875.0,169870.0,169820.0,169865.0,169775.0,169675.0,169575.0,169475.0,169385.0,169575.0,169600.0,169675.0,169570.0,169475.0,169370.0,169270.0,169255.0,169270.0,176790.0,176750.0,176815.0,176895.0,176890.0,176895.0,176790.0,176740.0,176790.0,176700.0,176600.0,176560.0,176700.0,176710.0,176780.0,176790.0,176790.0,176750.0,176890.0,186500.0,186570.0,186590.0,186490.0,186395.0,186290.0,186215.0,186290.0,186195.0,186090.0,185995.0,185900.0,186045.0,186120.0,186285.0,186295.0,186195.0,186095.0,186030.0,186190.0,186255.0,186290.0,186285.0,186320.0],"c":[183000.0,182900.0,183000.0,182900.0,183000.0,182900.0,183000.0,182900.0,182800.0,182700.0,182600.0,182700.0,182800.0,182900.0,182800.0,182900.0,183000.0,182900.0,183000.0,183200.0,183100.0,183000.0,182900.0,182800.0,182900.0,182800.0,182700.0,182800.0,182700.0,182600.0,182700.0,182800.0,182900.0,182800.0,182900.0,183000.0,182900.0,182800.0,190290.0,190390.0,190490.0,190390.0,190290.0,190390.0,190290.0,190190.0,190090.0,189990.0,189890.0,189990.0,190090.0,190190.0,190090.0,190190.0,190090.0,190190.0,190290.0,169875.0,169975.0,169875.0,169975.0,169875.0,169975.0,169875.0,169775.0,169675.0,169575.0,169475.0,169575.0,169675.0,169775.0,169675.0,169575.0,169475.0,169375.0,169275.0,169375.0,169275.0,176800.0,176900.0,177000.0,176900.0,177000.0,176900.0,176800.0,176900.0,176800.0,176700.0,176600.0,176700.0,176800.0,176900.0,176800.0,176900.0,176800.0,176900.0,177000.0,186600.0,186700.0,186600.0,186500.0,186400.0,186300.0,186400.0,186300.0,186200.0,186100.0,186000.0,186100.0,186200.0,186300.0,186400.0,186300.0,186200.0,186100.0,186200.0,186300.0,186400.0,186300.0,186400.0,186500.0],"hma":[182934.65,182934.29,182937.77,182941.64,182948.11,182952.61,182957.53,182959.61,182956.77,182947.15,182929.92,182909.83,182891.5,182878.23,182867.24,182861.39,182862.74,182866.55,182874.21,183261.06,183297.16,183320.11,183328.67,183322.66,183308.63,183286.46,183256.07,183223.01,183185.8,183142.82,183098.4,183055.71,183017.92,182981.64,182949.52,182924.27,182902.0,182879.09,190403.35,190389.09,190382.23,190377.87,190371.96,190367.29,190360.52,190348.64,190329.44,190301.76,190265.48,190226.4,190189.32,190158.94,190133.03,190114.93,190101.04,190093.42,190093.04,170069.71,170063.06,170052.38,170041.38,170027.7,170014.98,170001.07,169984.0,169961.69,169933.07,169896.93,169858.51,169821.82,169790.84,169763.02,169735.78,169706.55,169672.75,169632.14,169589.29,169542.69,176794.67,176799.66,176808.25,176816.66,176827.26,176836.78,176842.3,176847.45,176849.27,176845.53,176835.04,176822.48,176812.13,176807.11,176803.73,176804.81,176806.41,176810.69,176819.12,186362.51,186380.63,186402.11,186423.39,186441.0,186451.44,186457.81,186457.63,186449.59,186433.11,186407.56,186378.3,186349.82,186325.4,186308.32,186295.25,186282.91,186267.92,186252.94,186240.62,186233.34,186227.73,186226.97,186233.12],"ema":[182782.54,182793.22,182812.02,182820.01,182836.38,182842.16,182856.51,182860.46,182854.97,182840.88,182818.98,182808.16,182807.42,182815.84,182814.4,182822.18,182838.35,182843.95,182858.14,183081.12,183082.83,183075.3,183059.37,183035.79,183023.44,183003.13,182975.57,182959.61,182936.01,182905.46,182886.79,182878.9,182880.81,182873.47,182875.88,182887.16,182888.33,182880.3,190287.68,190296.98,190314.53,190321.39,190318.54,190325.03,190321.85,190309.86,190289.88,190262.61,190228.74,190207.04,190196.4,190195.82,190186.2,190186.54,190177.77,190178.88,190188.98,169936.95,169940.41,169934.47,169938.15,169932.41,169936.28,169930.71,169916.56,169894.6,169865.54,169830.04,169806.85,169794.87,169793.06,169782.33,169763.48,169737.25,169704.32,169665.29,169638.9,169605.82,176861.41,176864.92,176877.2,176879.27,176890.25,176891.13,176882.85,176884.41,176876.73,176860.67,176836.97,176824.52,176822.29,176829.35,176826.69,176833.35,176830.32,176836.65,176851.5,186423.51,186448.65,186462.41,186465.82,186459.84,186445.31,186441.19,186428.35,186407.6,186379.63,186345.12,186322.84,186311.67,186310.61,186318.73,186317.03,186306.39,186287.63,186279.66,186281.51,186292.28,186292.99,186302.71,186320.65],"dt":["06/03 10:13","06/03 10:13","06/03 10:13","06/03 10:14","06/03 10:14","06/03 10:15","06/03 10:15","06/03 10:16","06/03 10:17","06/03 10:17","06/03 10:18","06/03 10:18","06/03 10:19","06/03 10:19","06/03 10:19","06/03 10:19","06/03 10:20","06/03 10:20","06/03 10:21","27/03 10:49","27/03 10:50","27/03 10:50","27/03 10:50","27/03 10:50","27/03 10:51","27/03 10:52","27/03 10:53","27/03 10:53","27/03 10:53","27/03 10:54","27/03 10:55","27/03 10:55","27/03 10:58","27/03 10:59","27/03 11:00","27/03 11:00","27/03 11:01","27/03 11:01","04/05 09:40","04/05 09:45","04/05 09:48","04/05 09:50","04/05 09:51","04/05 09:54","04/05 09:57","04/05 09:59","04/05 10:00","04/05 10:00","04/05 10:00","04/05 10:00","04/05 10:00","04/05 10:01","04/05 10:01","04/05 10:02","04/05 10:02","04/05 10:05","04/05 10:06","16/06 14:56","16/06 14:57","16/06 15:02","16/06 15:09","16/06 15:11","16/06 15:17","16/06 15:29","16/06 15:38","16/06 15:47","16/06 15:49","16/06 15:57","16/06 16:02","16/06 16:11","16/06 16:18","16/06 16:32","16/06 16:34","16/06 16:55","16/06 17:18","16/06 17:30","16/06 17:33","16/06 17:39","06/08 09:47","06/08 09:49","06/08 09:54","06/08 09:58","06/08 10:00","06/08 10:00","06/08 10:00","06/08 10:00","06/08 10:01","06/08 10:01","06/08 10:01","06/08 10:02","06/08 10:03","06/08 10:03","06/08 10:05","06/08 10:06","06/08 10:07","06/08 10:08","06/08 10:08","14/09 11:17","14/09 11:17","14/09 11:17","14/09 11:17","14/09 11:17","14/09 11:17","14/09 11:18","14/09 11:22","14/09 11:23","14/09 11:23","14/09 11:23","14/09 11:24","14/09 11:27","14/09 11:28","14/09 11:29","14/09 11:30","14/09 11:30","14/09 11:30","14/09 11:31","14/09 11:32","14/09 11:32","14/09 11:33","14/09 11:34","14/09 11:34"],"kc_sup":null,"kc_inf":null},"parametros":{"ema":21,"hull":50,"atr":21,"desvio":2.0,"stop":100.0,"alvo":300.0,"parcial_em":100.0,"frac":0.5,"apos":"media","max_barras":120,"fecha_dia":1,"val_ponto":0.2,"pi":100.0,"estic_exaustao":0.45,"n_ret_min":2,"pavio_min":25.0,"pavio_max":90.0},"galeria_ex":[{"de":0,"ate":18,"i_ret":11,"i_sin":14,"i_ent":14,"i_sai":15,"lado":-1,"pts":-100.0,"preco_ent":182800.0,"data":"06/03 10:19","rot_saida":"stop","n_ret":3,"pav_tot":5.0,"nivel":"r3"},{"de":19,"ate":37,"i_ret":30,"i_sin":33,"i_ent":33,"i_sai":34,"lado":-1,"pts":-100.0,"preco_ent":182800.0,"data":"27/03 10:59","rot_saida":"stop","n_ret":3,"pav_tot":35.0,"nivel":"r3"},{"de":38,"ate":56,"i_ret":49,"i_sin":52,"i_ent":52,"i_sai":53,"lado":-1,"pts":-100.0,"preco_ent":190090.0,"data":"04/05 10:01","rot_saida":"stop","n_ret":3,"pav_tot":15.0,"nivel":"r3"},{"de":57,"ate":77,"i_ret":68,"i_sin":71,"i_ent":71,"i_sai":74,"lado":-1,"pts":200.0,"preco_ent":169675.0,"data":"16/06 16:32","rot_saida":"alvo","n_ret":3,"pav_tot":20.0,"nivel":"r3"},{"de":78,"ate":96,"i_ret":89,"i_sin":92,"i_ent":92,"i_sai":93,"lado":-1,"pts":-100.0,"preco_ent":176800.0,"data":"06/08 10:05","rot_saida":"stop","n_ret":3,"pav_tot":75.0,"nivel":"r3"},{"de":97,"ate":120,"i_ret":108,"i_sin":112,"i_ent":112,"i_sai":117,"lado":-1,"pts":0.0,"preco_ent":186300.0,"data":"14/09 11:30","rot_saida":"zero a zero","n_ret":4,"pav_tot":40.0,"nivel":"r3"}]};</script>
 <script>
 /* =====================================================================
    Kit de graficos em SVG puro. Nenhuma biblioteca: o arquivo precisa

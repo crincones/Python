@@ -13,10 +13,13 @@
 | | barras | pregões | período |
 |---|---|---|---|
 | **WINV26** | 6.367 | 95 (13 com trade) | 2026-04-15 a 2026-08-28 |
-| **WINFUT** | 19.993 | 44 (41 com trade) | 2026-06-30 a 2026-08-28 |
+| **WINFUT** | 49.586 | 102 (95 com trade) | 2026-04-17 a 2026-09-11 |
 
 > **Elas não são independentes.** O WINFUT contém a janela inteira do WINV26 e
-> mais julho. Quando as duas concordam, isso é menos confirmação do que parece.
+> se estende antes e depois dela. Quando as duas concordam, isso é menos
+> confirmação do que parece.
+
+> **Fora da amostra (§ 10):** **A vantagem não se repetiu fora da amostra.** Todos os parâmetros foram escolhidos olhando os pregões de 30/06/2026 a 28/08/2026. O WINFUT novo tem **58 pregões fora dessa janela** — 49 antes e 9 depois — que nunca foram vistos ao calibrar. Com stop 150: dentro da janela, só A dá 54 trades, EV +80,6, t +3,12 e A + B dá 151 trades, EV +44,1, t +2,97; **fora dela, só A dá 76 trades, EV +9,9, t +0,51 e A + B dá 197 trades, EV -5,3, t -0,45**. O setup B isolado, fora: 128 trades, EV -15,2, t -0,98. O setup A se divide: 57 trades, EV -10,5, t -0,47 antes da janela (49 pregões) e 19 trades, EV +71,1, t +2,36 depois (9 pregões) — o trecho posterior é curto demais para desempatar.
 
 ---
 
@@ -37,26 +40,26 @@ Com **todo o resto congelado** — mesma média, mesmos setups, mesma gestão:
 
 | fórmula | stop | | WINV26 · n / EV / t / PF | WINFUT · n / EV / t / PF |
 |---|---|---|---|---|
-| v1 · \|delta\| / \|Close-Open\| | 150 | setup A isolado | 31 · +89,5 · +3,17 · 2,85 | 74 · +65,9 · +3,42 · 2,25 |
-|  | 150 | setup B isolado | 36 · +25,0 · +0,86 · 1,40 | 118 · +15,7 · +0,95 · 1,22 |
-|  | 150 | carteira só A | 29 · +80,2 · +3,43 · 2,55 | 72 · +61,5 · +3,41 · 2,13 |
-|  | 150 | carteira A + B | 63 · +44,0 · +1,81 · 1,74 | 184 · +28,8 · +2,14 · 1,44 |
-|  | 100 | setup A isolado | 31 · +90,3 · +3,69 · 4,50 | 74 · +47,3 · +2,85 · 2,30 |
-|  | 100 | setup B isolado | 36 · +25,0 · +1,24 · 1,60 | 118 · +22,2 · +2,05 · 1,51 |
-|  | 100 | carteira só A | 29 · +82,8 · +4,20 · 4,00 | 72 · +43,1 · +2,86 · 2,15 |
-|  | 100 | carteira A + B | 64 · +53,1 · +2,79 · 2,55 | 185 · +28,8 · +2,75 · 1,70 |
-| v2 · (\|delta\|/esforço) × volta | 150 | setup A isolado | 26 · +86,5 · +2,42 · 2,67 | 54 · +80,6 · +3,11 · 2,53 |
-|  | 150 | setup B isolado | 35 · +68,6 · +2,86 · 2,45 | 103 · +21,0 · +1,21 · 1,31 |
-|  | 150 | carteira só A | 25 · +81,0 · +2,18 · 2,50 | 53 · +77,8 · +2,97 · 2,45 |
-|  | 150 | **carteira A + B** | 59 · +77,5 · +3,39 · 2,61 | 148 · +43,0 · +2,84 · 1,71 |
-|  | 100 | setup A isolado | 26 · +73,1 · +2,66 · 3,11 | 54 · +46,3 · +2,21 · 2,09 |
-|  | 100 | setup B isolado | 35 · +40,0 · +2,10 · 2,00 | 103 · +22,3 · +1,89 · 1,53 |
-|  | 100 | carteira só A | 25 · +68,0 · +2,43 · 2,89 | 53 · +43,4 · +2,08 · 2,00 |
-|  | 100 | carteira A + B | 60 · +51,7 · +2,73 · 2,35 | 149 · +28,2 · +2,27 · 1,66 |
+| v1 · \|delta\| / \|Close-Open\| | 150 | setup A isolado | 31 · +89,5 · +3,17 · 2,85 | 192 · +30,3 · +2,23 · 1,46 |
+|  | 150 | setup B isolado | 36 · +25,0 · +0,86 · 1,40 | 259 · +8,3 · +0,73 · 1,11 |
+|  | 150 | carteira só A | 29 · +80,2 · +3,43 · 2,55 | 186 · +28,1 · +2,11 · 1,42 |
+|  | 150 | carteira A + B | 63 · +44,0 · +1,81 · 1,74 | 421 · +12,3 · +1,33 · 1,17 |
+|  | 100 | setup A isolado | 31 · +90,3 · +3,69 · 4,50 | 192 · +27,6 · +2,73 · 1,61 |
+|  | 100 | setup B isolado | 36 · +25,0 · +1,24 · 1,60 | 259 · +8,2 · +1,09 · 1,17 |
+|  | 100 | carteira só A | 29 · +82,8 · +4,20 · 4,00 | 187 · +24,6 · +2,51 · 1,53 |
+|  | 100 | carteira A + B | 64 · +53,1 · +2,79 · 2,55 | 427 · +13,4 · +2,04 · 1,28 |
+| v2 · (\|delta\|/esforço) × volta | 150 | setup A isolado | 26 · +86,5 · +2,42 · 2,67 | 133 · +38,9 · +2,45 · 1,61 |
+|  | 150 | setup B isolado | 35 · +68,6 · +2,86 · 2,45 | 233 · +1,2 · +0,11 · 1,02 |
+|  | 150 | carteira só A | 25 · +81,0 · +2,18 · 2,50 | 130 · +39,2 · +2,46 · 1,61 |
+|  | 150 | **carteira A + B** | 59 · +77,5 · +3,39 · 2,61 | 348 · +16,1 · +1,68 · 1,23 |
+|  | 100 | setup A isolado | 26 · +73,1 · +2,66 · 3,11 | 133 · +21,8 · +1,85 · 1,46 |
+|  | 100 | setup B isolado | 35 · +40,0 · +2,10 · 2,00 | 233 · +1,3 · +0,16 · 1,03 |
+|  | 100 | carteira só A | 25 · +68,0 · +2,43 · 2,89 | 130 · +21,5 · +1,82 · 1,45 |
+|  | 100 | carteira A + B | 60 · +51,7 · +2,73 · 2,35 | 352 · +8,2 · +1,10 · 1,17 |
 
-**A troca não melhora tudo: ela melhora a reversão.** A fórmula nova corta gatilhos (-11% e -17%) e mede melhor no **setup B em 3 das 4** células (duas bases × dois stops), no **setup A em 0 de 4** e na **carteira A + B em 2 de 4**. No WINV26 o setup B sai de +25,0 de EV e t +0,86 para +68,6 e t +2,86, e o A de +89,5 e t +3,17 para +86,5 e t +2,42 (stop 150). No WINFUT o setup B sai de +15,7 de EV e t +0,95 para +21,0 e t +1,21, e o A de +65,9 e t +3,42 para +80,6 e t +3,11 (stop 150). Faz sentido: o eixo novo mede **vaivém**, que é exaustão — e exaustão é exatamente o que o setup de reversão procura. O setup A é continuação: ali o vaivém informa menos, e o que a fórmula nova faz é sobretudo tirar sinal.
+**A troca não melhora tudo: ela melhora a reversão.** A fórmula nova corta gatilhos (-11% e -17%) e mede melhor no **setup B em 2 das 4** células (duas bases × dois stops), no **setup A em 1 de 4** e na **carteira A + B em 2 de 4**. No WINV26 o setup B sai de +25,0 de EV e t +0,86 para +68,6 e t +2,86, e o A de +89,5 e t +3,17 para +86,5 e t +2,42 (stop 150). No WINFUT o setup B sai de +8,3 de EV e t +0,73 para +1,2 e t +0,11, e o A de +30,3 e t +2,23 para +38,9 e t +2,45 (stop 150). Faz sentido: o eixo novo mede **vaivém**, que é exaustão — e exaustão é exatamente o que o setup de reversão procura. O setup A é continuação: ali o vaivém informa menos, e o que a fórmula nova faz é sobretudo tirar sinal.
 
-**O filtro continua valendo com a fórmula nova.** Ele existia porque a antiga media negativo quando o eixo do deslocamento mandava; não era óbvio que sobreviveria à troca, e sobreviveu. No WINV26, com o filtro: +77,5 de EV e t +3,39 em 59 trades; sem ele: +33,3 e t +1,53 em 115. No WINFUT, com o filtro: +43,0 de EV e t +2,84 em 148 trades; sem ele: +20,0 e t +1,62 em 299.
+**O filtro continua valendo com a fórmula nova.** Ele existia porque a antiga media negativo quando o eixo do deslocamento mandava; não era óbvio que sobreviveria à troca, e sobreviveu. No WINV26, com o filtro: +77,5 de EV e t +3,39 em 59 trades; sem ele: +33,3 e t +1,53 em 115. No WINFUT, com o filtro: +16,1 de EV e t +1,68 em 348 trades; sem ele: +9,2 e t +1,31 em 701.
 
 ---
 
@@ -67,7 +70,7 @@ preencheu na barra seguinte, o trade é **abortado** -- não se persegue o preç
 não se deixa ordem esquecida no livro. Todo número deste arquivo já está sob
 essa regra.
 
-A regra descarta uma minoria estável dos sinais. No WINV26, **26 dos 29** sinais do setup A viraram trade (3 abortados, 10%); no B, 35 de 41 (15%). No WINFUT, **54 dos 60** sinais do setup A viraram trade (6 abortados, 10%); no B, 103 de 121 (15%). **Espere isso na tela:** cerca de um sinal em dez será abortado, e abortar é o comportamento correto, não uma falha sua.
+A regra descarta uma minoria estável dos sinais. No WINV26, **26 dos 29** sinais do setup A viraram trade (3 abortados, 10%); no B, 35 de 41 (15%). No WINFUT, **133 dos 151** sinais do setup A viraram trade (18 abortados, 12%); no B, 233 de 274 (15%). **Espere isso na tela:** cerca de um sinal em dez será abortado, e abortar é o comportamento correto, não uma falha sua.
 
 ---
 
@@ -85,15 +88,13 @@ A regra descarta uma minoria estável dos sinais. No WINV26, **26 dos 29** sinai
 
 | | n | /pregão | EV | total | acerto | t | PF | DD |
 |---|---|---|---|---|---|---|---|---|
-| **A** — tendência | 54 | 1,7 | +80,6 | +4.350 | 59,3% | +3,11 | 2,53 | 300 |
-| **B** — reversão rápida | 103 | 2,6 | +21,0 | +2.165 | 39,8% | +1,21 | 1,31 | 1725 |
-| **C** — consolidação | 15 | 1,5 | -70,0 | -1.050 | 13,3% | -2,58 | 0,30 | 1125 |
+| **A** — tendência | 133 | 1,8 | +38,9 | +5.175 | 45,9% | +2,45 | 1,61 | 1125 |
+| **B** — reversão rápida | 233 | 2,5 | +1,2 | +290 | 33,5% | +0,11 | 1,02 | 2485 |
+| **C** — consolidação | 48 | 1,5 | -17,2 | -825 | 31,2% | -0,76 | 0,80 | 1575 |
 
 **A prioridade que você pediu continua certa**: o setup de tendência lidera a maioria das colunas nas duas bases. Não todas — no WINV26 o setup B mede +2,86 de t contra +2,42 do A. Com esse número de trades uma coluna trocada é ruído, não hierarquia; o A segue prioritário por EV, fator de lucro e drawdown.
 
-O setup C mede negativo nas duas, em toda configuração testada. Invertendo o
-sinal sobram 0 e 8 trades: a combinação "médias emboladas **e** preço longe
-delas" quase não existe. Fica desligado por padrão.
+O setup C mede negativo nas duas bases. Fica desligado por padrão.
 
 ---
 
@@ -108,23 +109,23 @@ que mede bem **nas duas bases**, não o pico de uma.
 
 | média | % barras em tendência | WINV26 · n / EV / t / PF | WINFUT · n / EV / t / PF |
 |---|---|---|---|
-| **3 EMAs 21/42/72** ← padrão | 80% | 25 · +81,0 · +2,18 · 2,50 | 53 · +77,8 · +2,97 · 2,45 |
-| KAMA 13 | 48% | 14 · +64,3 · +1,00 · 2,00 | 30 · +55,0 · +1,39 · 1,85 |
-| Hull 13 | 95% | 22 · +10,2 · +0,19 · 1,12 | 56 · +24,1 · +0,97 · 1,33 |
-| T3 Tillson 13 | 92% | 23 · +45,7 · +1,01 · 1,64 | 51 · +42,6 · +1,62 · 1,63 |
-| estilo Jurik 21 | 93% | 24 · +43,8 · +0,88 · 1,64 | 56 · +68,3 · +2,64 · 2,21 |
+| **3 EMAs 21/42/72** ← padrão | 81% | 25 · +81,0 · +2,18 · 2,50 | 130 · +39,2 · +2,46 · 1,61 |
+| KAMA 13 | 48% | 14 · +64,3 · +1,00 · 2,00 | 71 · +19,0 · +0,87 · 1,27 |
+| Hull 13 | 95% | 22 · +10,2 · +0,19 · 1,12 | 146 · +21,6 · +1,54 · 1,32 |
+| T3 Tillson 13 | 92% | 23 · +45,7 · +1,01 · 1,64 | 134 · +25,7 · +1,70 · 1,38 |
+| estilo Jurik 21 | 93% | 24 · +43,8 · +0,88 · 1,64 | 150 · +37,5 · +2,65 · 1,62 |
 
 ### Carteira só A · stop 100
 
 | média | % barras em tendência | WINV26 · n / EV / t / PF | WINFUT · n / EV / t / PF |
 |---|---|---|---|
-| **3 EMAs 21/42/72** ← padrão | 80% | 25 · +68,0 · +2,43 · 2,89 | 53 · +43,4 · +2,08 · 2,00 |
-| KAMA 13 | 48% | 14 · +64,3 · +1,38 · 2,80 | 30 · +33,3 · +1,19 · 1,71 |
-| Hull 13 | 95% | 22 · +22,7 · +0,63 · 1,45 | 56 · +25,0 · +1,45 · 1,54 |
-| T3 Tillson 13 | 92% | 23 · +43,5 · +1,39 · 2,00 | 51 · +25,5 · +1,31 · 1,52 |
-| estilo Jurik 21 | 93% | 24 · +45,8 · +1,40 · 2,22 | 56 · +44,6 · +2,31 · 2,09 |
+| **3 EMAs 21/42/72** ← padrão | 81% | 25 · +68,0 · +2,43 · 2,89 | 130 · +21,5 · +1,82 · 1,45 |
+| KAMA 13 | 48% | 14 · +64,3 · +1,38 · 2,80 | 72 · +5,6 · +0,34 · 1,11 |
+| Hull 13 | 95% | 22 · +22,7 · +0,63 · 1,45 | 148 · +12,2 · +1,23 · 1,25 |
+| T3 Tillson 13 | 92% | 23 · +43,5 · +1,39 · 2,00 | 135 · +11,1 · +1,08 · 1,22 |
+| estilo Jurik 21 | 93% | 24 · +45,8 · +1,40 · 2,22 | 152 · +17,8 · +1,84 · 1,38 |
 
-Com **stop 150** as três EMAs dão o melhor `t` nas **duas bases** (+2,18 e +2,97); a segunda colocada fica em +1,01 e +2,64. Com **stop 100** as três EMAs ganham no WINV26 (+2,43 contra +1,40 da segunda), mas a **estilo Jurik 21** passa à frente no WINFUT (+2,31 contra +2,08). Na base em que o empilhamento ganha, essa mesma média mede +1,40. A **KAMA** segue sendo a mais seletiva — classifica 48% das barras como tendência contra 80% do empilhamento, e produz cerca de metade dos trades.
+Com **stop 150** as três EMAs ganham no WINV26 (+2,18 contra +1,01 da segunda), mas a **estilo Jurik 21** passa à frente no WINFUT (+2,65 contra +2,46). Na base em que o empilhamento ganha, essa mesma média mede +0,88. Com **stop 100** as três EMAs ganham no WINV26 (+2,43 contra +1,40 da segunda), mas a **estilo Jurik 21** passa à frente no WINFUT (+1,84 contra +1,82). Na base em que o empilhamento ganha, essa mesma média mede +1,40. A **KAMA** segue sendo a mais seletiva — classifica 48% das barras como tendência contra 81% do empilhamento, e produz cerca de metade dos trades.
 
 O empilhamento exige **concordância entre três escalas de tempo**, e isso é
 informação que a inclinação de uma linha só não carrega. Uma média adaptativa
@@ -150,9 +151,9 @@ descartado. Liga-se com `FILTRO_LEQUE = True` em `engine.py`.
 
 | posição da barra | WINV26 · barras / gatilhos | WINFUT · barras / gatilhos |
 |---|---|---|
-| tocando alguma das três | 75,0% / 61,7% | 76,0% / 53,3% |
-| **atrás** do leque, fora da tolerância | 1,7% / 4,3% | 1,6% / 3,3% |
-| na frente — *exatamente o que a restrição corta* | 23,3% / 34,0% | 22,4% / 43,5% |
+| tocando alguma das três | 75,0% / 61,7% | 76,1% / 55,4% |
+| **atrás** do leque, fora da tolerância | 1,7% / 4,3% | 1,6% / 4,2% |
+| na frente — *exatamente o que a restrição corta* | 23,3% / 34,0% | 22,3% / 40,5% |
 
 ### Sem restrição — qualquer posição em relação às médias
 
@@ -162,10 +163,10 @@ descartado. Liga-se com `FILTRO_LEQUE = True` em `engine.py`.
 | WINV26 · **carteira A + B** | 94 | 150 | 59 | +77,5 | +3,39 | 2,61 | 450 |
 | WINV26 · setup B isolado | 94 | 100 | 35 | +40,0 | +2,10 | 2,00 | 300 |
 | WINV26 · **carteira A + B** | 94 | 100 | 60 | +51,7 | +2,73 | 2,35 | 300 |
-| WINFUT · setup B isolado | 246 | 150 | 103 | +21,0 | +1,21 | 1,31 | 1725 |
-| WINFUT · **carteira A + B** | 246 | 150 | 148 | +43,0 | +2,84 | 1,71 | 1575 |
-| WINFUT · setup B isolado | 246 | 100 | 103 | +22,3 | +1,89 | 1,53 | 900 |
-| WINFUT · **carteira A + B** | 246 | 100 | 149 | +28,2 | +2,27 | 1,66 | 1500 |
+| WINFUT · setup B isolado | 625 | 150 | 233 | +1,2 | +0,11 | 1,02 | 2485 |
+| WINFUT · **carteira A + B** | 625 | 150 | 348 | +16,1 | +1,68 | 1,23 | 2475 |
+| WINFUT · setup B isolado | 625 | 100 | 233 | +1,3 | +0,16 | 1,03 | 2000 |
+| WINFUT · **carteira A + B** | 625 | 100 | 352 | +8,2 | +1,10 | 1,17 | 2600 |
 
 ### Só gatilho que toca ou fica atrás do leque
 
@@ -175,12 +176,12 @@ descartado. Liga-se com `FILTRO_LEQUE = True` em `engine.py`.
 | WINV26 · **carteira A + B** | 62 | 150 | 38 | +88,8 | +2,61 | 2,88 | 450 |
 | WINV26 · setup B isolado | 62 | 100 | 13 | +76,9 | +1,86 | 3,50 | 200 |
 | WINV26 · **carteira A + B** | 62 | 100 | 38 | +71,1 | +2,44 | 3,08 | 300 |
-| WINFUT · setup B isolado | 139 | 150 | 26 | +54,8 | +1,53 | 1,95 | 525 |
-| WINFUT · **carteira A + B** | 139 | 150 | 78 | +73,1 | +3,29 | 2,36 | 525 |
-| WINFUT · setup B isolado | 139 | 100 | 26 | +61,5 | +2,24 | 3,00 | 200 |
-| WINFUT · **carteira A + B** | 139 | 100 | 78 | +50,0 | +2,61 | 2,26 | 400 |
+| WINFUT · setup B isolado | 372 | 150 | 50 | -7,5 | -0,29 | 0,91 | 1500 |
+| WINFUT · **carteira A + B** | 372 | 150 | 179 | +27,2 | +1,98 | 1,39 | 1800 |
+| WINFUT · setup B isolado | 372 | 100 | 50 | +16,0 | +0,81 | 1,33 | 700 |
+| WINFUT · **carteira A + B** | 372 | 100 | 179 | +20,1 | +1,86 | 1,42 | 1400 |
 
-**A restrição não mexe no A: ela reescreve o B.** Cortando 34,0% e 43,5% dos gatilhos, ela melhora o EV da carteira A + B em **4 das 4** células (duas bases × dois stops), o `t` em **2 de 4** e o drawdown em **2 de 4** (sem piorar em nenhuma). O setup A sai **idêntico** nas quatro — ele já exigia o toque, então já estava inteiro dentro da restrição. No WINV26 o setup B cai de 35 para 13 trades e o EV vai de +68,6 para +103,8 (t +2,86 → +2,25); a carteira A + B vai de +77,5 para +88,8 de EV, com o drawdown parado em 450 pontos. No WINFUT o setup B cai de 103 para 26 trades e o EV vai de +21,0 para +54,8 (t +1,21 → +1,53); a carteira A + B vai de +43,0 para +73,1 de EV, com o drawdown de 1575 para 525 pontos. O que sobra do B é o afastamento medido **no leque ou atrás dele**: mesmo lugar do A, direção oposta — quem decide é de que lado veio a agressão que falhou. O que ela joga fora é a esticada à frente das médias, que é exatamente onde a reversão é mais cara. A ressalva é de amostra: onde o `t` piora, ele piora porque a restrição tirou trade, não porque tirou vantagem — o EV sobe e o `t` cai junto com o n.
+**A restrição não mexe no A: ela reescreve o B.** Cortando 34,0% e 40,5% dos gatilhos, ela melhora o EV da carteira A + B em **4 das 4** células (duas bases × dois stops), o `t` em **2 de 4** e o drawdown em **2 de 4** (sem piorar em nenhuma). O setup A sai **idêntico** nas quatro — ele já exigia o toque, então já estava inteiro dentro da restrição. No WINV26 o setup B cai de 35 para 13 trades e o EV vai de +68,6 para +103,8 (t +2,86 → +2,25); a carteira A + B vai de +77,5 para +88,8 de EV, com o drawdown parado em 450 pontos. No WINFUT o setup B cai de 233 para 50 trades e o EV vai de +1,2 para -7,5 (t +0,11 → -0,29); a carteira A + B vai de +16,1 para +27,2 de EV, com o drawdown de 2475 para 1800 pontos. O que sobra do B é o afastamento medido **no leque ou atrás dele**: mesmo lugar do A, direção oposta — quem decide é de que lado veio a agressão que falhou. O que ela joga fora é a esticada à frente das médias, que é exatamente onde a reversão é mais cara. A ressalva é de amostra: onde o `t` piora, ele piora porque a restrição tirou trade, não porque tirou vantagem — o EV sobe e o `t` cai junto com o n.
 
 > **Por que ela não é o padrão.** Não é uma peneira nova de qualidade: é uma
 > troca de carteira. Corta uma fatia grande dos gatilhos e quase todo o
@@ -193,28 +194,28 @@ descartado. Liga-se com `FILTRO_LEQUE = True` em `engine.py`.
 
 | gatilhos aceitos | stop | WINV26 · gat / n / EV / t / DD | WINFUT · gat / n / EV / t / DD |
 |---|---|---|---|
-| sem restrição | 150 | 94 · 59 · +77,5 · +3,39 · 450 | 246 · 148 · +43,0 · +2,84 · 1575 |
-| sem restrição | 100 | 94 · 60 · +51,7 · +2,73 · 300 | 246 · 149 · +28,2 · +2,27 · 1500 |
-| só o toque no leque | 150 | 58 · 36 · +81,2 · +2,26 · 450 | 131 · 76 · +69,1 · +3,08 · 525 |
-| só o toque no leque | 100 | 58 · 36 · +72,2 · +2,42 · 300 | 131 · 76 · +50,0 · +2,60 · 400 |
-| só o que fica atrás do leque | 150 | 4 · 2 · +225,0 · — · 0 | 8 · 2 · +225,0 · — · 0 |
-| só o que fica atrás do leque | 100 | 4 · 2 · +50,0 · — · 0 | 8 · 2 · +50,0 · — · 0 |
-| **os dois — a variante** | 150 | 62 · 38 · +88,8 · +2,61 · 450 | 139 · 78 · +73,1 · +3,29 · 525 |
-| **os dois — a variante** | 100 | 62 · 38 · +71,1 · +2,44 · 300 | 139 · 78 · +50,0 · +2,61 · 400 |
+| sem restrição | 150 | 94 · 59 · +77,5 · +3,39 · 450 | 625 · 348 · +16,1 · +1,68 · 2475 |
+| sem restrição | 100 | 94 · 60 · +51,7 · +2,73 · 300 | 625 · 352 · +8,2 · +1,10 · 2600 |
+| só o toque no leque | 150 | 58 · 36 · +81,2 · +2,26 · 450 | 346 · 172 · +27,9 · +1,99 · 1650 |
+| só o toque no leque | 100 | 58 · 36 · +72,2 · +2,42 · 300 | 346 · 172 · +20,3 · +1,85 · 1300 |
+| só o que fica atrás do leque | 150 | 4 · 2 · +225,0 · — · 0 | 26 · 7 · +10,7 · +0,14 · 300 |
+| só o que fica atrás do leque | 100 | 4 · 2 · +50,0 · — · 0 | 26 · 7 · +14,3 · +0,28 · 300 |
+| **os dois — a variante** | 150 | 62 · 38 · +88,8 · +2,61 · 450 | 372 · 179 · +27,2 · +1,98 · 1800 |
+| **os dois — a variante** | 100 | 62 · 38 · +71,1 · +2,44 · 300 | 372 · 179 · +20,1 · +1,86 · 1400 |
 
-**A metade de trás do leque ajuda, mas não sempre.** Ela vale 4,3% e 3,3% dos gatilhos e melhora o EV em 2 das 4 células. WINV26: só o toque dá +81,2 de EV, com o de trás junto dá +88,8; WINFUT: só o toque dá +69,1 de EV, com o de trás junto dá +73,1. Nenhuma das duas leituras aguenta peso: sozinha, a metade de trás rende **2 e 2 trades** nas duas bases. O que a decomposição mostra com segurança é outra coisa — a restrição é, na prática, **quase toda** o toque. Com tolerância de um range médio, o preço que se afastou o bastante para deixar o leque inteiro para trás quase não acontece.
+**A metade de trás do leque ajuda, mas não sempre.** Ela vale 4,3% e 4,2% dos gatilhos e melhora o EV em 1 das 4 células. WINV26: só o toque dá +81,2 de EV, com o de trás junto dá +88,8; WINFUT: só o toque dá +27,9 de EV, com o de trás junto dá +27,2. Nenhuma das duas leituras aguenta peso: sozinha, a metade de trás rende **2 e 7 trades** nas duas bases. O que a decomposição mostra com segurança é outra coisa — a restrição é, na prática, **quase toda** o toque. Com tolerância de um range médio, o preço que se afastou o bastante para deixar o leque inteiro para trás quase não acontece.
 
 ### A restrição nas cinco médias de regime (carteira A + B, stop 150)
 
 | média | % barras tocando | WINV26 · sem / com | WINFUT · sem / com |
 |---|---|---|---|
-| **3 EMAs 21/42/72** ← padrão | 76,0% | 59 · +77,5 · +3,39 / 38 · +88,8 · +2,61 | 148 · +43,0 · +2,84 / 78 · +73,1 · +3,29 |
-| KAMA 13 | 74,0% | 46 · +75,0 · +2,61 / 18 · +66,7 · +1,16 | 122 · +25,1 · +1,45 / 48 · +26,6 · +0,92 |
-| Hull 13 | 99,0% | 31 · +36,3 · +0,82 / 31 · +36,3 · +0,82 | 78 · +25,0 · +1,11 / 78 · +25,0 · +1,11 |
-| T3 Tillson 13 | 68,3% | 63 · +64,3 · +2,61 / 36 · +35,4 · +1,00 | 160 · +27,1 · +1,75 / 86 · +29,7 · +1,55 |
-| estilo Jurik 21 | 90,0% | 62 · +46,0 · +1,62 / 36 · +20,8 · +0,59 | 151 · +24,3 · +1,52 / 102 · +13,9 · +0,82 |
+| **3 EMAs 21/42/72** ← padrão | 76,1% | 59 · +77,5 · +3,39 / 38 · +88,8 · +2,61 | 348 · +16,1 · +1,68 / 179 · +27,2 · +1,98 |
+| KAMA 13 | 74,3% | 46 · +75,0 · +2,61 / 18 · +66,7 · +1,16 | 309 · +6,0 · +0,58 / 114 · +7,2 · +0,43 |
+| Hull 13 | 99,0% | 31 · +36,3 · +0,82 / 31 · +36,3 · +0,82 | 186 · +21,4 · +1,65 / 186 · +21,4 · +1,65 |
+| T3 Tillson 13 | 68,1% | 63 · +64,3 · +2,61 / 36 · +35,4 · +1,00 | 410 · +13,5 · +1,46 / 217 · +15,2 · +1,33 |
+| estilo Jurik 21 | 90,1% | 62 · +46,0 · +1,62 / 36 · +20,8 · +0,59 | 382 · +17,6 · +1,86 / 259 · +18,5 · +1,63 |
 
-**A restrição é uma propriedade do leque, não das médias em geral.** Em nenhuma família ela melhora o `t` nas duas bases ao mesmo tempo. Com as três EMAs — WINV26: +77,5 → +88,8 de EV (t +3,39 → +2,61); WINFUT: +43,0 → +73,1 de EV (t +2,84 → +3,29). Em Hull 13 a restrição é **inerte**: com média única e tolerância de um range médio, o preço encosta na linha quase sempre, e não sobra nada para cortar. “Atrás do leque” pressupõe um leque: três linhas separadas o bastante para haver um lado de cá e um de lá. Uma linha só não tem espessura, e a restrição vira outra coisa — um filtro do preço contra a inclinação.
+**A restrição é uma propriedade do leque, não das médias em geral.** Em nenhuma família ela melhora o `t` nas duas bases ao mesmo tempo. Com as três EMAs — WINV26: +77,5 → +88,8 de EV (t +3,39 → +2,61); WINFUT: +16,1 → +27,2 de EV (t +1,68 → +1,98). Em Hull 13 a restrição é **inerte**: com média única e tolerância de um range médio, o preço encosta na linha quase sempre, e não sobra nada para cortar. “Atrás do leque” pressupõe um leque: três linhas separadas o bastante para haver um lado de cá e um de lá. Uma linha só não tem espessura, e a restrição vira outra coisa — um filtro do preço contra a inclinação.
 
 ---
 
@@ -222,12 +223,12 @@ descartado. Liga-se com `FILTRO_LEQUE = True` em `engine.py`.
 
 | stop | carteira | WINV26 · EV / t / PF / DD | WINFUT · EV / t / PF / DD |
 |---|---|---|---|
-| 150 | só A | +81,0 · +2,18 · 2,50 · 300 | +77,8 · +2,97 · 2,45 · 300 |
-| 150 | A + B | +77,5 · +3,39 · 2,61 · 450 | +43,0 · +2,84 · 1,71 · 1575 |
-| **100** | só A | +68,0 · +2,43 · 2,89 · 200 | +43,4 · +2,08 · 2,00 · 400 |
-| **100** | A + B | +51,7 · +2,73 · 2,35 · 300 | +28,2 · +2,27 · 1,66 · 1500 |
+| 150 | só A | +81,0 · +2,18 · 2,50 · 300 | +39,2 · +2,46 · 1,61 · 1125 |
+| 150 | A + B | +77,5 · +3,39 · 2,61 · 450 | +16,1 · +1,68 · 1,23 · 2475 |
+| **100** | só A | +68,0 · +2,43 · 2,89 · 200 | +21,5 · +1,82 · 1,45 · 1100 |
+| **100** | A + B | +51,7 · +2,73 · 2,35 · 300 | +8,2 · +1,10 · 1,17 · 2600 |
 
-**Não há mais um stop que ganhe em tudo:** o de 150 mede melhor em 3 das 4 comparações (duas bases × duas carteiras) e o de 100 na outra. WINV26 · só A: t +2,18 com stop 150 contra +2,43 com 100. WINV26 · A + B: t +3,39 com stop 150 contra +2,73 com 100. WINFUT · só A: t +2,97 com stop 150 contra +2,08 com 100. WINFUT · A + B: t +2,84 com stop 150 contra +2,27 com 100.
+**Não há mais um stop que ganhe em tudo:** o de 150 mede melhor em 3 das 4 comparações (duas bases × duas carteiras) e o de 100 na outra. WINV26 · só A: t +2,18 com stop 150 contra +2,43 com 100. WINV26 · A + B: t +3,39 com stop 150 contra +2,73 com 100. WINFUT · só A: t +2,46 com stop 150 contra +1,82 com 100. WINFUT · A + B: t +1,68 com stop 150 contra +1,10 com 100.
 
 O preço do stop curto é acerto: você é parado mais vezes, mas cada perda é menor.
 E como a parcial acompanha o stop, trocar o stop troca as duas linhas de uma vez:
@@ -238,20 +239,20 @@ cheio; com stop 100 a parcial sai em +100 e o alvo paga +200.
 
 | regra | stop | carteira | WINV26 · n / EV / t / zero | WINFUT · n / EV / t / zero |
 |---|---|---|---|---|
-| parcial na distância do stop · stop na média da operação | 150 | só A | 25 · +81,0 · +2,18 · 4% | 53 · +77,8 · +2,97 · 6% |
-|  | 150 | **A + B** | 59 · +77,5 · +3,39 · 12% | 148 · +43,0 · +2,84 · 13% |
-|  | 100 | só A | 25 · +68,0 · +2,43 · 12% | 53 · +43,4 · +2,08 · 13% |
-|  | 100 | A + B | 60 · +51,7 · +2,73 · 17% | 149 · +28,2 · +2,27 · 21% |
-| parcial em +100 · stop na média da operação | 150 | só A | 25 · +64,0 · +2,13 · 12% | 53 · +61,3 · +2,74 · 13% |
-|  | 150 | A + B | 59 · +65,3 · +3,25 · 17% | 148 · +41,1 · +3,21 · 25% |
-|  | 100 | só A | 25 · +68,0 · +2,43 · 12% | 53 · +43,4 · +2,08 · 13% |
-|  | 100 | A + B | 60 · +51,7 · +2,73 · 17% | 149 · +28,2 · +2,27 · 21% |
-| parcial em +100 · stop na entrada (o modelo antigo) | 150 | só A | 25 · +52,0 · +1,71 · 24% | 53 · +53,8 · +2,39 · 23% |
-|  | 150 | A + B | 59 · +48,3 · +2,48 · 34% | 149 · +36,5 · +2,89 · 37% |
-|  | 100 | só A | 25 · +56,0 · +2,05 · 24% | 53 · +38,7 · +1,91 · 21% |
-|  | 100 | A + B | 60 · +40,0 · +2,33 · 30% | 150 · +26,0 · +2,33 · 31% |
+| parcial na distância do stop · stop na média da operação | 150 | só A | 25 · +81,0 · +2,18 · 4% | 130 · +39,2 · +2,46 · 11% |
+|  | 150 | **A + B** | 59 · +77,5 · +3,39 · 12% | 348 · +16,1 · +1,68 · 16% |
+|  | 100 | só A | 25 · +68,0 · +2,43 · 12% | 130 · +21,5 · +1,82 · 18% |
+|  | 100 | A + B | 60 · +51,7 · +2,73 · 17% | 352 · +8,2 · +1,10 · 22% |
+| parcial em +100 · stop na média da operação | 150 | só A | 25 · +64,0 · +2,13 · 12% | 130 · +25,0 · +1,89 · 22% |
+|  | 150 | A + B | 59 · +65,3 · +3,25 · 17% | 349 · +13,0 · +1,52 · 28% |
+|  | 100 | só A | 25 · +68,0 · +2,43 · 12% | 130 · +21,5 · +1,82 · 18% |
+|  | 100 | A + B | 60 · +51,7 · +2,73 · 17% | 352 · +8,2 · +1,10 · 22% |
+| parcial em +100 · stop na entrada (o modelo antigo) | 150 | só A | 25 · +52,0 · +1,71 · 24% | 130 · +20,8 · +1,59 · 32% |
+|  | 150 | A + B | 59 · +48,3 · +2,48 · 34% | 351 · +12,1 · +1,49 · 38% |
+|  | 100 | só A | 25 · +56,0 · +2,05 · 24% | 130 · +16,5 · +1,48 · 27% |
+|  | 100 | A + B | 60 · +40,0 · +2,33 · 30% | 354 · +6,8 · +0,99 · 31% |
 
-**A regra da parcial estava modelada errado, e o conserto muda os números.** Com a parcial na distância do stop e o stop do restante na média da operação, o stop **nunca anda** e o trade que volta morre em zero — não em +50. No WINV26, com stop 150: +77,5 de EV e t +3,39 pela regra certa, contra +48,3 e t +2,48 pelo modelo antigo — e o desfecho "zero a zero" cai de 34% para 12% dos trades, porque agora ele é zero de verdade e não +50 pontos. No WINFUT, com stop 150: +43,0 de EV e t +2,84 pela regra certa, contra +36,5 e t +2,89 pelo modelo antigo — e o desfecho "zero a zero" cai de 37% para 13% dos trades, porque agora ele é zero de verdade e não +50 pontos.
+**A regra da parcial estava modelada errado, e o conserto muda os números.** Com a parcial na distância do stop e o stop do restante na média da operação, o stop **nunca anda** e o trade que volta morre em zero — não em +50. No WINV26, com stop 150: +77,5 de EV e t +3,39 pela regra certa, contra +48,3 e t +2,48 pelo modelo antigo — e o desfecho "zero a zero" cai de 34% para 12% dos trades, porque agora ele é zero de verdade e não +50 pontos. No WINFUT, com stop 150: +16,1 de EV e t +1,68 pela regra certa, contra +12,1 e t +1,49 pelo modelo antigo — e o desfecho "zero a zero" cai de 38% para 16% dos trades, porque agora ele é zero de verdade e não +50 pontos.
 
 ---
 
@@ -269,9 +270,9 @@ cheio; com stop 100 a parcial sai em +100 e o alvo paga +200.
 
 | | n | /pregão | EV | total | acerto | t | PF | DD |
 |---|---|---|---|---|---|---|---|---|
-| só A | 53 | 1,7 | +77,8 | +4.125 | 58,5% | +2,97 | 2,45 | 300 |
-| **A + B** — padrão | 148 | 3,6 | +43,0 | +6.365 | 46,6% | +2,84 | 1,71 | 1575 |
-| A + B + C | 163 | 3,8 | +32,6 | +5.315 | 43,6% | +2,34 | 1,51 | 1941 |
+| só A | 130 | 1,8 | +39,2 | +5.100 | 46,2% | +2,46 | 1,61 | 1125 |
+| **A + B** — padrão | 348 | 3,7 | +16,1 | +5.615 | 38,2% | +1,68 | 1,23 | 2475 |
+| A + B + C | 393 | 3,9 | +12,4 | +4.865 | 37,4% | +1,41 | 1,17 | 2625 |
 
 Se o seu limite é drawdown, é **só A**; se é aproveitar o dia, é **A + B**.
 Adicionar C piora tudo nas duas bases.
@@ -295,12 +296,11 @@ EV em pontos, carteira A + B, com a **parcial acompanhando o stop de cada linha*
 
 | stop \ alvo | +200 | +300 | +400 | +500 |
 |---|---|---|---|---|
-| 100 | +23,3 | **+28,2** | +21,1 | +16,1 |
-| 150 | +33,7 | **+43,0** | +35,9 | +26,0 |
-| 200 | +51,4 | **+63,3** | +61,0 | +46,6 |
+| 100 | **+8,3** | +8,2 | +3,5 | +2,1 |
+| 150 | +15,6 | **+16,1** | +12,9 | +9,4 |
+| 200 | +26,3 | **+31,2** | +30,7 | +29,5 |
 
-**O alvo de 300 é o melhor da linha nas seis linhas das duas tabelas.** Não é um
-pico isolado: 200 é pior, 400 e 500 são piores.
+**O alvo de 300 é o melhor da linha em 5 das 6 linhas.** Exceções: WINFUT · stop 100 prefere +200 (+8,3 contra +8,2) — diferenças pequenas perto do ruído desta amostra.
 
 ---
 
@@ -310,10 +310,10 @@ pico isolado: 200 é pior, 400 e 500 são piores.
 
 | | WINV26 | WINFUT |
 |---|---|---|
-| limitada no meio do candle | +77,5 · t +3,39 | +43,0 · t +2,84 |
-| a mercado no fechamento | +56,8 · t +2,57 | +36,7 · t +2,72 |
+| limitada no meio do candle | +77,5 · t +3,39 | +16,1 · t +1,68 |
+| a mercado no fechamento | +56,8 · t +2,57 | +18,1 · t +2,20 |
 
-**A limitada continua à frente** nas duas bases. No WINV26, 66 trades a mercado contra 59 pela limitada (t +2,57 contra +3,39). No WINFUT, 168 trades a mercado contra 148 pela limitada (t +2,72 contra +2,84).
+As duas se dividem: cada uma ganha em uma base. No WINV26, 66 trades a mercado contra 59 pela limitada (t +2,57 contra +3,39). No WINFUT, 402 trades a mercado contra 348 pela limitada (t +2,20 contra +1,68).
 
 Isso **não** quer dizer trocar a limitada pela ordem a mercado: as duas linhas
 medem carteiras diferentes — a mercado faz ~15% mais trades porque nunca
@@ -321,24 +321,80 @@ aborta. Quer dizer que **perder o preenchimento não é valor esperado perdido**
 e que entrar a mercado no fechamento é um plano B legítimo se você preferir
 volume de operações a preço de entrada.
 
-### Mês a mês (WINFUT, carteira A + B)
+### Fora da amostra (WINFUT)
+
+Todo parâmetro foi escolhido olhando a janela de 30/06/2026 a 28/08/2026 — a do WINFUT antigo,
+que contém o WINV26. O arquivo novo acrescenta pregões antes e depois dela, e
+eles são o único teste fora da amostra que existe aqui. Os trades são simulados
+na base inteira e só depois separados pelo pregão do sinal.
+
+**A vantagem não se repetiu fora da amostra.** Todos os parâmetros foram escolhidos olhando os pregões de 30/06/2026 a 28/08/2026. O WINFUT novo tem **58 pregões fora dessa janela** — 49 antes e 9 depois — que nunca foram vistos ao calibrar. Com stop 150: dentro da janela, só A dá 54 trades, EV +80,6, t +3,12 e A + B dá 151 trades, EV +44,1, t +2,97; **fora dela, só A dá 76 trades, EV +9,9, t +0,51 e A + B dá 197 trades, EV -5,3, t -0,45**. O setup B isolado, fora: 128 trades, EV -15,2, t -0,98. O setup A se divide: 57 trades, EV -10,5, t -0,47 antes da janela (49 pregões) e 19 trades, EV +71,1, t +2,36 depois (9 pregões) — o trecho posterior é curto demais para desempatar.
+
+#### Stop 150
+
+| | n | /pregão | EV | total | acerto | t | PF | DD |
+|---|---|---|---|---|---|---|---|---|
+| só A · antes da janela (49 pregões) | 57 | 1,7 | -10,5 | -600 | 31,6% | -0,47 | 0,87 | 1125 |
+| só A · dentro da janela (calibração) (44 pregões) | 54 | 1,6 | +80,6 | +4.350 | 59,3% | +3,12 | 2,53 | 300 |
+| só A · depois da janela (9 pregões) | 19 | 2,7 | +71,1 | +1.350 | 52,6% | +2,36 | 2,50 | 300 |
+| só A · **fora da janela — antes + depois** (58 pregões) | 76 | 1,9 | +9,9 | +750 | 36,8% | +0,51 | 1,14 | 1425 |
+| A + B · antes da janela (49 pregões) | 152 | 3,5 | -10,9 | -1.650 | 30,3% | -0,90 | 0,86 | 2475 |
+| A + B · dentro da janela (calibração) (44 pregões) | 151 | 3,6 | +44,1 | +6.665 | 47,0% | +2,97 | 1,73 | 1575 |
+| A + B · depois da janela (9 pregões) | 45 | 5,0 | +13,3 | +600 | 35,6% | +0,40 | 1,20 | 1350 |
+| A + B · **fora da janela — antes + depois** (58 pregões) | 197 | 3,7 | -5,3 | -1.050 | 31,5% | -0,45 | 0,93 | 2475 |
+| só A · custo 5 · antes da janela (49 pregões) | 57 | 1,7 | -15,5 | -885 | 31,6% | -0,69 | 0,82 | 1275 |
+| só A · custo 5 · dentro da janela (calibração) (44 pregões) | 54 | 1,6 | +75,6 | +4.080 | 59,3% | +2,95 | 2,38 | 335 |
+| só A · custo 5 · depois da janela (9 pregões) | 19 | 2,7 | +66,1 | +1.255 | 52,6% | +2,15 | 2,33 | 315 |
+| só A · custo 5 · **fora da janela — antes + depois** (58 pregões) | 76 | 1,9 | +4,9 | +370 | 36,8% | +0,25 | 1,06 | 1595 |
+| setup B isolado · antes da janela (49 pregões) | 102 | 2,4 | -11,8 | -1.200 | 29,4% | -0,76 | 0,85 | 2325 |
+| setup B isolado · dentro da janela (calibração) (44 pregões) | 105 | 2,6 | +21,3 | +2.240 | 40,0% | +1,24 | 1,32 | 1725 |
+| setup B isolado · depois da janela (9 pregões) | 26 | 3,2 | -28,8 | -750 | 23,1% | -0,59 | 0,64 | 1575 |
+| setup B isolado · **fora da janela — antes + depois** (58 pregões) | 128 | 2,5 | -15,2 | -1.950 | 28,1% | -0,98 | 0,81 | 2625 |
+
+#### Stop 100
+
+| | n | /pregão | EV | total | acerto | t | PF | DD |
+|---|---|---|---|---|---|---|---|---|
+| só A · antes da janela (49 pregões) | 57 | 1,7 | -8,8 | -500 | 22,8% | -0,57 | 0,84 | 1100 |
+| só A · dentro da janela (calibração) (44 pregões) | 54 | 1,6 | +46,3 | +2.500 | 44,4% | +2,25 | 2,09 | 400 |
+| só A · depois da janela (9 pregões) | 19 | 2,7 | +42,1 | +800 | 42,1% | +1,62 | 2,00 | 300 |
+| só A · **fora da janela — antes + depois** (58 pregões) | 76 | 1,9 | +3,9 | +300 | 27,6% | +0,29 | 1,08 | 1300 |
+| A + B · antes da janela (49 pregões) | 155 | 3,5 | -8,4 | -1.300 | 22,6% | -0,86 | 0,84 | 2600 |
+| A + B · dentro da janela (calibração) (44 pregões) | 152 | 3,6 | +29,6 | +4.500 | 36,2% | +2,42 | 1,69 | 1500 |
+| A + B · depois da janela (9 pregões) | 45 | 5,0 | -6,7 | -300 | 24,4% | -0,32 | 0,88 | 900 |
+| A + B · **fora da janela — antes + depois** (58 pregões) | 200 | 3,8 | -8,0 | -1.600 | 23,0% | -0,92 | 0,85 | 3000 |
+| só A · custo 5 · antes da janela (49 pregões) | 57 | 1,7 | -13,8 | -785 | 22,8% | -0,89 | 0,76 | 1240 |
+| só A · custo 5 · dentro da janela (calibração) (44 pregões) | 54 | 1,6 | +41,3 | +2.230 | 44,4% | +2,02 | 1,91 | 450 |
+| só A · custo 5 · depois da janela (9 pregões) | 19 | 2,7 | +37,1 | +705 | 42,1% | +1,41 | 1,82 | 315 |
+| só A · custo 5 · **fora da janela — antes + depois** (58 pregões) | 76 | 1,9 | -1,1 | -80 | 27,6% | -0,08 | 0,98 | 1475 |
+| setup B isolado · antes da janela (49 pregões) | 102 | 2,4 | -9,8 | -1.000 | 21,6% | -0,82 | 0,81 | 2000 |
+| setup B isolado · dentro da janela (calibração) (44 pregões) | 105 | 2,6 | +22,9 | +2.400 | 32,4% | +1,95 | 1,55 | 900 |
+| setup B isolado · depois da janela (9 pregões) | 26 | 3,2 | -42,3 | -1.100 | 11,5% | -1,82 | 0,35 | 1200 |
+| setup B isolado · **fora da janela — antes + depois** (58 pregões) | 128 | 2,5 | -16,4 | -2.100 | 19,5% | -1,53 | 0,70 | 2700 |
+
+#### Mês a mês (carteira A + B, stop 150)
 
 | mês | n | EV | total | acerto |
 |---|---|---|---|---|
-| 2026-07 — **fora da amostra** | 65 | +45,9 | +2.981 | 46,2% |
-| 2026-08 | 83 | +40,8 | +3.384 | 47,0% |
+| 2026-04 — **fora da amostra** | 28 | +2,7 | +75 | 32,1% |
+| 2026-05 — **fora da amostra** | 51 | +5,9 | +300 | 35,3% |
+| 2026-06 — **parte fora da amostra (73 de 75 trades)** | 75 | -26,0 | -1.950 | 26,7% |
+| 2026-07 | 65 | +45,9 | +2.981 | 46,2% |
+| 2026-08 — **parte fora da amostra (5 de 89 trades)** | 89 | +39,7 | +3.534 | 46,1% |
+| 2026-09 — **fora da amostra** | 40 | +16,9 | +675 | 37,5% |
 
-Julho é o único mês do WINFUT que não está no WINV26. **Não é um walk-forward**:
-são dois meses, e os parâmetros foram varridos olhando os dois arquivos.
+**Não é um walk-forward**: é um corte só, e o trecho depois da janela é curto.
+Mas é a primeira vez que a estratégia encontra dados que não participaram de
+nenhuma escolha — e é o número que deveria pesar mais.
 
 ### Custos (carteira A + B, stop 150)
 
 | custo | WINV26 · EV / t | WINFUT · EV / t |
 |---|---|---|
-| 0 pts | +77,5 · +3,39 | +43,0 · +2,84 |
-| 5 pts | +72,5 · +3,21 | +38,0 · +2,53 |
-| 10 pts | +67,5 · +3,02 | +33,0 · +2,22 |
-| 20 pts | +57,5 · +2,63 | +23,0 · +1,57 |
+| 0 pts | +77,5 · +3,39 | +16,1 · +1,68 |
+| 5 pts | +72,5 · +3,21 | +11,1 · +1,17 |
+| 10 pts | +67,5 · +3,02 | +6,1 · +0,65 |
+| 20 pts | +57,5 · +2,63 | -3,9 · -0,41 |
 
 A ~5 trades por pregão o custo é uma fração material do EV, não um detalhe. E há
 um custo que **não** está aqui: a ordem limitada é assumida preenchida a preço
@@ -349,10 +405,10 @@ preenche.
 
 ## 11. Ressalvas
 
-- **Amostra pequena.** 44 pregões no WINFUT, 13 com trade no WINV26. Vários `t`
-  ficam entre +1 e +2, que não é evidência forte. O setup C tem 7 e 19 trades — a
+- **Amostra pequena.** 102 pregões no WINFUT, 13 com trade no WINV26. Vários `t`
+  ficam entre +1 e +2, que não é evidência forte. O setup C tem 6 e 48 trades — a
   conclusão sobre ele é "não há evidência a favor", não "está provado que perde".
-- **As bases não são independentes.** WINFUT ⊃ WINV26.
+- **As bases não são independentes.** WINFUT ⊃ WINV26 — e a janela do WINV26 é a de calibração.
 - **Parâmetros varridos nas mesmas bases** — inclusive o período e a inclinação de
   cada média adaptativa. A comparação da § 5 carrega sobreajuste: cada família
   ganhou uma varredura própria.
@@ -367,9 +423,10 @@ preenche.
 
 ## 12. O que eu faria
 
-1. **Manter o stop em 150.** O de 100 só mede melhor em 1 das 4 comparações (WINV26 · só A); nas outras o de 150 fica na frente. Com a fórmula nova do eixo [E2] o stop curto deixou de ser a escolha limpa que era com a antiga — e o ganho dele em risco por trade continua valendo, então é uma troca, não uma decisão óbvia.
-2. **Só A tem o melhor EV por trade; A + B tem o melhor t.** O A entrega mais por operação e um drawdown menor; a carteira com B entrega mais no total e um resultado diário mais estável. No WINV26: só A dá +81,0 de EV com t +2,18 e DD 300; A + B dá +77,5 com t +3,39 e DD 450. No WINFUT: só A dá +77,8 de EV com t +2,97 e DD 300; A + B dá +43,0 com t +2,84 e DD 1575.
-3. **Manter as três EMAs como padrão.** Elas dão o melhor t em 3 das 4 combinações de base e stop; ficam atrás em WINFUT com stop 100 (ganha estilo Jurik 21). E onde o empilhamento perde, quem aparece na frente é a aproximação de Jurik — que não é o JMA de verdade, então trocar o padrão por causa dela seria trocar por um indicador que não existe aqui.
-4. **Manter o alvo em 300.**
-5. **Não ligar o setup C.**
-6. **Medir o custo real da corretora** e refazer a § 10 antes de dimensionar posição.
+1. **Não operar com dinheiro ainda.** Fora da janela de calibração a carteira A + B mede -5,3 de EV e o só A +9,9 (t +0,51; +4,9 com 5 pontos de custo). O resto desta lista vale como ajuste **dentro** de uma estratégia que ainda não provou vantagem — o próximo passo é entender o que os pregões de antes da janela têm de diferente, não afinar parâmetros.
+2. **Manter o stop em 150.** O de 100 só mede melhor em 1 das 4 comparações (WINV26 · só A); nas outras o de 150 fica na frente. Com a fórmula nova do eixo [E2] o stop curto deixou de ser a escolha limpa que era com a antiga — e o ganho dele em risco por trade continua valendo, então é uma troca, não uma decisão óbvia.
+3. **Só A tem o melhor EV por trade; A + B tem o melhor t.** O A entrega mais por operação e um drawdown menor; a carteira com B entrega mais no total e um resultado diário mais estável. No WINV26: só A dá +81,0 de EV com t +2,18 e DD 300; A + B dá +77,5 com t +3,39 e DD 450. No WINFUT: só A dá +39,2 de EV com t +2,46 e DD 1125; A + B dá +16,1 com t +1,68 e DD 2475.
+4. **Manter as três EMAs como padrão.** Elas dão o melhor t em 2 das 4 combinações de base e stop; ficam atrás em WINFUT com stop 100 (ganha estilo Jurik 21), WINFUT com stop 150 (ganha estilo Jurik 21). E onde o empilhamento perde, quem aparece na frente é a aproximação de Jurik — que não é o JMA de verdade, então trocar o padrão por causa dela seria trocar por um indicador que não existe aqui.
+5. **Manter o alvo em 300.**
+6. **Não ligar o setup C.**
+7. **Medir o custo real da corretora** e refazer a § 10 antes de dimensionar posição.

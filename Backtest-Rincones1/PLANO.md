@@ -10,6 +10,20 @@ Companheiro operacional de [RESULTADOS.md](RESULTADOS.md). O relatório diz
 
 ---
 
+## Antes de assinar: o teste fora da amostra
+
+> **Este plano ainda não passou no único teste independente que existe.**
+> Os parâmetros foram escolhidos olhando os pregões de 30/06/2026 a 28/08/2026. Nos 58
+> pregões do WINFUT fora dessa janela, o setup A com stop 150 e 5 pontos de
+> custo mede **+4,9 pontos por trade (t +0,25, 76 trades)** — contra +75,6 dentro dela.
+> Antes da janela: -15,5 em 57 trades. Depois: +66,1 em 19.
+>
+> O procedimento abaixo continua valendo como procedimento. **Dinheiro, não**:
+> só em simulador, ou no tamanho mínimo, até que registros novos digam outra
+> coisa. Detalhe em [RESULTADOS.md § 10](RESULTADOS.md).
+
+---
+
 ## 0. O contrato
 
 Eu opero **um** setup, com **um** tamanho de risco, seguindo as regras 1 a 6
@@ -46,9 +60,9 @@ Assinado: ____________________   Data: __ / __ / ____
 - **Qualquer coisa que o indicador não marcou.** Se não saiu a seta A, não
   existe trade — por mais óbvio que o gráfico pareça.
 
-> Por que só o A: ele é o melhor dos três nas duas bases, em **todas** as
-> colunas — valor esperado, `t`, fator de lucro e rebaixamento. E a 1.7
-> trades por pregão ele é operável à mão sem pressa.
+> Por que só o A: é o setup com o melhor valor esperado por trade e o menor
+> rebaixamento nas duas bases. E a 1.8 trades por pregão ele é operável à
+> mão sem pressa.
 
 ---
 
@@ -89,8 +103,8 @@ barra t+2    não existe. O sinal morreu.
 perder", não deixo a ordem no livro para ver no que dá. Cancelo e volto a
 esperar.
 
-Cerca de **10% dos sinais serão abortados** — no WINV26, 3 de 29 sinais do
-setup A; no WINFUT, 6 de 60. Isso não é falha de execução: é **o plano
+Cerca de **12% dos sinais serão abortados** — no WINV26, 3 de 29 sinais do
+setup A; no WINFUT, 18 de 151. Isso não é falha de execução: é **o plano
 funcionando**. Um sinal abortado entra no diário como *aderência cumprida*,
 exatamente como um trade vencedor.
 
@@ -116,9 +130,9 @@ Resultado por trade, por contrato de lote cheio:
 
 | desfecho | pontos | R$ | frequência medida |
 |---|---|---|---|
-| stop antes da parcial | −150 | −30,00 | 36% |
-| parcial e depois o stop | 0 | 0,00 | 6% |
-| parcial e depois alvo | +225 | +45,00 | 58% |
+| stop antes da parcial | −150 | −30,00 | 43% |
+| parcial e depois o stop | 0 | 0,00 | 11% |
+| parcial e depois alvo | +225 | +45,00 | 46% |
 
 > **De onde vem esse stop.** Ele não é escolhido, é medido: entre 150 e 100, o
 > de **150** é o que dá a maior média diária somada nas duas bases nesta
@@ -156,7 +170,7 @@ com risco máximo por trade = 1% do capital da conta
 
 | limite | valor | por quê |
 |---|---|---|
-| **3 stops no dia** | −450 pts (R$ 90,00 / contrato) | o pior pregão medido foi -310 pts |
+| **3 stops no dia** | −450 pts (R$ 90,00 / contrato) | o pior pregão medido foi -465 pts |
 | **1 violação de regra** | — | erro de processo fecha o dia, mesmo no lucro |
 
 O segundo limite é o mais importante e o mais fácil de ignorar. Um erro de
@@ -177,7 +191,7 @@ porque o resultado o recompensa.
 **Durante**
 
 - Só existe ação quando a seta A imprime. O resto do tempo eu **espero**.
-- Em ~1.7 trades por pregão, a maior parte do dia é espera. Isso é o trabalho,
+- Em ~1.8 trades por pregão, a maior parte do dia é espera. Isso é o trabalho,
   não uma pausa dele.
 - Enviada a ordem: uma barra. Preencheu ou cancelou.
 - Aberta a posição: stop, parcial e alvo já estão definidos. Nada a decidir.
@@ -199,29 +213,29 @@ trade** — a leitura honesta, não a bruta:
 
 | | WINV26 | WINFUT |
 |---|---|---|
-| acerto por trade | 60% | 58% |
-| valor esperado por trade | +76,0 pts | +72,8 pts |
-| **desvio** por trade | 182 pts | 180 pts |
-| pregões positivos | 83% | 69% |
-| pior pregão | -310 pts | -310 pts |
-| maior sequência de pregões negativos | 1 | 3 |
-| chance de uma **semana** fechar negativa | 9% | 13% |
-| rebaixamento máximo | 310 pts (R$ 62,00) | 335 pts (R$ 67,00) |
+| acerto por trade | 60% | 46% |
+| valor esperado por trade | +76,0 pts | +34,2 pts |
+| **desvio** por trade | 182 pts | 178 pts |
+| pregões positivos | 83% | 55% |
+| pior pregão | -310 pts | -465 pts |
+| maior sequência de pregões negativos | 1 | 5 |
+| chance de uma **semana** fechar negativa | 9% | 28% |
+| rebaixamento máximo | 310 pts (R$ 62,00) | 1275 pts (R$ 255,00) |
 
-Olhe a linha do **desvio**: 180 pontos por trade, contra um valor esperado de
-+72,8. O ruído é **três vezes maior que o sinal** em cada operação isolada.
+Olhe a linha do **desvio**: 178 pontos por trade, contra um valor esperado de
++34,2. O ruído é **três vezes maior que o sinal** em cada operação isolada.
 Isso não é um defeito da estratégia — é como toda vantagem pequena se parece
 de perto.
 
 As consequências, que eu preciso ter aceitado **antes** de elas acontecerem:
 
-- **31% dos pregões fecham no vermelho.** Um dia negativo é o caso comum, não
+- **45% dos pregões fecham no vermelho.** Um dia negativo é o caso comum, não
   um sinal de nada.
-- **3 pregões negativos seguidos já aconteceram** na amostra medida. Vão
+- **5 pregões negativos seguidos já aconteceram** na amostra medida. Vão
   acontecer de novo.
-- **13% de chance de uma semana inteira fechar negativa**, com a vantagem
+- **28% de chance de uma semana inteira fechar negativa**, com a vantagem
   totalmente intacta.
-- Duas perdas seguidas: 17% de chance. Três: 7%. Não é raro.
+- Duas perdas seguidas: 29% de chance. Três: 16%. Não é raro.
 
 **Conclusão operacional:** o resultado de um dia, e mesmo de uma semana, **não
 contém informação** sobre se eu operei bem. Julgar o processo pelo resultado
@@ -277,7 +291,7 @@ volta a mandar, e o plano deixa de existir nos dias em que ele mais importa.
 ## 8. Os cinco erros que este plano existe para impedir
 
 **1. Perseguir o sinal abortado.** "Ele foi embora sem mim." Vai acontecer com
-10% dos sinais, todo mês. A regra da barra seguinte existe exatamente para
+12% dos sinais, todo mês. A regra da barra seguinte existe exatamente para
 tirar essa decisão da minha mão no momento em que eu estou menos apto a
 tomá-la.
 
@@ -296,7 +310,7 @@ recuperar num trade o que a distribuição devolve em vinte. Aumentar depois de
 ganhar é a mesma aposta, com o disfarce de confiança. O lote é definido antes
 do pregão e não muda dentro dele.
 
-**5. Operar por tédio.** São ~1.7 trades por pregão. A maior parte do dia é
+**5. Operar por tédio.** São ~1.8 trades por pregão. A maior parte do dia é
 espera, e o tédio é uma sensação — não um sinal. Se eu não consigo esperar,
 o problema não é a estratégia.
 
@@ -333,8 +347,8 @@ dela.
 nunca no meio de uma boa. Na revisão eu olho, nesta ordem:
 
 1. A **nota de aderência** média do mês
-2. Quantos sinais foram abortados, e se isso ficou perto de 10%
-3. O resultado, em pontos, contra o valor esperado de +72,8 por trade
+2. Quantos sinais foram abortados, e se isso ficou perto de 12%
+3. O resultado, em pontos, contra o valor esperado de +34,2 por trade
 4. O **custo real** cobrado pela corretora, comparado com os 5 pontos por
    trade que os números desta página já descontam
 
@@ -342,8 +356,8 @@ nunca no meio de uma boa. Na revisão eu olho, nesta ordem:
 
 | gatilho | ação |
 |---|---|
-| rebaixamento de **335 pts** (R$ 67,00) | reduzir o lote à metade |
-| rebaixamento de **670 pts** (R$ 134,00) | parar de operar e reabrir o backtest |
+| rebaixamento de **1275 pts** (R$ 255,00) | reduzir o lote à metade |
+| rebaixamento de **2550 pts** (R$ 510,00) | parar de operar e reabrir o backtest |
 | aderência < 90%% na semana | parar de operar; treinar em simulador |
 | 5 pregões negativos seguidos | parar por um dia e reler este arquivo |
 
@@ -351,7 +365,7 @@ O primeiro disjuntor está no **pior rebaixamento já medido**. Chegar nele é
 normal. O segundo é o dobro dele: chegar lá já é evidência de que alguma
 coisa mudou — no mercado ou em mim — e merece medição, não persistência.
 
-O último é sobre estado mental, não sobre estatística: 3 pregões negativos
+O último é sobre estado mental, não sobre estatística: 5 pregões negativos
 seguidos já aconteceram na amostra, então 5 não prova nada. Mas depois de 5 eu
 não sou a mesma pessoa na frente da tela, e é essa pessoa que o disjuntor
 protege.
@@ -362,17 +376,20 @@ protege.
 
 Ler antes de dimensionar posição. Está tudo em [RESULTADOS.md § 10](RESULTADOS.md).
 
-- **Amostra pequena.** 12 e 32 pregões com trade. Os `t` medidos são bons, mas
+- **Amostra pequena.** 12 e 73 pregões com trade. Os `t` medidos são bons, mas
   sobre poucas observações.
 - **As duas bases não são independentes** — o WINFUT contém o WINV26 inteiro.
   Concordarem é menos confirmação do que parece.
 - **Os parâmetros foram varridos nas mesmas bases** em que são avaliados. Há
   sobreajuste embutido, e o desempenho real tende a ser pior que o medido.
+- **Fora da janela de calibração o setup A mede +4,9 por trade** (t +0,25), com custo.
+  É o número mais honesto deste arquivo.
 - **A ordem limitada é dada por preenchida assim que o preço toca o nível.** Na
   prática existe fila, e nem todo toque preenche — este é o otimismo que mais
   pesa contra os números acima.
 - **Sem filtro de horário, rolagem ou vencimento.**
 
-Nada disso é motivo para não operar o plano. É motivo para operá-lo **pequeno**
-até que os seus próprios registros, e não os meus, digam que ele funciona.
+O teste fora da amostra **não** foi passado. Isso é motivo para operar o plano
+**sem dinheiro** — simulador ou tamanho mínimo — até que os seus próprios
+registros, e não os meus, digam que ele funciona.
 

@@ -34,7 +34,9 @@ BASE = os.path.dirname(os.path.abspath(__file__))
 DADOS = os.path.join(BASE, 'dados')
 
 ARQUIVOS = {
-    'WINFUT': os.path.join(DADOS, 'WIFNUT_10000T_28-28-26.csv'),
+    # exportado pelo robo: abr-set/2026. Contem, barra a barra, o antigo
+    # WIFNUT_10000T_28-28-26.csv (30/06-28/08), que fica so como referencia.
+    'WINFUT': os.path.join(DADOS, 'WINFUT_10K_Ticks_Robo.csv'),
     'WINV26': os.path.join(DADOS, 'WINV26_10000T_28-08-26.csv'),
 }
 
@@ -115,22 +117,50 @@ MAX_BARRAS_FILL = 1    # A REGRA DA BARRA SEGUINTE. A limitada vale por UMA
                        # 99999 = o comportamento antigo (valida ate o fim do
                        # pregao), mantido so para reproduzir a comparacao.
 PRIORIDADE = ('A', 'B', 'C')   # quem ganha quando mais de um setup dispara
+
+# --- a janela em que TODO parametro acima foi escolhido: o WINFUT antigo
+# (WIFNUT_10000T_28-28-26.csv) e o WINV26, que cabe dentro dele. Pregao fora
+# dela nunca foi olhado ao calibrar -- e o teste fora da amostra.
+JANELA_CALIBRACAO = ('2026-06-30', '2026-08-28')
 SETUPS_ATIVOS = ('A', 'B')     # C mede negativo nos dois arquivos -- ver ESTRATEGIA.md
 
 
 # ============================================================ carga de dados
-def carrega(caminho):
-    """Le o csv exportado do Profit, em ordem cronologica.
+HORA_FECHAMENTO = '18:00'   # pregao cujo ultimo candle e anterior a isto
+                            # ainda estava aberto quando o csv foi gravado
 
-    A coluna BarDurationF*1000 e MILESIMO DE MINUTO -- dividida por 1000
-    vira minutos, que e o que BarDurationF() devolve no NTSL.
+
+def carrega(caminho):
+    """Le o csv, em ordem cronologica. Aceita os dois formatos:
+
+    Profit (tab, virgula decimal, do mais novo p/ o antigo): a coluna
+    BarDurationF*1000 e MILESIMO DE MINUTO -- dividida por 1000 vira
+    minutos, que e o que BarDurationF() devolve no NTSL.
+
+    Robo (virgula, cronologico): duracao_min ja vem em minutos. O
+    pregao que ainda estava aberto na gravacao e descartado -- os trades
+    dele sairiam 'fim' num fechamento que nao existiu.
     """
-    df = pd.read_csv(caminho, sep='\t', decimal=',', thousands='.')
-    df.columns = ['Data', 'O', 'H', 'L', 'C',
-                  'Buy', 'Sell', 'DurX1000', 'Qtd', 'Trades']
-    df['Data'] = pd.to_datetime(df['Data'], format='%d/%m/%Y %H:%M')
-    df = df.iloc[::-1].reset_index(drop=True)      # csv vem do mais novo p/ o antigo
-    df['Dur'] = df['DurX1000'].astype(float) / 1000.0
+    with open(caminho, encoding='utf-8-sig') as f:
+        cab = f.readline()
+    if cab.startswith('barra,'):
+        bruto = pd.read_csv(caminho)
+        df = pd.DataFrame({
+            'Data': pd.to_datetime(bruto['data_hora'], format='%Y-%m-%d %H:%M'),
+            'O': bruto.abertura, 'H': bruto.maxima,
+            'L': bruto.minima, 'C': bruto.fechamento,
+            'Buy': bruto.agr_compra, 'Sell': bruto.agr_venda,
+            'Dur': bruto.duracao_min.astype(float)})
+        ult = df.Data.iloc[-1]
+        if ult.strftime('%H:%M') < HORA_FECHAMENTO:
+            df = df[df.Data.dt.date != ult.date()]
+    else:
+        df = pd.read_csv(caminho, sep='\t', decimal=',', thousands='.')
+        df.columns = ['Data', 'O', 'H', 'L', 'C',
+                      'Buy', 'Sell', 'DurX1000', 'Qtd', 'Trades']
+        df['Data'] = pd.to_datetime(df['Data'], format='%d/%m/%Y %H:%M')
+        df = df.iloc[::-1].reset_index(drop=True)  # csv vem do mais novo p/ o antigo
+        df['Dur'] = df['DurX1000'].astype(float) / 1000.0
     df['dia'] = df['Data'].dt.date
     df = df[(df.Buy + df.Sell) > 0].reset_index(drop=True)   # barra valida
     return df

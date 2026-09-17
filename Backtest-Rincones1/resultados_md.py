@@ -49,7 +49,9 @@ def gera(ctx, fmt, ROT_REG, ROT_SU):
           % (b, '{:,}'.format(d['barras']).replace(',', '.'), preg,
              d['ini'], d['fim']))
     A('\n> **Elas não são independentes.** O WINFUT contém a janela inteira do WINV26 e')
-    A('> mais julho. Quando as duas concordam, isso é menos confirmação do que parece.\n')
+    A('> se estende antes e depois dela. Quando as duas concordam, isso é menos')
+    A('> confirmação do que parece.\n')
+    A('> **Fora da amostra (§ 10):** ' + ctx['ver_oos_md'] + '\n')
 
     # --- 2: o eixo [E2]
     e2 = R.get('e2')
@@ -104,9 +106,7 @@ def gera(ctx, fmt, ROT_REG, ROT_SU):
                  R['variantes'][b]['ema3'][str(sp)]['setup_' + su]))
         A('')
     A(ctx['ver_setups_md'] + '\n')
-    A('O setup C mede negativo nas duas, em toda configuração testada. Invertendo o')
-    A('sinal sobram 0 e 8 trades: a combinação "médias emboladas **e** preço longe')
-    A('delas" quase não existe. Fica desligado por padrão.\n')
+    A('O setup C mede negativo nas duas bases. Fica desligado por padrão.\n')
 
     # --- 3
     A('---\n\n## 5. A média que dá a direção\n')
@@ -290,9 +290,7 @@ def gera(ctx, fmt, ROT_REG, ROT_SU):
             A('| %d | %s |' % (st, ' | '.join(
                 ('**%s**' % n1(v)) if i == mx else n1(v) for i, v in enumerate(vals))))
         A('')
-    A('**O alvo de %d é o melhor da linha nas seis linhas das duas tabelas.** Não é um'
-      % ctx['alvo'])
-    A('pico isolado: 200 é pior, 400 e 500 são piores.\n')
+    A(ctx['ver_alvo_md'] + '\n')
 
     # --- 7
     A('---\n\n## 10. Entrada, fora da amostra e custos\n')
@@ -309,14 +307,31 @@ def gera(ctx, fmt, ROT_REG, ROT_SU):
     A('aborta. Quer dizer que **perder o preenchimento não é valor esperado perdido**,')
     A('e que entrar a mercado no fechamento é um plano B legítimo se você preferir')
     A('volume de operações a preço de entrada.\n')
-    A('### Mês a mês (WINFUT, carteira A + B)\n')
+    jn = R['bases']['WINFUT']['janela']
+    A('### Fora da amostra (WINFUT)\n')
+    A('Todo parâmetro foi escolhido olhando a janela de %s a %s — a do WINFUT antigo,'
+      % (fmt['dmy'](jn['janela'][0]), fmt['dmy'](jn['janela'][1])))
+    A('que contém o WINV26. O arquivo novo acrescenta pregões antes e depois dela, e')
+    A('eles são o único teste fora da amostra que existe aqui. Os trades são simulados')
+    A('na base inteira e só depois separados pelo pregão do sinal.\n')
+    A(ctx['ver_oos_md'] + '\n')
+    for stop in R['stops']:
+        A('#### Stop %d\n' % stop)
+        A(CAB)
+        for ch, rot in fmt['linhas_oos']:
+            for q in jn['ordem']:
+                A(lm('%s · %s (%d pregões)' % (rot, fmt['rot_per'][q], jn['pregoes'][q]),
+                     jn[str(stop)][ch][q]))
+        A('')
+    A('#### Mês a mês (carteira A + B, stop %d)\n' % sp)
     A('| mês | n | EV | total | acerto |\n|---|---|---|---|---|')
     for m in R['bases']['WINFUT']['mes']:
         A('| %s%s | %d | %s | %s | %s |'
-          % (m['mes'], ' — **fora da amostra**' if m['mes'] == '2026-07' else '',
+          % (m['mes'], fmt['rot_mes'](m, True),
              m['n'], n1(m['ev']), mil(m['total']), p1(m['acerto'])))
-    A('\nJulho é o único mês do WINFUT que não está no WINV26. **Não é um walk-forward**:')
-    A('são dois meses, e os parâmetros foram varridos olhando os dois arquivos.\n')
+    A('\n**Não é um walk-forward**: é um corte só, e o trecho depois da janela é curto.')
+    A('Mas é a primeira vez que a estratégia encontra dados que não participaram de')
+    A('nenhuma escolha — e é o número que deveria pesar mais.\n')
     A('### Custos (carteira A + B, stop %d)\n' % sp)
     A('| custo | WINV26 · EV / t | WINFUT · EV / t |\n|---|---|---|')
     for c in (0, 5, 10, 20):
@@ -334,9 +349,9 @@ def gera(ctx, fmt, ROT_REG, ROT_SU):
     A('---\n\n## 11. Ressalvas\n')
     A('- **Amostra pequena.** %d pregões no WINFUT, %s com trade no WINV26. Vários `t`'
       % (R['bases']['WINFUT']['pregoes'], ctx['preg26tr']))
-    A('  ficam entre +1 e +2, que não é evidência forte. O setup C tem 7 e 19 trades — a')
+    A('  ficam entre +1 e +2, que não é evidência forte. O setup C tem %s trades — a' % ctx['n_c'])
     A('  conclusão sobre ele é "não há evidência a favor", não "está provado que perde".')
-    A('- **As bases não são independentes.** WINFUT ⊃ WINV26.')
+    A('- **As bases não são independentes.** WINFUT ⊃ WINV26 — e a janela do WINV26 é a de calibração.')
     A('- **Parâmetros varridos nas mesmas bases** — inclusive o período e a inclinação de')
     A('  cada média adaptativa. A comparação da § 5 carrega sobreajuste: cada família')
     A('  ganhou uma varredura própria.')
@@ -349,10 +364,11 @@ def gera(ctx, fmt, ROT_REG, ROT_SU):
 
     # --- 9
     A('---\n\n## 12. O que eu faria\n')
-    A('1. ' + ctx['acao_stop_md'])
-    A('2. ' + ctx['acao_carteira_md'])
-    A('3. ' + ctx['acao_ma_md'])
-    A('4. **Manter o alvo em %d.**' % ctx['alvo'])
-    A('5. **Não ligar o setup C.**')
-    A('6. **Medir o custo real da corretora** e refazer a § 10 antes de dimensionar posição.')
+    A('1. ' + ctx['acao_oos_md'])
+    A('2. ' + ctx['acao_stop_md'])
+    A('3. ' + ctx['acao_carteira_md'])
+    A('4. ' + ctx['acao_ma_md'])
+    A('5. **Manter o alvo em %d.**' % ctx['alvo'])
+    A('6. **Não ligar o setup C.**')
+    A('7. **Medir o custo real da corretora** e refazer a § 10 antes de dimensionar posição.')
     return '\n'.join(L) + '\n'

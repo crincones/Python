@@ -8,9 +8,9 @@ entrada: ordem limitada no meio do candle, valida por 1 barra(s) | custo: 0.0 pt
     WINV26  parcial na distância do stop · stop na média da operação | stop 150: EV  +77.5 t+3.39 | stop 100: EV  +51.7 t+2.73
     WINV26  parcial em +100 · stop na média da operação          | stop 150: EV  +65.3 t+3.25 | stop 100: EV  +51.7 t+2.73
     WINV26  parcial em +100 · stop na entrada (o modelo antigo)  | stop 150: EV  +48.3 t+2.48 | stop 100: EV  +40.0 t+2.33
-    WINFUT  parcial na distância do stop · stop na média da operação | stop 150: EV  +43.0 t+2.84 | stop 100: EV  +28.2 t+2.27
-    WINFUT  parcial em +100 · stop na média da operação          | stop 150: EV  +41.1 t+3.21 | stop 100: EV  +28.2 t+2.27
-    WINFUT  parcial em +100 · stop na entrada (o modelo antigo)  | stop 150: EV  +36.5 t+2.89 | stop 100: EV  +26.0 t+2.33
+    WINFUT  parcial na distância do stop · stop na média da operação | stop 150: EV  +16.1 t+1.68 | stop 100: EV   +8.2 t+1.10
+    WINFUT  parcial em +100 · stop na média da operação          | stop 150: EV  +13.0 t+1.52 | stop 100: EV   +8.2 t+1.10
+    WINFUT  parcial em +100 · stop na entrada (o modelo antigo)  | stop 150: EV  +12.1 t+1.49 | stop 100: EV   +6.8 t+0.99
 
   A VARIANTE DO LEQUE: so gatilho que TOCA ou fica ATRAS das medias
     WINV26  posicao dos gatilhos: toca 61.7% · atras  4.3% · na frente 34.0%
@@ -25,24 +25,24 @@ entrada: ordem limitada no meio do candle, valida por 1 barra(s) | custo: 0.0 pt
       hma   toca 99.1% das barras | livre n= 31 EV  +36.3 t+0.82   | leque n= 31 EV  +36.3 t+0.82  
       t3    toca 66.6% das barras | livre n= 63 EV  +64.3 t+2.61   | leque n= 36 EV  +35.4 t+1.00  
       jma   toca 89.7% das barras | livre n= 62 EV  +46.0 t+1.62   | leque n= 36 EV  +20.8 t+0.59  
-    WINFUT  posicao dos gatilhos: toca 53.3% · atras  3.3% · na frente 43.5%
-    WINFUT  sem restrição — qualquer posição em relação às médias gatilhos= 246 | stop 150: EV  +43.0 t+2.84 n=148 DD 1575 | stop 100: EV  +28.2 t+2.27 n=149 DD 1500
-    WINFUT  só gatilho que toca ou fica atrás do leque     gatilhos= 139 | stop 150: EV  +73.1 t+3.29 n= 78 DD  525 | stop 100: EV  +50.0 t+2.61 n= 78 DD  400
-    WINFUT  setup B isolado (stop 150): livre n=103 EV  +21.0 t+1.21 -> leque n= 26 EV  +54.8 t+1.53
-    WINFUT  só o toque no leque              gatilhos= 131 | stop 150: EV  +69.1 t+3.08 n= 76 | stop 100: EV  +50.0 t+2.60 n= 76
-    WINFUT  só o que fica atrás do leque     gatilhos=   8 | stop 150: EV +225.0 t +nan n=  2 | stop 100: EV  +50.0 t +nan n=  2
-    WINFUT  os dois — a variante             gatilhos= 139 | stop 150: EV  +73.1 t+3.29 n= 78 | stop 100: EV  +50.0 t+2.61 n= 78
-      ema3  toca 76.0% das barras | livre n=148 EV  +43.0 t+2.84   | leque n= 78 EV  +73.1 t+3.29  
-      kama  toca 74.0% das barras | livre n=122 EV  +25.1 t+1.45   | leque n= 48 EV  +26.6 t+0.92  
-      hma   toca 99.0% das barras | livre n= 78 EV  +25.0 t+1.11   | leque n= 78 EV  +25.0 t+1.11  
-      t3    toca 68.3% das barras | livre n=160 EV  +27.1 t+1.75   | leque n= 86 EV  +29.7 t+1.55  
-      jma   toca 90.0% das barras | livre n=151 EV  +24.3 t+1.52   | leque n=102 EV  +13.9 t+0.82  
+    WINFUT  posicao dos gatilhos: toca 55.4% · atras  4.2% · na frente 40.5%
+    WINFUT  sem restrição — qualquer posição em relação às médias gatilhos= 625 | stop 150: EV  +16.1 t+1.68 n=348 DD 2475 | stop 100: EV   +8.2 t+1.10 n=352 DD 2600
+    WINFUT  só gatilho que toca ou fica atrás do leque     gatilhos= 372 | stop 150: EV  +27.2 t+1.98 n=179 DD 1800 | stop 100: EV  +20.1 t+1.86 n=179 DD 1400
+    WINFUT  setup B isolado (stop 150): livre n=233 EV   +1.2 t+0.11 -> leque n= 50 EV   -7.5 t-0.29
+    WINFUT  só o toque no leque              gatilhos= 346 | stop 150: EV  +27.9 t+1.99 n=172 | stop 100: EV  +20.3 t+1.85 n=172
+    WINFUT  só o que fica atrás do leque     gatilhos=  26 | stop 150: EV  +10.7 t+0.14 n=  7 | stop 100: EV  +14.3 t+0.28 n=  7
+    WINFUT  os dois — a variante             gatilhos= 372 | stop 150: EV  +27.2 t+1.98 n=179 | stop 100: EV  +20.1 t+1.86 n=179
+      ema3  toca 76.1% das barras | livre n=348 EV  +16.1 t+1.68   | leque n=179 EV  +27.2 t+1.98  
+      kama  toca 74.3% das barras | livre n=309 EV   +6.0 t+0.58   | leque n=114 EV   +7.2 t+0.43  
+      hma   toca 99.0% das barras | livre n=186 EV  +21.4 t+1.65   | leque n=186 EV  +21.4 t+1.65  
+      t3    toca 68.1% das barras | livre n=410 EV  +13.5 t+1.46   | leque n=217 EV  +15.2 t+1.33  
+      jma   toca 90.1% das barras | livre n=382 EV  +17.6 t+1.86   | leque n=259 EV  +18.5 t+1.63  
 
   O EIXO [E2]: FORMULA ANTIGA x NOVA  (ema3, carteira A + B)
     WINV26  v1 · |delta| / |Close-Open|      gatilhos=  106 | stop 150: EV  +44.0 t+1.81 n= 63 | stop 100: EV  +53.1 t+2.79 n= 64
     WINV26  v2 · (|delta|/esforço) × volta   gatilhos=   94 | stop 150: EV  +77.5 t+3.39 n= 59 | stop 100: EV  +51.7 t+2.73 n= 60
-    WINFUT  v1 · |delta| / |Close-Open|      gatilhos=  295 | stop 150: EV  +28.8 t+2.14 n=184 | stop 100: EV  +28.8 t+2.75 n=185
-    WINFUT  v2 · (|delta|/esforço) × volta   gatilhos=  246 | stop 150: EV  +43.0 t+2.84 n=148 | stop 100: EV  +28.2 t+2.27 n=149
+    WINFUT  v1 · |delta| / |Close-Open|      gatilhos=  753 | stop 150: EV  +12.3 t+1.33 n=421 | stop 100: EV  +13.4 t+2.04 n=427
+    WINFUT  v2 · (|delta|/esforço) × volta   gatilhos=  625 | stop 150: EV  +16.1 t+1.68 n=348 | stop 100: EV   +8.2 t+1.10 n=352
 
 ########################################################################################################
 # WINV26
@@ -83,44 +83,114 @@ entrada: ordem limitada no meio do candle, valida por 1 barra(s) | custo: 0.0 pt
   custo de 10 pts                  59   4.5    +67.5     +3985  55.9%  +3.02   85%  2.28    490
   custo de 20 pts                  59   4.5    +57.5     +3395  55.9%  +2.63   77%  2.01    530
 
+  FORA DA AMOSTRA -- janela de calibracao 2026-06-30 a 2026-08-28  (pregoes: antes 51 · dentro 44 · depois 0 · fora 51)
+                                        n /preg       EV     total acerto      t dias+    PF     DD
+  stop 150 · so A · antes             sem trades
+  stop 150 · so A · dentro             25   2.1    +81.0     +2025  60.0%  +2.18   83%  2.50    300
+  stop 150 · so A · depois            sem trades
+  stop 150 · so A · fora              sem trades
+  stop 150 · A + B · antes            sem trades
+  stop 150 · A + B · dentro            59   4.5    +77.5     +4575  55.9%  +3.39   85%  2.61    450
+  stop 150 · A + B · depois           sem trades
+  stop 150 · A + B · fora             sem trades
+  stop 150 · so A, custo 5 · antes    sem trades
+  stop 150 · so A, custo 5 · dentro    25   2.1    +76.0     +1900  60.0%  +2.05   83%  2.36    310
+  stop 150 · so A, custo 5 · depois   sem trades
+  stop 150 · so A, custo 5 · fora     sem trades
+  stop 150 · setup B isolado · antes  sem trades
+  stop 150 · setup B isolado · dentro   35   2.7    +68.6     +2400  51.4%  +2.86   69%  2.45    450
+  stop 150 · setup B isolado · depois  sem trades
+  stop 150 · setup B isolado · fora   sem trades
+  stop 100 · so A · antes             sem trades
+  stop 100 · so A · dentro             25   2.1    +68.0     +1700  52.0%  +2.43   75%  2.89    200
+  stop 100 · so A · depois            sem trades
+  stop 100 · so A · fora              sem trades
+  stop 100 · A + B · antes            sem trades
+  stop 100 · A + B · dentro            60   4.6    +51.7     +3100  45.0%  +2.73   77%  2.35    300
+  stop 100 · A + B · depois           sem trades
+  stop 100 · A + B · fora             sem trades
+  stop 100 · so A, custo 5 · antes    sem trades
+  stop 100 · so A, custo 5 · dentro    25   2.1    +63.0     +1575  52.0%  +2.26   75%  2.64    220
+  stop 100 · so A, custo 5 · depois   sem trades
+  stop 100 · so A, custo 5 · fora     sem trades
+  stop 100 · setup B isolado · antes  sem trades
+  stop 100 · setup B isolado · dentro   35   2.7    +40.0     +1400  40.0%  +2.10   46%  2.00    300
+  stop 100 · setup B isolado · depois  sem trades
+  stop 100 · setup B isolado · fora   sem trades
+
 ########################################################################################################
 # WINFUT
 ########################################################################################################
 
   MEDIA DE REGIME x DESEMPENHO  (stop 150)
     media   %tend | setup A isolado       carteira so A        
-    ema3      80% | n=54    +80.6 t+3.11  n=53    +77.8 t+2.97 
-    kama      48% | n=30    +55.0 t+1.39  n=30    +55.0 t+1.39 
-    hma       95% | n=57    +21.1 t+0.85  n=56    +24.1 t+0.97 
-    t3        92% | n=52    +38.9 t+1.52  n=51    +42.6 t+1.62 
-    jma       93% | n=57    +64.5 t+2.50  n=56    +68.3 t+2.64 
+    ema3      81% | n=133   +38.9 t+2.45  n=130   +39.2 t+2.46 
+    kama      48% | n=72    +16.7 t+0.76  n=71    +19.0 t+0.87 
+    hma       95% | n=150   +17.0 t+1.24  n=146   +21.6 t+1.54 
+    t3        92% | n=137   +21.9 t+1.48  n=134   +25.7 t+1.70 
+    jma       93% | n=154   +32.6 t+2.34  n=150   +37.5 t+2.65 
 
   MEDIA DE REGIME x DESEMPENHO  (stop 100)
     media   %tend | setup A isolado       carteira so A        
-    ema3      80% | n=54    +46.3 t+2.21  n=53    +43.4 t+2.08 
-    kama      48% | n=30    +33.3 t+1.19  n=30    +33.3 t+1.19 
-    hma       95% | n=57    +22.8 t+1.34  n=56    +25.0 t+1.45 
-    t3        92% | n=52    +23.1 t+1.22  n=51    +25.5 t+1.31 
-    jma       93% | n=57    +42.1 t+2.19  n=56    +44.6 t+2.31 
+    ema3      81% | n=133   +21.8 t+1.85  n=130   +21.5 t+1.82 
+    kama      48% | n=72     +5.6 t+0.34  n=72     +5.6 t+0.34 
+    hma       95% | n=150   +10.7 t+1.09  n=148   +12.2 t+1.23 
+    t3        92% | n=137    +9.5 t+0.94  n=135   +11.1 t+1.08 
+    jma       93% | n=154   +16.2 t+1.69  n=152   +17.8 t+1.84 
 
   CONFIGURACAO PADRAO (ema3, stop 150) -- carteira A + B
                                     n /preg       EV     total acerto      t dias+    PF     DD
-  stop 150 · so A                  53   1.7    +77.8     +4125  58.5%  +2.97   69%  2.45    300
-  stop 150 · A + B                148   3.6    +43.0     +6365  46.6%  +2.84   66%  1.71   1575
-  stop 150 · A + B + C            163   3.8    +32.6     +5315  43.6%  +2.34   63%  1.51   1941
-  stop 100 · so A                  53   1.7    +43.4     +2300  43.4%  +2.08   50%  2.00    400
-  stop 100 · A + B                149   3.6    +28.2     +4200  35.6%  +2.27   59%  1.66   1500
-  stop 100 · A + B + C            164   3.8    +23.2     +3800  33.5%  +2.02   56%  1.53   1600
+  stop 150 · so A                 130   1.8    +39.2     +5100  46.2%  +2.46   55%  1.61   1125
+  stop 150 · A + B                348   3.7    +16.1     +5615  38.2%  +1.68   55%  1.23   2475
+  stop 150 · A + B + C            393   3.9    +12.4     +4865  37.4%  +1.41   49%  1.17   2625
+  stop 100 · so A                 130   1.8    +21.5     +2800  34.6%  +1.82   42%  1.45   1100
+  stop 100 · A + B                352   3.7     +8.2     +2900  28.7%  +1.10   49%  1.17   2600
+  stop 100 · A + B + C            397   4.0     +6.5     +2600  28.5%  +0.96   48%  1.13   3000
 
   entrada limitada x a mercado (stop 150)
-  limitada no meio do candle      148   3.6    +43.0     +6365  46.6%  +2.84   66%  1.71   1575
-  a mercado no fechamento         168   4.0    +36.7     +6158  44.0%  +2.72   64%  1.59   1500
+  limitada no meio do candle      348   3.7    +16.1     +5615  38.2%  +1.68   55%  1.23   2475
+  a mercado no fechamento         402   4.1    +18.1     +7282  38.6%  +2.20   57%  1.27   2175
 
   custo por trade (stop 150)
-  custo de 0 pts                  148   3.6    +43.0     +6365  46.6%  +2.84   66%  1.71   1575
-  custo de 5 pts                  148   3.6    +38.0     +5625  46.6%  +2.53   66%  1.60   1675
-  custo de 10 pts                 148   3.6    +33.0     +4885  46.6%  +2.22   66%  1.50   1775
-  custo de 20 pts                 148   3.6    +23.0     +3405  46.6%  +1.57   63%  1.32   2031
+  custo de 0 pts                  348   3.7    +16.1     +5615  38.2%  +1.68   55%  1.23   2475
+  custo de 5 pts                  348   3.7    +11.1     +3875  38.2%  +1.17   55%  1.15   2890
+  custo de 10 pts                 348   3.7     +6.1     +2135  38.2%  +0.65   55%  1.08   3605
+  custo de 20 pts                 348   3.7     -3.9     -1345  38.2%  -0.41   53%  0.95   5100
+
+  FORA DA AMOSTRA -- janela de calibracao 2026-06-30 a 2026-08-28  (pregoes: antes 49 · dentro 44 · depois 9 · fora 58)
+                                        n /preg       EV     total acerto      t dias+    PF     DD
+  stop 150 · so A · antes              57   1.7    -10.5      -600  31.6%  -0.47   36%  0.87   1125
+  stop 150 · so A · dentro             54   1.6    +80.6     +4350  59.3%  +3.12   70%  2.53    300
+  stop 150 · so A · depois             19   2.7    +71.1     +1350  52.6%  +2.36   71%  2.50    300
+  stop 150 · so A · fora               76   1.9     +9.9      +750  36.8%  +0.51   42%  1.14   1425
+  stop 150 · A + B · antes            152   3.5    -10.9     -1650  30.3%  -0.90   45%  0.86   2475
+  stop 150 · A + B · dentro           151   3.6    +44.1     +6665  47.0%  +2.97   67%  1.73   1575
+  stop 150 · A + B · depois            45   5.0    +13.3      +600  35.6%  +0.40   44%  1.20   1350
+  stop 150 · A + B · fora             197   3.7     -5.3     -1050  31.5%  -0.45   45%  0.93   2475
+  stop 150 · so A, custo 5 · antes     57   1.7    -15.5      -885  31.6%  -0.69   36%  0.82   1275
+  stop 150 · so A, custo 5 · dentro    54   1.6    +75.6     +4080  59.3%  +2.95   70%  2.38    335
+  stop 150 · so A, custo 5 · depois    19   2.7    +66.1     +1255  52.6%  +2.15   71%  2.33    315
+  stop 150 · so A, custo 5 · fora      76   1.9     +4.9      +370  36.8%  +0.25   42%  1.06   1595
+  stop 150 · setup B isolado · antes  102   2.4    -11.8     -1200  29.4%  -0.76   47%  0.85   2325
+  stop 150 · setup B isolado · dentro  105   2.6    +21.3     +2240  40.0%  +1.24   61%  1.32   1725
+  stop 150 · setup B isolado · depois   26   3.2    -28.8      -750  23.1%  -0.59   38%  0.64   1575
+  stop 150 · setup B isolado · fora   128   2.5    -15.2     -1950  28.1%  -0.98   45%  0.81   2625
+  stop 100 · so A · antes              57   1.7     -8.8      -500  22.8%  -0.57   30%  0.84   1100
+  stop 100 · so A · dentro             54   1.6    +46.3     +2500  44.4%  +2.25   52%  2.09    400
+  stop 100 · so A · depois             19   2.7    +42.1      +800  42.1%  +1.62   57%  2.00    300
+  stop 100 · so A · fora               76   1.9     +3.9      +300  27.6%  +0.29   35%  1.08   1300
+  stop 100 · A + B · antes            155   3.5     -8.4     -1300  22.6%  -0.86   45%  0.84   2600
+  stop 100 · A + B · dentro           152   3.6    +29.6     +4500  36.2%  +2.42   60%  1.69   1500
+  stop 100 · A + B · depois            45   5.0     -6.7      -300  24.4%  -0.32   22%  0.88    900
+  stop 100 · A + B · fora             200   3.8     -8.0     -1600  23.0%  -0.92   42%  0.85   3000
+  stop 100 · so A, custo 5 · antes     57   1.7    -13.8      -785  22.8%  -0.89   30%  0.76   1240
+  stop 100 · so A, custo 5 · dentro    54   1.6    +41.3     +2230  44.4%  +2.02   52%  1.91    450
+  stop 100 · so A, custo 5 · depois    19   2.7    +37.1      +705  42.1%  +1.41   57%  1.82    315
+  stop 100 · so A, custo 5 · fora      76   1.9     -1.1       -80  27.6%  -0.08   35%  0.98   1475
+  stop 100 · setup B isolado · antes  102   2.4     -9.8     -1000  21.6%  -0.82   33%  0.81   2000
+  stop 100 · setup B isolado · dentro  105   2.6    +22.9     +2400  32.4%  +1.95   51%  1.55    900
+  stop 100 · setup B isolado · depois   26   3.2    -42.3     -1100  11.5%  -1.82   12%  0.35   1200
+  stop 100 · setup B isolado · fora   128   2.5    -16.4     -2100  19.5%  -1.53   29%  0.70   2700
 
 ========================================================================================================
 Rode `python relatorio.py` para regerar o relatorio.html a partir destes numeros.

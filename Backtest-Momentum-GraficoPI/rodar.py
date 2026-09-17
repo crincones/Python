@@ -21,6 +21,7 @@ import pandas as pd
 import engine as E
 import estrategia as S
 import estudo_fluxo as FX
+import periodos as PR
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 SAIDA = os.path.join(BASE, 'saida')
@@ -212,6 +213,60 @@ def galeria(ref, n_por_nivel=6):
                 n_ret=int(r['n_ret']), pav_tot=float(r['pav_tot']),
                 motivo=motivo, nivel=niv))
         out[niv] = itens
+    return out
+
+
+def p_stop_aleatorio(prof):
+    """Probabilidade de a ordem stop ter disparado ANTES do pavio contra.
+
+    Candle de PI que fechou a favor com o pavio contra alcancando o stop
+    (entrada no meio do corpo, stop 100 abaixo = 50 abaixo da abertura).
+    Com OHLC nao da para saber a ordem. Um passeio aleatorio de ticks de 5
+    pontos, que abre em 0 e fecha ao tocar +100 ou -100, condicionado a
+    fechar em +100 com a minima nessa profundidade, dispara em +50 e depois
+    toma o stop em -50 com esta frequencia (simulacao de 200 mil caminhos):
+    28% com minima em -50 ate 40% com minima em -95.
+    """
+    prof = np.clip(np.asarray(prof, dtype=float), 50, 95)
+    return 0.276 + (prof - 50) / 45 * (0.397 - 0.276)
+
+
+def cenarios_antecipa(d, tabelas, p):
+    """A antecipada depende de uma convencao que as outras entradas nao usam.
+
+    A engine assume que, num candle que fechou a favor, o pavio contra se
+    formou ANTES de a ordem stop disparar -- entao a propria barra de
+    entrada nunca toma stop. Quando esse pavio chega ao stop, isso e uma
+    aposta, nao um dado. Tres cenarios por sinal:
+      convencao    o da engine
+      aleatorio    o stop acontece com a probabilidade do passeio aleatorio
+      pessimista   todo candle ambiguo tomou stop
+    """
+    o = d['o'].to_numpy(); h = d['h'].to_numpy()
+    l = d['l'].to_numpy(); c = d['c'].to_numpy()
+    out = {}
+    for gn in GESTOES:
+        t = tabelas[('antecipa', gn)]
+        t = t[t['aceito']]
+        ie = t['i_ent'].to_numpy(int); ld = t['lado'].to_numpy(int)
+        pe = t['preco_ent'].to_numpy(float)
+        fav = np.sign(c[ie] - o[ie]) == ld
+        adv = np.where(ld > 0, l[ie], h[ie])
+        amb = fav & ((adv - (pe - ld * E.STOP)) * ld <= 0)
+        prof = (o[ie] - adv) * ld
+        pr = np.where(amb, p_stop_aleatorio(prof), 0.0)
+        pts = t['pts'].to_numpy(float)
+        ale = (1 - pr) * pts + pr * (-E.STOP)
+        pes = np.where(amb, -E.STOP, pts)
+        for niv in ('prata', 'bronze'):
+            m = S.seleciona(t.assign(_k=np.arange(len(t))), niv)['_k'].to_numpy()
+            r = dict(n=int(len(m)), ambiguos_pct=float(amb[m].mean() * 100),
+                     ev_conv=float(pts[m].mean()), ev_aleat=float(ale[m].mean()),
+                     ev_pess=float(pes[m].mean()))
+            out[f'{gn}|{niv}'] = r
+            p(f"    {gn:<8}{niv:<7} n={r['n']:>5}  candles ambiguos {r['ambiguos_pct']:4.1f}%   "
+              f"EV convencao {r['ev_conv']:+6.1f}  aleatorio {r['ev_aleat']:+6.1f}  "
+              f"pessimista {r['ev_pess']:+6.1f}")
     return out
 
 
@@ -541,6 +596,63 @@ def main():
       f"pior dia: {diario['sum'].min():.0f} pts   "
       f"media: {diario['sum'].mean():.1f} pts")
 
+    # ------------------------------------------------ fora da amostra original
+    #  Os cortes de estrategia.py foram escolhidos na base antiga (06/08 a
+    #  11/09). Tudo o que esta fora dessa janela e teste de verdade.
+    p('\n[13] FORA DA AMOSTRA ORIGINAL (regras escolhidas em 06/08 a 11/09)')
+    oos = dict(blocos={}, meses={}, regime=PR.regime(d), rot=PR.ROT_BLOCO,
+               orig_ini=str(PR.ORIG_INI.date()), orig_fim=str(PR.ORIG_FIM.date()))
+    for (modo, gn), t in tabelas.items():
+        for niv in S.NIVEIS:
+            if modo == 'antecipa' and niv == 'ouro':
+                continue
+            sel = S.seleciona(t[t['aceito']], niv)
+            chave = f'{modo}|{gn}|{niv}'
+            oos['blocos'][chave] = dict(sinais=PR.por_bloco(sel),
+                                        carteira=PR.por_bloco(E.carteira(sel)))
+            oos['meses'][chave] = PR.por_mes(sel)
+    for modo in MODOS:
+        for niv in S.NIVEIS:
+            b = oos['blocos'].get(f'{modo}|parcial|{niv}')
+            if b:
+                s_ = b['sinais']
+                p(f"    {modo:<9}{niv:<7} antes {PR.linha_txt(s_['antes'])} | "
+                  f"original {PR.linha_txt(s_['original'])} | depois {PR.linha_txt(s_['depois'])}")
+    p('    por mes (fecha, parcial):')
+    for niv in S.NIVEIS:
+        p(f"      {niv:<7}" + '  '.join(f"{m['mes'][5:]} {m['ev']:+5.1f}({m['n']})"
+                                   for m in oos['meses'][f'fecha|parcial|{niv}']))
+    #  os filtros medidos SO fora da amostra original
+    fora_ref = ref_ac[PR.bloco(ref_ac['data']) != 'original']
+    oos['filtros_fora'] = {
+        'pavio': estudo_atributo(fora_ref.assign(aceito=True), 'pav_tot',
+                                 [-1, 25, 45, 65, 90, 999],
+                                 ['ate 25 pts', '25 a 45', '45 a 65', '65 a 90', 'acima de 90']),
+        'retracao_candles': estudo_atributo(fora_ref.assign(aceito=True), 'n_ret', [0, 1, 2, 3, 99],
+                                            ['1 candle', '2 candles', '3 candles', '4 ou mais']),
+    }
+    cz_f = []
+    for cv in (False, True):
+        for es in (False, True):
+            g = fora_ref[((fora_ref['curva'] > 0) == cv) & ((fora_ref['estic'] > S.ESTIC_EXAUSTAO) == es)]
+            cz_f.append(dict(concava=cv, esticado=es, n=int(len(g)),
+                             ev=float(g['pts'].mean()) if len(g) else None))
+    oos['cruz_fora'] = cz_f
+
+    # ------------------------------------------ a entrada antecipada e o caminho
+    p('\n[14] ANTECIPADA: SENSIBILIDADE AO CAMINHO DENTRO DO CANDLE DE ENTRADA')
+    oos['antecipa'] = cenarios_antecipa(d, tabelas, p)
+
+    # --------------------------------------------------------------- numeros
+    #  que o texto do relatorio cita -- calculados, nunca digitados
+    sem_veto = ref.assign(aceito=ref['aceito'] & ~ref['exaustao'])
+    estudos['extra'] = dict(
+        n_veto=int(cruz[1]['celulas'][1]['n']),
+        corr_ema_estic=float(ref_ac['incl_ema'].corr(ref_ac['estic'])),
+        incl_ema_sem_veto=estudo_atributo(sem_veto, 'incl_ema', [-9, 0.0, 0.13, 0.30, 9],
+                                          ['EMA contra', '0 a 0,13 ATR', '0,13 a 0,30', 'acima de 0,30']),
+    )
+
     # --------------------------------------------------------------- candles
     # amostra de candles com indicadores, para o grafico Kline do relatorio
     # O eixo do grafico de candles e SINTETICO -- um minuto por barra. No
@@ -550,7 +662,7 @@ def main():
     cols = ['o', 'h', 'l', 'c', 'hma', 'ema', 'kc_sup', 'kc_inf']
     candles = d[cols].round(2).astype(object).where(pd.notna(d[cols]), None)
     candles = candles.to_dict('list')
-    candles['dt'] = d['data'].dt.strftime('%d/%m %H:%M:%S').tolist()
+    candles['dt'] = d['data'].dt.strftime('%d/%m %H:%M').tolist()
 
     # ------------------------------------------------- agressao e tendencia
     #  As duas perguntas do estudo de fluxo, com controle de busca. Roda por
@@ -563,7 +675,7 @@ def main():
     fluxo = FX.roda(p)
 
     saida = dict(
-        auditoria=aud, fluxo=fluxo,
+        auditoria=aud, fluxo=fluxo, oos=oos,
         parametros=dict(
             ema=E.EMA_PER, hull=E.HMA_PER, atr=E.ATR_PER, desvio=E.KELT_DESV,
             stop=E.STOP, alvo=E.ALVO, parcial_em=E.PARCIAL_EM,

@@ -1,10 +1,12 @@
 # Backtest-Rincones1
 
-Backtest de **três setups de esforço filtrados por regime de média** no WIN, sobre barras de **10.000 ticks** (WINV26 e WINFUT, jun–ago/2026).
+Backtest de **três setups de esforço filtrados por regime de média** no WIN, sobre barras de **10.000 ticks** (WINFUT abr–set/2026 e WINV26 até ago/2026).
 
 O gatilho é o índice de esforço já validado em `ProfitChart/Indicadores/Grafico-Ticks/Ticks_Esforco_Reversao.ntsl`; aqui ele é reimplementado idêntico e cruzado com uma média de regime para decidir se o trade vai a favor ou contra o movimento.
 
 > **Esta rodada trocou o eixo E2 do gatilho.** Ele media `|delta| / |Close−Open|` — agressão por ponto de *saldo*, cego ao caminho que o preço fez dentro da barra. Agora mede **vaivém**: `(|delta|/esforço) × (1 − |Close−Open|/percurso)`, com `percurso = 2·(High−Low) − |Close−Open|`. A derivação está em `Ticks_Esforco_Hist_v2.ntsl` e o efeito no backtest, medido com todo o resto congelado, está na **§ 2 de [RESULTADOS.md](RESULTADOS.md)**. Para voltar à fórmula antiga: `METRICA_E2 = 0` em `engine.py`.
+
+> **Esta rodada trocou a base do WINFUT** para `dados/WINFUT_10K_Ticks_Robo.csv`, exportado pelo robô: 102 pregões, de 17/04 a 11/09/2026 (o pregão de 14/09, ainda aberto na gravação, é descartado). Ele contém o WINFUT antigo barra a barra — no período antigo reproduz os mesmos 148 trades — e acrescenta **58 pregões fora da janela em que os parâmetros foram escolhidos** (30/06–28/08). Esses pregões são o primeiro teste fora da amostra do projeto, e **a vantagem não se repetiu neles**. § 10 de [RESULTADOS.md](RESULTADOS.md).
 
 ## Conteúdo
 
@@ -19,7 +21,7 @@ O gatilho é o índice de esforço já validado em `ProfitChart/Indicadores/Graf
 | `relatorio.py` + `molde.py` + `resultados_md.py` | Geram `relatorio.html` e `RESULTADOS.md` a partir de `saida/resumo.json`. |
 | `plano.py` + `molde_plano.py` | Geram `PLANO.md` e `plano.html` — do mesmo `resumo.json`, e o HTML sai do próprio markdown. |
 | `vendor/` | [KLineCharts](https://klinecharts.com) 9.8.10 (Apache 2.0), embutido no HTML pelo `relatorio.py`. É a única dependência de front-end e não vai a CDN. |
-| `dados/` | Os dois CSV de 10.000 ticks exportados do Profit. |
+| `dados/` | `WINFUT_10K_Ticks_Robo.csv` (exportado pelo robô, a base do WINFUT) e `WINV26_10000T_28-08-26.csv` (exportado do Profit). `WIFNUT_10000T_28-28-26.csv` é o WINFUT antigo, mantido só como referência. `carrega()` lê os dois formatos. |
 | `saida/` | `resumo.json` (fonte única dos números), `console.txt` e `trades_*.csv`. |
 
 ## Como rodar
@@ -42,7 +44,7 @@ Mesmo gatilho (índice de esforço ≥ 0,80, corpo pequeno, eixo de deslocamento
 - **B — reversão rápida.** Fora de consolidação, preço a 1+ range médio da média, gatilho contra o afastamento.
 - **C — reversão em consolidação.** Média sem inclinação, preço afastado. **Desligado: mede negativo nas duas bases.**
 
-**Variante do leque (`FILTRO_LEQUE`, desligada).** Só vale o gatilho que **toca o leque ou fica atrás dele** — o que dispara com o preço esticado à frente das médias é descartado. Não mexe no A (que já exige o toque) e reescreve o B: EV sobe nas quatro células medidas e o drawdown do WINFUT cai de 1.575 para 525 pontos, ao custo de metade dos trades. Fica desligada porque o `t` cai onde a amostra encolhe. § 6 de [RESULTADOS.md](RESULTADOS.md).
+**Variante do leque (`FILTRO_LEQUE`, desligada).** Só vale o gatilho que **toca o leque ou fica atrás dele** — o que dispara com o preço esticado à frente das médias é descartado. Não mexe no A (que já exige o toque) e reescreve o B: corta boa parte dos trades e melhora o EV da carteira A + B, mas fora da janela de calibração o B que sobra mede negativo. § 6 de [RESULTADOS.md](RESULTADOS.md).
 
 Gestão: **stop 150 (padrão) ou 100 · parcial de 50% na mesma distância do stop · alvo 300**. Quando a parcial sai, o stop do restante fica na **média da operação** — que, com meia posição e a parcial na distância do stop, é o próprio stop inicial. O stop não anda, e o trade que volta morre em **zero de verdade** (o modelo anterior pagava +50 nesse desfecho e ainda o chamava de "zero a zero").
 
@@ -56,14 +58,16 @@ e todo número deste projeto já está sob essa regra.
 > `saida/resumo.json`, como os números. As de baixo são o resumo desta rodada; se a
 > engine mudar, valem as dos documentos gerados, não estas.
 
-1. **A regra da parcial estava modelada errado — e o conserto vale mais que a troca do indicador.** O backtest punha o stop do restante na *entrada* e tirava a parcial em +100 com stop de 150: o desfecho chamado "zero a zero" pagava **+50 pontos**. Na regra de verdade a parcial sai na **mesma distância do stop** e o stop do restante fica na **média da operação** — que, com meia posição, é o próprio stop inicial. O stop não anda e o "zero a zero" é zero. Carteira A + B, stop 150: `+48,3 → +77,5` no WINV26 e `+36,5 → +43,0` no WINFUT.
-2. **A troca do eixo E2 melhora a reversão, não a tendência.** O setup B sai de `+25,0` / `t +0,86` para `+68,6` / `t +2,86` no WINV26 e de `+15,7` / `t +0,95` para `+21,0` / `t +1,21` no WINFUT. O setup A não melhora em nenhuma das quatro células. Faz sentido: o eixo novo mede exaustão, que é o que a reversão procura.
-3. **A prioridade em tendência continua certa** — o setup A lidera a maioria das colunas nas duas bases, mas não mais todas: o B passou a medir `t` melhor no WINV26.
-4. **O stop de 100 deixou de ser a escolha limpa.** O de 150 mede melhor em 3 das 4 comparações; o de 100 só ganha no WINV26 · só A. O plano operacional passou a usar 150, e o motivo está escrito nele.
-5. **As três EMAs seguem como padrão**, com o melhor `t` em 3 das 4 combinações de base e stop; perdem só no WINFUT com stop 100, para a aproximação de Jurik — que não é o JMA de verdade.
-6. **A regra da barra seguinte custa quase nada** — cerca de um sinal em dez é abortado. O ganho dela é de disciplina, não de estatística.
+Carteira A + B, stop 150, sem custo, salvo indicação.
 
-Leia a § 11 de [RESULTADOS.md](RESULTADOS.md) antes de dimensionar posição — os números são brutos.
+1. **Fora da amostra a vantagem não se repetiu.** Dentro da janela de calibração o WINFUT mede `+44,1` / `t +2,97` (A + B) e `+80,6` / `t +3,12` (só A). Nos 58 pregões fora dela: `−5,3` / `t −0,45` e `+9,9` / `t +0,51`. Com 5 pontos de custo o só A fora da janela vai a `+4,9`.
+2. **O estrago está antes da janela.** Abr–jun: só A `−10,5` em 57 trades, A + B `−10,9` em 152. Depois da janela (9 pregões de setembro) o só A volta a `+71,1` em 19 trades — curto demais para desempatar.
+3. **O setup B é o que mais sofre.** Isolado, fora da janela: `−15,2` / `t −0,98` em 128 trades. Na base inteira do WINFUT ele fica em `+1,2`. O A isolado na base inteira ainda mede `+38,9` / `t +2,45`, mas quase tudo vem da janela de calibração.
+4. **Na base inteira do WINFUT o resultado cai pela metade ou mais:** A + B `+43,0 → +16,1` (`t +2,84 → +1,68`), drawdown `1.575 → 2.475` pontos; só A `+77,8 → +39,2`. Com 20 pontos de custo a carteira A + B fica negativa. O WINV26 não mudou — e está inteiro dentro da janela.
+5. **Os ajustes finos continuam onde estavam**, mas perderam peso: stop 150 melhor em 3 de 4 comparações, alvo 300 melhor em 5 de 6 linhas, três EMAs com o melhor `t` em 2 de 4 (a aproximação de Jurik passa à frente no WINFUT). Afinar parâmetro de uma estratégia que não passou no teste fora da amostra é o passo errado.
+6. **O plano operacional agora abre com o aviso**: procedimento sim, dinheiro não — simulador ou tamanho mínimo até registros novos.
+
+Leia a § 10 (fora da amostra) e a § 11 de [RESULTADOS.md](RESULTADOS.md) antes de dimensionar posição — os números são brutos.
 
 ## O visualizador
 

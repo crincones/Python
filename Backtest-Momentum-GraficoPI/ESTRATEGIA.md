@@ -1,5 +1,14 @@
 # Especificacao da estrategia
 
+> **Atualizacao 14/09/2026.** Todos os estudos agora rodam sobre `WINFUT/WINFUT_20PI_Robo.csv`
+> (50.611 candles, 132 pregoes, 06/03 a 14/09/2026), carregada por `engine.carrega()`; a base antiga
+> continua disponivel com `WINFUT_BASE=WINFUT_20PI.csv`. As regras e a engine descritas abaixo nao
+> mudaram. Os **numeros** citados neste documento sao da base antiga (26 pregoes); os atuais estao em
+> `RESULTADOS.md`, que tambem traz o teste fora da amostra (`periodos.py`), a sensibilidade da entrada
+> antecipada ao caminho dentro do candle e a hipotese da retracao profunda (`candidato.py`). Diferencas
+> de formato da base nova: hora so ate o minuto, sem a EMA da Nelogica, e agressao/duracao na propria
+> linha do candle (sem volume total e sem numero de negocios -- `fluxo.py` usa o volume agressor).
+
 O que o codigo faz, em detalhe, e **por que** cada decisao de medicao foi
 tomada assim. Os resultados estao em [RESULTADOS.md](RESULTADOS.md); o que
 fazer na frente da tela esta em [PLANO.md](PLANO.md).

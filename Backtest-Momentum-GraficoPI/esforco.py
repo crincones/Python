@@ -151,10 +151,19 @@ def roda(t, d, S, FX, p=print, semente=4242):
     """
     rng = np.random.default_rng(semente)
     NOVAS = ['ef_par_vol', 'ef_par_negs', 'ef_par_agr', 'tam_neg', 'tam_neg_r']
+    # A base do robo nao traz numero de negocios, e o volume dela JA E o
+    # agressor: as colunas de negocios saem vazias e ef_par_agr repete
+    # ef_par_vol. Ficam fora da busca -- uma coluna repetida entraria duas
+    # vezes no ruido e inflaria o controle.
+    fam = [c for c in FAMILIA if t[c].notna().any()]
+    if np.allclose(t['ef_par_vol'].fillna(-1), t['ef_par_agr'].fillna(-1)):
+        fam = [c for c in fam if c != 'ef_par_agr']
+    NOVAS = [c for c in NOVAS if c in fam]
+    ausentes = [c for c in FAMILIA if c not in fam]
 
     # --- [0] isto e informacao nova, ou e o pavio de novo? --------------
     novidade = []
-    for c in FAMILIA:
+    for c in fam:
         novidade.append(dict(
             col=c, rotulo=ROTULO[c],
             corr_pav=float(t[c].corr(t['pav_tot'])),
@@ -246,5 +255,6 @@ def roda(t, d, S, FX, p=print, semente=4242):
 
     return dict(novidade=novidade, geom=geom, rho=rho, quintis=quint,
                 base_ouro=base_ouro, peneira=pen, cortes=cortes, poder=pod,
+                ausentes=[dict(col=c, rotulo=ROTULO[c]) for c in ausentes],
                 espaco=dict(feats=len(NOVAS), cortes=5, sentidos=2,
                             total=len(NOVAS) * 5 * 2, perms=400))

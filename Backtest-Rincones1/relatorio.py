@@ -37,7 +37,7 @@ ROT_REG = {
 }
 ROT_SU = {'A': ('A · tendência', 'Médias alinhadas, o preço volta e toca uma delas, e alguém agride contra a tendência ali — e falha.'),
           'B': ('B · reversão rápida', 'Fora de consolidação, preço a um range médio ou mais da média, gatilho contra o afastamento.'),
-          'C': ('C · consolidação', 'Médias emboladas, preço afastado do cacho. Negativo nas duas bases, em toda configuração testada.')}
+          'C': ('C · consolidação', 'Médias emboladas, preço afastado do cacho. Negativo nas duas bases.')}
 
 
 # ------------------------------------------------------------ formatacao
@@ -494,6 +494,106 @@ def veredito_filtro_e2(R):
         cab = ('*O filtro deixou de valer:* com a fórmula nova ele piora as duas bases, e o '
                'certo é desligá-lo (DESCARTA_E2 = False). ')
     return _neg(cab + ' '.join(det))
+
+
+ROT_PER = {'antes': 'antes da janela', 'dentro': 'dentro da janela (calibração)',
+           'depois': 'depois da janela', 'fora': '**fora da janela — antes + depois**'}
+
+
+def _dmy(iso):
+    a, m, d = iso.split('-')
+    return '%s/%s/%s' % (d, m, a)
+
+
+def _oos(R, base='WINFUT'):
+    return R['bases'][base].get('janela')
+
+
+def veredito_oos(R):
+    """A frase do teste fora da amostra. E a primeira coisa que o relatorio
+    tem de dizer quando ele falha, e a ultima quando passa."""
+    jn = _oos(R)
+    if not jn:
+        return _neg('Sem janela de calibração medida.')
+    sp = str(R['stops'][0])
+    g = jn[sp]
+    a, ab, b = g['cA'], g['cAB'], g['setup_B']
+    ini, fim = _dmy(jn['janela'][0]), _dmy(jn['janela'][1])
+
+    def m(x, q):
+        v = x[q]
+        return ('%d trades, EV %s, t %s' % (v['n'], n1(v['ev']), t2(v['t']))
+                if v else 'sem trades')
+    base = ('Todos os parâmetros foram escolhidos olhando os pregões de %s a %s. O '
+            'WINFUT novo tem **%d pregões fora dessa janela** — %d antes e %d depois — '
+            'que nunca foram vistos ao calibrar. Com stop %s: dentro da janela, só A dá '
+            '%s e A + B dá %s; **fora dela, só A dá %s e A + B dá %s**. O setup B '
+            'isolado, fora: %s.'
+            % (ini, fim, jn['pregoes']['fora'], jn['pregoes']['antes'],
+               jn['pregoes']['depois'], sp, m(a, 'dentro'), m(ab, 'dentro'),
+               m(a, 'fora'), m(ab, 'fora'), m(b, 'fora')))
+    fa, fab = a['fora'], ab['fora']
+    if fab and fab['ev'] <= 0 and fa and fa['t'] < 1:
+        cab = ('*A vantagem não se repetiu fora da amostra.* ')
+    elif fa and fa['t'] >= 2 and fab and fab['ev'] > 0:
+        cab = ('*A vantagem se repetiu fora da amostra.* ')
+    else:
+        cab = ('*Fora da amostra a vantagem encolhe muito.* ')
+    ant, dep = a['antes'], a['depois']
+    if ant and dep and (ant['ev'] < 0) != (dep['ev'] < 0):
+        base += (' O setup A se divide: %s antes da janela (%d pregões) e %s depois '
+                 '(%d pregões) — o trecho posterior é curto demais para desempatar.'
+                 % (m(a, 'antes'), jn['pregoes']['antes'],
+                    m(a, 'depois'), jn['pregoes']['depois']))
+    md, html = _neg(cab)
+    import re
+    corpo_html = re.sub(r'\*\*(.+?)\*\*', lambda x: '<strong>%s</strong>' % x.group(1), base)
+    return md + base, html + corpo_html
+
+
+def acao_oos(R):
+    jn = _oos(R)
+    sp = str(R['stops'][0])
+    fa, fab = jn[sp]['cA']['fora'], jn[sp]['cAB']['fora']
+    fa5 = jn[sp]['cA_c5']['fora']
+    if fab and fab['ev'] <= 0 and fa and fa['t'] < 1:
+        return _neg('*Não operar com dinheiro ainda.* Fora da janela de calibração a '
+                    'carteira A + B mede %s de EV e o só A %s (t %s; %s com 5 pontos de '
+                    'custo). O resto desta lista vale como ajuste *dentro* de uma '
+                    'estratégia que ainda não provou vantagem — o próximo passo é '
+                    'entender o que os pregões de antes da janela têm de diferente, '
+                    'não afinar parâmetros.'
+                    % (n1(fab['ev']), n1(fa['ev']), t2(fa['t']), n1(fa5['ev'])))
+    return _neg('*Operar pequeno e seguir medindo.* Fora da janela de calibração o só A '
+                'mede %s de EV (t %s) e a carteira A + B %s.'
+                % (n1(fa['ev']), t2(fa['t']), n1(fab['ev'])))
+
+
+def veredito_alvo(R):
+    """Em quantas linhas das grades o alvo padrao e o melhor."""
+    alvo = int(R['parametros']['ALVO'])
+    linhas = ganha = 0
+    perde = []
+    for b in BASES:
+        g = R['bases'][b]['grade']
+        for st in (100, 150, 200):
+            vals = {al: g.get('%d_%d' % (st, al)) for al in (200, 300, 400, 500)}
+            vals = {k: v for k, v in vals.items() if v is not None}
+            if not vals:
+                continue
+            linhas += 1
+            melhor = max(vals, key=vals.get)
+            if melhor == alvo:
+                ganha += 1
+            else:
+                perde.append('%s · stop %d prefere +%d (%s contra %s)'
+                             % (b, st, melhor, n1(vals[melhor]), n1(vals.get(alvo))))
+    if not perde:
+        return _neg('*O alvo de %d é o melhor da linha nas %d linhas das duas tabelas.* '
+                    'Não é um pico isolado: os alvos vizinhos são piores.' % (alvo, linhas))
+    return _neg('*O alvo de %d é o melhor da linha em %d das %d linhas.* Exceções: %s — '
+                'diferenças pequenas perto do ruído desta amostra.'
+                % (alvo, ganha, linhas, '; '.join(perde)))
 
 
 def acao_stop(R):
@@ -983,6 +1083,38 @@ def tabela_fill(R, ROT=None):
             '<tbody>%s</tbody></table>' % (R['stops'][0], ''.join(lin)))
 
 
+def _rot_mes(m, md=False):
+    """Marca do mes na tabela: fora da janela, parcial, ou nada (calibrado)."""
+    if m.get('calib') is None or m['calib'] == m['n']:
+        return ''
+    txt = ('fora da amostra' if m['calib'] == 0
+           else 'parte fora da amostra (%d de %d trades)' % (m['n'] - m['calib'], m['n']))
+    return (' — **%s**' % txt) if md else ' <span class="sub">— %s</span>' % txt
+
+
+LINHAS_OOS = (('cA', 'só A'), ('cAB', 'A + B'), ('cA_c5', 'só A · custo 5'),
+              ('setup_B', 'setup B isolado'))
+
+
+def bloco_oos(R, base='WINFUT'):
+    """Tabelas do teste fora da amostra: uma por stop, periodo x carteira."""
+    jn = _oos(R, base)
+    out = []
+    for stop in R['stops']:
+        lin = []
+        for ch, rot in LINHAS_OOS:
+            for q in jn['ordem']:
+                k = 'hi' if q == 'fora' else ('mute' if q != 'dentro' else '')
+                rq = ROT_PER[q].replace('**', '')
+                lin.append(linha_metrica('<b>%s</b> · %s (%d pregões)' % (
+                    rot, rq, jn['pregoes'][q]), jn[str(stop)][ch][q], k))
+        out.append('<div class="scroll"><table><caption>%s · stop %d · janela de '
+                   'calibração %s a %s</caption>%s<tbody>%s</tbody></table></div>'
+                   % (base, stop, _dmy(jn['janela'][0]), _dmy(jn['janela'][1]),
+                      CAB_MET, ''.join(lin)))
+    return ''.join(out)
+
+
 def monta():
     R = json.load(open(os.path.join(SAIDA, 'resumo.json'), encoding='utf-8'))
     G = coleta_grafico()
@@ -1026,8 +1158,8 @@ def monta():
     linhas_mes = ''.join(
         '<tr%s><td>%s%s</td><td class="num">%d</td><td class="num %s">%s</td>'
         '<td class="num">%s</td><td class="num">%s</td></tr>'
-        % (' class="hi"' if m['mes'] == '2026-07' else (' class="mute"' if m['n'] < 5 else ''),
-           m['mes'], ' <span class="sub">— fora da amostra</span>' if m['mes'] == '2026-07' else '',
+        % (' class="hi"' if not m.get('calib') else (' class="mute"' if m['n'] < 5 else ''),
+           m['mes'], _rot_mes(m),
            m['n'], 'best' if m['ev'] > 0 else 'neg', n1(m['ev']), mil(m['total']), p1(m['acerto']))
         for m in dfu['mes'])
 
@@ -1089,9 +1221,18 @@ def monta():
                      ('ver_leque_decomp', veredito_leque_decomp),
                      ('acao_stop', acao_stop), ('acao_ma', acao_ma),
                      ('acao_carteira', acao_carteira),
-                     ('ver_gestao', veredito_gestao)):
+                     ('ver_gestao', veredito_gestao),
+                     ('ver_oos', veredito_oos), ('acao_oos', acao_oos),
+                     ('ver_alvo', veredito_alvo)):
         md, html = fn(R)
         ctx[nome + '_md'], ctx[nome] = md, html
+    ctx['tab_oos'] = bloco_oos(R)
+    ctx['periodo'] = '%s a %s' % (_dmy(min(R['bases'][b]['ini'] for b in BASES)),
+                                  _dmy(max(R['bases'][b]['fim'] for b in BASES)))
+    ctx['n_c'] = ' e '.join(str((R['variantes'][b]['ema3'][str(stop_pad)]['setup_C'] or {})
+                                .get('n', 0)) for b in BASES)
+    ctx['trades_preg'] = ('%.1f' % max(R['variantes'][b]['ema3'][str(stop_pad)]['cAB']
+                                       ['por_pregao'] for b in BASES)).replace('.', ',')
     ctx['tab_fill'] = tabela_fill(R)
     ctx['tab_e2'] = bloco_e2(R)
     ctx['tab_leque'] = bloco_leque(R)
@@ -1113,7 +1254,9 @@ if __name__ == '__main__':
 
     import resultados_md
     md = resultados_md.gera(
-        ctx, dict(n1=n1, p0=p0, p1=p1, t2=t2, f2=f2, mil=mil), ROT_REG, ROT_SU)
+        ctx, dict(n1=n1, p0=p0, p1=p1, t2=t2, f2=f2, mil=mil, dmy=_dmy,
+                  linhas_oos=LINHAS_OOS, rot_per=ROT_PER, rot_mes=_rot_mes),
+        ROT_REG, ROT_SU)
     dest_md = os.path.join(BASE, 'RESULTADOS.md')
     with open(dest_md, 'w', encoding='utf-8') as f:
         f.write(md)

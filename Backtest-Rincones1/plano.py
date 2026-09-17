@@ -43,6 +43,10 @@ def p0(v):
     return '—' if v is None else '%d%%' % round(v)
 
 
+def t2(v):
+    return '—' if v is None or v != v else ('%+.2f' % v).replace('.', ',')
+
+
 def i0(v):
     return '—' if v is None else '%d' % round(v)
 
@@ -91,8 +95,15 @@ def contexto():
     tot_s = sum(x[0] for x in ab.values())
     tot_n = sum(x[1] for x in ab.values())
 
+    # o teste fora da amostra, na configuracao do plano (so A, custo 5)
+    jn = R['bases']['WINFUT']['janela']
+    oos = dict(janela=jn['janela'], pregoes=jn['pregoes'],
+               A=jn[STOP_PLANO]['cA_c5'], AB=jn[STOP_PLANO]['cAB_c5'])
+    fa = oos['A']['fora']
+    oos['falhou'] = (fa is None) or (fa['t'] != fa['t']) or fa['t'] < 1.0
+
     return dict(
-        R=R, fu=fu, v26=v26, fu0=fu0,
+        R=R, fu=fu, v26=v26, fu0=fu0, oos=oos,
         stop=int(STOP_PLANO), stop_outro=(int(STOP_OUTRO) if STOP_OUTRO else None),
         stop_fixo=(STOP_FIXO is not None),
         parcial=int(P['PARCIAL_EM'] or STOP_PLANO), alvo=int(P['ALVO']),
@@ -121,6 +132,28 @@ def markdown(C):
     A('> você mudar uma regra, mude aqui **e** em [ESTRATEGIA.md](ESTRATEGIA.md).\n')
     A('Companheiro operacional de [RESULTADOS.md](RESULTADOS.md). O relatório diz')
     A('**o que foi medido**; este arquivo diz **o que eu faço na frente da tela**.\n')
+
+    oos = C['oos']
+    if oos['falhou']:
+        jn = oos['janela']
+        dmy = lambda x: '/'.join(reversed(x.split('-')))
+        A('---\n\n## Antes de assinar: o teste fora da amostra\n')
+        A('> **Este plano ainda não passou no único teste independente que existe.**')
+        A('> Os parâmetros foram escolhidos olhando os pregões de %s a %s. Nos %d'
+          % (dmy(jn[0]), dmy(jn[1]), oos['pregoes']['fora']))
+        A('> pregões do WINFUT fora dessa janela, o setup A com stop %d e 5 pontos de'
+          % C['stop'])
+        A('> custo mede **%s pontos por trade (t %s, %d trades)** — contra %s dentro dela.'
+          % (n1(oos['A']['fora']['ev']), t2(oos['A']['fora']['t']),
+             oos['A']['fora']['n'], n1(oos['A']['dentro']['ev'])))
+        A('> Antes da janela: %s em %d trades. Depois: %s em %d.'
+          % (n1(oos['A']['antes']['ev']), oos['A']['antes']['n'],
+             (n1(oos['A']['depois']['ev']) if oos['A']['depois'] else '—'),
+             (oos['A']['depois']['n'] if oos['A']['depois'] else 0)))
+        A('>')
+        A('> O procedimento abaixo continua valendo como procedimento. **Dinheiro, não**:')
+        A('> só em simulador, ou no tamanho mínimo, até que registros novos digam outra')
+        A('> coisa. Detalhe em [RESULTADOS.md § 10](RESULTADOS.md).\n')
 
     # ---------------------------------------------------------------- 0
     A('---\n\n## 0. O contrato\n')
@@ -151,10 +184,10 @@ def markdown(C):
     A('  eu quiser operá-lo, é uma decisão de revisão mensal, não de pregão.')
     A('- **Qualquer coisa que o indicador não marcou.** Se não saiu a seta A, não')
     A('  existe trade — por mais óbvio que o gráfico pareça.\n')
-    A('> Por que só o A: ele é o melhor dos três nas duas bases, em **todas** as')
-    A('> colunas — valor esperado, `t`, fator de lucro e rebaixamento. E a %.1f'
+    A('> Por que só o A: é o setup com o melhor valor esperado por trade e o menor')
+    A('> rebaixamento nas duas bases. E a %.1f trades por pregão ele é operável à'
       % fu['por_pregao'])
-    A('> trades por pregão ele é operável à mão sem pressa.\n')
+    A('> mão sem pressa.\n')
 
     # ---------------------------------------------------------------- 2
     A('---\n\n## 2. O gatilho — quando existe trade\n')
@@ -443,12 +476,20 @@ def markdown(C):
     A('  Concordarem é menos confirmação do que parece.')
     A('- **Os parâmetros foram varridos nas mesmas bases** em que são avaliados. Há')
     A('  sobreajuste embutido, e o desempenho real tende a ser pior que o medido.')
+    A('- **Fora da janela de calibração o setup A mede %s por trade** (t %s), com custo.'
+      % (n1(C['oos']['A']['fora']['ev']), t2(C['oos']['A']['fora']['t'])))
+    A('  É o número mais honesto deste arquivo.')
     A('- **A ordem limitada é dada por preenchida assim que o preço toca o nível.** Na')
     A('  prática existe fila, e nem todo toque preenche — este é o otimismo que mais')
     A('  pesa contra os números acima.')
     A('- **Sem filtro de horário, rolagem ou vencimento.**\n')
-    A('Nada disso é motivo para não operar o plano. É motivo para operá-lo **pequeno**')
-    A('até que os seus próprios registros, e não os meus, digam que ele funciona.\n')
+    if C['oos']['falhou']:
+        A('O teste fora da amostra **não** foi passado. Isso é motivo para operar o plano')
+        A('**sem dinheiro** — simulador ou tamanho mínimo — até que os seus próprios')
+        A('registros, e não os meus, digam que ele funciona.\n')
+    else:
+        A('Nada disso é motivo para não operar o plano. É motivo para operá-lo **pequeno**')
+        A('até que os seus próprios registros, e não os meus, digam que ele funciona.\n')
 
     return '\n'.join(L) + '\n'
 

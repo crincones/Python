@@ -1,0 +1,91 @@
+==========================================================================
+FILTROS ORTOGONAIS A HULL: VELOCIDADE, HORARIO, POSICAO NO DIA
+==========================================================================
+base: 50611 barras, 132 pregoes; sinais Hull + 2-4: 4477; Hull + pavios: 3508
+ritmo: janela 60 min, mediana das 5000 barras anteriores; quartil de baixo < 0.54
+
+--- 0. ortogonalidade: correlacao de posto com a leitura de tendencia (Hull + pavios) ---
+  ritmo_r   incl_hull -0.02  sep_hull +0.02  macd_atr -0.01
+  hora      incl_hull -0.06  sep_hull -0.00  macd_atr -0.04
+  vwap_atr  incl_hull +0.19  sep_hull +0.53  macd_atr +0.59   <- NAO e ortogonal
+  abre_atr  incl_hull +0.09  sep_hull +0.35  macd_atr +0.38   <- NAO e ortogonal
+  V1        incl_hull -0.01  sep_hull +0.02  macd_atr -0.01
+  V2        incl_hull +0.00  sep_hull +0.01  macd_atr -0.01
+  H1        incl_hull +0.01  sep_hull +0.01  macd_atr +0.02
+  H2        incl_hull -0.03  sep_hull +0.01  macd_atr -0.01
+  P1        incl_hull +0.18  sep_hull +0.44  macd_atr +0.50   <- NAO e ortogonal
+  P2        incl_hull +0.06  sep_hull +0.29  macd_atr +0.31   <- NAO e ortogonal
+
+--- 1. quanto de cada conjunto a regra deixa passar (%) ---
+  h     V1   50  V2   75  H1   59  H2   73  P1   65  P2   55
+  cand  V1   48  V2   75  H1   62  H2   76  P1   66  P2   56
+
+--- 2. Hull + 2 a 4  (fechamento, 1:3 com parcial) ---
+  base: EV +7.7
+  V1 Ritmo da ultima hora acima da mediana            n= 2224 ( 50%)  dentro   +6.9  fora   +8.5  ganho  -0.8  p 0.658  tercos +5/+5/+11 (base +6/+6/+11)  antes +5.9 (base +6.7)  C +7.4 V +6.5  pct 34
+  V2 Ritmo fora do quartil mais baixo                 n= 3357 ( 75%)  dentro   +7.7  fora   +7.7  ganho  +0.0  p 0.993  tercos +7/+7/+9 (base +6/+6/+11)  antes +7.5 (base +6.7)  C +7.7 V +7.7  pct 50
+  H1 Sinal entre 10:00 e 15:00                        n= 2639 ( 59%)  dentro  +11.0  fora   +3.0  ganho  +3.3  p 0.037  tercos +9/+9/+15 (base +6/+6/+11)  antes +9.5 (base +6.7)  C +9.7 V +12.2  pct 98
+  H2 Sinal a partir das 10:00                         n= 3273 ( 73%)  dentro  +10.2  fora   +0.9  ganho  +2.5  p 0.030  tercos +7/+9/+15 (base +6/+6/+11)  antes +8.9 (base +6.7)  C +9.5 V +10.9  pct 98
+  P1 Fechamento do lado do trade na VWAP do dia       n= 2919 ( 65%)  dentro   +8.4  fora   +6.4  ganho  +0.7  p 0.623  tercos +7/+7/+11 (base +6/+6/+11)  antes +8.2 (base +6.7)  C +11.3 V +5.6  pct 70
+  P2 Fechamento do lado do trade na abertura do pregao n= 2480 ( 55%)  dentro   +6.0  fora   +9.8  ganho  -1.7  p 0.326  tercos +4/+8/+7 (base +6/+6/+11)  antes +6.9 (base +6.7)  C +6.9 V +5.3  pct 15
+  ganho nas 4 gestoes: V1 -0.8/-0.7/-0.4/-0.9  V2 +0.0/+0.7/+0.9/-0.7  H1 +3.3/+5.7/+3.7/+0.9  H2 +2.5/+3.9/+2.5/+1.1  P1 +0.7/+0.7/+2.1/+0.7  P2 -1.7/-3.0/-1.4/-0.3
+
+--- 2. Hull + pavios (2-3 + fech ate 10%)  (fechamento, 1:3 com parcial) ---
+  base: EV +8.9
+  V1 Ritmo da ultima hora acima da mediana            n= 1696 ( 48%)  dentro   +7.3  fora  +10.4  ganho  -1.6  p 0.466  tercos +2/+8/+13 (base +4/+9/+15)  antes +5.0 (base +7.0)  C +10.2 V +4.7  pct 24
+  V2 Ritmo fora do quartil mais baixo                 n= 2614 ( 75%)  dentro   +8.5  fora  +10.1  ganho  -0.4  p 0.761  tercos +5/+9/+12 (base +4/+9/+15)  antes +7.2 (base +7.0)  C +10.2 V +7.0  pct 38
+  H1 Sinal entre 10:00 e 15:00                        n= 2171 ( 62%)  dentro  +11.8  fora   +4.2  ganho  +2.9  p 0.073  tercos +6/+11/+20 (base +4/+9/+15)  antes +8.8 (base +7.0)  C +11.9 V +11.8  pct 96
+  H2 Sinal a partir das 10:00                         n= 2679 ( 76%)  dentro  +11.1  fora   +1.9  ganho  +2.2  p 0.064  tercos +5/+11/+19 (base +4/+9/+15)  antes +8.7 (base +7.0)  C +11.1 V +11.1  pct 96
+  P1 Fechamento do lado do trade na VWAP do dia       n= 2319 ( 66%)  dentro   +8.6  fora   +9.5  ganho  -0.3  p 0.843  tercos +3/+11/+14 (base +4/+9/+15)  antes +7.0 (base +7.0)  C +12.2 V +5.1  pct 42
+  P2 Fechamento do lado do trade na abertura do pregao n= 1969 ( 56%)  dentro   +6.5  fora  +12.0  ganho  -2.4  p 0.188  tercos +1/+9/+12 (base +4/+9/+15)  antes +5.9 (base +7.0)  C +8.8 V +4.6  pct 10
+  ganho nas 4 gestoes: V1 -1.6/-2.1/-0.7/-1.1  V2 -0.4/+0.1/+0.8/-0.9  H1 +2.9/+5.3/+2.9/+0.5  H2 +2.2/+3.6/+1.6/+0.7  P1 -0.3/+0.3/+1.7/-0.9  P2 -2.4/-3.3/-2.1/-1.6
+
+--- 3. a busca: 6 regras x 2 sentidos, contra resultados embaralhados ---
+  h     1:3 com parcial  melhor H1 t=+1.33  ruido med +1.07 p95 +1.89  p=0.280
+        escolha antes -> original+depois  : H1 teste +16.0 (n=611) x sem filtro +11.0
+        escolha T1+T2 -> T3               : H1 teste +15.5 (n=828) x sem filtro +11.0
+  cand  1:3 com parcial  melhor H1 t=+1.07  ruido med +1.04 p95 +1.88  p=0.474
+        escolha antes -> original+depois  : H2 teste +20.0 (n=576) x sem filtro +15.8
+        escolha T1+T2 -> T3               : P2~ teste +18.8 (n=463) x sem filtro +14.6
+  h     1:3 sem parcial  melhor H1 t=+1.62  ruido med +1.07 p95 +1.87  p=0.124
+        escolha antes -> original+depois  : H1 teste +21.4 (n=611) x sem filtro +13.6
+        escolha T1+T2 -> T3               : H1 teste +19.6 (n=828) x sem filtro +13.0
+  cand  1:3 sem parcial  melhor H1 t=+1.36  ruido med +1.03 p95 +1.84  p=0.236
+        escolha antes -> original+depois  : H1 teste +31.3 (n=504) x sem filtro +21.2
+        escolha T1+T2 -> T3               : H1 teste +27.8 (n=684) x sem filtro +18.8
+  h     1:2 sem parcial  melhor H1 t=+1.32  ruido med +1.05 p95 +1.88  p=0.280
+        escolha antes -> original+depois  : H1 teste +13.4 (n=611) x sem filtro +8.3
+        escolha T1+T2 -> T3               : H1 teste +13.8 (n=828) x sem filtro +9.0
+  cand  1:2 sem parcial  melhor H1 t=+0.93  ruido med +1.05 p95 +1.92  p=0.608
+        escolha antes -> original+depois  : H1 teste +19.6 (n=504) x sem filtro +13.6
+        escolha T1+T2 -> T3               : P2~ teste +17.9 (n=463) x sem filtro +14.1
+  h     1:1 sem parcial  melhor V2 (complemento) t=+0.70  ruido med +1.06 p95 +1.87  p=0.853
+        escolha antes -> original+depois  : P1 teste +5.9 (n=640) x sem filtro +8.5
+        escolha T1+T2 -> T3               : P1 teste +8.1 (n=940) x sem filtro +9.0
+  cand  1:1 sem parcial  melhor V2 (complemento) t=+0.81  ruido med +1.06 p95 +1.93  p=0.719
+        escolha antes -> original+depois  : V1~ teste +13.8 (n=327) x sem filtro +10.4
+        escolha T1+T2 -> T3               : P2~ teste +13.2 (n=463) x sem filtro +10.4
+
+--- 4. leituras em quintis (Hull + pavios, 1:3 com parcial) ---
+  Ritmo da ultima hora / mediana               lim 0.41 0.84 1.14 1.61 | +11.0  +10.1   +9.3  +12.2   +2.0
+  Hora do sinal                                lim 9.73 10.57 11.55 13.95 |  +4.6   +1.8  +18.9  +11.2   +7.8
+  Distancia a VWAP do dia, em ATR (a favor)    lim -1.74 0.38 2.02 4.93 | +11.3   +7.3   +3.5  +14.1   +8.4
+  Distancia a abertura do pregao, em ATR (a favor) lim -5.52 0.00 3.36 8.58 | +20.7   +7.7   -0.1   +6.0  +10.4
+  hora (faixas fixas): 9h-10h +1.9(829)  10h-11h +12.8(936)  11h-12h +8.5(555)  12h-13h +11.9(294)  13h-14h +18.8(202)  14h-15h +9.2(184)  15h-16h +8.0(176)  16h em diante +7.8(332)
+
+--- 4b. horario x ritmo (1:3 com parcial) ---
+  h     ritmo > 1.66: antes 10h rapido -0.3 (688)  antes 10h normal +2.5 (516)  depois 10h rapido +7.2 (208)  depois 10h normal +10.4 (3065)   | 77% dos sinais rapidos sao antes das 10h
+  cand  ritmo > 1.61: antes 10h rapido +0.4 (513)  antes 10h normal +4.4 (316)  depois 10h rapido +6.3 (189)  depois 10h normal +11.4 (2490)   | 73% dos sinais rapidos sao antes das 10h
+
+--- 5. vizinhanca (ganho no Hull + pavios, 1:3 com parcial) ---
+  V1@janela 30 min +0.4  V2@janela 30 min -1.2  V1@janela 60 min -1.6  V2@janela 60 min -0.4  V1@janela 120 min -2.5  V2@janela 120 min -1.1  H1@10h a 14h +3.2  H1@10h a 15h +2.9  H1@10h a 16h +2.6  H2@a partir de 9h30 +0.9  H2@a partir de 10h +2.2  H2@a partir de 10h30 +2.6
+
+--- 6. carteira, uma posicao por vez ---
+  h     1:3 com parcial  base  4168 tr  +8.2/tr FL 1.18 DD  4700 | V1 2077tr +8.1  V2 3130tr +8.6  H1 2466tr +11.2  H2 3047tr +10.6  P1 2758tr +8.6  P2 2345tr +6.5
+  cand  1:3 com parcial  base  3296 tr  +9.3/tr FL 1.20 DD  5100 | V1 1596tr +8.2  V2 2466tr +9.4  H1 2051tr +12.0  H2 2520tr +11.3  P1 2201tr +8.8  P2 1872tr +7.0
+  h     1:3 sem parcial  base  4168 tr  +9.4/tr FL 1.13 DD  6200 | V1 2077tr +9.4  V2 3130tr +10.4  H1 2466tr +14.9  H2 3047tr +13.3  P1 2758tr +9.4  P2 2345tr +6.2
+  cand  1:3 sem parcial  base  3296 tr +12.2/tr FL 1.17 DD  6600 | V1 1596tr +10.6  V2 2466tr +12.8  H1 2051tr +17.3  H2 2520tr +15.8  P1 2201tr +11.9  P2 1872tr +8.8
+  h     1:2 sem parcial  base  4426 tr  +8.7/tr FL 1.14 DD  6900 | V1 2201tr +8.4  V2 3320tr +9.6  H1 2610tr +12.3  H2 3232tr +11.1  P1 2918tr +10.5  P2 2480tr +7.0
+  cand  1:2 sem parcial  base  3478 tr  +9.2/tr FL 1.15 DD  5800 | V1 1684tr +8.6  V2 2593tr +10.2  H1 2152tr +11.9  H2 2652tr +10.7  P1 2319tr +10.7  P2 1969tr +6.9
+  h     1:1 sem parcial  base  4477 tr  +6.6/tr FL 1.14 DD  4500 | V1 2224tr +5.7  V2 3357tr +5.9  H1 2639tr +7.5  H2 3273tr +7.7  P1 2919tr +7.3  P2 2480tr +6.2
+  cand  1:1 sem parcial  base  3508 tr  +6.2/tr FL 1.13 DD  4900 | V1 1696tr +5.1  V2 2614tr +5.3  H1 2171tr +6.8  H2 2679tr +6.9  P1 2319tr +5.3  P2 1969tr +4.7

@@ -19,7 +19,7 @@ quatro colunas a mais e 88 barras a mais no fim. Duas armadilhas:
 import os, sys
 import numpy as np, pandas as pd
 
-BASE = r'C:\Users\Carlos\Documents\GitHub\Python\Backtest-Momentum-GraficoPI'
+BASE = os.path.dirname(os.path.abspath(__file__))
 if BASE not in sys.path:
     sys.path.insert(0, BASE)
 import engine as E
@@ -80,6 +80,8 @@ def anexa(d=None, verbose=False):
     """
     if d is None:
         d = E.carrega()
+    if 'agr_c' in d.columns:
+        return _anexa_robo(d, verbose)
     n = carrega_fluxo()
     idx, trocas = _casa(d, n)
     f = n.iloc[idx].reset_index(drop=True)
@@ -112,6 +114,35 @@ def anexa(d=None, verbose=False):
 
     if verbose:
         print('fluxo anexado: %d barras, %d grupos reordenados' % (len(d), trocas))
+    return d
+
+
+def _anexa_robo(d, verbose=False):
+    """Base WINFUT_20PI_Robo.csv: a agressao e a duracao ja vem na linha do
+    candle, na ordem certa -- nao ha o que casar.
+
+    O que ela NAO traz: volume total (Quantity) e numero de negocios
+    (Trades). No trecho em que as duas exportacoes se sobrepoem, o volume
+    total e o volume agressor (compra + venda) tem correlacao de 0,995
+    (Spearman 0,988; o total fica 1,04 a 1,49 vezes o agressor). Por isso
+    `qtd` passa a ser o volume AGRESSOR -- os estudos usam volume sempre
+    RELATIVO (razao entre barras ou contra a mediana), e nessa leitura a
+    troca e praticamente neutra. `negs` sai NaN: os atributos que dependem
+    do numero de negocios ficam fora da busca.
+    """
+    d = d.copy()
+    d['qtd'] = d['agr_c'] + d['agr_v']
+    d['negs'] = np.nan
+    d['dur_s'] = d['dur_barra_s']
+    tot = d['agr_c'] + d['agr_v']
+    d['agr_liq'] = d['agr_c'] - d['agr_v']
+    d['agr_des'] = (d['agr_liq'] / tot.replace(0, np.nan)).fillna(0.0)
+    d['vel'] = np.where(d['dur_s'] > 0, E.PI_PONTOS / d['dur_s'].replace(0, np.nan),
+                        np.nan)
+    d['vel'] = d['vel'].fillna(d['vel'].max())
+    if verbose:
+        print('fluxo da base do robo: %d barras (volume = agressor, sem negocios)'
+              % len(d))
     return d
 
 
