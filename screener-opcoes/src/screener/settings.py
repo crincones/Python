@@ -60,6 +60,34 @@ class PathSettings(_Strict):
         return PathSettings(**{k: root / v for k, v in self.model_dump().items()})
 
 
+class PublishSettings(_Strict):
+    """Envio do relatório para o servidor que o serve na tailnet (SSH/SFTP + nginx)."""
+
+    enabled: bool
+    host: str
+    port: PositiveInt
+    user: str
+    private_key: Path | None  # None = chaves padrão do ~/.ssh e agente SSH
+    known_hosts: Path
+    strict_host_key: bool
+    remote_dir: str  # raiz servida pelo nginx, caminho absoluto no servidor
+    history_subdir: str  # subpasta dos relatórios datados
+    latest_name: str  # nome público (link para o relatório desta execução)
+    keep_reports: PositiveInt
+    timeout_seconds: PositiveFloat
+    public_url: str
+
+    @model_validator(mode="after")
+    def _remote_paths(self) -> PublishSettings:
+        if not self.remote_dir.startswith("/") or self.remote_dir.endswith("/"):
+            raise ValueError("remote_dir deve ser um caminho absoluto sem barra no fim")
+        for field in ("history_subdir", "latest_name"):
+            value: str = getattr(self, field)
+            if not value or "/" in value:
+                raise ValueError(f"{field} deve ser um nome simples, sem barras")
+        return self
+
+
 class LoggingSettings(_Strict):
     level: Literal["DEBUG", "INFO", "WARNING", "ERROR"]
     max_bytes: PositiveInt
@@ -204,6 +232,7 @@ class CheckSettings(_Strict):
 class Settings(_Strict):
     mt5: MT5Settings
     paths: PathSettings
+    publish: PublishSettings
     logging: LoggingSettings
     collector: CollectorSettings
     underlying_filter: UnderlyingFilterSettings

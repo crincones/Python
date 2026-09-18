@@ -21,7 +21,7 @@ Isto é uma ferramenta de apoio à decisão. **Nunca** enviar ordens. Não usar 
   confirmar no PyPI que o pacote `MetaTrader5` já suporta a versão
 - Gerenciador: `uv` (`pyproject.toml` + `uv.lock`)
 - Bibliotecas: `MetaTrader5`, `pandas`, `pyarrow`, `duckdb`, `numpy`, `scipy`, `jinja2`,
-  `pyyaml`, `pydantic`, `typer`, `plotly`
+  `pyyaml`, `pydantic`, `typer`, `plotly`, `paramiko`
 - Testes: `pytest`. Lint/format: `ruff`
 
 ## Comandos
@@ -31,8 +31,10 @@ uv sync                                   # instala dependências
 uv run screener check                     # valida conexão e campos de opção expostos pela XP
 uv run screener collect                   # grava snapshot em data/snapshots/
 uv run screener analyze --snapshot latest # calcula IV, métricas, score
-uv run screener report  --snapshot latest # gera output/relatorio_YYYYMMDD_HHMM.html
-uv run screener run [--force]             # collect + analyze + report (sai sem fazer nada fora de pregão)
+uv run screener report  --snapshot latest # gera output/relatorio_YYYYMMDD_HHMM.html e publica
+uv run screener publish --snapshot latest # só envia o relatório para o servidor (ou --file <html>)
+uv run screener run [--force]             # collect + analyze + report + publish (sai fora de pregão)
+#   report/run aceitam --no-publish para não enviar nada ao servidor
 uv run screener fixture --snapshot <nome> # copia snapshot p/ tests/fixtures/ sem dados da conta
 uv run pytest                             # testes offline (sem MT5)
 uv run pytest -m mt5                      # testes que exigem terminal aberto e logado
@@ -43,8 +45,9 @@ uv run ruff check . ; uv run ruff format .
 Scripts Windows (ASCII puro; PowerShell 5.1 lê .ps1 sem BOM como ANSI):
 
 ```powershell
-executar_screener.bat [-Forcar] [-Etapa report]   # duplo clique: roda e abre o relatório
-.\scripts\executar_screener.ps1 [-Etapa run|collect|analyze|report|check] [-Forcar] [-AbrirRelatorio]
+executar_screener.bat [-Forcar] [-Etapa report] [-SemPublicar]   # duplo clique: roda e abre
+.\scripts\executar_screener.ps1 [-Etapa run|collect|analyze|report|publish|check] [-Forcar]
+                                 [-SemPublicar] [-ManterTerminal] [-AbrirRelatorio]
 .\scripts\agendar_tarefas.ps1 [-Horarios 10:30,13:00,16:30] [-Remover]   # tarefa "Screener Opcoes B3"
 .\scripts\criar_atalho.ps1                         # atalho "Relatorio-Opcoes" (Área de Trabalho → output\)
 ```
@@ -54,7 +57,7 @@ Os caminhos devem sempre usar `pathlib.Path`. Nunca concatenar strings com `\` o
 ## Arquitetura
 
 ```
-config/settings.yaml          ativos-objeto, viés direcional, filtros, janela de DTE, pesos, taxa livre de risco
+config/settings.yaml          ativos-objeto, viés direcional, filtros, janela de DTE, pesos, taxa livre de risco, publicação
 config/feriados_b3.csv        feriados B3 (2023–2026 conferidos no D1 do MT5; futuros a confirmar)
 config/proventos.csv          datas ex de proventos (manual): underlying,ex_date(AAAA-MM-DD),description
 src/screener/
@@ -83,6 +86,7 @@ src/screener/
   scoring.py                  faixa de POP, score ponderado por percentis e ranking pelo viés
   report/render.py            Jinja2 → HTML
   report/templates/
+  publish.py                  envio do HTML por SFTP para o servidor da tailnet (ÚNICO com paramiko)
   cli.py                      Typer
 tests/fixtures/               snapshots reais salvos para testes offline
 data/snapshots/AAAAMMDD_HHMMSS/  saída do coletor e da análise (não versionar):
@@ -94,10 +98,12 @@ output/                       relatórios HTML (não versionar)
 
 ### Regras de arquitetura
 
+- `import paramiko` só pode existir em `src/screener/publish.py`; a lógica de envio é escrita
+  contra o protocolo `RemoteFiles` e testada offline com um dublê (`tests/test_publish.py`).
 - `import MetaTrader5` só pode existir dentro de `src/screener/collector/`. Todos os outros módulos
   recebem e devolvem `pandas.DataFrame` ou modelos pydantic, e devem ser testáveis sem o terminal.
 - O pipeline é por etapas com artefato em disco entre elas: coleta → Parquet → análise → Parquet
-  → relatório. Qualquer etapa pode ser reexecutada a partir do snapshot, fora do horário de pregão.
+  → relatório → publicação. Qualquer etapa pode ser reexecutada a partir do snapshot, fora do horário de pregão.
 - Parâmetros de negócio (filtros, pesos, DTE, largura máxima, taxa) ficam em `settings.yaml`,
   validados por pydantic. Nada de números mágicos no código.
 - Funções de pricing são puras e vetorizadas com numpy.
@@ -283,12 +289,41 @@ O alerta **não** remove a trava do ranking: só sinaliza.
 - Payoff por lote: área de ganho azul e de perda vermelha (par divergente), rótulos de ganho e
   perda máximos em texto, spot tracejado e breakeven pontilhado.
 
+## Publicação do relatório (decisão de 2026-09-17)
+
+- O relatório fica em **http://100.113.24.44/screening.html** (IP Tailscale do `debian-server`),
+  acessível de qualquer dispositivo da tailnet. Histórico navegável em `/relatorios/`.
+- Windows → servidor por **SFTP** (`src/screener/publish.py`, bloco `publish` do YAML):
+  - envia para `/srv/screener/relatorios/relatorio_AAAAMMDD_HHMM.html` com sufixo `.partial` e
+    só então renomeia (`posix_rename`), para o navegador nunca pegar um HTML pela metade;
+  - `screening.html` é um **link simbólico relativo** para o relatório da execução, trocado de
+    uma vez por rename atômico (funciona mesmo se hoje for arquivo comum);
+  - retenção: mantém os `keep_reports` mais recentes (padrão 20, ~6,7 MB cada) e apaga restos
+    `.partial`; nunca apaga o alvo do link recém-criado.
+- Autenticação por chave **ed25519 sem passphrase** (`~/.ssh/screener_deploy`, pública em
+  `~carlos/.ssh/authorized_keys` no servidor). Nenhuma senha em código, YAML ou disco. Host key
+  conferida em `~/.ssh/known_hosts` (`strict_host_key: true` → recusa conexão se não bater).
+- Falha na publicação **não** derruba a execução: o HTML em `output\` continua válido e o motivo
+  vai para o log. O comando `screener publish` isolado sai com código 1 em caso de falha.
+- Servidor (Debian 13 trixie, configurado em 17/09/2026):
+  - `nginx` em `/etc/nginx/sites-available/screener` com `listen 100.113.24.44:80` — **só** o IP
+    Tailscale; site `default` desabilitado. Com gzip, os 6,7 MB descem em ~1,7 MB.
+  - `net.ipv4.ip_nonlocal_bind = 1` (`/etc/sysctl.d/99-screener-nonlocal-bind.conf`) e drop-in
+    `nginx.service.d/tailscale.conf` (`After=tailscaled.service`): o nginx sobe no boot mesmo
+    antes de o IP da tailnet existir.
+  - `ufw` está ativo e liberava só a 22: regra `allow in on tailscale0 to any port 80 proto tcp`.
+    A porta 80 continua fechada na LAN 192.168.0.x.
+  - `/srv/screener` e `/srv/screener/relatorios` pertencem a `carlos` (envio sem sudo).
+  - Disco raiz pequeno (13 GB, ~2 GB livres em 17/09/2026) — daí a retenção obrigatória.
+
 ## Agendamento (decisão de 2026-09-17)
 
 - Tarefa "Screener Opcoes B3" no Agendador do Windows: seg–sex às 10:30, 13:00 e 16:30, usuário
   logado (LogonType Interactive, o MT5 precisa estar aberto na sessão), sem instâncias
   simultâneas, limite de 1 h, execuções perdidas não são repetidas.
 - Feriados B3: `screener run` consulta `config/feriados_b3.csv` e encerra sem coletar.
+- Cada execução publica o relatório no servidor (http://100.113.24.44/screening.html); se o
+  servidor estiver fora do ar, a execução termina normalmente com o erro no log.
 - Saída: relatórios em `output\` (atalho "Relatorio-Opcoes" na Área de Trabalho); logs em
   `logs\screener.log` (aplicação) e `logs\execucao_AAAAMMDD.log` (script, inclui erros do uv).
 
@@ -311,6 +346,8 @@ O alerta **não** remove a trava do ranking: só sinaliza.
   - `snapshot_20260917_122706` (17/09/2026 12:27, com barras D1/H4): `bars_fixture_options` /
     `fixture_bars`. Regressão do sinal: VALE3 baixa, BOVA11 alta, PETR4 neutro.
   Todo teste de pricing, spreads, scoring e report roda sobre fixtures, sem o MT5.
+- `tests/test_publish.py` roda sem rede: `FakeRemote` implementa o protocolo `RemoteFiles` e
+  cobre ordem do envio, troca do link público e retenção.
 - Pricing testado contra valores de referência conhecidos (put-call parity, preço BS tabelado,
   recuperação de IV a partir de preço gerado com IV conhecida).
 - Testes que exigem o terminal levam `@pytest.mark.mt5` e ficam fora da execução padrão.

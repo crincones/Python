@@ -168,6 +168,12 @@ def render_html(data: dict[str, Any]) -> str:
     )
 
 
+def report_path(snapshot: Path, output_dir: Path) -> Path:
+    """Caminho do relatório do snapshot (nome = horário do snapshot), gerado ou não."""
+    snapshot_time = pd.Timestamp(store.read_meta(snapshot)["snapshot_time"])
+    return output_dir / snapshot_time.strftime(REPORT_NAME_FORMAT)
+
+
 def write_report(snapshot: Path, output_dir: Path) -> Path:
     """Gera o relatório de um snapshot já analisado. Nome do arquivo = horário do snapshot."""
     spreads = store.read_table(snapshot, SPREADS_TABLE)
@@ -178,7 +184,7 @@ def write_report(snapshot: Path, output_dir: Path) -> Path:
     data = build_report_data(spreads, bias, underlyings, meta, snapshot_time)
 
     output_dir.mkdir(parents=True, exist_ok=True)
-    target = output_dir / snapshot_time.strftime(REPORT_NAME_FORMAT)
+    target = report_path(snapshot, output_dir)
     temporary = target.with_name(target.name + ".partial")
     temporary.write_text(render_html(data), encoding="utf-8")
     temporary.replace(target)

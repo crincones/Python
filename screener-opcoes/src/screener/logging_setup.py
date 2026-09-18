@@ -9,6 +9,9 @@ from logging.handlers import RotatingFileHandler
 from screener.settings import LoggingSettings, PathSettings
 
 LOG_FILE_NAME = "screener.log"
+# O paramiko loga a negociação SSH inteira em INFO; só interessa a partir de WARNING
+# (com level DEBUG no YAML, volta a aparecer para diagnosticar a publicação).
+QUIET_LIBRARIES = ("paramiko",)
 FILE_FORMAT = "%(asctime)s %(levelname)s %(name)s: %(message)s"
 CONSOLE_FORMAT = "%(message)s"
 
@@ -35,3 +38,7 @@ def setup_logging(log_settings: LoggingSettings, paths: PathSettings) -> None:
     console = logging.StreamHandler(sys.stdout)
     console.setFormatter(logging.Formatter(CONSOLE_FORMAT))
     root.addHandler(console)
+
+    if log_settings.level != "DEBUG":
+        for name in QUIET_LIBRARIES:
+            logging.getLogger(name).setLevel(logging.WARNING)

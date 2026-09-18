@@ -31,6 +31,25 @@ paths:
   holidays_file: config/feriados_b3.csv
   dividends_file: config/proventos.csv
 
+# Publicação do relatório: envia o HTML por SFTP para o servidor Debian da tailnet, que o serve
+# com nginx (escutando SÓ no IP Tailscale, porta 80 liberada apenas na interface tailscale0).
+publish:
+  enabled: true
+  host: 100.113.24.44             # debian-server na tailnet
+  port: 22
+  user: carlos
+  # Chave dedicada, sem passphrase (a senha da conta não é usada nem guardada).
+  # null = usa as chaves padrão do ~/.ssh e o agente SSH.
+  private_key: ~/.ssh/screener_deploy
+  known_hosts: ~/.ssh/known_hosts
+  strict_host_key: true           # host key conferida em known_hosts (recusa se não bater)
+  remote_dir: /srv/screener       # raiz servida pelo nginx
+  history_subdir: relatorios      # /srv/screener/relatorios/relatorio_AAAAMMDD_HHMM.html
+  latest_name: screening.html     # http://100.113.24.44/screening.html
+  keep_reports: 20                # ~6,7 MB por relatório; o disco do servidor é pequeno
+  timeout_seconds: 60.0
+  public_url: http://100.113.24.44/screening.html
+
 logging:
   level: INFO
   max_bytes: 5000000

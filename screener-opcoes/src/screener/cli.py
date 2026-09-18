@@ -238,13 +238,22 @@ def snapshot_rate(meta: dict, settings: Settings) -> dict:
     ).to_dict()
 
 
+NoPublishOption = Annotated[
+    bool, typer.Option("--no-publish", help="Não envia o relatório para o servidor da tailnet")
+]
+
+
 @app.command()
 def report(
-    snapshot: SnapshotOption = "latest", config: ConfigOption = DEFAULT_SETTINGS_PATH
+    snapshot: SnapshotOption = "latest",
+    config: ConfigOption = DEFAULT_SETTINGS_PATH,
+    no_publish: NoPublishOption = False,
 ) -> None:
-    """Gera output/relatorio_AAAAMMDD_HHMM.html a partir de um snapshot analisado."""
+    """Gera output/relatorio_AAAAMMDD_HHMM.html e publica no servidor (veja publish no YAML)."""
     settings = _init(config)
-    _report(settings, snapshot)
+    target = _report(settings, snapshot)
+    if not no_publish:
+        _publish(settings, target)
 
 
 def _report(settings: Settings, snapshot: str) -> Path:
@@ -257,6 +266,53 @@ def _report(settings: Settings, snapshot: str) -> Path:
     return target
 
 
+FileOption = Annotated[
+    Path | None,
+    typer.Option("--file", help="Publica este HTML em vez do relatório do snapshot"),
+]
+
+
+@app.command()
+def publish(
+    snapshot: SnapshotOption = "latest",
+    config: ConfigOption = DEFAULT_SETTINGS_PATH,
+    file: FileOption = None,
+) -> None:
+    """Envia o relatório HTML para o servidor e aponta a URL pública para ele."""
+    settings = _init(config)
+    target = file if file is not None else _report_file(settings, snapshot)
+    if not _publish(settings, target):
+        raise typer.Exit(code=1)
+
+
+def _report_file(settings: Settings, snapshot: str) -> Path:
+    """Relatório do snapshot; gera se ainda não existir em output/."""
+    from screener.data.store import resolve_snapshot
+    from screener.report.render import report_path
+
+    path = resolve_snapshot(settings.paths.snapshots_dir, snapshot)
+    target = report_path(path, settings.paths.output_dir)
+    if target.is_file():
+        return target
+    log.info("Relatório de %s ainda não gerado; gerando agora", path.name)
+    return _report(settings, snapshot)
+
+
+def _publish(settings: Settings, report_file: Path) -> bool:
+    """Publica o relatório. Falha de rede é registrada, não interrompe: o HTML local está pronto."""
+    from screener.publish import PublishError, publish_report
+
+    if not settings.publish.enabled:
+        log.info("Publicação desativada (publish.enabled: false em settings.yaml)")
+        return True
+    try:
+        publish_report(report_file, settings.publish)
+    except PublishError as exc:
+        log.error("Relatório gerado em %s, mas não publicado: %s", report_file, exc)
+        return False
+    return True
+
+
 ForceOption = Annotated[
     bool, typer.Option("--force", help="Executa mesmo fora de dia de pregão da B3")
 ]
@@ -267,8 +323,9 @@ def run(
     config: ConfigOption = DEFAULT_SETTINGS_PATH,
     force: ForceOption = False,
     keep_terminal: KeepTerminalOption = False,
+    no_publish: NoPublishOption = False,
 ) -> None:
-    """collect + analyze + report. Em dia sem pregão (fim de semana/feriado B3) não faz nada."""
+    """collect + analyze + report + publish. Fim de semana ou feriado da B3: não faz nada."""
     import pandas as pd
 
     from screener.calendar_b3 import B3Calendar
@@ -288,4 +345,6 @@ def run(
         log.error("Falha na coleta: %s", exc)
         raise typer.Exit(code=1) from exc
     _analyze(settings, path.name)
-    _report(settings, path.name)
+    target = _report(settings, path.name)
+    if not no_publish:
+        _publish(settings, target)

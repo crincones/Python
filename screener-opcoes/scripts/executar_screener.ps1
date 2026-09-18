@@ -10,7 +10,11 @@
     login automatico e, ao terminar, fecha apenas o terminal que ele mesmo abriu.
 
 .PARAMETER Etapa
-    run (coleta + analise + relatorio), collect, analyze, report ou check.
+    run (coleta + analise + relatorio + publicacao), collect, analyze, report, publish ou check.
+
+.PARAMETER SemPublicar
+    Nas etapas run e report: nao envia o relatorio para o servidor da tailnet
+    (http://100.113.24.44/screening.html).
 
 .PARAMETER Forcar
     Na etapa run, executa mesmo fora de dia de pregao.
@@ -25,12 +29,14 @@
 .EXAMPLE
     .\scripts\executar_screener.ps1
     .\scripts\executar_screener.ps1 -Etapa report -AbrirRelatorio
+    .\scripts\executar_screener.ps1 -Etapa publish
 #>
 [CmdletBinding()]
 param(
-    [ValidateSet('run', 'collect', 'analyze', 'report', 'check')]
+    [ValidateSet('run', 'collect', 'analyze', 'report', 'publish', 'check')]
     [string]$Etapa = 'run',
     [switch]$Forcar,
+    [switch]$SemPublicar,
     [switch]$ManterTerminal,
     [switch]$AbrirRelatorio
 )
@@ -62,6 +68,7 @@ if (-not (Test-Path -LiteralPath $Uv)) {
 $Argumentos = @('run', 'screener', $Etapa)
 if ($Forcar -and $Etapa -eq 'run') { $Argumentos += '--force' }
 if ($ManterTerminal -and $Etapa -in @('run', 'collect')) { $Argumentos += '--keep-terminal' }
+if ($SemPublicar -and $Etapa -in @('run', 'report')) { $Argumentos += '--no-publish' }
 
 # Saida do Python em UTF-8 para acentos corretos no console e no log.
 $env:PYTHONIOENCODING = 'utf-8'
