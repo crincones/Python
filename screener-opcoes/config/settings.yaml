@@ -50,6 +50,20 @@ publish:
   timeout_seconds: 60.0
   public_url: http://100.113.24.44/screening.html
 
+# Aviso por Telegram ao fim de cada `screener run` (ou com `screener notify`): resumo das travas
+# de alta/baixa com score acima de min_score e gráfico de payoff das melhores. Sem nenhuma, avisa
+# que não há. O token do bot NÃO fica aqui: arquivo de uma linha fora do repositório.
+notify:
+  enabled: true
+  token_file: ~/.config/screener/telegram_token   # bot mt5_3_bot
+  chat_id: "-5374954807"
+  min_score: 90
+  only_ranked: true               # só travas na faixa de POP e na direção do viés do ativo
+  best_per_group: true            # melhor por estratégia, ativo e vencimento (como no relatório)
+  max_listed: 15
+  max_charts: 5
+  timeout_seconds: 30
+
 logging:
   level: INFO
   max_bytes: 5000000

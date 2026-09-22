@@ -21,7 +21,7 @@ Isto é uma ferramenta de apoio à decisão. **Nunca** enviar ordens. Não usar 
   confirmar no PyPI que o pacote `MetaTrader5` já suporta a versão
 - Gerenciador: `uv` (`pyproject.toml` + `uv.lock`)
 - Bibliotecas: `MetaTrader5`, `pandas`, `pyarrow`, `duckdb`, `numpy`, `scipy`, `jinja2`,
-  `pyyaml`, `pydantic`, `typer`, `plotly`, `paramiko`
+  `pyyaml`, `pydantic`, `typer`, `plotly`, `paramiko`, `matplotlib` (PNG do payoff no Telegram)
 - Testes: `pytest`. Lint/format: `ruff`
 
 ## Comandos
@@ -33,7 +33,9 @@ uv run screener collect                   # grava snapshot em data/snapshots/
 uv run screener analyze --snapshot latest # calcula IV, métricas, score
 uv run screener report  --snapshot latest # gera output/relatorio_YYYYMMDD_HHMM.html e publica
 uv run screener publish --snapshot latest # só envia o relatório para o servidor (ou --file <html>)
-uv run screener run [--force]             # collect + analyze + report + publish (sai fora de pregão)
+uv run screener notify --snapshot latest [--test]  # aviso no Telegram das travas com score > 90
+uv run screener run [--force]             # collect + analyze + report + publish + notify (sai fora de pregão)
+#   run aceita --no-notify para não avisar no Telegram
 #   report/run aceitam --no-publish para não enviar nada ao servidor
 uv run screener fixture --snapshot <nome> # copia snapshot p/ tests/fixtures/ sem dados da conta
 uv run pytest                             # testes offline (sem MT5)
@@ -87,6 +89,9 @@ src/screener/
   report/render.py            Jinja2 → HTML
   report/templates/
   publish.py                  envio do HTML por SFTP para o servidor da tailnet (ÚNICO com paramiko)
+  notify/telegram.py          Bot API do Telegram via urllib (protocolo TelegramApi, token fora do repo)
+  notify/alerts.py            seleção das travas com score alto, resumo e legendas
+  notify/payoff_chart.py      payoff no vencimento em PNG (matplotlib, mesmo desenho do relatório)
   cli.py                      Typer
 tests/fixtures/               snapshots reais salvos para testes offline
 data/snapshots/AAAAMMDD_HHMMSS/  saída do coletor e da análise (não versionar):
@@ -315,6 +320,20 @@ O alerta **não** remove a trava do ranking: só sinaliza.
     A porta 80 continua fechada na LAN 192.168.0.x.
   - `/srv/screener` e `/srv/screener/relatorios` pertencem a `carlos` (envio sem sudo).
   - Disco raiz pequeno (13 GB, ~2 GB livres em 17/09/2026) — daí a retenção obrigatória.
+
+## Aviso por Telegram (decisão de 2026-09-22)
+
+- Ao fim de cada `screener run` (depois da publicação), envia ao chat `notify.chat_id` (bot
+  mt5_3_bot) um resumo das travas **ranqueadas** com score **estritamente acima** de
+  `notify.min_score` (90), melhor por estratégia, ativo e vencimento (variações contadas na
+  legenda), e uma foto do payoff com os números da trava para as `max_charts` melhores. Sem
+  nenhuma acima do limite, envia só "Nenhuma trava ... acima de 90". Link do relatório só se a
+  publicação deu certo.
+- Token do bot em `~/.config/screener/telegram_token` (arquivo de uma linha, fora do repo);
+  nunca no YAML nem em log/mensagem de erro.
+- Falha no Telegram **não** derruba a execução (erro no log); `screener notify` isolado sai com 1.
+  `--test` marca a mensagem como teste e envia mesmo com `notify.enabled: false`.
+- Testado offline em `tests/test_notify.py` com `FakeTelegram`.
 
 ## Agendamento (decisão de 2026-09-17)
 

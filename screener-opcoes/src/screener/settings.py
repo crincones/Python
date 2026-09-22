@@ -88,6 +88,20 @@ class PublishSettings(_Strict):
         return self
 
 
+class NotifySettings(_Strict):
+    """Aviso das travas com score alto por Telegram (token fora do repositório)."""
+
+    enabled: bool
+    token_file: Path  # arquivo de uma linha com o token do bot
+    chat_id: str
+    min_score: NonNegativeFloat  # avisa travas com score estritamente acima disso
+    only_ranked: bool  # só travas ranqueadas (faixa de POP e direção igual ao viés)
+    best_per_group: bool  # melhor trava por estratégia, ativo e vencimento
+    max_listed: PositiveInt  # travas listadas na mensagem de resumo
+    max_charts: NonNegativeInt  # gráficos de payoff enviados (um por trava)
+    timeout_seconds: PositiveFloat
+
+
 class LoggingSettings(_Strict):
     level: Literal["DEBUG", "INFO", "WARNING", "ERROR"]
     max_bytes: PositiveInt
@@ -233,6 +247,7 @@ class Settings(_Strict):
     mt5: MT5Settings
     paths: PathSettings
     publish: PublishSettings
+    notify: NotifySettings
     logging: LoggingSettings
     collector: CollectorSettings
     underlying_filter: UnderlyingFilterSettings
