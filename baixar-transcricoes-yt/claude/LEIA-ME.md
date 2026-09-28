@@ -34,6 +34,15 @@ python 3_processar_srt.py --raw-dir raw_srt --out-dir transcricoes_processadas
 Gera `transcricoes_processadas/<video_id>/transcricao.json` (timestamps em segundos, prontos para
 enviar a uma IA) e um `indice.json` com a lista de todos os vídeos processados.
 
+### 4. Compilar para o NotebookLM (alternativa ao passo 3)
+```
+python 4_compilar_notebooklm.py --raw-dir Palmezani --out-dir Palmezani_notebooklm --prefixo Palmezani
+```
+Lê os .srt direto, remove a duplicação das legendas automáticas e gera no máximo 20 arquivos `.md`
+(`--max-fontes`), equilibrados por nº de palavras, sem cortar vídeos. Cada parágrafo (~60s, `--janela-seg`)
+começa com `[hh:mm:ss | título | https://youtu.be/<id>?t=<seg>]`, para as citações do NotebookLM
+apontarem o vídeo e o momento exato.
+
 ## Próximo passo
 Os arquivos em `transcricoes_processadas/` já estão no formato certo para o script de
 extração de pontos-chave via API da Anthropic (chunking + geração de capítulos com timestamp).
