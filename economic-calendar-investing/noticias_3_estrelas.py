@@ -318,6 +318,7 @@ def main():
         salvar_csv(noticias, args.csv)
         log.info("%d notícias salvas em %s", len(noticias), args.csv)
 
+    falhou_telegram = False
     if args.telegram:
         # Falha no Telegram não impede os avisos na tela.
         try:
@@ -325,12 +326,16 @@ def main():
             log.info("Lista enviada ao Telegram.")
         except Exception as e:
             log.error("%s", e)
+            falhou_telegram = True
 
     if args.popup:
         try:
             aguardar_popups(noticias, args.antecedencia, args.duracao)
         except KeyboardInterrupt:
             log.info("Encerrado.")
+
+    if falhou_telegram:  # código de saída != 0 marca a falha no GitHub Actions
+        sys.exit(1)
 
 
 if __name__ == "__main__":
