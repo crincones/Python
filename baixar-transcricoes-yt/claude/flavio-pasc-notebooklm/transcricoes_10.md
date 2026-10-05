@@ -1,0 +1,22 @@
+# transcricoes — parte 10 de 10
+
+Transcrições automáticas de vídeos do YouTube. Vídeos nesta fonte:
+
+- Fique de Olho x Carteira Estratégia e timing — https://www.youtube.com/watch?v=Re6_6xR3R1I
+
+---
+# Fique de Olho x Carteira Estratégia e timing
+
+- Vídeo: Fique de Olho x Carteira Estratégia e timing
+- URL: https://www.youtube.com/watch?v=Re6_6xR3R1I
+- ID do vídeo: Re6_6xR3R1I
+- Publicado em: 2025-11-19
+- Duração aprox.: 00:03:02
+
+Cada parágrafo começa com [tempo | vídeo | link] indicando o trecho exato no YouTube.
+
+[00:00:10 | Fique de Olho x Carteira Estratégia e timing | https://youtu.be/Re6_6xR3R1I?t=10] uma delas, qual é a diferença entre elas? Vamos começar falando aqui da carteira Estratégia Time. A carteira Estratégia Time é a carteira recomendada, né, que a gente tem ali os ativos onde que a gente quer entrar, onde que a gente entrou e faz a simulação via eh planilha. Então, todos os ativos que estão aqui, exemplo, né, a ALPA 4 que pagou dividendos hoje, ela é atualizada aqui na planilha, né, os dados e tudo mais. E aqui a gente faz um controle de todas as operações, né? Então, na carteira Stratégia Time, se você olhar aqui, já tem mais de 1572 operações aqui nesse momento da nessa data que eu tô gravando eh esse vídeo, tá? Então, eh, a carteira Estratégia Time, ela tá diretamente vinculada a essa planilha. Tudo que acontece aqui nesse ambiente, eh, mudança de stop, tamanho de capital, repara, né? Tem aqui, ó, eh, o ponto de entrada, o ponto de saída, o ponto de stop, o alvo final, a porcentagem, a estratégia, a data, atualização, se tá ativo, cancelado, finalizado. Eh, aqui são estratégias aonde a gente acompanha. Exemplo, aqui é uma que foi enviada hoje, que é uma venda de Porto Seguro. Então, se Porto Seguro PSSA romper o fundo, então deixa eu pegar aqui o gráfico aqui e entrar em PSSA3.
+
+[00:01:35 | Fique de Olho x Carteira Estratégia e timing | https://youtu.be/Re6_6xR3R1I?t=95] Se ela romper lá o fundo estabelecido, tá, ela perder lá aproximada a esse esse fundo aqui, né, que é o onde tá o ponto de entrada, no caso é 45 com 33. Então, se ela perder aqui 45, 33, vai ser startado essa operação aqui no aplicativo, tá? Então aqui vai aparecer uma bolinha do lado de entrada porque deu entrada, foi após às 11 horas, que é o horário que a gente tem e tudo mais. Então essa aqui é uma carteira que a gente acompanha. Eh, o que que é o fique de olho, né? O fique de olho ele é um complemento, o fique de olho é um complemento da carteira estratégia timing. Então todos os dias a gente envia ali uma quantidade de operações que não são oficiais, ou seja, não vão entrar na carteira Strateg Time, mas ficam como sugestão para quem tem um pouco mais de eh experiência e quer alocar ali em outros ativos que a gente ainda não vai entrar. Então, exemplo, olha a diferença aqui. Eh, você tem aqui, no caso, uma sugestão de compra em plano plano, tá? PLPL3. Aqui diz qual é a estratégia e a hora, né? Repara que aqui já tá diferente do que é lá na carteira estratégia. Tem aqui a mesma questão, entrada, stop, saída, mas não há o acompanhamento, ou seja, não vai ser marcado aqui bolinha ou se foi cancelado ou se foi ativado. Tem a data de que a data sempre do dia, né? Então, hoje é dia 19. Esse call vale até 5:40.
+
+[00:03:02 | Fique de Olho x Carteira Estratégia e timing | https://youtu.be/Re6_6xR3R1I?t=182] do dia de hoje. Amanhã, se isso aqui desconfigurar, isso sai daqui e vai para uma outra aba que a gente chama de histórico, fique de olho, que é aqui embaixo, ó. Tá vendo, ó? Aqui embaixo, ó. Fique de olho histórico. Então, os ativos que estavam ontem, que deram entrada ou que se ou desconfiguraram, exemplo, BBAS, ela tava ontem, ó. Hoje ela saiu, deu como finalizado e veio para cá. Mesma coisa aconteceu com a Camil. A Camil porque ela acabou entrando lá como uma sugestão de compra. a BBSE. Então, tá vendo aqui na no histórico, tão todas as operações que foram sugeridas anteriormente. E aqui no fique de olho é sugestão para você entrar no dia, né? Então, se você rolar aqui, você vai ver que vai ter 8, 9, sete eh oportunidades aqui. E se uma delas desconfigurar ou der entrada, elas vão ali para o histórico de operações sem necessariamente ter o acompanhamento, tá? O acompanhamento ele só acontece aqui na carteira estratégia time. Aqui sim há um acompanhamento, há um planilhamento, tudo, todas as notificações, pagamento de proventos, de dividendos, tudo é notificado e acompanhado aqui e feito ali uma simulação em carteira, tá bom? Então é basicamente isso aí a diferença entre um e outro. M.

@@ -1,0 +1,45 @@
+costs:
+  fees_bps_per_side: 0.0        # corretagem + emolumentos, em bps do valor negociado
+  slippage_ticks: 0             # por lado, contra a operação
+  tick_size: 0.01
+
+random_benchmark:
+  seed: 42
+  probability: 0.10             # fração das barras H1 elegíveis sorteadas como candidatas
+
+forward_bars: [5, 10, 20]       # retorno após N barras H1 da entrada
+bootstrap_samples: 2000         # IC 95% da expectativa (R médio)
+
+warnings:
+  min_trades: 30
+  max_asset_profit_share: 0.5
+  max_year_profit_share: 0.5
+  max_top5_trades_profit_share: 0.5
+
+distance_buckets_atr: [0.0, 0.25, 0.50, 0.75, 1.00]   # último bucket = 1.00+
+
+# Variante-base: buckets de distância, robustez de liquidez e exemplos com gráfico.
+baseline_variant: A_retracao
+
+examples:
+  per_category: 10
+  bars_before: 80
+  bars_after: 20
+  context_bars: 120             # barras D1 e H4 nos gráficos de contexto
+
+# Incremento de cada filtro (seções 17 e 41): diferença de expectativa test − base com IC 95%
+# por bootstrap. As amostras se sobrepõem (B ⊂ A), então o IC é aproximado.
+increments:
+  - {label: "Tendência D1/H4 vs entrada aleatória", base: R_aleatorio, test: T_tendencia}
+  - {label: "Retração H1 vs só tendência", base: T_tendencia, test: A_retracao}
+  - {label: "MM21 D1 ≤ 1,00 ATR vs retração sem referência", base: A_retracao, test: B_dist_1.00}
+  - {label: "MM21 D1 ≤ 0,75 ATR", base: A_retracao, test: C_dist_0.75}
+  - {label: "MM21 D1 ≤ 0,50 ATR", base: A_retracao, test: D_dist_0.50}
+  - {label: "MM21 D1 ≤ 0,30 ATR", base: A_retracao, test: E_dist_0.30}
+  - {label: "Toque da MM21 D1", base: A_retracao, test: F_toque_mm21}
+  - {label: "Confirmação H1 vs entrada imediata (sem referência)", base: A_imediata, test: A_retracao}
+  - {label: "Confirmação H1 vs entrada imediata (≤ 0,50 ATR)", base: D_imediata, test: D_dist_0.50}
+
+klinecharts:
+  version: 9.8.12
+  cache: data/cache/klinecharts.min.js   # embutido no HTML (relatório funciona offline)

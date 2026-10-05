@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Preços Atacadão</title>
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f6f5f2;
+  --surface: #fcfcfb;
+  --surface-2: #f0efec;
+  --border: #e2e0da;
+  --grid: #e8e6e1;
+  --text: #0b0b0b;
+  --text-2: #52514e;
+  --text-3: #7a7873;
+  --accent: #2a78d6;
+  --up: #b42d2d;
+  --down: #006300;
+  --chip-on: #0b0b0b;
+  --chip-on-text: #ffffff;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100;
+  --s5: #e87ba4; --s6: #008300; --s7: #4a3aa7; --s8: #e34948;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #121211; --surface: #1a1a19; --surface-2: #242422; --border: #33332f; --grid: #2c2c29;
+    --text: #ffffff; --text-2: #c3c2b7; --text-3: #8f8e86; --accent: #3987e5;
+    --up: #f07171; --down: #3fc23f; --chip-on: #ffffff; --chip-on-text: #0b0b0b;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
+    --s5: #d55181; --s6: #008300; --s7: #9085e9; --s8: #e66767;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #121211; --surface: #1a1a19; --surface-2: #242422; --border: #33332f; --grid: #2c2c29;
+  --text: #ffffff; --text-2: #c3c2b7; --text-3: #8f8e86; --accent: #3987e5;
+  --up: #f07171; --down: #3fc23f; --chip-on: #ffffff; --chip-on-text: #0b0b0b;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
+  --s5: #d55181; --s6: #008300; --s7: #9085e9; --s8: #e66767;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+main { max-width: 1180px; margin: 0 auto; padding: 24px 16px 64px; }
+header h1 { font-size: 22px; margin: 0 0 2px; letter-spacing: -0.01em; }
+header p { margin: 0; color: var(--text-2); }
+.num { font-variant-numeric: tabular-nums; }
+section { margin-top: 28px; }
+h2 { font-size: 15px; margin: 0 0 10px; }
+h2 small { font-weight: 400; color: var(--text-3); margin-left: 6px; }
+
+.filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 20px; }
+.chip {
+  border: 1px solid var(--border); background: var(--surface); color: var(--text-2);
+  border-radius: 999px; padding: 5px 12px; font: inherit; cursor: pointer;
+}
+.chip[aria-pressed="true"] { background: var(--chip-on); color: var(--chip-on-text); border-color: var(--chip-on); }
+.filters input[type=search] {
+  flex: 1 1 200px; min-width: 0; max-width: 320px; margin-left: auto;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text);
+  border-radius: 8px; padding: 6px 10px; font: inherit;
+}
+.filters label { color: var(--text-2); display: flex; gap: 6px; align-items: center; }
+
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; }
+.tile { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px; cursor: pointer; }
+.tile:hover { border-color: var(--text-3); }
+.tile .cat { color: var(--text-3); font-size: 12px; }
+.tile .price { font-size: 22px; font-weight: 600; margin: 2px 0; }
+.tile .name { color: var(--text-2); font-size: 12px; line-height: 1.3; }
+
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-bottom: 8px; min-height: 22px; }
+.legend button {
+  display: inline-flex; align-items: center; gap: 6px; border: 0; background: none; padding: 2px 0;
+  color: var(--text-2); font: inherit; font-size: 13px; cursor: pointer; max-width: 100%;
+}
+.legend button span.nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px; }
+.legend .sw { width: 12px; height: 3px; border-radius: 2px; flex: none; }
+.legend .x { color: var(--text-3); }
+.empty { color: var(--text-3); padding: 30px 0; text-align: center; }
+#chart { position: relative; }
+#chart svg { display: block; width: 100%; overflow: visible; }
+.tooltip {
+  position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; padding: 8px 10px; font-size: 12px; box-shadow: 0 4px 16px rgba(0,0,0,.12);
+  min-width: 160px; max-width: 300px; display: none; z-index: 2;
+}
+.tooltip .d { color: var(--text-3); margin-bottom: 4px; }
+.tooltip .r { display: flex; gap: 8px; align-items: center; justify-content: space-between; }
+.tooltip .r .l { display: flex; gap: 6px; align-items: center; min-width: 0; }
+.tooltip .r .l span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-2); }
+
+.changes { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 6px 20px; }
+.change { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--grid); cursor: pointer; }
+.change .n { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.up { color: var(--up); } .down { color: var(--down); } .same { color: var(--text-3); }
+
+.table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; min-width: 760px; }
+th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--grid); vertical-align: top; }
+th { font-size: 12px; font-weight: 600; color: var(--text-2); cursor: pointer; user-select: none; white-space: nowrap; position: sticky; top: 0; background: var(--surface); }
+th.r, td.r { text-align: right; }
+th[aria-sort="ascending"]::after { content: " ↑"; }
+th[aria-sort="descending"]::after { content: " ↓"; }
+tbody tr { cursor: pointer; }
+tbody tr:hover { background: var(--surface-2); }
+tbody tr.sel td:first-child { box-shadow: inset 3px 0 0 var(--sel, var(--accent)); }
+td .sub { color: var(--text-3); font-size: 12px; }
+.badge { display: inline-block; font-size: 11px; color: var(--text-2); background: var(--surface-2); border-radius: 4px; padding: 0 5px; margin-left: 4px; }
+.best { font-size: 11px; color: var(--down); margin-left: 4px; }
+a { color: var(--accent); }
+.hint { color: var(--text-3); font-size: 12px; margin-top: 6px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Preços Atacadão</h1>
+    <p id="sub"></p>
+  </header>
+
+  <div class="filters" id="filters"></div>
+
+  <section>
+    <h2>Menor preço por categoria <small>na última sondagem</small></h2>
+    <div class="tiles" id="tiles"></div>
+  </section>
+
+  <section>
+    <h2>Histórico <small>clique nos produtos da tabela para comparar (até 8)</small></h2>
+    <div class="card">
+      <div class="legend" id="legend"></div>
+      <div id="chart"></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Mudanças desde a sondagem anterior <small id="chg-sub"></small></h2>
+    <div class="changes" id="changes"></div>
+  </section>
+
+  <section>
+    <h2>Todos os produtos <small id="count"></small></h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr id="thead"></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <p class="hint">“vitrine” = preço exibido no site (refrigerados não têm preço no carrinho online). Preço de atacado = menor preço unitário encontrado ao simular 3, 6, 12, 24 e 48 unidades.</p>
+  </section>
+</main>
+
+<script>
+const DADOS = {"loja": "Loja do CEP 13840110 (atacadaobr945)", "gerado": "2026-09-27T21:22:24", "linhas": [["2026-09-27T21:13:24", "Queijo mussarela 1kg", "35351", "Queijo Mussarela Aurora Preço por quilo na peça", 39.9, 39.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/queijo-mussarela-aurora-36534/p"], ["2026-09-27T21:13:24", "Queijo mussarela 1kg", "36265", "Queijo Mussarela Soberano F4 Preço por quilo na peça", 34.9, 34.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/queijo-mussarela-soberano-f4-59886/p"], ["2026-09-27T21:13:24", "Queijo mussarela 1kg", "38847", "Queijo Mussarela Três Marias Preço por quilo na peça", 43.9, 43.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/queijo-mussarela-tres-marias-83932/p"], ["2026-09-27T21:13:24", "Queijo mussarela 1kg", "61669", "Queijo Mussarela Bulnez F4 Preço por quilo na peça", 42.9, 42.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/queijo-mussarela-bulnez-f4-13870/p"], ["2026-09-27T21:13:24", "Queijo mussarela 1kg", "36136", "Queijo Mussarela Président F4 Preço por quilo na peça", 39.9, 39.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/queijo-mussarela-president-f4-55974/p"], ["2026-09-27T21:13:24", "Queijo mussarela 1kg", "36384", "Queijo Mussarela Três Marias Preço por quilo na peça", 42.9, 42.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/queijo-mussarela-tres-marias-25425/p"], ["2026-09-27T21:13:24", "Queijo mussarela 1kg", "38366", "Queijo Mussarela Soberano F2 Preço por quilo na peça", 40.9, 40.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/queijo-mussarela-soberano-f2-62564/p"], ["2026-09-27T21:13:24", "Queijo mussarela 1kg", "47258", "Queijo Mussarela Hebrom Zero Lactose Preço por quilo na peça", 51.9, 51.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/queijo-mussarela-hebrom-zero-lactose-97367/p"], ["2026-09-27T21:13:24", "Queijo mussarela 1kg", "61666", "Queijo Mussarela Bulnez F2 Preço por quilo na peça", 41.9, 41.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/queijo-mussarela-bulnez-f2-13869/p"], ["2026-09-27T21:13:24", "Queijo mussarela 1kg", "41578", "Queijo Mussarela Fatiado Soberano quilo", 49.9, 49.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/queijo-mussarela-fatiado-soberano-85615/p"], ["2026-09-27T21:13:24", "Queijo mussarela 1kg", "61671", "Queijo Mussarela Bulnez Fatiado quilo", 51.9, 51.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/queijo-mussarela-bulnez-fatiado-13898/p"], ["2026-09-27T21:13:24", "Queijo mussarela 1kg", "35774", "Queijo Mussarela Italac F4 Preço por quilo na peça", 42.9, 42.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/queijo-mussarela-italac-f4-17906/p"], ["2026-09-27T21:13:24", "Queijo mussarela 1kg", "58890", "Queijo Mussarela Fat Hebrom Zero Lactose Preço por quilo na bdj", 69.9, 69.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/queijo-mussarela-fatiado-hebrom-zero-lactose-8853/p"], ["2026-09-27T21:13:24", "Queijo mussarela 1kg", "36049", "Queijo Mussarela Piracanjuba F4 Preço por quilo na peça", 42.9, 42.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/queijo-mussarela-piracanjuba-f4-25635/p"], ["2026-09-27T21:13:24", "Queijo mussarela 1kg", "38249", "Queijo Mussarela Ipanema F4 Preço por quilo na peça", 42.9, 42.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/queijo-mussarela-ipanema-f4-52227/p"], ["2026-09-27T21:13:24", "Queijo mussarela 1kg", "35646", "Queijo Mussarela Girolanda F4 Preço por quilo na peça", 41.9, 41.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/queijo-mussarela-girolanda-14941/p"], ["2026-09-27T21:13:24", "Queijo mussarela 1kg", "59975", "Queijo Mussarela Fatiado Formosa Preço por quilo na bandeja", 54.9, 54.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/queijo-mussarela-fatiado-formosa-86624/p"], ["2026-09-27T21:13:24", "Queijo mussarela 1kg", "35392", "Queijo Mussarela Buritis Lanche Preço por quilo na peça", 65.9, 65.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/queijo-mussarela-buritis-lanche-71526/p"], ["2026-09-27T21:13:24", "Queijo mussarela 1kg", "34864", "Queijo Mussarela Lanche Formosa Preço por quilo na peça", 53.6, 53.6, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/queijo-mussarela-lanche-formosa-29694/p"], ["2026-09-27T21:13:24", "Queijo mussarela 1kg", "35603", "Queijo Mussarela Formosa F2 Preço por quilo na peça", 45.5, 45.5, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/queijo-mussarela-formosa-20000/p"], ["2026-09-27T21:13:24", "Iogurte líquido", "63353", "Iogurte Frutap Morango 1,15kg", 10.49, 10.49, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/iogurte-frutap-morango-17117/p"], ["2026-09-27T21:13:24", "Iogurte líquido", "60196", "Iogurte Zero Carolina La Vita Ameixa 1,25kg", 12.8, 12.8, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/iogurte-zero-carolina-la-vita-ameixa-11277/p"], ["2026-09-27T21:13:24", "Iogurte líquido", "59616", "Iogurte Danone 5x Zero Morango 1,2kg", 18.9, 18.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/iogurte-danone-5x-zero-morango-11285/p"], ["2026-09-27T21:13:24", "Iogurte líquido", "59615", "Iogurte Danone 5x Zero Batido 1,2kg", 18.9, 18.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/iogurte-danone-5x-zero-batido-11284/p"], ["2026-09-27T21:13:24", "Iogurte líquido", "61527", "Iogurte Nestlé Zero Batido 1,15kg", 17.9, 17.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/iogurte-nestle-zero-batido-13787/p"], ["2026-09-27T21:13:24", "Iogurte líquido", "62764", "Iogurte Natural Batavo Integral 1,15kg", 9.9, 9.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/iogurte-natural-batavo-integral-16454/p"], ["2026-09-27T21:13:24", "Iogurte líquido", "61490", "Iogurte Nestlé Morango 1,15kg", 10.97, 10.97, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/iogurte-nestle-morango-13667/p"], ["2026-09-27T21:13:24", "Iogurte líquido", "61528", "Iogurte Nestlé Zero Morango 1,15kg", 17.9, 17.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/iogurte-nestle-zero-morango-13788/p"], ["2026-09-27T21:13:24", "Iogurte líquido", "61834", "Iogurte Itambé Ameixa Zero 1,15kg", 13.9, 13.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/iogurte-itambe-ameixa-zero-14437/p"], ["2026-09-27T21:13:24", "Iogurte líquido", "62779", "Iogurte Itambé Natural Milk Integral 1,15kg", 16.9, 16.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/iogurte-itambe-natural-milk-integral-16504/p"], ["2026-09-27T21:13:24", "Iogurte líquido", "61487", "Iogurte Nestlé Vitamina de Frutas 1,15kg", 10.97, 10.97, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/iogurte-nestle-vitamina-de-frutas-13668/p"], ["2026-09-27T21:13:24", "Iogurte líquido", "61525", "Iogurte Vigor Zero Batido 1,1kg", 15.9, 15.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/iogurte-vigor-zero-batido-13790/p"], ["2026-09-27T21:13:24", "Iogurte líquido", "62769", "Iogurte Natural Batavo Desnatado 1,15kg", 9.9, 9.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/iogurte-natural-batavo-desnatado-16458/p"], ["2026-09-27T21:13:24", "Iogurte líquido", "60194", "Iogurte Zero Carolina La Vita Abacaxi e Coco 1,25kg", 12.8, 12.8, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/iogurte-zero-carolina-la-vita-abacaxi-e-coco-11275/p"], ["2026-09-27T21:13:24", "Iogurte líquido", "61534", "Iogurte Vigor Zero Morango 1,1kg", 15.9, 15.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/iogurte-vigor-zero-morango-13791/p"], ["2026-09-27T21:13:24", "Iogurte líquido", "63355", "Iogurte Frutap Salada de Frutas 1,15kg", 10.49, 10.49, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/iogurte-frutap-salada-de-frutas-17116/p"], ["2026-09-27T21:13:24", "Iogurte líquido", "58091", "Iogurte Milk Mix Morango 1kg", 5.49, 5.49, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/iogurte-milk-mix-morango-7171/p"], ["2026-09-27T21:13:24", "Iogurte líquido", "63635", "Iogurte Frutap Zero Lactose Morango 1,15kg", 13.9, 13.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/iogurte-frutap-zero-lactose-morango-17500/p"], ["2026-09-27T21:13:24", "Iogurte líquido", "62762", "Iogurte Probio2 Batavo Morango Zero 1,15kg", 13.9, 13.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/iogurte-probio2-batavo-morango-zero-16449/p"], ["2026-09-27T21:13:24", "Iogurte líquido", "63615", "Iogurte Itambé Morango Zero 1,15kg", 13.9, 13.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/iogurte-itambe-morango-zero-17463/p"], ["2026-09-27T21:13:24", "Iogurte líquido", "58084", "Iogurte Milk Mix Vitamina 1kg", 5.49, 5.49, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/iogurte-milk-mix-vitamina-7163/p"], ["2026-09-27T21:13:24", "Iogurte líquido", "58400", "Iogurte Vigor Morango 1,150kg", 14.9, 14.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/iogurte-vigor-morango-7867/p"], ["2026-09-27T21:13:24", "Café 500g", "63439", "Café Bulnez Tradicional 500g", 17.9, 17.9, 1, "available", "carrinho", "https://www.atacadao.com.br/cafe-bulnez-tradicional-16675/p"], ["2026-09-27T21:13:24", "Café 500g", "62928", "Café Jardim Tradicional Pouch 500g", 16.9, 16.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/cafe-jardim-tradicional-16618/p"], ["2026-09-27T21:13:24", "Café 500g", "62745", "Café Pilão Cafeteria Italiano 500g", 25.9, 25.9, 1, "available", "carrinho", "https://www.atacadao.com.br/cafe-pilao-cafeteria-italiano-16412/p"], ["2026-09-27T21:13:24", "Café 500g", "63637", "Café em Grãos Pilão Espresso 500g", 39.9, 39.9, 1, "available", "carrinho", "https://www.atacadao.com.br/cafe-em-graos-pilao-espresso-17512/p"], ["2026-09-27T21:13:24", "Café 500g", "2617", "Café Melitta Tradicional Vácuo 500g", 22.9, 22.9, 1, "available", "carrinho", "https://www.atacadao.com.br/cafe-melitta-tradicional-vacuo-18816/p"], ["2026-09-27T21:13:24", "Café 500g", "915", "Café 3 Corações Tradicional 500g", 22.9, 22.9, 1, "available", "carrinho", "https://www.atacadao.com.br/cafe-3-coracoes-tradicional-23371/p"], ["2026-09-27T21:13:24", "Café 500g", "3014", "Café Pilão Almofada 500g", 29.98, 29.98, 1, "withoutStock", "carrinho", "https://www.atacadao.com.br/cafe-pilao-almofada-4959/p"], ["2026-09-27T21:13:24", "Café 500g", "3853", "Café Torrado Moído Tradicional Pouch União 500g", 23.9, 22.9, 3, "available", "carrinho", "https://www.atacadao.com.br/cafe-uniao-tradicional-76123/p"], ["2026-09-27T21:13:24", "Café 500g", "3092", "Café Pilão Vácuo 500g", 22.9, 22.9, 1, "available", "carrinho", "https://www.atacadao.com.br/cafe-pilao-vacuo-18437/p"], ["2026-09-27T21:13:24", "Café 500g", "2579", "Café Melitta Extraforte Vácuo 500g", 22.9, 22.9, 1, "available", "carrinho", "https://www.atacadao.com.br/cafe-melitta-extraforte-vacuo-35719/p"], ["2026-09-27T21:13:24", "Café 500g", "3837", "Café Torrado Moído Extra Forte Pouch União 500g", 23.9, 22.9, 3, "available", "carrinho", "https://www.atacadao.com.br/cafe-uniao-extra-forte-76124/p"], ["2026-09-27T21:13:24", "Café 500g", "924", "Café 3 Corações Tradicional - Vácuo 500g", 19.48, 19.48, 1, "withoutStock", "carrinho", "https://www.atacadao.com.br/cafe-3-coracoes-tradicional-vacuo-70976/p"], ["2026-09-27T21:13:24", "Café 500g", "1294", "Café Caboclo Tradicional Vácuo 500g", 19.9, 19.9, 1, "available", "carrinho", "https://www.atacadao.com.br/cafe-caboclo-tradicional-vacuo-11469/p"], ["2026-09-27T21:13:24", "Café 500g", "2584", "Café Melitta Sabor da Fazenda Vácuo 500g", 25.9, 25.9, 1, "available", "carrinho", "https://www.atacadao.com.br/cafe-melitta-sabor-da-fazenda-vacuo-66796/p"], ["2026-09-27T21:13:24", "Café 500g", "2166", "Café Fort Almofada 500g", 19.78, 19.78, 1, "available", "carrinho", "https://www.atacadao.com.br/cafe-fort-almofada-31969/p"], ["2026-09-27T21:13:24", "Café 500g", "3148", "Café Premium 3 Corações Estrada Real 500g", 26.9, 26.9, 1, "available", "carrinho", "https://www.atacadao.com.br/cafe-premium-3-coracoes-estrada-real-pacote-com-500g-75263/p"], ["2026-09-27T21:13:24", "Café 500g", "890", "Café 3 Corações Extra Forte Vácuo 500g", 23.9, 23.9, 1, "withoutStock", "carrinho", "https://www.atacadao.com.br/cafe-3-coracoes-extra-forte-vacuo-70977/p"], ["2026-09-27T21:13:24", "Café 500g", "2588", "Café Melitta Tradicional 500g", 23.9, 23.9, 1, "withoutStock", "carrinho", "https://www.atacadao.com.br/cafe-melitta-tradicional-49829/p"], ["2026-09-27T21:13:24", "Café 500g", "3861", "Café Torrado Moído Tradicional Vácuo União 500g", 19.9, 19.9, 1, "withoutStock", "carrinho", "https://www.atacadao.com.br/cafe-uniao-tradicional-vacuo-84325/p"], ["2026-09-27T21:13:24", "Café 500g", "38248", "Café Bom Jesus Tradicional 500g", 18.9, 18.9, 1, "available", "carrinho", "https://www.atacadao.com.br/cafe-bom-jesus-tradicional-52198/p"], ["2026-09-27T21:13:24", "Café 500g", "2456", "Café La Santé Tradicional 500g", 18.48, 18.48, 1, "available", "carrinho", "https://www.atacadao.com.br/cafe-la-sante-tradicional-pacote-com-500g-58112/p"], ["2026-09-27T21:13:24", "Café 500g", "888", "Café 3 Corações Extra Forte 500g", 22.9, 22.9, 1, "available", "carrinho", "https://www.atacadao.com.br/cafe-3-coracoes-extra-forte-23368/p"], ["2026-09-27T21:13:24", "Café 500g", "3044", "Café Pilão Extra Forte Vácuo 500g", 28.88, 28.88, 1, "withoutStock", "carrinho", "https://www.atacadao.com.br/cafe-pilao-extra-forte-vacuo-45818/p"], ["2026-09-27T21:13:24", "Café 500g", "3000", "Café Pilão 252º Graus Vácuo 500g", 35.48, 34.48, 3, "withoutStock", "carrinho", "https://www.atacadao.com.br/cafe-pilao-252º-graus-vacuo-pacote-com-500g-68302/p"], ["2026-09-27T21:13:24", "Café 500g", "3844", "Café Torrado Moido Extra Forte Vacuo União 500g", 23.9, 22.9, 3, "available", "carrinho", "https://www.atacadao.com.br/cafe-uniao-extra-forte-vacuo-84324/p"], ["2026-09-27T21:13:24", "Café 500g", "1138", "Café Bom Jesus Tradicional 500g", 21.98, 20.98, 3, "withoutStock", "carrinho", "https://www.atacadao.com.br/cafe-bom-jesus-tradicional-41552/p"], ["2026-09-27T21:13:24", "Café 500g", "2452", "Café La Santé Extra forte 500g", 18.48, 18.48, 1, "available", "carrinho", "https://www.atacadao.com.br/cafe-la-sante-extra-forte-pouch-com-500g-66583/p"], ["2026-09-27T21:13:24", "Café 500g", "1281", "Café Caboclo Extra forte Vácuo 500g", 19.9, 19.9, 1, "available", "carrinho", "https://www.atacadao.com.br/cafe-caboclo-extra-forte-vacuo-pacote-com-500g-61649/p"], ["2026-09-27T21:13:24", "Café 500g", "2574", "Café Melitta Extraforte 500g", 34.98, 33.98, 3, "withoutStock", "carrinho", "https://www.atacadao.com.br/cafe-melitta-extraforte-57172/p"], ["2026-09-27T21:13:24", "Café 500g", "1353", "Café Canecão Tradicional 500g", 17.89, 17.89, 1, "available", "carrinho", "https://www.atacadao.com.br/cafe-canecao-tradicional-pacote-com-500g-5672/p"], ["2026-09-27T21:13:24", "Café 500g", "56708", "Café La Santé Supreme Vácuo 500g", 22.78, 22.78, 1, "available", "carrinho", "https://www.atacadao.com.br/cafe-la-sante-supreme-vacuo-4052/p"], ["2026-09-27T21:13:24", "Café 500g", "3029", "Café Pilão Cafeteria Espresso 500g", 35.9, 34.9, 3, "withoutStock", "carrinho", "https://www.atacadao.com.br/cafe-pilao-cafeteria-espresso-pacote-com-500g-71975/p"], ["2026-09-27T21:13:24", "Café 500g", "3066", "Café Pilão Tradicional Doy 500g", 34.38, 33.38, 3, "withoutStock", "carrinho", "https://www.atacadao.com.br/cafe-pilao-tradicional-63065/p"], ["2026-09-27T21:13:24", "Café 500g", "3024", "Café Pilão Almofada Tradicional 500g", 22.9, 22.9, 1, "available", "carrinho", "https://www.atacadao.com.br/cafe-pilao-almofada-tradicional-56770/p"], ["2026-09-27T21:13:24", "Café 500g", "39087", "Café Torrado em Grão Melitta Spresso 500g", 39.0, 39.0, 1, "withoutStock", "carrinho", "https://www.atacadao.com.br/cafe-torrado-em-grao-melitta-spresso-88425/p"], ["2026-09-27T21:13:24", "Café 500g", "1358", "Café Canecão Tradicional Vácuo 500g", 17.89, 17.89, 1, "available", "carrinho", "https://www.atacadao.com.br/cafe-canecao-tradicional-vacuo-69253/p"], ["2026-09-27T21:13:24", "Leite 1L", "39196", "Leite Longa Vida Aurora Integral Com Tampa 1L", 5.55, 5.35, 12, "available", "carrinho", "https://www.atacadao.com.br/leite-longa-vida-aurora-integral-com-tampa-88650/p"], ["2026-09-27T21:13:24", "Leite 1L", "58243", "Leite Longa Vida Itambé Integral com Tampa 1L", 5.45, 5.25, 12, "withoutStock", "carrinho", "https://www.atacadao.com.br/leite-longa-vida-itambe-integral-com-tampa-7527/p"], ["2026-09-27T21:13:24", "Leite 1L", "33115", "Leite Xandô Integral A2 1L", 8.9, 8.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/leite-xando-integral-a2-86967/p"], ["2026-09-27T21:13:24", "Leite 1L", "62759", "Leite Longa Vida Bulnez Integral 1L", 5.65, 5.49, 12, "available", "carrinho", "https://www.atacadao.com.br/leite-longa-vida-bulnez-integral-14214/p"], ["2026-09-27T21:13:24", "Leite 1L", "63211", "Leite Longa Vida Bulnez Integral com Tampa 1L", 5.65, 5.49, 12, "available", "carrinho", "https://www.atacadao.com.br/leite-longa-vida-bulnez-integral-com-tampa-14213/p"], ["2026-09-27T21:13:24", "Leite 1L", "39860", "Leite Pasteurizado Serramar Integral 1L", 6.9, 6.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/leite-pasteurizado-serramar-integral-89516/p"], ["2026-09-27T21:13:24", "Leite 1L", "61428", "Leite Xandô A2 Zero Lactose 1L", 8.9, 8.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/leite-xando-a2-zero-lactose-13915/p"], ["2026-09-27T21:13:24", "Leite 1L", "63642", "Leite Fazenda Bela Vista A2 Integral 1L", 8.29, 7.99, 3, "available", "carrinho", "https://www.atacadao.com.br/leite-fazenda-bela-vista-a2-integral-17541/p"], ["2026-09-27T21:13:24", "Leite 1L", "58092", "Leite Freelac Serramar Zero Lactose 1L", 6.49, 6.49, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/leite-freelac-serramar-zero-lactose-7172/p"], ["2026-09-27T21:13:24", "Leite 1L", "32346", "Leite Longa Vida Italac Com tampa Integral 1L", 5.59, 5.39, 12, "available", "carrinho", "https://www.atacadao.com.br/leite-longa-vida-italac-com-tampa-integral-tp-com-1l-34808/p"], ["2026-09-27T21:13:24", "Leite 1L", "32839", "Leite Longa Vida Piracanjuba Com tampa Integral 1L", 5.69, 5.49, 12, "available", "carrinho", "https://www.atacadao.com.br/leite-longa-vida-piracanjuba-com-tampa-integral-58045/p"], ["2026-09-27T21:13:24", "Leite 1L", "32739", "Leite Longa Vida Parmalat Integral 1L", 4.95, 4.95, 1, "available", "carrinho", "https://www.atacadao.com.br/leite-longa-vida-parmalat-integral-tp-com-1l-13851/p"], ["2026-09-27T21:13:24", "Leite 1L", "32447", "Leite Longa Vida Jussara Com tampa Integral 1L", 5.49, 5.29, 12, "available", "carrinho", "https://www.atacadao.com.br/leite-longa-vida-jussara-com-tampa-integral-67809/p"], ["2026-09-27T21:13:24", "Leite 1L", "32711", "Leite Longa Vida Ninho Integral 1L", 7.15, 6.95, 12, "available", "carrinho", "https://www.atacadao.com.br/leite-longa-vida-ninho-integral-14191/p"], ["2026-09-27T21:13:24", "Leite 1L", "32371", "Leite Longa Vida Italac Zero Lactose Semidesnatado 1L", 6.99, 6.99, 1, "available", "carrinho", "https://www.atacadao.com.br/leite-longa-vida-italac-zero-lactose-semidesnatado-46976/p"], ["2026-09-27T21:13:24", "Leite 1L", "32866", "Leite Longa Vida Piracanjuba Zero Lactose 1L", 6.99, 6.59, 3, "available", "carrinho", "https://www.atacadao.com.br/leite-longa-vida-piracanjuba-zero-lactose-39284/p"], ["2026-09-27T21:13:24", "Leite 1L", "32719", "Leite Longa Vida Ninho Zero Lactose 1L", 7.69, 7.29, 6, "withoutStock", "carrinho", "https://www.atacadao.com.br/leite-longa-vida-ninho-zero-lactose-54322/p"], ["2026-09-27T21:13:24", "Leite 1L", "40497", "Leite Longa Vida Italac Zero Lactose Integral 1L", 6.99, 6.99, 1, "available", "carrinho", "https://www.atacadao.com.br/leite-longa-vida-italac-zero-lactose-integral-90593/p"], ["2026-09-27T21:13:24", "Leite 1L", "32763", "Leite Longa Vida Parmalat Zero Lactose Semidesnatado 1L", 6.69, 6.29, 3, "available", "carrinho", "https://www.atacadao.com.br/leite-longa-vida-parmalat-zero-lactose-semidesnatado-72355/p"], ["2026-09-27T21:13:24", "Leite 1L", "48079", "Leite Longa Vida Quatá Com Tampa Integral 1L", 5.45, 5.25, 12, "withoutStock", "carrinho", "https://www.atacadao.com.br/leite-longa-vida-quata-com-tampa-integral-98073/p"], ["2026-09-27T21:13:24", "Leite 1L", "32664", "Leite Longa Vida Molico Zero Lactose 1L", 7.69, 7.29, 3, "available", "carrinho", "https://www.atacadao.com.br/leite-longa-vida-molico-zero-lactose-56199/p"], ["2026-09-27T21:13:24", "Leite 1L", "32389", "Leite Longa Vida Itambé Integral 1L", 3.29, 3.29, 1, "withoutStock", "carrinho", "https://www.atacadao.com.br/leite-longa-vida-itambe-integral-23455/p"], ["2026-09-27T21:13:24", "Leite 1L", "33099", "Leite Pasteurizado Fazenda Bela Vista Integral 1L", 7.49, 7.49, 1, "available", "carrinho", "https://www.atacadao.com.br/leite-pasteurizado-fazenda-bela-vista-integral-57436/p"], ["2026-09-27T21:13:24", "Leite 1L", "32790", "Leite Longa Vida Paulista Integral 1L", 5.55, 5.35, 12, "available", "carrinho", "https://www.atacadao.com.br/leite-longa-vida-paulista-integral-6572/p"], ["2026-09-27T21:13:24", "Leite 1L", "43160", "Leite Pasteurizado Fazenda Bela Vista Zero Lactose 1L", 7.49, 7.49, 1, "available", "carrinho", "https://www.atacadao.com.br/leite-pasteurizado-fazenda-bela-vista-zero-lactose-92650/p"], ["2026-09-27T21:13:24", "Leite 1L", "32891", "Leite Longa Vida Quatá Integral 1L", 4.49, 4.49, 1, "withoutStock", "carrinho", "https://www.atacadao.com.br/leite-longa-vida-quata-integral-42599/p"], ["2026-09-27T21:13:24", "Ovos", "42194", "Ovo Vermelho Galinhas Livres 20 un", 16.9, 16.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/ovo-vermelho-galinhas-livres-bandeja-com-20-unidades-72055/p"], ["2026-09-27T21:13:24", "Ovos", "61641", "Ovo Branco Grande Bulnez PVC 20 un", 12.9, 12.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/ovo-branco-grande-bulnez-pvc-12833/p"], ["2026-09-27T21:13:24", "Ovos", "52722", "Ovo Caipira Vermelho Grande 20 un", 18.9, 18.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/ovo-caipira-vermelho-grande-68151/p"], ["2026-09-27T21:13:24", "Ovos", "17279", "Ovo Branco Mantiqueira Jumbo Polpa 10 un", 7.49, 7.49, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/ovo-branco-mantiqueira-jumbo-polpa-bandeja-com-10-unidades-77140/p"], ["2026-09-27T21:13:24", "Ovos", "55477", "Ovo Grande Granja Lobo Branco Pvc 20 un", 12.9, 12.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/ovo-grande-granja-lobo-branco-pvc-1641/p"], ["2026-09-27T21:13:24", "Ovos", "52726", "Ovo Branco Galinhas Livres 20 un", 13.9, 13.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/ovo-branco-galinhas-livres-72054/p"], ["2026-09-27T21:13:24", "Ovos", "55476", "Ovo Grande Granja Lobo Branco Cinta 60 un", 29.9, 29.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/ovo-grande-granja-lobo-branco-cinta-1638/p"], ["2026-09-27T21:13:24", "Ovos", "58004", "Ovo Happy Eggs Mantiqueira Vermelho Jumbo 10 un", 10.9, 10.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/ovo-happy-eggs-mantiqueira-vermelho-jumbo-6980/p"], ["2026-09-27T21:13:24", "Ovos", "52724", "Ovo Vermelho Grande 20 un", 13.9, 13.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/ovo-vermelho-grande-72052/p"], ["2026-09-27T21:13:24", "Ovos", "56649", "Ovo Vermelho Caipira Raiar Orgânico 20 un", 28.9, 28.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/ovo-vermelho-caipira-raiar-organico-3928/p"], ["2026-09-27T21:13:24", "Ovos", "42157", "Ovo Caipira Vermelho 10 un", 13.9, 13.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/ovo-caipira-vermelho-bandeja-com-10-unidades-42388/p"], ["2026-09-27T21:13:24", "Ovos", "55475", "Ovo Grande Granja Lobo Branco Pvc 30 un", 23.9, 23.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/ovo-grande-granja-lobo-branco-pvc-1636/p"], ["2026-09-27T21:13:24", "Ovos", "56650", "Ovo Vermelho Caipira Raiar Orgânico 10 un", 8.99, 8.99, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/ovo-vermelho-caipira-raiar-organico-3929/p"], ["2026-09-27T21:13:24", "Ovos", "17294", "Ovo Caipira Label Rouge 20 un", 22.9, 22.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/ovo-caipira-label-rouge-77666/p"], ["2026-09-27T21:13:24", "Ovos", "52728", "Ovo Jumbo Estojo Polpa 10 un", 8.99, 8.99, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/ovo-jumbo-estojo-polpa-77138/p"], ["2026-09-27T21:13:24", "Ovos", "52716", "Ovo Branco Gourmet 10 un", 5.99, 5.99, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/ovo-branco-gourmet-59218/p"], ["2026-09-27T21:13:24", "Ovos", "55472", "Ovo Grande Granja Lobo Branco Polpa 12 un", 9.5, 9.5, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/ovo-grande-granja-lobo-branco-polpa-1623/p"], ["2026-09-27T21:13:24", "Ovos", "55473", "Ovo Grande Granja Lobo Vermelho Polpa 12 un", 10.5, 10.5, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/ovo-grande-granja-lobo-vermelho-polpa-1627/p"], ["2026-09-27T21:13:24", "Ovos", "52717", "Ovo Vermelho Orgânico Ômega 3 10 un", 15.9, 15.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/ovo-vermelho-organico-omega-3-62316/p"], ["2026-09-27T21:13:24", "Ovos", "52705", "Ovo Vermelho Grande 30 un", 24.9, 24.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/ovo-vermelho-grande-21834/p"], ["2026-09-27T21:13:24", "Ovos", "52718", "Ovo Vermelho Orgânico Selênio 10 un", 15.9, 15.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/ovo-vermelho-organico-selenio-62317/p"], ["2026-09-27T21:13:24", "Ovos", "17290", "Ovo Caipira Label Rouge 10 un", 16.9, 16.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/ovo-caipira-label-rouge-77663/p"], ["2026-09-27T21:13:24", "Pasta de amendoim 1kg", "25914", "Pasta de Amendoim Akio Power Integral 1,02kg", 21.89, 21.89, 1, "available", "carrinho", "https://www.atacadao.com.br/pasta-de-amendoim-akio-power-integral-81117/p"], ["2026-09-27T21:13:24", "Pasta de amendoim 1kg", "25908", "Pasta de Amendoim Akio Power Crocante 1,02kg", 21.89, 21.89, 1, "available", "carrinho", "https://www.atacadao.com.br/pasta-de-amendoim-akio-power-crocante-81475/p"], ["2026-09-27T21:13:24", "Pasta de amendoim 1kg", "25934", "Pasta de Amendoim Guimarães Cacau 1,005kg", 25.9, 23.9, 3, "withoutStock", "carrinho", "https://www.atacadao.com.br/pasta-de-amendoim-guimaraes-cacau-80575/p"], ["2026-09-27T21:13:24", "Pasta de amendoim 1kg", "59593", "Pasta de Amendoim Amendo Power Crunchy 1,005kg", 29.98, 23.98, 3, "withoutStock", "carrinho", "https://www.atacadao.com.br/pasta-de-amendoim-amendo-power-crunchy-10583/p"], ["2026-09-27T21:13:24", "Pasta de amendoim 1kg", "41298", "Pasta de Amendoim Amendo Power 1,005kg", 29.98, 23.98, 3, "withoutStock", "carrinho", "https://www.atacadao.com.br/pasta-de-amendoim-amendo-power-91796/p"], ["2026-09-27T21:13:47", "Queijo mussarela 1kg", "35351", "Queijo Mussarela Aurora Preço por quilo na peça", 39.9, 39.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/queijo-mussarela-aurora-36534/p"], ["2026-09-27T21:13:47", "Queijo mussarela 1kg", "36265", "Queijo Mussarela Soberano F4 Preço por quilo na peça", 34.9, 34.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/queijo-mussarela-soberano-f4-59886/p"], ["2026-09-27T21:13:47", "Queijo mussarela 1kg", "38847", "Queijo Mussarela Três Marias Preço por quilo na peça", 43.9, 43.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/queijo-mussarela-tres-marias-83932/p"], ["2026-09-27T21:13:47", "Queijo mussarela 1kg", "61669", "Queijo Mussarela Bulnez F4 Preço por quilo na peça", 42.9, 42.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/queijo-mussarela-bulnez-f4-13870/p"], ["2026-09-27T21:13:47", "Queijo mussarela 1kg", "36136", "Queijo Mussarela Président F4 Preço por quilo na peça", 39.9, 39.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/queijo-mussarela-president-f4-55974/p"], ["2026-09-27T21:13:47", "Queijo mussarela 1kg", "36384", "Queijo Mussarela Três Marias Preço por quilo na peça", 42.9, 42.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/queijo-mussarela-tres-marias-25425/p"], ["2026-09-27T21:13:47", "Queijo mussarela 1kg", "38366", "Queijo Mussarela Soberano F2 Preço por quilo na peça", 40.9, 40.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/queijo-mussarela-soberano-f2-62564/p"], ["2026-09-27T21:13:47", "Queijo mussarela 1kg", "47258", "Queijo Mussarela Hebrom Zero Lactose Preço por quilo na peça", 51.9, 51.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/queijo-mussarela-hebrom-zero-lactose-97367/p"], ["2026-09-27T21:13:47", "Queijo mussarela 1kg", "61666", "Queijo Mussarela Bulnez F2 Preço por quilo na peça", 41.9, 41.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/queijo-mussarela-bulnez-f2-13869/p"], ["2026-09-27T21:13:47", "Queijo mussarela 1kg", "41578", "Queijo Mussarela Fatiado Soberano quilo", 49.9, 49.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/queijo-mussarela-fatiado-soberano-85615/p"], ["2026-09-27T21:13:47", "Queijo mussarela 1kg", "61671", "Queijo Mussarela Bulnez Fatiado quilo", 51.9, 51.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/queijo-mussarela-bulnez-fatiado-13898/p"], ["2026-09-27T21:13:47", "Queijo mussarela 1kg", "35774", "Queijo Mussarela Italac F4 Preço por quilo na peça", 42.9, 42.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/queijo-mussarela-italac-f4-17906/p"], ["2026-09-27T21:13:47", "Queijo mussarela 1kg", "58890", "Queijo Mussarela Fat Hebrom Zero Lactose Preço por quilo na bdj", 69.9, 69.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/queijo-mussarela-fatiado-hebrom-zero-lactose-8853/p"], ["2026-09-27T21:13:47", "Queijo mussarela 1kg", "36049", "Queijo Mussarela Piracanjuba F4 Preço por quilo na peça", 42.9, 42.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/queijo-mussarela-piracanjuba-f4-25635/p"], ["2026-09-27T21:13:47", "Queijo mussarela 1kg", "38249", "Queijo Mussarela Ipanema F4 Preço por quilo na peça", 42.9, 42.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/queijo-mussarela-ipanema-f4-52227/p"], ["2026-09-27T21:13:47", "Queijo mussarela 1kg", "35646", "Queijo Mussarela Girolanda F4 Preço por quilo na peça", 41.9, 41.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/queijo-mussarela-girolanda-14941/p"], ["2026-09-27T21:13:47", "Queijo mussarela 1kg", "59975", "Queijo Mussarela Fatiado Formosa Preço por quilo na bandeja", 54.9, 54.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/queijo-mussarela-fatiado-formosa-86624/p"], ["2026-09-27T21:13:47", "Queijo mussarela 1kg", "35392", "Queijo Mussarela Buritis Lanche Preço por quilo na peça", 65.9, 65.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/queijo-mussarela-buritis-lanche-71526/p"], ["2026-09-27T21:13:47", "Queijo mussarela 1kg", "34864", "Queijo Mussarela Lanche Formosa Preço por quilo na peça", 53.6, 53.6, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/queijo-mussarela-lanche-formosa-29694/p"], ["2026-09-27T21:13:47", "Queijo mussarela 1kg", "35603", "Queijo Mussarela Formosa F2 Preço por quilo na peça", 45.5, 45.5, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/queijo-mussarela-formosa-20000/p"], ["2026-09-27T21:13:47", "Iogurte líquido", "63353", "Iogurte Frutap Morango 1,15kg", 10.49, 10.49, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/iogurte-frutap-morango-17117/p"], ["2026-09-27T21:13:47", "Iogurte líquido", "60196", "Iogurte Zero Carolina La Vita Ameixa 1,25kg", 12.8, 12.8, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/iogurte-zero-carolina-la-vita-ameixa-11277/p"], ["2026-09-27T21:13:47", "Iogurte líquido", "59616", "Iogurte Danone 5x Zero Morango 1,2kg", 18.9, 18.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/iogurte-danone-5x-zero-morango-11285/p"], ["2026-09-27T21:13:47", "Iogurte líquido", "59615", "Iogurte Danone 5x Zero Batido 1,2kg", 18.9, 18.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/iogurte-danone-5x-zero-batido-11284/p"], ["2026-09-27T21:13:47", "Iogurte líquido", "61527", "Iogurte Nestlé Zero Batido 1,15kg", 17.9, 17.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/iogurte-nestle-zero-batido-13787/p"], ["2026-09-27T21:13:47", "Iogurte líquido", "62764", "Iogurte Natural Batavo Integral 1,15kg", 9.9, 9.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/iogurte-natural-batavo-integral-16454/p"], ["2026-09-27T21:13:47", "Iogurte líquido", "61490", "Iogurte Nestlé Morango 1,15kg", 10.97, 10.97, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/iogurte-nestle-morango-13667/p"], ["2026-09-27T21:13:47", "Iogurte líquido", "61528", "Iogurte Nestlé Zero Morango 1,15kg", 17.9, 17.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/iogurte-nestle-zero-morango-13788/p"], ["2026-09-27T21:13:47", "Iogurte líquido", "61834", "Iogurte Itambé Ameixa Zero 1,15kg", 13.9, 13.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/iogurte-itambe-ameixa-zero-14437/p"], ["2026-09-27T21:13:47", "Iogurte líquido", "62779", "Iogurte Itambé Natural Milk Integral 1,15kg", 16.9, 16.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/iogurte-itambe-natural-milk-integral-16504/p"], ["2026-09-27T21:13:47", "Iogurte líquido", "61487", "Iogurte Nestlé Vitamina de Frutas 1,15kg", 10.97, 10.97, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/iogurte-nestle-vitamina-de-frutas-13668/p"], ["2026-09-27T21:13:47", "Iogurte líquido", "61525", "Iogurte Vigor Zero Batido 1,1kg", 15.9, 15.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/iogurte-vigor-zero-batido-13790/p"], ["2026-09-27T21:13:47", "Iogurte líquido", "62769", "Iogurte Natural Batavo Desnatado 1,15kg", 9.9, 9.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/iogurte-natural-batavo-desnatado-16458/p"], ["2026-09-27T21:13:47", "Iogurte líquido", "60194", "Iogurte Zero Carolina La Vita Abacaxi e Coco 1,25kg", 12.8, 12.8, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/iogurte-zero-carolina-la-vita-abacaxi-e-coco-11275/p"], ["2026-09-27T21:13:47", "Iogurte líquido", "61534", "Iogurte Vigor Zero Morango 1,1kg", 15.9, 15.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/iogurte-vigor-zero-morango-13791/p"], ["2026-09-27T21:13:47", "Iogurte líquido", "63355", "Iogurte Frutap Salada de Frutas 1,15kg", 10.49, 10.49, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/iogurte-frutap-salada-de-frutas-17116/p"], ["2026-09-27T21:13:47", "Iogurte líquido", "58091", "Iogurte Milk Mix Morango 1kg", 5.49, 5.49, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/iogurte-milk-mix-morango-7171/p"], ["2026-09-27T21:13:47", "Iogurte líquido", "63635", "Iogurte Frutap Zero Lactose Morango 1,15kg", 13.9, 13.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/iogurte-frutap-zero-lactose-morango-17500/p"], ["2026-09-27T21:13:47", "Iogurte líquido", "62762", "Iogurte Probio2 Batavo Morango Zero 1,15kg", 13.9, 13.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/iogurte-probio2-batavo-morango-zero-16449/p"], ["2026-09-27T21:13:47", "Iogurte líquido", "63615", "Iogurte Itambé Morango Zero 1,15kg", 13.9, 13.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/iogurte-itambe-morango-zero-17463/p"], ["2026-09-27T21:13:47", "Iogurte líquido", "58084", "Iogurte Milk Mix Vitamina 1kg", 5.49, 5.49, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/iogurte-milk-mix-vitamina-7163/p"], ["2026-09-27T21:13:47", "Iogurte líquido", "58400", "Iogurte Vigor Morango 1,150kg", 14.9, 14.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/iogurte-vigor-morango-7867/p"], ["2026-09-27T21:13:47", "Café 500g", "63439", "Café Bulnez Tradicional 500g", 17.9, 17.9, 1, "available", "carrinho", "https://www.atacadao.com.br/cafe-bulnez-tradicional-16675/p"], ["2026-09-27T21:13:47", "Café 500g", "62928", "Café Jardim Tradicional Pouch 500g", 16.9, 16.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/cafe-jardim-tradicional-16618/p"], ["2026-09-27T21:13:47", "Café 500g", "62745", "Café Pilão Cafeteria Italiano 500g", 25.9, 25.9, 1, "available", "carrinho", "https://www.atacadao.com.br/cafe-pilao-cafeteria-italiano-16412/p"], ["2026-09-27T21:13:47", "Café 500g", "63637", "Café em Grãos Pilão Espresso 500g", 39.9, 39.9, 1, "available", "carrinho", "https://www.atacadao.com.br/cafe-em-graos-pilao-espresso-17512/p"], ["2026-09-27T21:13:47", "Café 500g", "2617", "Café Melitta Tradicional Vácuo 500g", 22.9, 22.9, 1, "available", "carrinho", "https://www.atacadao.com.br/cafe-melitta-tradicional-vacuo-18816/p"], ["2026-09-27T21:13:47", "Café 500g", "915", "Café 3 Corações Tradicional 500g", 22.9, 22.9, 1, "available", "carrinho", "https://www.atacadao.com.br/cafe-3-coracoes-tradicional-23371/p"], ["2026-09-27T21:13:47", "Café 500g", "3014", "Café Pilão Almofada 500g", 29.98, 29.98, 1, "withoutStock", "carrinho", "https://www.atacadao.com.br/cafe-pilao-almofada-4959/p"], ["2026-09-27T21:13:47", "Café 500g", "3853", "Café Torrado Moído Tradicional Pouch União 500g", 23.9, 22.9, 3, "available", "carrinho", "https://www.atacadao.com.br/cafe-uniao-tradicional-76123/p"], ["2026-09-27T21:13:47", "Café 500g", "3092", "Café Pilão Vácuo 500g", 22.9, 22.9, 1, "available", "carrinho", "https://www.atacadao.com.br/cafe-pilao-vacuo-18437/p"], ["2026-09-27T21:13:47", "Café 500g", "2579", "Café Melitta Extraforte Vácuo 500g", 22.9, 22.9, 1, "available", "carrinho", "https://www.atacadao.com.br/cafe-melitta-extraforte-vacuo-35719/p"], ["2026-09-27T21:13:47", "Café 500g", "3837", "Café Torrado Moído Extra Forte Pouch União 500g", 23.9, 22.9, 3, "available", "carrinho", "https://www.atacadao.com.br/cafe-uniao-extra-forte-76124/p"], ["2026-09-27T21:13:47", "Café 500g", "924", "Café 3 Corações Tradicional - Vácuo 500g", 19.48, 19.48, 1, "withoutStock", "carrinho", "https://www.atacadao.com.br/cafe-3-coracoes-tradicional-vacuo-70976/p"], ["2026-09-27T21:13:47", "Café 500g", "1294", "Café Caboclo Tradicional Vácuo 500g", 19.9, 19.9, 1, "available", "carrinho", "https://www.atacadao.com.br/cafe-caboclo-tradicional-vacuo-11469/p"], ["2026-09-27T21:13:47", "Café 500g", "2584", "Café Melitta Sabor da Fazenda Vácuo 500g", 25.9, 25.9, 1, "available", "carrinho", "https://www.atacadao.com.br/cafe-melitta-sabor-da-fazenda-vacuo-66796/p"], ["2026-09-27T21:13:47", "Café 500g", "2166", "Café Fort Almofada 500g", 19.78, 19.78, 1, "available", "carrinho", "https://www.atacadao.com.br/cafe-fort-almofada-31969/p"], ["2026-09-27T21:13:47", "Café 500g", "3148", "Café Premium 3 Corações Estrada Real 500g", 26.9, 26.9, 1, "available", "carrinho", "https://www.atacadao.com.br/cafe-premium-3-coracoes-estrada-real-pacote-com-500g-75263/p"], ["2026-09-27T21:13:47", "Café 500g", "890", "Café 3 Corações Extra Forte Vácuo 500g", 23.9, 23.9, 1, "withoutStock", "carrinho", "https://www.atacadao.com.br/cafe-3-coracoes-extra-forte-vacuo-70977/p"], ["2026-09-27T21:13:47", "Café 500g", "2588", "Café Melitta Tradicional 500g", 23.9, 23.9, 1, "withoutStock", "carrinho", "https://www.atacadao.com.br/cafe-melitta-tradicional-49829/p"], ["2026-09-27T21:13:47", "Café 500g", "3861", "Café Torrado Moído Tradicional Vácuo União 500g", 19.9, 19.9, 1, "withoutStock", "carrinho", "https://www.atacadao.com.br/cafe-uniao-tradicional-vacuo-84325/p"], ["2026-09-27T21:13:47", "Café 500g", "38248", "Café Bom Jesus Tradicional 500g", 18.9, 18.9, 1, "available", "carrinho", "https://www.atacadao.com.br/cafe-bom-jesus-tradicional-52198/p"], ["2026-09-27T21:13:47", "Café 500g", "2456", "Café La Santé Tradicional 500g", 18.48, 18.48, 1, "available", "carrinho", "https://www.atacadao.com.br/cafe-la-sante-tradicional-pacote-com-500g-58112/p"], ["2026-09-27T21:13:47", "Café 500g", "888", "Café 3 Corações Extra Forte 500g", 22.9, 22.9, 1, "available", "carrinho", "https://www.atacadao.com.br/cafe-3-coracoes-extra-forte-23368/p"], ["2026-09-27T21:13:47", "Café 500g", "3044", "Café Pilão Extra Forte Vácuo 500g", 28.88, 28.88, 1, "withoutStock", "carrinho", "https://www.atacadao.com.br/cafe-pilao-extra-forte-vacuo-45818/p"], ["2026-09-27T21:13:47", "Café 500g", "3000", "Café Pilão 252º Graus Vácuo 500g", 35.48, 34.48, 3, "withoutStock", "carrinho", "https://www.atacadao.com.br/cafe-pilao-252º-graus-vacuo-pacote-com-500g-68302/p"], ["2026-09-27T21:13:47", "Café 500g", "3844", "Café Torrado Moido Extra Forte Vacuo União 500g", 23.9, 22.9, 3, "available", "carrinho", "https://www.atacadao.com.br/cafe-uniao-extra-forte-vacuo-84324/p"], ["2026-09-27T21:13:47", "Café 500g", "1138", "Café Bom Jesus Tradicional 500g", 21.98, 20.98, 3, "withoutStock", "carrinho", "https://www.atacadao.com.br/cafe-bom-jesus-tradicional-41552/p"], ["2026-09-27T21:13:47", "Café 500g", "2452", "Café La Santé Extra forte 500g", 18.48, 18.48, 1, "available", "carrinho", "https://www.atacadao.com.br/cafe-la-sante-extra-forte-pouch-com-500g-66583/p"], ["2026-09-27T21:13:47", "Café 500g", "1281", "Café Caboclo Extra forte Vácuo 500g", 19.9, 19.9, 1, "available", "carrinho", "https://www.atacadao.com.br/cafe-caboclo-extra-forte-vacuo-pacote-com-500g-61649/p"], ["2026-09-27T21:13:47", "Café 500g", "2574", "Café Melitta Extraforte 500g", 34.98, 33.98, 3, "withoutStock", "carrinho", "https://www.atacadao.com.br/cafe-melitta-extraforte-57172/p"], ["2026-09-27T21:13:47", "Café 500g", "1353", "Café Canecão Tradicional 500g", 17.89, 17.89, 1, "available", "carrinho", "https://www.atacadao.com.br/cafe-canecao-tradicional-pacote-com-500g-5672/p"], ["2026-09-27T21:13:47", "Café 500g", "56708", "Café La Santé Supreme Vácuo 500g", 22.78, 22.78, 1, "available", "carrinho", "https://www.atacadao.com.br/cafe-la-sante-supreme-vacuo-4052/p"], ["2026-09-27T21:13:47", "Café 500g", "3029", "Café Pilão Cafeteria Espresso 500g", 35.9, 34.9, 3, "withoutStock", "carrinho", "https://www.atacadao.com.br/cafe-pilao-cafeteria-espresso-pacote-com-500g-71975/p"], ["2026-09-27T21:13:47", "Café 500g", "3066", "Café Pilão Tradicional Doy 500g", 34.38, 33.38, 3, "withoutStock", "carrinho", "https://www.atacadao.com.br/cafe-pilao-tradicional-63065/p"], ["2026-09-27T21:13:47", "Café 500g", "3024", "Café Pilão Almofada Tradicional 500g", 22.9, 22.9, 1, "available", "carrinho", "https://www.atacadao.com.br/cafe-pilao-almofada-tradicional-56770/p"], ["2026-09-27T21:13:47", "Café 500g", "39087", "Café Torrado em Grão Melitta Spresso 500g", 39.0, 39.0, 1, "withoutStock", "carrinho", "https://www.atacadao.com.br/cafe-torrado-em-grao-melitta-spresso-88425/p"], ["2026-09-27T21:13:47", "Café 500g", "1358", "Café Canecão Tradicional Vácuo 500g", 17.89, 17.89, 1, "available", "carrinho", "https://www.atacadao.com.br/cafe-canecao-tradicional-vacuo-69253/p"], ["2026-09-27T21:13:47", "Leite 1L", "39196", "Leite Longa Vida Aurora Integral Com Tampa 1L", 5.55, 5.35, 12, "available", "carrinho", "https://www.atacadao.com.br/leite-longa-vida-aurora-integral-com-tampa-88650/p"], ["2026-09-27T21:13:47", "Leite 1L", "58243", "Leite Longa Vida Itambé Integral com Tampa 1L", 5.45, 5.25, 12, "withoutStock", "carrinho", "https://www.atacadao.com.br/leite-longa-vida-itambe-integral-com-tampa-7527/p"], ["2026-09-27T21:13:47", "Leite 1L", "33115", "Leite Xandô Integral A2 1L", 8.9, 8.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/leite-xando-integral-a2-86967/p"], ["2026-09-27T21:13:47", "Leite 1L", "62759", "Leite Longa Vida Bulnez Integral 1L", 5.65, 5.49, 12, "available", "carrinho", "https://www.atacadao.com.br/leite-longa-vida-bulnez-integral-14214/p"], ["2026-09-27T21:13:47", "Leite 1L", "63211", "Leite Longa Vida Bulnez Integral com Tampa 1L", 5.65, 5.49, 12, "available", "carrinho", "https://www.atacadao.com.br/leite-longa-vida-bulnez-integral-com-tampa-14213/p"], ["2026-09-27T21:13:47", "Leite 1L", "39860", "Leite Pasteurizado Serramar Integral 1L", 6.9, 6.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/leite-pasteurizado-serramar-integral-89516/p"], ["2026-09-27T21:13:47", "Leite 1L", "61428", "Leite Xandô A2 Zero Lactose 1L", 8.9, 8.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/leite-xando-a2-zero-lactose-13915/p"], ["2026-09-27T21:13:47", "Leite 1L", "63642", "Leite Fazenda Bela Vista A2 Integral 1L", 8.29, 7.99, 3, "available", "carrinho", "https://www.atacadao.com.br/leite-fazenda-bela-vista-a2-integral-17541/p"], ["2026-09-27T21:13:47", "Leite 1L", "58092", "Leite Freelac Serramar Zero Lactose 1L", 6.49, 6.49, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/leite-freelac-serramar-zero-lactose-7172/p"], ["2026-09-27T21:13:47", "Leite 1L", "32346", "Leite Longa Vida Italac Com tampa Integral 1L", 5.59, 5.39, 12, "available", "carrinho", "https://www.atacadao.com.br/leite-longa-vida-italac-com-tampa-integral-tp-com-1l-34808/p"], ["2026-09-27T21:13:47", "Leite 1L", "32839", "Leite Longa Vida Piracanjuba Com tampa Integral 1L", 5.69, 5.49, 12, "available", "carrinho", "https://www.atacadao.com.br/leite-longa-vida-piracanjuba-com-tampa-integral-58045/p"], ["2026-09-27T21:13:47", "Leite 1L", "32739", "Leite Longa Vida Parmalat Integral 1L", 4.95, 4.95, 1, "available", "carrinho", "https://www.atacadao.com.br/leite-longa-vida-parmalat-integral-tp-com-1l-13851/p"], ["2026-09-27T21:13:47", "Leite 1L", "32447", "Leite Longa Vida Jussara Com tampa Integral 1L", 5.49, 5.29, 12, "available", "carrinho", "https://www.atacadao.com.br/leite-longa-vida-jussara-com-tampa-integral-67809/p"], ["2026-09-27T21:13:47", "Leite 1L", "32711", "Leite Longa Vida Ninho Integral 1L", 7.15, 6.95, 12, "available", "carrinho", "https://www.atacadao.com.br/leite-longa-vida-ninho-integral-14191/p"], ["2026-09-27T21:13:47", "Leite 1L", "32371", "Leite Longa Vida Italac Zero Lactose Semidesnatado 1L", 6.99, 6.99, 1, "available", "carrinho", "https://www.atacadao.com.br/leite-longa-vida-italac-zero-lactose-semidesnatado-46976/p"], ["2026-09-27T21:13:47", "Leite 1L", "32866", "Leite Longa Vida Piracanjuba Zero Lactose 1L", 6.99, 6.59, 3, "available", "carrinho", "https://www.atacadao.com.br/leite-longa-vida-piracanjuba-zero-lactose-39284/p"], ["2026-09-27T21:13:47", "Leite 1L", "32719", "Leite Longa Vida Ninho Zero Lactose 1L", 7.69, 7.29, 6, "withoutStock", "carrinho", "https://www.atacadao.com.br/leite-longa-vida-ninho-zero-lactose-54322/p"], ["2026-09-27T21:13:47", "Leite 1L", "40497", "Leite Longa Vida Italac Zero Lactose Integral 1L", 6.99, 6.99, 1, "available", "carrinho", "https://www.atacadao.com.br/leite-longa-vida-italac-zero-lactose-integral-90593/p"], ["2026-09-27T21:13:47", "Leite 1L", "32763", "Leite Longa Vida Parmalat Zero Lactose Semidesnatado 1L", 6.69, 6.29, 3, "available", "carrinho", "https://www.atacadao.com.br/leite-longa-vida-parmalat-zero-lactose-semidesnatado-72355/p"], ["2026-09-27T21:13:47", "Leite 1L", "48079", "Leite Longa Vida Quatá Com Tampa Integral 1L", 5.45, 5.25, 12, "withoutStock", "carrinho", "https://www.atacadao.com.br/leite-longa-vida-quata-com-tampa-integral-98073/p"], ["2026-09-27T21:13:47", "Leite 1L", "32664", "Leite Longa Vida Molico Zero Lactose 1L", 7.69, 7.29, 3, "available", "carrinho", "https://www.atacadao.com.br/leite-longa-vida-molico-zero-lactose-56199/p"], ["2026-09-27T21:13:47", "Leite 1L", "32389", "Leite Longa Vida Itambé Integral 1L", 3.29, 3.29, 1, "withoutStock", "carrinho", "https://www.atacadao.com.br/leite-longa-vida-itambe-integral-23455/p"], ["2026-09-27T21:13:47", "Leite 1L", "33099", "Leite Pasteurizado Fazenda Bela Vista Integral 1L", 7.49, 7.49, 1, "available", "carrinho", "https://www.atacadao.com.br/leite-pasteurizado-fazenda-bela-vista-integral-57436/p"], ["2026-09-27T21:13:47", "Leite 1L", "32790", "Leite Longa Vida Paulista Integral 1L", 5.55, 5.35, 12, "available", "carrinho", "https://www.atacadao.com.br/leite-longa-vida-paulista-integral-6572/p"], ["2026-09-27T21:13:47", "Leite 1L", "43160", "Leite Pasteurizado Fazenda Bela Vista Zero Lactose 1L", 7.49, 7.49, 1, "available", "carrinho", "https://www.atacadao.com.br/leite-pasteurizado-fazenda-bela-vista-zero-lactose-92650/p"], ["2026-09-27T21:13:47", "Leite 1L", "32891", "Leite Longa Vida Quatá Integral 1L", 4.49, 4.49, 1, "withoutStock", "carrinho", "https://www.atacadao.com.br/leite-longa-vida-quata-integral-42599/p"], ["2026-09-27T21:13:47", "Ovos", "42194", "Ovo Vermelho Galinhas Livres 20 un", 16.9, 16.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/ovo-vermelho-galinhas-livres-bandeja-com-20-unidades-72055/p"], ["2026-09-27T21:13:47", "Ovos", "61641", "Ovo Branco Grande Bulnez PVC 20 un", 12.9, 12.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/ovo-branco-grande-bulnez-pvc-12833/p"], ["2026-09-27T21:13:47", "Ovos", "52722", "Ovo Caipira Vermelho Grande 20 un", 18.9, 18.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/ovo-caipira-vermelho-grande-68151/p"], ["2026-09-27T21:13:47", "Ovos", "17279", "Ovo Branco Mantiqueira Jumbo Polpa 10 un", 7.49, 7.49, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/ovo-branco-mantiqueira-jumbo-polpa-bandeja-com-10-unidades-77140/p"], ["2026-09-27T21:13:47", "Ovos", "55477", "Ovo Grande Granja Lobo Branco Pvc 20 un", 12.9, 12.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/ovo-grande-granja-lobo-branco-pvc-1641/p"], ["2026-09-27T21:13:47", "Ovos", "52726", "Ovo Branco Galinhas Livres 20 un", 13.9, 13.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/ovo-branco-galinhas-livres-72054/p"], ["2026-09-27T21:13:47", "Ovos", "55476", "Ovo Grande Granja Lobo Branco Cinta 60 un", 29.9, 29.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/ovo-grande-granja-lobo-branco-cinta-1638/p"], ["2026-09-27T21:13:47", "Ovos", "58004", "Ovo Happy Eggs Mantiqueira Vermelho Jumbo 10 un", 10.9, 10.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/ovo-happy-eggs-mantiqueira-vermelho-jumbo-6980/p"], ["2026-09-27T21:13:47", "Ovos", "52724", "Ovo Vermelho Grande 20 un", 13.9, 13.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/ovo-vermelho-grande-72052/p"], ["2026-09-27T21:13:47", "Ovos", "56649", "Ovo Vermelho Caipira Raiar Orgânico 20 un", 28.9, 28.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/ovo-vermelho-caipira-raiar-organico-3928/p"], ["2026-09-27T21:13:47", "Ovos", "42157", "Ovo Caipira Vermelho 10 un", 13.9, 13.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/ovo-caipira-vermelho-bandeja-com-10-unidades-42388/p"], ["2026-09-27T21:13:47", "Ovos", "55475", "Ovo Grande Granja Lobo Branco Pvc 30 un", 23.9, 23.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/ovo-grande-granja-lobo-branco-pvc-1636/p"], ["2026-09-27T21:13:47", "Ovos", "56650", "Ovo Vermelho Caipira Raiar Orgânico 10 un", 8.99, 8.99, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/ovo-vermelho-caipira-raiar-organico-3929/p"], ["2026-09-27T21:13:47", "Ovos", "17294", "Ovo Caipira Label Rouge 20 un", 22.9, 22.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/ovo-caipira-label-rouge-77666/p"], ["2026-09-27T21:13:47", "Ovos", "52728", "Ovo Jumbo Estojo Polpa 10 un", 8.99, 8.99, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/ovo-jumbo-estojo-polpa-77138/p"], ["2026-09-27T21:13:47", "Ovos", "52716", "Ovo Branco Gourmet 10 un", 5.99, 5.99, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/ovo-branco-gourmet-59218/p"], ["2026-09-27T21:13:47", "Ovos", "55472", "Ovo Grande Granja Lobo Branco Polpa 12 un", 9.5, 9.5, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/ovo-grande-granja-lobo-branco-polpa-1623/p"], ["2026-09-27T21:13:47", "Ovos", "55473", "Ovo Grande Granja Lobo Vermelho Polpa 12 un", 10.5, 10.5, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/ovo-grande-granja-lobo-vermelho-polpa-1627/p"], ["2026-09-27T21:13:47", "Ovos", "52717", "Ovo Vermelho Orgânico Ômega 3 10 un", 15.9, 15.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/ovo-vermelho-organico-omega-3-62316/p"], ["2026-09-27T21:13:47", "Ovos", "52705", "Ovo Vermelho Grande 30 un", 24.9, 24.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/ovo-vermelho-grande-21834/p"], ["2026-09-27T21:13:47", "Ovos", "52718", "Ovo Vermelho Orgânico Selênio 10 un", 15.9, 15.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/ovo-vermelho-organico-selenio-62317/p"], ["2026-09-27T21:13:47", "Ovos", "17290", "Ovo Caipira Label Rouge 10 un", 16.9, 16.9, 1, "withoutStock", "vitrine", "https://www.atacadao.com.br/ovo-caipira-label-rouge-77663/p"], ["2026-09-27T21:13:47", "Pasta de amendoim 1kg", "25914", "Pasta de Amendoim Akio Power Integral 1,02kg", 21.89, 21.89, 1, "available", "carrinho", "https://www.atacadao.com.br/pasta-de-amendoim-akio-power-integral-81117/p"], ["2026-09-27T21:13:47", "Pasta de amendoim 1kg", "25908", "Pasta de Amendoim Akio Power Crocante 1,02kg", 21.89, 21.89, 1, "available", "carrinho", "https://www.atacadao.com.br/pasta-de-amendoim-akio-power-crocante-81475/p"], ["2026-09-27T21:13:47", "Pasta de amendoim 1kg", "25934", "Pasta de Amendoim Guimarães Cacau 1,005kg", 25.9, 23.9, 3, "withoutStock", "carrinho", "https://www.atacadao.com.br/pasta-de-amendoim-guimaraes-cacau-80575/p"], ["2026-09-27T21:13:47", "Pasta de amendoim 1kg", "59593", "Pasta de Amendoim Amendo Power Crunchy 1,005kg", 29.98, 23.98, 3, "withoutStock", "carrinho", "https://www.atacadao.com.br/pasta-de-amendoim-amendo-power-crunchy-10583/p"], ["2026-09-27T21:13:47", "Pasta de amendoim 1kg", "41298", "Pasta de Amendoim Amendo Power 1,005kg", 29.98, 23.98, 3, "withoutStock", "carrinho", "https://www.atacadao.com.br/pasta-de-amendoim-amendo-power-91796/p"]]};
+// linhas: [data, categoria, item_id, nome, preco_un, preco_atacado, qtd_atacado, disponibilidade, fonte, link]
+
+const brl = v => v == null ? "–" : v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+const fmtData = s => new Date(s).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" });
+const norm = s => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+// --- modelo -----------------------------------------------------------------
+const sondagens = [...new Set(DADOS.linhas.map(l => l[0]))].sort();
+const ultima = sondagens[sondagens.length - 1];
+const itens = new Map();
+for (const [data, cat, id, nome, un, atac, qtd, disp, fonte, link] of DADOS.linhas) {
+  if (!itens.has(id)) itens.set(id, { id, cat, nome, link, hist: [] });
+  const it = itens.get(id);
+  it.nome = nome; it.cat = cat; it.link = link;
+  it.hist.push({ data, un, atac, qtd, disp, fonte });
+}
+for (const it of itens.values()) {
+  it.hist.sort((a, b) => a.data.localeCompare(b.data));
+  const h = it.hist.filter(p => p.un != null);
+  it.atual = h[h.length - 1] || null;
+  it.anterior = h.length > 1 ? h[h.length - 2] : null;
+  it.naUltima = !!it.atual && it.atual.data === ultima;
+  it.min = h.length ? Math.min(...h.map(p => p.un)) : null;
+  it.max = h.length ? Math.max(...h.map(p => p.un)) : null;
+  it.var = it.atual && it.anterior ? it.atual.un / it.anterior.un - 1 : null;
+  it.porKg = /quilo/i.test(it.nome);
+}
+const categorias = [...new Set([...itens.values()].map(i => i.cat))].sort((a, b) => a.localeCompare(b, "pt-BR"));
+const lista = [...itens.values()];
+
+// --- estado -----------------------------------------------------------------
+const state = { cat: null, q: "", soComEstoque: false, sort: { key: "cat", dir: 1 }, sel: [] };
+const SLOTS = 8;
+const slotDe = new Map(); // id -> índice de cor; a cor segue o produto enquanto ele estiver selecionado
+
+function toggleSel(id) {
+  const i = state.sel.indexOf(id);
+  if (i >= 0) { state.sel.splice(i, 1); slotDe.delete(id); }
+  else {
+    if (state.sel.length >= SLOTS) return;
+    const usados = new Set(slotDe.values());
+    let s = 0; while (usados.has(s)) s++;
+    slotDe.set(id, s); state.sel.push(id);
+  }
+  render();
+}
+const cor = id => `var(--s${slotDe.get(id) + 1})`;
+
+// --- filtros ----------------------------------------------------------------
+function renderFilters() {
+  const el = document.getElementById("filters");
+  el.innerHTML = [null, ...categorias].map(c =>
+    `<button class="chip" data-cat="${c ?? ""}" aria-pressed="${state.cat === c}">${esc(c ?? "Todas")}</button>`).join("") +
+    `<label><input type="checkbox" id="estoque" ${state.soComEstoque ? "checked" : ""}> só com preço na última sondagem</label>` +
+    `<input type="search" id="busca" placeholder="Buscar produto…" value="${esc(state.q)}">`;
+  el.querySelectorAll(".chip").forEach(b => b.onclick = () => { state.cat = b.dataset.cat || null; render(); });
+  el.querySelector("#estoque").onchange = e => { state.soComEstoque = e.target.checked; render(); };
+  const busca = el.querySelector("#busca");
+  busca.oninput = e => { state.q = e.target.value; renderTable(); };
+}
+
+function filtrados() {
+  const q = norm(state.q.trim());
+  return lista.filter(it =>
+    (!state.cat || it.cat === state.cat) &&
+    (!q || norm(it.nome).includes(q)) &&
+    (!state.soComEstoque || it.naUltima));
+}
+
+// --- destaques --------------------------------------------------------------
+function renderTiles() {
+  const el = document.getElementById("tiles");
+  el.innerHTML = categorias.filter(c => !state.cat || c === state.cat).map(c => {
+    const cands = lista.filter(i => i.cat === c && i.naUltima);
+    if (!cands.length) return "";
+    const best = cands.reduce((a, b) => b.atual.un < a.atual.un ? b : a);
+    return `<div class="tile" data-id="${best.id}">
+      <div class="cat">${esc(c)}</div>
+      <div class="price num">${brl(best.atual.un)}${best.porKg ? '<span class="sub" style="font-size:12px;font-weight:400"> /kg</span>' : ""}</div>
+      <div class="name">${esc(best.nome)}</div></div>`;
+  }).join("");
+  el.querySelectorAll(".tile").forEach(t => t.onclick = () => toggleSel(t.dataset.id));
+}
+
+// --- mudanças ---------------------------------------------------------------
+function renderChanges() {
+  const el = document.getElementById("changes");
+  const sub = document.getElementById("chg-sub");
+  if (sondagens.length < 2) { sub.textContent = ""; el.innerHTML = `<div class="empty">Ainda há só uma sondagem — as variações aparecem a partir da próxima.</div>`; return; }
+  const ch = lista.filter(i => (!state.cat || i.cat === state.cat) && i.naUltima && i.var != null && Math.abs(i.var) > 0.0005)
+    .sort((a, b) => a.var - b.var);
+  sub.textContent = `${fmtData(sondagens[sondagens.length - 2])} → ${fmtData(ultima)}`;
+  el.innerHTML = ch.length ? ch.map(i => `<div class="change" data-id="${i.id}">
+      <span class="n" title="${esc(i.nome)}">${esc(i.nome)}</span>
+      <span class="num ${i.var < 0 ? "down" : "up"}">${i.var < 0 ? "▼" : "▲"} ${(i.var * 100).toFixed(1).replace(".", ",")}% · ${brl(i.atual.un)}</span></div>`).join("")
+    : `<div class="empty">Nenhum preço mudou.</div>`;
+  el.querySelectorAll(".change").forEach(r => r.onclick = () => toggleSel(r.dataset.id));
+}
+
+// --- tabela -----------------------------------------------------------------
+const COLS = [
+  { key: "nome", label: "Produto", get: i => norm(i.nome) },
+  { key: "cat", label: "Categoria", get: i => i.cat },
+  { key: "preco", label: "Preço", r: 1, get: i => i.atual ? i.atual.un : Infinity },
+  { key: "atac", label: "Atacado", r: 1, get: i => i.atual && i.atual.qtd > 1 ? i.atual.atac : Infinity },
+  { key: "var", label: "Variação", r: 1, get: i => i.var ?? 0 },
+  { key: "min", label: "Mín. / máx.", r: 1, get: i => i.min ?? Infinity },
+  { key: "n", label: "Sondagens", r: 1, get: i => i.hist.length },
+];
+function renderTable() {
+  const th = document.getElementById("thead");
+  th.innerHTML = COLS.map(c => `<th class="${c.r ? "r" : ""}" data-k="${c.key}" aria-sort="${state.sort.key === c.key ? (state.sort.dir > 0 ? "ascending" : "descending") : "none"}">${c.label}</th>`).join("");
+  th.querySelectorAll("th").forEach(h => h.onclick = () => {
+    const k = h.dataset.k;
+    state.sort = { key: k, dir: state.sort.key === k ? -state.sort.dir : 1 };
+    renderTable();
+  });
+  const col = COLS.find(c => c.key === state.sort.key);
+  const rows = filtrados().sort((a, b) => {
+    const x = col.get(a), y = col.get(b);
+    const c = typeof x === "string" ? x.localeCompare(y, "pt-BR") : x - y;
+    return c * state.sort.dir || (a.atual ? a.atual.un : Infinity) - (b.atual ? b.atual.un : Infinity) || a.nome.localeCompare(b.nome, "pt-BR");
+  });
+  const melhor = new Map();
+  for (const i of lista) if (i.naUltima && (!melhor.has(i.cat) || i.atual.un < melhor.get(i.cat).atual.un)) melhor.set(i.cat, i);
+
+  document.getElementById("count").textContent = `${rows.length} de ${lista.length}`;
+  document.getElementById("tbody").innerHTML = rows.map(i => {
+    const a = i.atual;
+    const sel = slotDe.has(i.id);
+    const badges = (a && a.fonte === "vitrine" ? `<span class="badge">vitrine</span>` : "") +
+      (a && a.fonte === "carrinho" && a.disp !== "available" ? `<span class="badge">sem estoque online</span>` : "") +
+      (!i.naUltima ? `<span class="badge">fora da última sondagem</span>` : "") +
+      (melhor.get(i.cat) === i ? `<span class="best">● mais barato</span>` : "");
+    const v = i.var == null ? `<span class="same">–</span>` :
+      Math.abs(i.var) < 0.0005 ? `<span class="same">=</span>` :
+      `<span class="${i.var < 0 ? "down" : "up"}">${i.var < 0 ? "▼" : "▲"} ${(i.var * 100).toFixed(1).replace(".", ",")}%</span><div class="sub">era ${brl(i.anterior.un)}</div>`;
+    return `<tr data-id="${i.id}" class="${sel ? "sel" : ""}" style="${sel ? `--sel:${cor(i.id)}` : ""}">
+      <td>${esc(i.nome)} <a href="${esc(i.link)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">↗</a>${badges ? "<div>" + badges + "</div>" : ""}</td>
+      <td>${esc(i.cat)}</td>
+      <td class="r num">${a ? brl(a.un) : "–"}${i.porKg && a ? '<div class="sub">por kg</div>' : ""}</td>
+      <td class="r num">${a && a.qtd > 1 ? brl(a.atac) + `<div class="sub">a partir de ${a.qtd} un</div>` : "–"}</td>
+      <td class="r num">${v}</td>
+      <td class="r num">${i.min == null ? "–" : i.min === i.max ? brl(i.min) : brl(i.min) + '<div class="sub">' + brl(i.max) + "</div>"}</td>
+      <td class="r num">${i.hist.length}</td></tr>`;
+  }).join("");
+  document.querySelectorAll("#tbody tr").forEach(r => r.onclick = () => toggleSel(r.dataset.id));
+}
+
+// --- gráfico ----------------------------------------------------------------
+const NS = "http://www.w3.org/2000/svg";
+function niceTicks(lo, hi, n = 5) {
+  const span = hi - lo || 1, raw = span / n, mag = 10 ** Math.floor(Math.log10(raw));
+  const step = [1, 2, 2.5, 5, 10].map(m => m * mag).find(s => span / s <= n) || raw;
+  const t = []; for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) t.push(+v.toFixed(6));
+  return t;
+}
+function renderChart() {
+  const legend = document.getElementById("legend");
+  const box = document.getElementById("chart");
+  const series = state.sel.map(id => itens.get(id));
+  legend.innerHTML = series.map(s => `<button data-id="${s.id}" title="Remover do gráfico">
+      <span class="sw" style="background:${cor(s.id)}"></span><span class="nm">${esc(s.nome)}</span><span class="x">×</span></button>`).join("");
+  legend.querySelectorAll("button").forEach(b => b.onclick = () => toggleSel(b.dataset.id));
+  if (!series.length) { box.innerHTML = `<div class="empty">Selecione produtos na tabela, nos destaques ou nas mudanças para ver o histórico de preço.</div>`; return; }
+
+  const W = box.clientWidth, H = 280, m = { l: 64, r: 16, t: 12, b: 28 };
+  const pts = series.flatMap(s => s.hist.filter(p => p.un != null).map(p => ({ s, t: +new Date(p.data), v: p.un })));
+  let t0 = Math.min(...pts.map(p => p.t)), t1 = Math.max(...pts.map(p => p.t));
+  if (t0 === t1) { t0 -= 864e5; t1 += 864e5; }
+  let v0 = Math.min(...pts.map(p => p.v)), v1 = Math.max(...pts.map(p => p.v));
+  const pad = (v1 - v0) * 0.15 || v1 * 0.1 || 1; v0 = Math.max(0, v0 - pad); v1 += pad;
+  const x = t => m.l + (t - t0) / (t1 - t0) * (W - m.l - m.r);
+  const y = v => m.t + (1 - (v - v0) / (v1 - v0)) * (H - m.t - m.b);
+
+  const svg = document.createElementNS(NS, "svg");
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("height", H);
+  svg.setAttribute("role", "img"); svg.setAttribute("aria-label", "Histórico de preços dos produtos selecionados");
+  const add = (tag, attrs, parent = svg) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); parent.appendChild(e); return e; };
+  const txt = (s, attrs) => { const e = add("text", { "font-size": 11, fill: "var(--text-3)", ...attrs }); e.textContent = s; return e; };
+
+  for (const v of niceTicks(v0, v1)) {
+    add("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), stroke: "var(--grid)", "stroke-width": 1 });
+    txt(brl(v), { x: m.l - 8, y: y(v) + 4, "text-anchor": "end", class: "num" });
+  }
+  const datas = sondagens.map(d => +new Date(d)).filter(t => t >= t0 && t <= t1);
+  const maxLabels = Math.max(2, Math.floor((W - m.l - m.r) / 90));
+  const stepL = Math.ceil(datas.length / maxLabels);
+  datas.forEach((t, i) => {
+    if (i % stepL) return;
+    txt(new Date(t).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }), { x: x(t), y: H - 8, "text-anchor": "middle" });
+  });
+
+  for (const s of series) {
+    const h = s.hist.filter(p => p.un != null);
+    // preço vale até a próxima sondagem: linha em degraus
+    let d = "";
+    h.forEach((p, i) => {
+      const px = x(+new Date(p.data)), py = y(p.un);
+      d += i === 0 ? `M${px},${py}` : `H${px}V${py}`;
+    });
+    add("path", { d, fill: "none", stroke: cor(s.id), "stroke-width": 2, "stroke-linejoin": "round" });
+    for (const p of h) add("circle", { cx: x(+new Date(p.data)), cy: y(p.un), r: 4, fill: cor(s.id), stroke: "var(--surface)", "stroke-width": 2 });
+  }
+
+  const cross = add("line", { y1: m.t, y2: H - m.b, stroke: "var(--text-3)", "stroke-width": 1, "stroke-dasharray": "3 3", visibility: "hidden" });
+  const hit = add("rect", { x: m.l, y: 0, width: W - m.l - m.r, height: H, fill: "transparent" });
+  box.innerHTML = ""; box.appendChild(svg);
+  const tip = document.createElement("div"); tip.className = "tooltip"; box.appendChild(tip);
+
+  const mover = ev => {
+    const r = svg.getBoundingClientRect();
+    const mx = (ev.clientX - r.left) * (W / r.width);
+    const alvo = datas.reduce((a, b) => Math.abs(x(b) - mx) < Math.abs(x(a) - mx) ? b : a, datas[0]);
+    if (alvo == null) return;
+    cross.setAttribute("x1", x(alvo)); cross.setAttribute("x2", x(alvo)); cross.setAttribute("visibility", "visible");
+    const iso = sondagens.find(d => +new Date(d) === alvo);
+    const linhas = series.map(s => {
+      const p = [...s.hist].reverse().find(p => p.un != null && p.data <= iso);
+      return { s, v: p ? p.un : null };
+    }).sort((a, b) => (a.v ?? Infinity) - (b.v ?? Infinity));
+    tip.innerHTML = `<div class="d">${fmtData(iso)}</div>` + linhas.map(({ s, v }) =>
+      `<div class="r"><span class="l"><span class="sw" style="width:10px;height:10px;border-radius:50%;background:${cor(s.id)};flex:none"></span><span>${esc(s.nome)}</span></span><b class="num">${brl(v)}</b></div>`).join("");
+    tip.style.display = "block";
+    const px = x(alvo) * (r.width / W);
+    const tw = tip.offsetWidth;
+    tip.style.left = (px + 12 + tw > r.width ? px - tw - 12 : px + 12) + "px";
+    tip.style.top = "8px";
+  };
+  hit.addEventListener("pointermove", mover);
+  hit.addEventListener("pointerdown", mover);
+  hit.addEventListener("pointerleave", () => { tip.style.display = "none"; cross.setAttribute("visibility", "hidden"); });
+}
+
+// --- geral ------------------------------------------------------------------
+function render() {
+  renderFilters();
+  renderTiles();
+  renderChart();
+  renderChanges();
+  renderTable();
+}
+document.getElementById("sub").textContent =
+  `${DADOS.loja} · ${sondagens.length} sondage${sondagens.length > 1 ? "ns" : "m"} · última em ${fmtData(ultima)} · gerado em ${fmtData(DADOS.gerado)}`;
+
+// começa com os 3 mais baratos da primeira categoria (escalas de preço diferentes não se misturam bem)
+lista.filter(i => i.cat === categorias[0] && i.naUltima)
+  .sort((a, b) => a.atual.un - b.atual.un).slice(0, 3)
+  .forEach(i => { slotDe.set(i.id, state.sel.length); state.sel.push(i.id); });
+render();
+let rz; new ResizeObserver(() => { clearTimeout(rz); rz = setTimeout(renderChart, 100); }).observe(document.getElementById("chart"));
+</script>
+</body>
+</html>

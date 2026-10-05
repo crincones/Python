@@ -1,0 +1,25 @@
+[  3.3s] dados 49685 corte 2026-07-07
+[  7.9s] sinais c1 5500
+[  9.8s] sinais c2 2874
+[ 10.7s] sinais hull 809
+C:\Users\Carlos\Documents\GitHub\Python\Backtest-VWAPBANDS-GraficoPI\vbase.py:315: RuntimeWarning: Mean of empty slice
+  dur_emp_rel=float(dur[v0:fim_emp + 1].mean() / dur_med[g]) if (gatilho != 'hull' and dur_med[g]) else np.nan,
+C:\Users\Carlos\AppData\Roaming\Python\Python314\site-packages\numpy\_core\_methods.py:142: RuntimeWarning: invalid value encountered in scalar divide
+  ret = ret.dtype.type(ret / rcount)
+C:\Users\Carlos\Documents\GitHub\Python\Backtest-VWAPBANDS-GraficoPI\vbase.py:315: RuntimeWarning: Mean of empty slice
+  dur_emp_rel=float(dur[v0:fim_emp + 1].mean() / dur_med[g]) if (gatilho != 'hull' and dur_med[g]) else np.nan,
+C:\Users\Carlos\AppData\Roaming\Python\Python314\site-packages\numpy\_core\_methods.py:142: RuntimeWarning: invalid value encountered in scalar divide
+  ret = ret.dtype.type(ret / rcount)
+[ 23.4s] controle 24198 vwap {'c1': 4248, 'c2': 2092}
+[ 23.6s] aleatorio {'r300': -6.999597464023347, 'r500': -7.854583878434135, 'vw': -356.2009803882636, 'claude': -5.2546040052329674}
+[ 26.2s] base
+[ 27.8s] faixas
+[ 95.0s] hipoteses
+[ 96.9s] vwap entrada
+[ 97.1s] vwap alvo
+[100.3s] carteira r300 [504, 3885, 5949, 6705, 7590, 2475, 4803, 5913, 303, -16308, -10587]
+[103.2s] carteira r500 [-8091, -2445, -900, 2034, 3639, 315, 4686, -2952, 3657, -19455, -6381]
+[107.2s] carteira vw [-14695, -5855, 80, 3897, 3237, 142, 5937, -11180, -78, -17599, -11932]
+[110.0s] carteira claude [9264, 9885, 9729, 8205, 8670, 2775, 3963, 8073, 1083, -6528, -7947]
+[112.0s] robustez
+[115.5s] ok

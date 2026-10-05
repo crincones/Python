@@ -1,0 +1,6 @@
+# Dados financeiros pessoais: nunca versionar
+extrato/
+faturas-cartao/
+*.db
+*.db-journal
+__pycache__/
