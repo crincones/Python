@@ -16,8 +16,9 @@ import pandas as pd
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
+from travas.api.heatmap_routes import heatmap_router
 from travas.api.tracking_routes import tracking_router
 from travas.data.icons import IconCache
 from travas.data.market_data import ChainScope
@@ -77,6 +78,18 @@ class AnalyzeIn(BaseModel):
     min_reward_risk: float | None = Field(default=None, gt=0)
     nobre_filter: bool = False
     nobre_target_required: bool = False
+    nobre_max_cost_fraction: float = 0.25
+    nobre_prefer_close: bool = True
+
+    @field_validator("nobre_max_cost_fraction")
+    @classmethod
+    def _nobre_fraction(cls, v: float) -> float:
+        # Só os tetos do método: 1/4 (padrão) ou 1/3 (mais permissivo).
+        for allowed in (0.25, 1 / 3):
+            if abs(v - allowed) < 1e-3:
+                return allowed
+        raise ValueError("teto do filtro Rafael Nobre deve ser 1/4 ou 1/3")
+
     costs_brl: float = Field(default=0.0, ge=0)
     refresh: bool = False
 
@@ -174,6 +187,7 @@ def create_app(
         return clean(rows.to_dict(orient="records"))
 
     app.include_router(tracking_router(settings, service, store, clean))
+    app.include_router(heatmap_router(settings, service, clean))
 
     @app.get("/api/quote/{underlying}")
     def quote(underlying: str) -> dict:
@@ -331,6 +345,8 @@ def _params(body: AnalyzeIn, spot: float, settings: Settings) -> AnalysisParams:
         min_reward_risk=body.min_reward_risk,
         nobre_filter=body.nobre_filter,
         nobre_target_required=body.nobre_target_required,
+        nobre_max_cost_fraction=body.nobre_max_cost_fraction,
+        nobre_prefer_close=body.nobre_prefer_close,
         costs_brl=body.costs_brl,
         max_results=a.max_results,
     )

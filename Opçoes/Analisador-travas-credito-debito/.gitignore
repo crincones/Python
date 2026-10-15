@@ -3,6 +3,7 @@ __pycache__/
 *.pyc
 .pytest_cache/
 .ruff_cache/
-logs/
+# Só as pastas da RAIZ do projeto (a barra inicial evita ignorar src/travas/data/, que é código)
+/logs/
+/data/
 config/preferencias.json
-data/

@@ -1,7 +1,9 @@
 // Controlador da interface. Todos os cálculos vêm da API Python; aqui só exibição.
 (() => {
   const $ = (id) => document.getElementById(id);
-  const state = { defaults: null, analysis: null, detail: null, sort: null, tf: "d1", side: true, underlying: null, levels: [], tab: "analysis" };
+  const state = { defaults: null, analysis: null, detail: null, sort: null, tf: "d1", side: true, underlying: null, levels: [], tab: "analysis",
+    // Cada aba tem o próprio ativo e as próprias linhas no gráfico; nada vaza de uma para outra.
+    chart: { analysis: { underlying: null, levels: [] }, tracking: { underlying: null, levels: [] }, heatmap: { underlying: null, levels: [] } } };
 
   const KIND_TEXT = {
     "alta|debito": "Trava de alta com débito: compra call de strike menor e vende call de strike maior. Paga débito; ganha se o ativo subir acima do breakeven.",
@@ -70,9 +72,11 @@
 
   async function onUnderlying() {
     const u = $("underlying").value.trim().toUpperCase();
-    if (!u || u === state.underlying) return;
-    state.underlying = u;
-    $("side-title").innerHTML = tickerIcon(u, 24) + esc(u);
+    const ctx = state.chart.analysis;
+    if (!u || u === ctx.underlying) return;
+    // Novo ativo na análise: as linhas da estrutura anterior não valem mais.
+    state.chart.analysis = { underlying: u, levels: [] };
+    applyChart();
     $("underlying-icon").innerHTML = tickerIcon(u, 26);
     $("spot-info").textContent = "consultando…";
     try {
@@ -83,21 +87,36 @@
     } catch (e) {
       $("spot-info").textContent = e.message;
     }
-    loadCandles();
     savePrefs();
   }
 
-  // Usado também pela aba Acompanhamento: troca o ativo do gráfico lateral.
-  function showUnderlying(u) {
-    if (!u || u === state.underlying) return;
-    state.underlying = u;
-    $("side-title").innerHTML = tickerIcon(u, 24) + esc(u);
-    loadCandles();
+  // O gráfico lateral é compartilhado, mas o conteúdo é por aba: `tab` diz a quem pertence o
+  // ativo/linhas. Só a aba ativa aparece; a outra fica guardada até voltar a ela.
+  function showUnderlying(u, tab = state.tab) {
+    if (!u) return;
+    state.chart[tab].underlying = u;
+    if (tab === state.tab) applyChart();
   }
 
-  function setLevels(levels) {
-    state.levels = levels;
-    Candles.setLevels(levels);
+  function setLevels(levels, tab = state.tab) {
+    state.chart[tab].levels = levels;
+    if (tab === state.tab) applyChart();
+  }
+
+  function applyChart() {
+    const ctx = state.chart[state.tab];
+    // Sem ativo próprio (ex.: Acompanhamento sem estrutura selecionada), mantém o ativo exibido,
+    // mas sem linhas de outra aba.
+    const u = ctx.underlying || state.underlying;
+    state.levels = ctx.levels;
+    if (u && u !== state.underlying) {
+      state.underlying = u;
+      $("side-title").innerHTML = tickerIcon(u, 24) + esc(u);
+      Candles.setLevels([]); // não deixa linhas da outra aba à vista enquanto carrega
+      loadCandles(); // aplica state.levels ao terminar
+    } else if (!candlesLoading) {
+      Candles.setLevels(state.levels);
+    } // carregando candles: loadCandles aplica as linhas quando o ativo certo estiver na tela
     renderLevelsLegend();
   }
 
@@ -170,17 +189,29 @@
     document.querySelectorAll(".tabs button").forEach((b) => b.classList.toggle("active", b.dataset.tab === name));
     $("tab-analysis").hidden = name !== "analysis";
     $("tab-tracking").hidden = name !== "tracking";
+    $("tab-heatmap").hidden = name !== "heatmap";
     if (name === "tracking") Tracking.activate();
+    if (name === "heatmap") Heatmap.activate();
+    applyChart();
     savePrefs();
   }
 
   // ---------- candles ----------
+  let candlesRequest = 0;
+  let candlesLoading = false;
   async function loadCandles() {
     const u = state.underlying;
     if (!u || !state.side) return;
+    const token = ++candlesRequest;
+    candlesLoading = true;
     $("candle-note").textContent = "Carregando candles…";
+    const tfName = { d1: "diário", w1: "semanal", h4: "240 min" }[state.tf] || state.tf;
+    Busy.show($("kchart-host"), `Carregando ${u} (${tfName})…`);
     try {
       const data = await api(`/api/candles/${encodeURIComponent(u)}?tf=${state.tf}`);
+      // Resposta atrasada de um pedido anterior (troca rápida de aba/ativo): descarta.
+      if (token !== candlesRequest) return;
+      candlesLoading = false;
       Candles.setData($("kchart"), u, state.tf, data.bars);
       Candles.setLevels(state.levels);
       const m = data.meta;
@@ -188,7 +219,11 @@
       $("candle-note").textContent = `${m.bars} barras do MT5. ${m.ema_method}. Breakevens se referem ao vencimento, salvo indicação.` +
         (state.tf === "h4" ? " No 240 min, as barras seguem o relógio do servidor (08h, 12h, 16h): a primeira do dia cobre só parte do pregão." : "");
     } catch (e) {
+      if (token !== candlesRequest) return;
+      candlesLoading = false;
       $("candle-note").textContent = `Candles indisponíveis: ${e.message}`;
+    } finally {
+      Busy.hide($("kchart-host"));
     }
   }
 
@@ -205,6 +240,8 @@
     $("nobre-box").classList.toggle("disabled", !debit);
     $("nobre_filter").disabled = !debit;
     $("nobre_target_required").disabled = !debit || !$("nobre_filter").checked;
+    $("nobre_fraction").disabled = !debit || !$("nobre_filter").checked;
+    $("nobre_prefer_close").disabled = !debit || !$("nobre_filter").checked;
     $("nobre-hint").textContent = !debit ? "disponível só para travas de débito"
       : $("nobre_filter").checked && num("target_price") === null && num("target_pct") === null
         ? "informe o preço-alvo (ou a variação) para aplicar o critério do alvo" : "";
@@ -236,6 +273,8 @@
       include_illiquid: $("include_illiquid").checked,
       nobre_filter: radio("flow") === "debito" && $("nobre_filter").checked,
       nobre_target_required: $("nobre_target_required").checked,
+      nobre_max_cost_fraction: Number($("nobre_fraction").value),
+      nobre_prefer_close: $("nobre_prefer_close").checked,
       refresh: $("refresh").checked,
       liquidity: {
         max_spread_pct_mid: pctOrNull("max_spread_pct_mid"),
@@ -258,6 +297,9 @@
     btn.disabled = true;
     msg.className = "msg";
     msg.textContent = "Coletando a cadeia no MT5 e calculando… (a primeira coleta pode levar até ~1 min)";
+    // Carregando sobre os resultados (ou sobre o formulário, na primeira análise).
+    const host = $("results-card").hidden ? $("f-title").closest(".card") : $("results-card");
+    Busy.show(host, "Coletando a cadeia no MT5 e calculando…");
     try {
       const r = await api("/api/analyze", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       state.analysis = r;
@@ -270,6 +312,7 @@
       msg.className = "msg err";
       msg.textContent = `Erro: ${e.message}`;
     } finally {
+      Busy.hide(host);
       btn.disabled = false;
     }
   }
@@ -281,6 +324,7 @@
     { key: "expiration", label: "Vencimento", l: true, val: (r) => r.expiration, fmt: (r) => `${FMT.date(r.expiration)} <span class="muted">(${r.dte_business_days} du)</span>` },
     { key: "long", label: "Compra", l: true, val: (r) => r.legs[0].strike, fmt: (r) => `${FMT.price(r.legs[0].strike)} <span class="muted">${esc(r.legs[0].symbol)}</span>` },
     { key: "short", label: "Venda", l: true, val: (r) => r.legs[1].strike, fmt: (r) => `${FMT.price(r.legs[1].strike)} <span class="muted">${esc(r.legs[1].symbol)}</span>` },
+    { key: "width", label: "Largura", tip: "Distância entre os strikes (R$)", val: (r) => r.width, fmt: (r) => FMT.price(r.width) },
     { key: "entry", label: "Entrada natural", tip: "Por ação: compra no ask, venda no bid", val: (r) => r.entry_natural, fmt: (r) => FMT.price(r.entry_natural) },
     { key: "mid", label: "Mid", val: (r) => r.entry_mid, fmt: (r) => FMT.price(r.entry_mid) },
     { key: "max_loss", label: "Perda máx.", val: (r) => r.max_loss, fmt: (r) => FMT.brl(r.max_loss) },
@@ -289,7 +333,7 @@
     { key: "rr", label: "Lucro/Perda", tip: "Lucro máximo ÷ perda máxima", val: (r) => r.reward_risk, fmt: (r) => FMT.ratio(r.reward_risk) },
     { key: "pop", label: "POP", tip: "Probabilidade de lucro no vencimento (modelo lognormal). Ver metodologia no detalhe.", val: (r) => r.pop, fmt: (r) => FMT.pct(r.pop, 0) },
     { key: "scenario", label: "No alvo", tip: "Resultado estimado no preço-alvo (no vencimento ou, com horizonte, pelo modelo)", val: (r) => r.scenario_pnl, fmt: (r) => `<span class="${(r.scenario_pnl ?? 0) >= 0 ? "pos" : "neg"}">${FMT.signedBrl(r.scenario_pnl)}</span>` },
-    { key: "nobre", label: "R. Nobre", tip: "Filtro Rafael Nobre: custo ≤ 1/4 da largura e perna vendida antes do alvo", show: () => state.analysis && state.analysis.nobre && state.analysis.nobre.active, val: (r) => (r.nobre ? (r.nobre.target_ok === false ? 0 : 1) * 10 - r.nobre.cost_ratio : null), fmt: (r) => nobreBadge(r.nobre) },
+    { key: "nobre", label: "R. Nobre", tip: "Filtro Rafael Nobre: custo ≤ 1/4 (ou 1/3) da largura e perna vendida antes do alvo", show: () => state.analysis && state.analysis.nobre && state.analysis.nobre.active, val: (r) => (r.nobre ? (r.nobre.target_ok === false ? 0 : 1) * 10 - r.nobre.cost_ratio : null), fmt: (r) => nobreBadge(r.nobre) },
     { key: "liq", label: "Liquidez", val: (r) => r.liquidity_score, fmt: (r) => liqBadge(r) },
     { key: "alerts", label: "Alertas", l: true, val: (r) => (r.early_exercise || "").startsWith("RISCO") ? 1 : 0, fmt: (r) => alertsCell(r) },
   ];
@@ -299,7 +343,7 @@
     const cost = `custo ${FMT.pct(n.cost_ratio, 0)}`;
     const target = n.target_ok === null ? "sem alvo" : n.target_ok ? "antes do alvo" : "além do alvo";
     const cls = n.cost_ok && n.target_ok !== false ? "ok" : n.cost_ok ? "mid" : "bad";
-    return `<span class="badge ${cls}" title="Custo = ${FMT.pct(n.cost_ratio, 1)} da largura (máx. 25%) · vendida ${target}">${cost} · ${target}</span>`;
+    return `<span class="badge ${cls}" title="Custo = ${FMT.pct(n.cost_ratio, 1)} da largura (máx. ${FMT.pct(n.max_cost_fraction, 1)}) · vendida ${target}">${cost} · ${target}</span>`;
   }
 
   function liqBadge(r) {
@@ -322,7 +366,8 @@
     const warn = $("data-warning");
     warn.hidden = !c.realtime_warning;
     warn.textContent = c.realtime_warning ? `Atenção: ${c.realtime_warning}.` : "";
-    const nobreNote = a.nobre ? `<div class="small"><b>Filtro Rafael Nobre:</b> ${esc(a.nobre.note)}</div>` : "";
+    const nobreNote = a.nobre ? `<div class="small"><b>Filtro Rafael Nobre:</b> ${esc(a.nobre.note)}</div>` +
+      (a.nobre.warning ? `<div class="warn">${esc(a.nobre.warning)}</div>` : "") : "";
     const disc = Object.entries(a.discarded).map(([k, v]) => `${esc(k)}: ${v}`).join(" · ");
     $("discarded").innerHTML = nobreNote + `${a.total_ranked} travas ranqueadas de ${a.candidates_evaluated} avaliadas` + (disc ? ` · descartadas — ${disc}` : "") +
       (a.atm_iv.length ? ` · IV ATM: ${a.atm_iv.map((x) => `${FMT.date(x.expiration)} ${FMT.pct(x.atm_iv)}`).join(", ")}` : " · sem IV ATM confiável (POP indisponível)");
@@ -369,7 +414,14 @@
     const tr = ev.target.closest("tr[data-id]");
     if (!tr) return;
     try {
-      const d = await api(`/api/detail/${state.analysis.analysis_id}/${encodeURIComponent(tr.dataset.id)}`);
+      const host = $("detail-card").hidden ? $("results-card") : $("detail-card");
+      Busy.show(host, "Abrindo a estrutura…");
+      let d;
+      try {
+        d = await api(`/api/detail/${state.analysis.analysis_id}/${encodeURIComponent(tr.dataset.id)}`);
+      } finally {
+        Busy.hide(host);
+      }
       state.detail = d;
       renderTable();
       renderDetail();
@@ -443,7 +495,7 @@
       ["Rho (R$ por 1 p.p. de juros)", FMT.signedBrl(g.rho_per_pp)],
       ["Custo de execução (natural − mid)", FMT.pct(d.execution_cost_pct_width) + " da largura"],
       ...(d.nobre ? [
-        ["R. Nobre: custo ÷ largura (máx. 25%)", `${FMT.pct(d.nobre.cost_ratio, 1)} ${d.nobre.cost_ok ? "✓" : "✗ acima"} · teto ${FMT.price(d.nobre.max_cost)}`],
+        [`R. Nobre: custo ÷ largura (máx. ${FMT.pct(d.nobre.max_cost_fraction, 1)})`, `${FMT.pct(d.nobre.cost_ratio, 1)} ${d.nobre.cost_ok ? "✓" : "✗ acima"} · teto ${FMT.price(d.nobre.max_cost)}`],
         ["R. Nobre: vendida antes do alvo", d.nobre.target_ok === null ? "sem alvo informado" : d.nobre.target_ok ? "✓ sim" : "✗ não (além do alvo)"],
       ] : []),
     ];
@@ -517,7 +569,7 @@
       ...(d.target_price ? [{ label: "Alvo", value: d.target_price, color: "#7a2fc0", dashed: true, size: 1.4 }] : []),
       ...d.legs.map((l) => ({ label: `Strike ${l.side === "compra" ? "C" : "V"}`, value: l.strike, color: "#98a2b3", dashed: true, dash: [2, 4], fit: true })),
     ];
-    setLevels(levels);
+    setLevels(levels, "analysis");
   }
 
   // ---------- painel lateral ----------
@@ -537,7 +589,7 @@
   function savePrefs() {
     clearTimeout(saveTimer);
     saveTimer = setTimeout(() => {
-      const prefs = { side_width: state.sideWidth || null, nobre_filter: $("nobre_filter").checked, nobre_target_required: $("nobre_target_required").checked, direction: radio("direction"), flow: radio("flow"), tf: state.tf, side: state.side, tab: state.tab, include_illiquid: $("include_illiquid").checked, tracking: Tracking.prefs() };
+      const prefs = { side_width: state.sideWidth || null, nobre_filter: $("nobre_filter").checked, nobre_target_required: $("nobre_target_required").checked, nobre_fraction: $("nobre_fraction").value, nobre_prefer_close: $("nobre_prefer_close").checked, direction: radio("direction"), flow: radio("flow"), tf: state.tf, side: state.side, tab: state.tab, include_illiquid: $("include_illiquid").checked, tracking: Tracking.prefs(), heatmap: Heatmap.prefs() };
       for (const f of PREF_FIELDS) prefs[f] = $(f).value;
       fetch("/api/preferences", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(prefs) }).catch(() => {});
     }, 600);
@@ -560,12 +612,15 @@
     if (prefs.include_illiquid) $("include_illiquid").checked = true;
     $("nobre_filter").checked = !!prefs.nobre_filter;
     $("nobre_target_required").checked = !!prefs.nobre_target_required;
+    if (prefs.nobre_fraction) $("nobre_fraction").value = prefs.nobre_fraction;
+    if (prefs.nobre_prefer_close !== undefined) $("nobre_prefer_close").checked = !!prefs.nobre_prefer_close;
     if (prefs.tf) state.tf = prefs.tf;
     document.querySelectorAll(".tf button").forEach((b) => b.classList.toggle("active", b.dataset.tf === state.tf));
     if (prefs.side_width) setSideWidth(Number(prefs.side_width), false);
     if (prefs.side === false) setSide(false);
     if (prefs.tracking) Tracking.applyPrefs(prefs.tracking);
-    if (prefs.tab === "tracking") switchTab("tracking");
+    if (prefs.heatmap) Heatmap.applyPrefs(prefs.heatmap);
+    if (prefs.tab === "tracking" || prefs.tab === "heatmap") switchTab(prefs.tab);
   }
 
   async function init() {
@@ -592,6 +647,8 @@
     document.querySelectorAll(".tabs button").forEach((b) => b.addEventListener("click", () => switchTab(b.dataset.tab)));
     setupSplitter();
     setupTooltips();
+    fullListWhenComplete($("underlying"));
+    fullListWhenComplete($("tf-underlying"));
     $("max-candles").addEventListener("click", () => {
       if (!state.side) setSide(true);
       toggleMax($("side"), $("max-candles"), () => Candles.resize());
@@ -607,6 +664,42 @@
     });
     await pollStatus();
     setInterval(pollStatus, 5000);
+  }
+
+  // Campo de ativo com <datalist>: o Chrome filtra as opções pelo texto digitado, então com um
+  // ticker COMPLETO só sobraria ele mesmo. Nesse caso, ao clicar/focar, o campo é esvaziado
+  // (o ticker fica como texto de fundo) para listar todos; sem nova escolha, o valor volta.
+  // Texto parcial (ex.: "PE") continua filtrando normalmente.
+  function fullListWhenComplete(input) {
+    const listId = input.getAttribute("list");
+    const isComplete = (v) => !!v && [...document.getElementById(listId).options].some((o) => o.value === v);
+    let saved = null;
+    let savedPlaceholder = input.placeholder;
+    const open = () => {
+      const v = input.value.trim().toUpperCase();
+      if (saved !== null || !isComplete(v)) return;
+      saved = v;
+      savedPlaceholder = input.placeholder;
+      input.placeholder = v;
+      input.value = "";
+    };
+    input.addEventListener("mousedown", open);
+    input.addEventListener("focus", open);
+    input.addEventListener("blur", () => {
+      if (saved === null) return;
+      const restore = input.value.trim() === "";
+      input.placeholder = savedPlaceholder;
+      if (restore) {
+        input.value = saved;
+        saved = null;
+        input.dispatchEvent(new Event("change", { bubbles: true })); // reexibe ícone/estado
+      } else {
+        saved = null;
+      }
+    });
+    input.addEventListener("keydown", (ev) => {
+      if (ev.key === "Escape" && saved !== null) { input.value = saved; input.blur(); }
+    });
   }
 
   function setupTooltips() {
@@ -638,6 +731,14 @@
     document.addEventListener("focusout", (ev) => { if (ev.target.closest("[data-tip]")) tip.hidden = true; });
   }
 
-  window.App = { api, showUnderlying, setLevels, toggleMax, savePrefs, tooltip: () => $("tooltip") };
+  // Do heatmap: abre a Análise com o ativo escolhido.
+  function analyzeTicker(ticker) {
+    switchTab("analysis");
+    $("underlying").value = ticker;
+    $("underlying").dispatchEvent(new Event("change", { bubbles: true }));
+    $("tab-analysis").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  window.App = { analyzeTicker, api, showUnderlying, setLevels, toggleMax, savePrefs, tooltip: () => $("tooltip") };
   init();
 })();

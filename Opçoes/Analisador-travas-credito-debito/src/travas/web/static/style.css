@@ -211,3 +211,41 @@ h2 .tk { margin-right: .45rem; }
 
 .with-icon { display: flex; align-items: center; gap: .1rem; }
 .with-icon input { flex: 1; min-width: 7rem; }
+
+/* Heatmap */
+.seg-buttons { display: inline-flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+.seg-buttons button { border: 0; border-radius: 0; border-right: 1px solid var(--border); padding: .3rem .7rem; }
+.seg-buttons button:last-child { border-right: 0; }
+.seg-buttons button.active { background: var(--accent); color: #fff; }
+.hm-legend { display: flex; align-items: center; gap: .8rem; flex-wrap: wrap; margin: .5rem 0; font-size: .85rem; }
+.hm-grad { display: inline-block; width: 220px; height: 10px; border-radius: 5px; }
+.hm-scale { display: inline-flex; flex-direction: column; gap: 2px; }
+.hm-legend-labels { display: flex; justify-content: space-between; width: 220px; font-size: .75rem; color: var(--muted); }
+.hm-legend-title { font-weight: 600; }
+.hm-map { position: relative; width: 100%; height: 64vh; min-height: 420px; background: #f0f2f6; border-radius: 6px; overflow: hidden; }
+.hm-group { position: absolute; border-radius: 4px; background: #e2e6ed; pointer-events: none; }
+.hm-group span { display: block; font-size: .72rem; font-weight: 700; color: #475467; padding: 2px 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: uppercase; letter-spacing: .02em; }
+.hm-tile { position: absolute; border: 0; border-radius: 3px; padding: 2px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+           gap: .1em; overflow: hidden; cursor: pointer; line-height: 1.1; text-align: center; font-family: inherit; }
+.hm-tile:hover { outline: 2px solid #1d2330; outline-offset: -2px; z-index: 2; }
+.hm-tile.sel { outline: 3px solid #1d2330; outline-offset: -3px; z-index: 3; }
+.hm-tile:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
+.hm-head { display: inline-flex; align-items: center; gap: .25em; max-width: 100%; }
+.hm-head .tk { margin-right: 0; }
+.hm-head b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hm-v1 { font-weight: 700; white-space: nowrap; }
+.hm-v2 { font-size: .72em; opacity: .9; white-space: nowrap; }
+.hm-detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.2rem; }
+.tooltip table td { padding: 1px 0; }
+
+/* Carregando: camada clara sobre o conteúdo + ícone girando */
+.busy-host, .card { position: relative; }
+.busy-overlay { position: absolute; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: center;
+                background: rgba(255, 255, 255, .62); backdrop-filter: blur(1.5px); border-radius: inherit; animation: busy-in .15s ease-out; }
+.busy-box { display: flex; flex-direction: column; align-items: center; gap: .55rem; padding: .8rem 1.1rem; border-radius: 10px;
+            background: rgba(255, 255, 255, .92); box-shadow: 0 2px 12px rgba(16, 24, 40, .12); }
+.busy-text { font-size: .88rem; color: var(--text); font-weight: 600; max-width: 18rem; text-align: center; }
+.spinner { width: 34px; height: 34px; border-radius: 50%; border: 3px solid #d5dbe6; border-top-color: var(--accent); animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes busy-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 2.4s; } .busy-overlay { animation: none; } }

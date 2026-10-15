@@ -57,7 +57,13 @@ const Tracking = (() => {
     $("trk-refresh").disabled = true;
     $("trk-meta").textContent = "Atualizando cotações no MT5…";
     try {
-      st.data = await api("/api/tracking/evaluate", json("POST", evalBody()));
+      const host = $("trk-groups").closest(".card");
+      Busy.show(host, "Atualizando cotações…");
+      try {
+        st.data = await api("/api/tracking/evaluate", json("POST", evalBody()));
+      } finally {
+        Busy.hide(host);
+      }
       $("trk-meta").textContent = `Atualizado em ${FMT.datetime(st.data.evaluated_at)} · ${st.data.positions.length} estrutura(s). P&L "natural" = zerar agora vendendo no bid e recomprando no ask; "mid" é referência.`;
       const mk = $("trk-market");
       mk.hidden = !st.data.quotes_note;
@@ -181,7 +187,12 @@ const Tracking = (() => {
         }
         st.confirmDelete = null;
         await api(`/api/tracking/positions/${id}`, { method: "DELETE" });
-        if (st.detailKey === id) { st.detailKey = null; $("trk-detail-card").hidden = true; }
+        if (st.detailKey === id) {
+          st.detailKey = null;
+          st.detail = null;
+          $("trk-detail-card").hidden = true;
+          App.setLevels([], "tracking"); // estrutura excluída: some do gráfico
+        }
         await refresh();
       }
     } catch (e) {
@@ -391,7 +402,14 @@ const Tracking = (() => {
     st.detailKind = kind;
     st.detailKey = key;
     const url = kind === "group" ? `/api/tracking/groups/${encodeURIComponent(key)}/detail` : `/api/tracking/positions/${key}/detail`;
-    const d = await api(url, json("POST", evalBody()));
+    const host = $("trk-detail-card").hidden ? $("trk-groups").closest(".card") : $("trk-detail-card");
+    if (!silent) Busy.show(host, kind === "group" ? "Montando o payoff do grupo…" : "Abrindo a estrutura…");
+    let d;
+    try {
+      d = await api(url, json("POST", evalBody()));
+    } finally {
+      if (!silent) Busy.hide(host);
+    }
     st.detail = d;
     render();
     const card = $("trk-detail-card");
@@ -408,7 +426,7 @@ const Tracking = (() => {
     $("td-slider").max = Math.max(0, sim.dates.length - 1);
     if (!silent) $("td-slider").value = 0;
     $("td-assumptions").textContent = sim.model_available ? sim.assumptions : `Simulação temporal indisponível: ${sim.model_reason}.`;
-    App.showUnderlying(d.underlying);
+    App.showUnderlying(d.underlying, "tracking");
     drawDetail();
     if (!silent) card.scrollIntoView({ behavior: "smooth", block: "start" });
   }
@@ -439,7 +457,7 @@ const Tracking = (() => {
       })),
       ...(d.breakevens || []).map((b) => ({ label: d.profile_exact ? "Breakeven no venc." : "Breakeven 1º venc. (modelo)", value: b, color: "#7a2fc0", size: 2, fit: true })),
       ...(showModel ? sel.breakevens.map((b) => ({ label: `Equilíbrio em ${FMT.date(sel.date)} (modelo)`, value: b, color: "#1f5fbf", dashed: true, dash: [2, 3] })) : []),
-    ]);
+    ], "tracking");
   }
 
   function renderMetrics(d) {

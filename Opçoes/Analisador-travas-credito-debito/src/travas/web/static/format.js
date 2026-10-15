@@ -45,3 +45,48 @@ function tickerIcon(ticker, size = 20) {
   return `<span class="tk" style="width:${size}px;height:${size}px;font-size:${Math.round(size * 0.38)}px" aria-hidden="true">` +
     `<span>${esc(t.slice(0, 2))}</span><img src="/api/icon/${encodeURIComponent(t)}" alt="" decoding="async" onerror="this.remove()"></span>`;
 }
+
+// Indicador de carregamento: camada semitransparente com ícone girando sobre um elemento.
+// Contagem por elemento (vários carregamentos simultâneos) e atraso de 150 ms para não piscar
+// em respostas instantâneas (cache). Use sempre em pares: show() … finally hide().
+const Busy = (() => {
+  const state = new WeakMap(); // el → { n, timer, text }
+  function show(el, text = "Carregando…") {
+    if (!el) return;
+    const s = state.get(el) || { n: 0, timer: null };
+    s.n += 1;
+    s.text = text;
+    state.set(el, s);
+    el.setAttribute("aria-busy", "true");
+    if (s.n === 1) {
+      s.timer = setTimeout(() => {
+        if (s.n <= 0) return;
+        let ov = el.querySelector(":scope > .busy-overlay");
+        if (!ov) {
+          ov = document.createElement("div");
+          ov.className = "busy-overlay";
+          ov.setAttribute("role", "status");
+          ov.innerHTML = '<div class="busy-box"><span class="spinner" aria-hidden="true"></span><span class="busy-text"></span></div>';
+          el.appendChild(ov);
+        }
+        ov.querySelector(".busy-text").textContent = s.text;
+      }, 150);
+    } else {
+      const t = el.querySelector(":scope > .busy-overlay .busy-text");
+      if (t) t.textContent = text;
+    }
+  }
+  function hide(el) {
+    if (!el) return;
+    const s = state.get(el);
+    if (!s) return;
+    s.n = Math.max(0, s.n - 1);
+    if (s.n === 0) {
+      clearTimeout(s.timer);
+      const ov = el.querySelector(":scope > .busy-overlay");
+      if (ov) ov.remove();
+      el.removeAttribute("aria-busy");
+    }
+  }
+  return { show, hide };
+})();

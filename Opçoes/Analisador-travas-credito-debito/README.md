@@ -54,6 +54,26 @@ Os gráficos de payoff e de candles têm o botão **⤢ Maximizar** (Esc ou "Res
 largura do gráfico do ativo é ajustável arrastando a divisória à esquerda dele (setas ←/→ com a
 divisória em foco; duplo clique volta ao padrão); a largura fica salva nas preferências.
 
+### Aba Heatmap
+
+Mapa de calor (treemap) dos ativos com opções listadas (IBOV11 fica fora: é índice).
+- **Cor**: Dia / Semana / Mês / Ano (variação em 1, 5, 21 e 252 pregões, janela móvel), Volume
+  (volume financeiro do dia ÷ média de 20 pregões; durante o pregão o dia é parcial) ou Negócios
+  (da sessão; o MT5 não tem histórico de negócios). Cada bloco mostra ícone, ticker, % e valor bruto.
+- **Tamanho**: volume médio de 20 pregões, valor de mercado aproximado (preço do ticker × total
+  de ações da B3) ou igual. **Agrupamento** pela classificação setorial da B3.
+- **Clique num ativo**: setor/atividade/listagem (B3); variações; volatilidade histórica 20/60/252
+  × IV ATM por vencimento (mesma metodologia da análise); resumo técnico calculado com as barras
+  do MT5 (RSI 14, EMA 17×34, SMA 50/200, máx./mín. 52 semanas); proventos em dinheiro (data-com,
+  pagamento, valor, soma e % dos últimos 12 meses) e eventos em ações (desdobramento, grupamento,
+  bonificação, subscrição). Fusões/aquisições não constam da fonte. "Analisar travas" abre a
+  Análise com o ativo.
+- Fontes: MT5 (preços/volumes) e a API pública de empresas listadas da B3 (cadastro, proventos,
+  eventos), com cache em `data/b3/`. A 1ª carga leva ~30 s; depois vem do cache.
+- Fontes avaliadas e NÃO usadas: Investing.com (bloqueio anti-robô do Cloudflare), opcoes.net.br
+  (termos de uso proíbem acesso automatizado e o robots.txt bloqueia os dados históricos),
+  TradingView (só endpoint não oficial; termos restringem uso automatizado).
+
 ### Filtro Rafael Nobre (travas de débito)
 
 Opção no formulário de análise, habilitada só para débito:
@@ -130,7 +150,7 @@ src/travas/
   tracking/                   acompanhamento: modelos, avaliação (P&L, alertas, grupos), store JSON
   api/app.py                  FastAPI (nenhuma rota de ordem); api/tracking_routes.py
   web/static/                 HTML/JS, payoff em SVG, KLineCharts 10.0.4 (empacotado localmente)
-tests/                        100 testes: 4 travas, extremos, breakevens, POP, preço-limite, API…
+tests/                        109 testes: 4 travas, extremos, breakevens, POP, preço-limite, API…
 ```
 
 ## Definições (fonte de verdade: código em `src/travas/options`)

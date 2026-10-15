@@ -53,16 +53,33 @@ RANKING_COMPONENTS: dict[str, tuple[str, bool, str]] = {
 # Filtro Rafael Nobre (travas de débito):
 # 1) com alvo conhecido, a perna mais afastada (a vendida) deve ficar ANTES do alvo — de
 #    preferência; o usuário escolhe se é exigência ou só prioridade no ranking;
-# 2) o custo (débito natural) não deve passar de 1/4 da distância entre os strikes,
-#    o que equivale a lucro máximo ≥ 3 × perda máxima.
-NOBRE_MAX_COST_FRACTION = 0.25
-NOBRE_MIN_REWARD_RISK = (1 - NOBRE_MAX_COST_FRACTION) / NOBRE_MAX_COST_FRACTION  # = 3
-NOBRE_COST_REASON = "Rafael Nobre: custo acima de 1/4 da distância entre strikes"
+# 2) o custo (débito natural) não deve passar de 1/4 da distância entre os strikes (lucro
+#    máximo ≥ 3 × perda máxima); o usuário pode afrouxar para 1/3 (lucro ≥ 2 × perda);
+# 3) entre as que passam, priorizar strikes mais próximos (menor largura primeiro).
+NOBRE_COST_FRACTIONS = {0.25: "1/4", 1 / 3: "1/3"}
+NOBRE_MAX_COST_FRACTION = 0.25  # padrão
+NOBRE_COST_REASON = "Rafael Nobre: custo acima do teto da distância entre strikes"
 NOBRE_TARGET_REASON = "Rafael Nobre: perna vendida além do alvo"
 
 
+def nobre_min_reward_risk(fraction: float) -> float:
+    """Custo ≤ f × largura ⇔ lucro máx./perda máx. ≥ (1 − f)/f (1/4 → 3; 1/3 → 2)."""
+    return (1 - fraction) / fraction
+
+
+def nobre_fraction_label(fraction: float) -> str:
+    return next(
+        (v for k, v in NOBRE_COST_FRACTIONS.items() if abs(k - fraction) < 1e-9), f"{fraction:.0%}"
+    )
+
+
 def nobre_check(
-    kind: VerticalKind, short_strike: float, width: float, entry: float, target: float | None
+    kind: VerticalKind,
+    short_strike: float,
+    width: float,
+    entry: float,
+    target: float | None,
+    max_cost_fraction: float = NOBRE_MAX_COST_FRACTION,
 ) -> dict | None:
     """Critérios do filtro Rafael Nobre para uma trava de débito (None nas de crédito)."""
     if kind.flow is not Flow.DEBIT:
@@ -73,8 +90,9 @@ def nobre_check(
         target_ok = short_strike <= target + 1e-9
     else:
         target_ok = short_strike >= target - 1e-9
-    max_cost = width * NOBRE_MAX_COST_FRACTION
+    max_cost = width * max_cost_fraction
     return {
+        "max_cost_fraction": max_cost_fraction,
         "cost_ratio": entry / width,
         "max_cost": max_cost,
         "cost_ok": entry <= max_cost + 1e-9,
@@ -116,6 +134,8 @@ class AnalysisParams:
     min_reward_risk: float | None = None
     nobre_filter: bool = False  # filtro Rafael Nobre (só travas de débito)
     nobre_target_required: bool = False  # True = exige perna vendida antes do alvo
+    nobre_max_cost_fraction: float = NOBRE_MAX_COST_FRACTION  # 1/4 (padrão) ou 1/3
+    nobre_prefer_close: bool = True  # strikes mais próximos primeiro no ranking
     costs_brl: float = 0.0
     max_results: int = 300
 
@@ -405,12 +425,19 @@ def evaluate_pair(prep: PreparedChain, long_row: pd.Series, short_row: pd.Series
     )
     result["data_flags"] = sorted(set(long_row["quote_flags"]) | set(short_row["quote_flags"]))
 
-    nobre = nobre_check(p.kind, float(short_row["strike"]), width, natural, p.target_price)
+    nobre = nobre_check(
+        p.kind,
+        float(short_row["strike"]),
+        width,
+        natural,
+        p.target_price,
+        p.nobre_max_cost_fraction,
+    )
     result["nobre"] = nobre
     nobre_active = p.nobre_filter and nobre is not None
     min_rr = p.min_reward_risk
-    if nobre_active:  # preço-limite também respeita custo ≤ 1/4 da largura
-        min_rr = max(min_rr or 0.0, NOBRE_MIN_REWARD_RISK)
+    if nobre_active:  # preço-limite também respeita o teto de custo do filtro
+        min_rr = max(min_rr or 0.0, nobre_min_reward_risk(p.nobre_max_cost_fraction))
     limit = suggest_limit(
         structure,
         p.flow,
@@ -552,6 +579,8 @@ def analyze_prepared(prep: PreparedChain) -> dict:
         key=lambda r: (
             # Filtro Nobre "preferencial": travas com a vendida antes do alvo vêm primeiro.
             nobre_active and (r.get("nobre") or {}).get("target_ok") is False,
+            # …e, entre elas, strikes mais próximos (menor largura) primeiro; empate → score.
+            round(r["width"], 4) if nobre_active and params.nobre_prefer_close else 0,
             r["score"] is None,
             -(r["score"] or 0),
         )
@@ -572,26 +601,39 @@ def analyze_prepared(prep: PreparedChain) -> dict:
         ],
         "expirations": sorted({d.isoformat() for d in prep.chain["expiration_date"].unique()}),
         "assumptions": assumptions(prep),
-        "nobre": nobre_summary(params),
+        "nobre": nobre_summary(params, ranked),
     }
 
 
-def nobre_summary(params: AnalysisParams) -> dict | None:
+def nobre_summary(params: AnalysisParams, ranked: list[dict] | None = None) -> dict | None:
     if not params.nobre_filter:
         return None
     if params.flow is not Flow.DEBIT:
         return {"active": False, "note": "filtro Rafael Nobre vale só para travas de débito"}
+    f = params.nobre_max_cost_fraction
     notes = [
-        "custo (débito natural) ≤ 1/4 da distância entre strikes (lucro máx. ≥ 3 × perda máx.); "
-        "o preço-limite sugerido respeita esse teto"
+        f"custo (débito natural) ≤ {nobre_fraction_label(f)} da distância entre strikes "
+        f"(lucro máx. ≥ {nobre_min_reward_risk(f):.0f} × perda máx.); o preço-limite sugerido "
+        "respeita esse teto"
     ]
+    if params.nobre_prefer_close:
+        notes.append("ordem: strikes mais próximos primeiro (menor largura), depois o score")
     if params.target_price is None:
         notes.append("sem preço-alvo: o critério da perna antes do alvo não foi aplicado")
     elif params.nobre_target_required:
         notes.append("perna vendida antes do alvo: exigida")
     else:
         notes.append("perna vendida antes do alvo: preferida (aparece primeiro no ranking)")
-    return {"active": True, "note": "; ".join(notes)}
+    both = sum(1 for r in ranked or [] if (r.get("nobre") or {}).get("target_ok") is True)
+    warning = None
+    if params.target_price is not None and ranked and both == 0:
+        warning = (
+            "Nenhuma trava cumpre as duas regras ao mesmo tempo: com a perna vendida antes do alvo "
+            f"o custo passa de {nobre_fraction_label(f)} da largura. As travas listadas cumprem só "
+            "o custo (vendida além do alvo). Considere alvo mais distante ou vencimento mais longo"
+            + (" ou o teto de 1/3." if f < 0.3 else ".")
+        )
+    return {"active": True, "note": "; ".join(notes), "both_rules": both, "warning": warning}
 
 
 def assumptions(prep: PreparedChain) -> dict:

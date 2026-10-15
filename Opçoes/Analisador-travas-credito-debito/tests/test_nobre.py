@@ -80,3 +80,86 @@ def test_filter_ignored_for_credit(calendar):
     off = analyze(chain, SPOT, TODAY, calendar, make_params(Direction.BULL, Flow.CREDIT))
     assert len(on["results"]) == len(off["results"])
     assert on["nobre"]["active"] is False
+
+
+def test_one_third_is_more_permissive(calendar):
+    chain = synthetic_chain(calendar)
+    quarter = analyze(
+        chain,
+        SPOT,
+        TODAY,
+        calendar,
+        make_params(Direction.BULL, Flow.DEBIT, target_price=33.0, nobre_filter=True),
+    )["results"]
+    third = analyze(
+        chain,
+        SPOT,
+        TODAY,
+        calendar,
+        make_params(
+            Direction.BULL,
+            Flow.DEBIT,
+            target_price=33.0,
+            nobre_filter=True,
+            nobre_max_cost_fraction=1 / 3,
+        ),
+    )["results"]
+    assert len(third) > len(quarter)
+    for r in third:
+        assert r["entry_natural"] <= r["width"] / 3 + 1e-9
+        assert r["reward_risk"] >= 2 - 1e-9
+        assert r["limit"]["suggested"] <= r["width"] / 3 + 1e-9
+    assert any(r["entry_natural"] > r["width"] / 4 for r in third)  # passou só com 1/3
+
+
+def test_closer_strikes_first(calendar):
+    chain = synthetic_chain(calendar)
+    params = make_params(
+        Direction.BULL,
+        Flow.DEBIT,
+        target_price=36.0,
+        nobre_filter=True,
+        nobre_max_cost_fraction=1 / 3,
+    )
+    rows = analyze(chain, SPOT, TODAY, calendar, params)["results"]
+    assert len({r["width"] for r in rows}) > 1
+    ok = [r for r in rows if r["nobre"]["target_ok"] is not False]
+    widths = [r["width"] for r in ok]
+    assert widths == sorted(widths)  # menor largura primeiro
+    for w in set(widths):  # empate de largura → maior score primeiro
+        scores = [r["score"] for r in ok if r["width"] == w]
+        assert scores == sorted(scores, reverse=True)
+    by_score = analyze(
+        chain,
+        SPOT,
+        TODAY,
+        calendar,
+        make_params(
+            Direction.BULL,
+            Flow.DEBIT,
+            target_price=36.0,
+            nobre_filter=True,
+            nobre_max_cost_fraction=1 / 3,
+            nobre_prefer_close=False,
+        ),
+    )["results"]
+    ok2 = [r["score"] for r in by_score if r["nobre"]["target_ok"] is not False]
+    assert ok2 == sorted(ok2, reverse=True)
+
+
+def test_warns_when_no_structure_meets_both_rules(calendar):
+    chain = synthetic_chain(calendar)
+    # Alvo logo acima do spot: vendida antes do alvo ⇒ trava cara demais para 1/4.
+    params = make_params(Direction.BULL, Flow.DEBIT, target_price=31.5, nobre_filter=True)
+    result = analyze(chain, SPOT, TODAY, calendar, params)
+    assert result["results"]
+    assert result["nobre"]["both_rules"] == 0
+    assert "Nenhuma trava cumpre as duas regras" in result["nobre"]["warning"]
+    far = analyze(
+        chain,
+        SPOT,
+        TODAY,
+        calendar,
+        make_params(Direction.BULL, Flow.DEBIT, target_price=36.0, nobre_filter=True),
+    )
+    assert far["nobre"]["both_rules"] > 0 and far["nobre"]["warning"] is None

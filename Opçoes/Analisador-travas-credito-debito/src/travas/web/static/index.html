@@ -12,6 +12,7 @@
   <nav class="tabs" role="tablist" aria-label="Seções">
     <button data-tab="analysis" class="active" role="tab">Análise</button>
     <button data-tab="tracking" role="tab">Acompanhamento</button>
+    <button data-tab="heatmap" role="tab">Heatmap</button>
   </nav>
   <div id="market" class="market-pill" role="status" aria-live="polite" hidden></div>
   <div id="conn" class="conn" role="status" aria-live="polite">
@@ -46,6 +47,12 @@
         <p id="kind-desc" class="kind-desc"></p>
         <div class="nobre-box" id="nobre-box">
           <label class="check-inline strong"><input type="checkbox" id="nobre_filter"> Filtro Rafael Nobre</label>
+          <label class="check-inline">custo máx.
+            <select id="nobre_fraction" title="Teto do débito em relação à distância entre os strikes">
+              <option value="0.25">1/4 da distância (lucro ≥ 3× perda)</option>
+              <option value="0.3333333333">1/3 da distância (lucro ≥ 2× perda)</option>
+            </select></label>
+          <label class="check-inline"><input type="checkbox" id="nobre_prefer_close" checked> priorizar strikes mais próximos</label>
           <label class="check-inline"><input type="checkbox" id="nobre_target_required"> exigir a perna vendida antes do alvo (desmarcado: só prioriza no ranking)</label>
           <span class="tip" title="Para travas de débito: (1) conhecendo o alvo, a perna mais afastada (a vendida) deve ficar antes do alvo; (2) o custo (débito natural) não deve passar de 1/4 da distância entre os strikes — equivale a lucro máximo ≥ 3 × perda máxima. Informe o preço-alvo para aplicar o critério (1).">?</span>
           <span id="nobre-hint" class="muted small"></span>
@@ -140,7 +147,7 @@
             <button type="button" class="max-btn" id="max-payoff">⤢ Maximizar</button>
           </div>
           <div class="legend" id="payoff-legend"></div>
-          <div id="payoff" class="payoff" role="img" aria-label="Gráfico de payoff"></div>
+          <div class="busy-host" id="payoff-host"><div id="payoff" class="payoff" role="img" aria-label="Gráfico de payoff"></div></div>
           <div class="time-control" id="time-control">
             <label for="time-slider">Data simulada:</label>
             <input type="range" id="time-slider" min="0" max="0" value="0">
@@ -256,7 +263,7 @@
             <button type="button" class="max-btn" id="td-max">⤢ Maximizar</button>
           </div>
           <div class="legend" id="td-legend"></div>
-          <div id="td-payoff" class="payoff" role="img" aria-label="Gráfico de payoff da estrutura acompanhada"></div>
+          <div class="busy-host" id="td-payoff-host"><div id="td-payoff" class="payoff" role="img" aria-label="Gráfico de payoff da estrutura acompanhada"></div></div>
           <div class="time-control" id="td-time">
             <label for="td-slider">Data simulada:</label>
             <input type="range" id="td-slider" min="0" max="0" value="0">
@@ -273,6 +280,28 @@
       <div class="table-wrap"><table id="td-legs" class="legs"></table></div>
       <p class="muted small" id="td-notes"></p>
     </section>
+   </div>
+
+   <div id="tab-heatmap" hidden>
+    <section class="card">
+      <div class="card-head">
+        <h2>Heatmap <span class="muted small">ativos com opções listadas</span></h2>
+        <div class="toolbar">
+          <div class="seg-buttons" id="hm-metric" role="group" aria-label="Métrica de cor">
+            <button data-m="1d" class="active">Dia</button><button data-m="1w">Semana</button><button data-m="1m">Mês</button><button data-m="1y">Ano</button><button data-m="vol">Volume</button><button data-m="deals">Negócios</button>
+          </div>
+          <label class="small">Tamanho
+            <select id="hm-size"><option value="turnover">Volume médio 20d</option><option value="cap">Valor de mercado (aprox.)</option><option value="equal">Igual</option></select></label>
+          <label class="check-inline"><input type="checkbox" id="hm-group" checked> Agrupar por setor</label>
+          <button id="hm-refresh">Atualizar</button>
+        </div>
+      </div>
+      <div class="muted small" id="hm-meta"></div>
+      <div class="hm-legend" id="hm-legend"></div>
+      <div class="busy-host" id="hm-map-host"><div class="hm-map" id="hm-map" aria-label="Mapa de calor dos ativos"></div></div>
+      <p class="muted small" id="hm-notes"></p>
+    </section>
+    <section class="card" id="hm-detail" hidden></section>
    </div>
 
     <footer class="disclaimer small">
@@ -301,7 +330,7 @@
         <span><i class="sw" style="background:#ff8c00"></i>EMA 34</span>
         <span id="bar-info" class="muted small"></span>
       </div>
-      <div id="kchart" class="kchart"></div>
+      <div class="busy-host" id="kchart-host"><div id="kchart" class="kchart"></div></div>
       <div id="levels" class="levels small"></div>
       <p class="muted small" id="candle-note"></p>
     </div>
@@ -314,6 +343,7 @@
 <script src="/static/payoff.js"></script>
 <script src="/static/candles.js"></script>
 <script src="/static/tracking.js"></script>
+<script src="/static/heatmap.js"></script>
 <script src="/static/app.js"></script>
 </body>
 </html>
