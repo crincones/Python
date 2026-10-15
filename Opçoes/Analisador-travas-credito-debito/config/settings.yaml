@@ -1,0 +1,102 @@
+# Configuração do Analisador de Travas. Valores marcados "PROVISÓRIO" são padrões iniciais.
+# Caminhos relativos são resolvidos a partir da raiz do projeto.
+# Os filtros de análise (vencimentos, strikes, liquidez, pesos, vol, juros) também podem ser
+# alterados na interface; estes são apenas os padrões.
+
+mt5:
+  terminal_path: C:\Users\Carlos\AppData\Roaming\MetaQuotes\Terminal\Metatrader5B3\terminal64.exe
+  portable: true                  # o terminal da XP roda com /portable
+  # Terminal fechado: o analisador abre minimizado e, ao encerrar, fecha SÓ o que ele abriu.
+  launch_if_closed: true
+  close_if_launched: true
+  startup_timeout_seconds: 180
+  startup_stable_seconds: 5
+  shutdown_timeout_seconds: 60
+  init_retries: 3
+  retry_wait_seconds: 2.0
+  select_batch_size: 100
+  quote_poll_seconds: 0.5
+  quote_min_wait_seconds: 1.5
+  quote_wait_timeout_seconds: 10.0
+  feed_cooldown_seconds: 15.0
+  # Na XP o epoch do MT5 é o relógio de parede de Brasília codificado como UTC.
+  server_timezone: America/Sao_Paulo
+
+paths:
+  holidays_file: config/feriados_b3.csv
+  logs_dir: logs
+  preferences_file: config/preferencias.json   # preferências da interface (sem credenciais)
+  tracking_file: data/acompanhamento.json      # estruturas acompanhadas (fora do git)
+  quotes_dir: data/cotacoes                    # últimas cotações do pregão (fora do git)
+  icons_dir: data/icones                       # ícones dos ativos baixados (fora do git)
+
+server:
+  host: 127.0.0.1                 # só local
+  port: 8765
+  open_browser: true
+
+logging:
+  level: INFO
+  max_bytes: 5000000
+  backup_count: 5
+
+collection:
+  strike_range_pct_spot: 0.30
+  max_dte_business_days: 90
+  catalog_cache_minutes: 30
+  chain_cache_seconds: 60         # reaproveita a cadeia coletada por até 60 s
+  stale_feed_minutes: 15          # tick do ativo mais velho que isso = dados não estão em tempo real
+
+liquidity:                        # PROVISÓRIO: mínimos por perna (ajustáveis na interface)
+  max_spread_pct_mid: 0.20        # (ask − bid) / mid
+  min_mid_price_brl: 0.03
+  min_turnover_brl: 5000          # volume financeiro do dia
+  min_deals: 5                    # negócios no dia
+  max_quote_age_seconds: 300      # idade medida contra o tick mais recente do mesmo lote
+
+pricing:
+  # CDI anual (composto em 252 du). Ajustável na interface. Ref.: B3 16/09/2026 = 13,90%.
+  risk_free_rate_annual: 0.1390
+  iv_lower_bound: 0.01
+  iv_upper_bound: 5.0
+  iv_tolerance: 1.0e-6
+  iv_max_iterations: 100
+  atm_max_spread_pct_mid: 0.15
+  atm_max_strike_distance_pct: 0.05
+
+analysis:
+  dte_min_business_days: 3
+  dte_max_business_days: 60
+  max_width_pct_spot: 0.15        # largura máxima da trava em % do spot
+  quantity: 100                   # opções por perna na simulação
+  limit_aggressiveness: 0.25      # preço-limite = mid + 25% do caminho até o preço natural
+  illiquid_score_cap: 40          # estruturas com perna reprovada nunca passam disso
+  max_results: 300
+  weights:                        # somam 1; ajustáveis na interface
+    scenario: 0.35
+    reward_risk: 0.15
+    pop: 0.15
+    liquidity: 0.25
+    execution_cost: 0.10
+
+early_exercise:
+  min_extrinsic_brl: 0.02
+  min_extrinsic_pct_premium: 0.02
+
+candles:
+  bars: 400
+  ema_fast: 17
+  ema_slow: 34
+
+# Pregão regular de opções da B3 (horário de Brasília). CONFERIR na B3 quando houver mudança de
+# horário. Fora deste intervalo, o app usa as últimas cotações capturadas com o mercado aberto.
+market_hours:
+  session_open: "10:00"
+  session_close: "17:55"
+
+# Ícones dos ativos: baixados sob demanda para paths.icons_dir (não versionados). Fonte: repositório
+# público thefintz/icones-b3 (sem licença declarada; logos são marcas das respectivas empresas).
+icons:
+  enabled: true
+  source_url: https://raw.githubusercontent.com/thefintz/icones-b3/main/icones/{name}.png
+  timeout_seconds: 6

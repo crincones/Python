@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Analisador de Travas</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">Analisador de Travas <span class="muted">B3 · opções</span></div>
+  <nav class="tabs" role="tablist" aria-label="Seções">
+    <button data-tab="analysis" class="active" role="tab">Análise</button>
+    <button data-tab="tracking" role="tab">Acompanhamento</button>
+  </nav>
+  <div id="market" class="market-pill" role="status" aria-live="polite" hidden></div>
+  <div id="conn" class="conn" role="status" aria-live="polite">
+    <span class="dot"></span><span id="conn-text">Verificando MT5…</span>
+  </div>
+</header>
+
+<div class="layout" id="layout">
+  <main class="main">
+   <div id="tab-analysis">
+    <section class="card" aria-labelledby="f-title">
+      <h2 id="f-title">Análise</h2>
+      <form id="form" autocomplete="off">
+        <div class="row">
+          <fieldset class="seg">
+            <legend>Direção</legend>
+            <label><input type="radio" name="direction" value="alta" checked> Trava de alta</label>
+            <label><input type="radio" name="direction" value="baixa"> Trava de baixa</label>
+          </fieldset>
+          <fieldset class="seg">
+            <legend>Estrutura</legend>
+            <label><input type="radio" name="flow" value="debito" checked> Débito</label>
+            <label><input type="radio" name="flow" value="credito"> Crédito</label>
+          </fieldset>
+          <div class="field">
+            <label for="underlying">Ativo-objeto</label>
+            <div class="with-icon"><span id="underlying-icon"></span><input id="underlying" list="underlyings" required placeholder="ex.: PETR4" class="upper"></div>
+            <datalist id="underlyings"></datalist>
+            <small id="spot-info" class="muted hint"></small>
+          </div>
+        </div>
+        <p id="kind-desc" class="kind-desc"></p>
+        <div class="nobre-box" id="nobre-box">
+          <label class="check-inline strong"><input type="checkbox" id="nobre_filter"> Filtro Rafael Nobre</label>
+          <label class="check-inline"><input type="checkbox" id="nobre_target_required"> exigir a perna vendida antes do alvo (desmarcado: só prioriza no ranking)</label>
+          <span class="tip" title="Para travas de débito: (1) conhecendo o alvo, a perna mais afastada (a vendida) deve ficar antes do alvo; (2) o custo (débito natural) não deve passar de 1/4 da distância entre os strikes — equivale a lucro máximo ≥ 3 × perda máxima. Informe o preço-alvo para aplicar o critério (1).">?</span>
+          <span id="nobre-hint" class="muted small"></span>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="target_price">Preço-alvo (R$)</label>
+            <input id="target_price" type="number" step="any" min="0">
+          </div>
+          <div class="field">
+            <label for="target_pct">ou variação esperada (%)</label>
+            <input id="target_pct" type="number" step="any">
+          </div>
+          <div class="field">
+            <label for="horizon_date">Horizonte do movimento</label>
+            <input id="horizon_date" type="date">
+            <small class="muted hint">vazio = no vencimento</small>
+          </div>
+          <div class="field">
+            <label for="quantity">Opções por perna</label>
+            <input id="quantity" type="number" min="1" step="1">
+          </div>
+        </div>
+
+        <details class="advanced">
+          <summary>Filtros e premissas avançados (opcional)</summary>
+          <div class="grid">
+            <div class="field"><label for="conservative_price">Cenário conservador (R$)</label><input id="conservative_price" type="number" step="any" min="0"></div>
+            <div class="field"><label for="optimistic_price">Cenário otimista (R$)</label><input id="optimistic_price" type="number" step="any" min="0"></div>
+            <div class="field"><label for="dte_min">Dias úteis até venc. (mín)</label><input id="dte_min" type="number" min="0" step="1"></div>
+            <div class="field"><label for="dte_max">Dias úteis até venc. (máx)</label><input id="dte_max" type="number" min="1"></div>
+            <div class="field"><label for="strike_min">Strike mínimo</label><input id="strike_min" type="number" step="any"></div>
+            <div class="field"><label for="strike_max">Strike máximo</label><input id="strike_max" type="number" step="any"></div>
+            <div class="field"><label for="max_width">Largura máx. da trava (R$)</label><input id="max_width" type="number" step="any" min="0"></div>
+            <div class="field"><label for="max_loss_total">Perda máx. por operação (R$)</label><input id="max_loss_total" type="number" step="any" min="0"></div>
+            <div class="field"><label for="max_spread_pct_mid">Spread bid/ask máx. (% do mid)</label><input id="max_spread_pct_mid" type="number" step="any" min="0"></div>
+            <div class="field"><label for="min_deals">Negócios mín. no dia (por perna)</label><input id="min_deals" type="number" min="0" step="1"></div>
+            <div class="field"><label for="min_turnover_brl">Volume financeiro mín. (R$)</label><input id="min_turnover_brl" type="number" min="0" step="any"></div>
+            <div class="field"><label for="max_quote_age_seconds">Idade máx. da cotação (s)</label><input id="max_quote_age_seconds" type="number" min="1"></div>
+            <div class="field"><label for="vol_override">Volatilidade própria (% a.a.)</label><input id="vol_override" type="number" step="any" min="0" placeholder="vazio = IV do mercado"></div>
+            <div class="field"><label for="rate_annual">Juros livre de risco (% a.a.)</label><input id="rate_annual" type="number" step="any"></div>
+            <div class="field"><label for="costs_brl">Custos estimados por operação (R$)</label><input id="costs_brl" type="number" step="any" min="0" value="0"></div>
+            <div class="field"><label for="limit_aggressiveness">Agressividade do preço-limite (0–100%)</label><input id="limit_aggressiveness" type="number" min="0" max="100" step="any"></div>
+            <div class="field"><label for="min_reward_risk">Lucro/perda mínimo (opcional)</label><input id="min_reward_risk" type="number" step="any" min="0"></div>
+            <div class="field check"><label><input id="include_illiquid" type="checkbox"> Incluir travas com perna ilíquida/cotação antiga (score limitado)</label></div>
+          </div>
+          <h3>Pesos do ranking <span class="muted">(normalizados para somar 100%)</span></h3>
+          <div class="grid weights">
+            <div class="field"><label for="w_scenario">Resultado no alvo</label><input id="w_scenario" type="number" min="0" step="any"></div>
+            <div class="field"><label for="w_reward_risk">Lucro/perda máx.</label><input id="w_reward_risk" type="number" min="0" step="any"></div>
+            <div class="field"><label for="w_pop">POP</label><input id="w_pop" type="number" min="0" step="any"></div>
+            <div class="field"><label for="w_liquidity">Liquidez</label><input id="w_liquidity" type="number" min="0" step="any"></div>
+            <div class="field"><label for="w_execution_cost">Custo de execução</label><input id="w_execution_cost" type="number" min="0" step="any"></div>
+          </div>
+        </details>
+
+        <div class="actions">
+          <button type="submit" id="btn-analyze" class="primary">Analisar</button>
+          <label class="check-inline"><input type="checkbox" id="refresh"> Forçar nova coleta</label>
+          <span id="form-msg" class="msg" role="status" aria-live="polite"></span>
+        </div>
+      </form>
+    </section>
+
+    <section class="card" id="results-card" hidden>
+      <div class="card-head">
+        <h2>Estruturas ranqueadas</h2>
+        <div class="muted" id="results-meta"></div>
+      </div>
+      <div id="data-warning" class="warn" hidden></div>
+      <div id="discarded" class="muted small"></div>
+      <div class="table-wrap">
+        <table id="ranking" class="ranking">
+          <thead></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="muted small" id="ranking-note"></p>
+    </section>
+
+    <section class="card" id="detail-card" hidden>
+      <div class="card-head">
+        <h2 id="detail-title">Estrutura</h2>
+        <div class="muted" id="detail-sub"></div>
+        <button type="button" id="btn-track">+ Adicionar ao acompanhamento</button>
+      </div>
+      <div id="detail-alerts"></div>
+      <div class="detail-grid">
+        <div class="payoff-wrap" id="payoff-wrap">
+          <div class="chart-head">
+            <h3>Payoff <span class="muted small">(total da operação, R$)</span></h3>
+            <button type="button" class="max-btn" id="max-payoff">⤢ Maximizar</button>
+          </div>
+          <div class="legend" id="payoff-legend"></div>
+          <div id="payoff" class="payoff" role="img" aria-label="Gráfico de payoff"></div>
+          <div class="time-control" id="time-control">
+            <label for="time-slider">Data simulada:</label>
+            <input type="range" id="time-slider" min="0" max="0" value="0">
+            <output id="time-label"></output>
+          </div>
+          <p class="muted small" id="sim-assumptions"></p>
+        </div>
+        <div>
+          <h3>Preço-limite indicativo <span class="tip" title="Preço para digitar manualmente no ProfitChart. Indicativo: execução não garantida. Nenhuma ordem é enviada por este aplicativo.">?</span></h3>
+          <div id="limit-box"></div>
+          <h3>Métricas</h3>
+          <div id="metrics" class="metrics"></div>
+        </div>
+      </div>
+      <h3>Pernas</h3>
+      <div class="table-wrap"><table id="legs" class="legs"></table></div>
+      <h3>Composição do score</h3>
+      <div id="score-box"></div>
+      <h3>Premissas e metodologia</h3>
+      <ul id="assumptions" class="small"></ul>
+    </section>
+
+   </div>
+
+   <div id="tab-tracking" hidden>
+    <section class="card">
+      <div class="card-head">
+        <h2>Acompanhamento</h2>
+        <div class="toolbar">
+          <label class="small">Vol. própria (% a.a.) <input id="trk-vol" type="number" step="any" min="0" placeholder="IV das pernas" style="width:8rem"></label>
+          <label class="check-inline"><input type="checkbox" id="trk-auto"> Atualizar a cada 60 s</label>
+          <label class="check-inline"><input type="checkbox" id="trk-closed"> Mostrar encerradas</label>
+          <button id="trk-refresh">Atualizar cotações</button>
+          <button id="trk-new" class="primary">+ Nova estrutura</button>
+        </div>
+      </div>
+      <div class="muted small" id="trk-meta">Nenhuma atualização ainda.</div>
+      <div id="trk-market" class="warn" hidden></div>
+      <div id="trk-errors" class="warn" hidden></div>
+      <div id="trk-groups"></div>
+    </section>
+
+    <section class="card" id="trk-form-card" hidden>
+      <h2 id="trk-form-title">Nova estrutura</h2>
+      <form id="trk-form" autocomplete="off" novalidate>
+        <div class="row">
+          <div class="field"><label for="tf-name">Nome</label><input id="tf-name" placeholder="ex.: Alta PETR4 nov"></div>
+          <div class="field"><label for="tf-group">Grupo</label><input id="tf-group" list="trk-group-list" placeholder="ex.: Novembro"><datalist id="trk-group-list"></datalist></div>
+          <div class="field"><label for="tf-underlying">Ativo-objeto</label><div class="with-icon"><span id="tf-underlying-icon"></span><input id="tf-underlying" list="underlyings" class="upper" required></div></div>
+          <div class="field"><label for="tf-date">Data de entrada</label><input id="tf-date" type="date" required></div>
+        </div>
+        <h3>Pernas <span class="muted small">(tickers reais do MT5; preço da perna é opcional)</span></h3>
+        <datalist id="trk-opts"></datalist>
+        <div class="table-wrap"><table class="legs" id="tf-legs">
+          <thead><tr><th class="l">Ticker</th><th class="l">Lado</th><th>Quantidade</th><th>Preço de entrada da perna</th><th class="l">Série</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table></div>
+        <button type="button" id="tf-add-leg">+ perna</button>
+        <div class="row" style="margin-top:.8rem">
+          <div class="field"><label for="tf-net">Preço líquido pago/recebido (por unidade)</label><input id="tf-net" type="number" step="any" min="0"></div>
+          <div class="field"><label for="tf-flow">Sentido</label>
+            <select id="tf-flow"><option value="debito">Débito (paguei)</option><option value="credito">Crédito (recebi)</option></select></div>
+          <div class="field"><label for="tf-costs">Custos de entrada (R$)</label><input id="tf-costs" type="number" step="any" min="0" value="0"></div>
+          <div class="field"><label for="tf-tp" title="Alerta quando o P&L (pelo natural) atingir este percentual do lucro máximo da estrutura. Não é preço do ativo.">Alvo de saída (% do lucro máx., 1–100)</label><input id="tf-tp" type="number" step="any" min="1" max="100" placeholder="opcional, ex.: 50"></div>
+          <div class="field"><label for="tf-sl" title="Alerta quando o prejuízo total (pelo natural) chegar a este valor em R$.">Stop (prejuízo total em R$)</label><input id="tf-sl" type="number" step="any" min="0" placeholder="opcional, ex.: 300"></div>
+        </div>
+        <div class="field" style="margin-top:.6rem"><label for="tf-notes">Observações</label><textarea id="tf-notes" rows="2"></textarea></div>
+        <p class="muted small" id="tf-help">
+          Basta o <b>preço líquido</b> quando todas as pernas têm a mesma quantidade e entram/saem juntas.
+          Informe o <b>preço de cada perna</b> se montou as pernas em momentos diferentes, se as quantidades diferem (ex.: 1×2)
+          ou para ver o resultado por perna. Os custos (corretagem/emolumentos) entram no resultado.
+        </p>
+        <div class="actions">
+          <button type="submit" class="primary" id="tf-save">Salvar</button>
+          <button type="button" id="tf-cancel">Cancelar</button>
+          <span id="tf-msg" class="msg" role="status" aria-live="polite"></span>
+        </div>
+      </form>
+    </section>
+
+    <section class="card" id="trk-close-card" hidden>
+      <h2 id="trk-close-title">Encerrar estrutura</h2>
+      <form id="trk-close-form" novalidate>
+        <div class="row">
+          <div class="field"><label for="tc-date">Data de saída</label><input id="tc-date" type="date"></div>
+          <div class="field"><label for="tc-net">Preço líquido de saída (por unidade)</label><input id="tc-net" type="number" step="any" min="0"></div>
+          <div class="field"><label for="tc-flow">Sentido</label>
+            <select id="tc-flow"><option value="credito">Crédito (recebi ao zerar)</option><option value="debito">Débito (paguei ao zerar)</option></select></div>
+          <div class="field"><label for="tc-costs">Custos de saída (R$)</label><input id="tc-costs" type="number" step="any" min="0" value="0"></div>
+          <div class="field"><label for="tc-reason">Motivo</label>
+            <select id="tc-reason"><option value="zerada">Zerada</option><option value="vencida">Vencida (virou pó)</option><option value="exercida">Exercida</option></select></div>
+        </div>
+        <div id="tc-legs" class="row"></div>
+        <p class="muted small">Informe o preço líquido ou o preço de cada perna (os preços das pernas prevalecem).</p>
+        <div class="actions">
+          <button type="submit" class="primary">Registrar encerramento</button>
+          <button type="button" id="tc-cancel">Cancelar</button>
+          <span id="tc-msg" class="msg" role="status" aria-live="polite"></span>
+        </div>
+      </form>
+    </section>
+
+    <section class="card" id="trk-detail-card" hidden>
+      <div class="card-head">
+        <h2 id="td-title">Estrutura</h2>
+        <div class="muted" id="td-sub"></div>
+      </div>
+      <div id="td-alerts"></div>
+      <div class="detail-grid">
+        <div class="payoff-wrap" id="td-payoff-wrap">
+          <div class="chart-head">
+            <h3>Payoff <span class="muted small">(total, R$, preço de entrada registrado)</span></h3>
+            <button type="button" class="max-btn" id="td-max">⤢ Maximizar</button>
+          </div>
+          <div class="legend" id="td-legend"></div>
+          <div id="td-payoff" class="payoff" role="img" aria-label="Gráfico de payoff da estrutura acompanhada"></div>
+          <div class="time-control" id="td-time">
+            <label for="td-slider">Data simulada:</label>
+            <input type="range" id="td-slider" min="0" max="0" value="0">
+            <output id="td-time-label"></output>
+          </div>
+          <p class="muted small" id="td-assumptions"></p>
+        </div>
+        <div>
+          <h3>Resultado</h3>
+          <div id="td-metrics" class="metrics"></div>
+        </div>
+      </div>
+      <h3>Pernas</h3>
+      <div class="table-wrap"><table id="td-legs" class="legs"></table></div>
+      <p class="muted small" id="td-notes"></p>
+    </section>
+   </div>
+
+    <footer class="disclaimer small">
+      Ferramenta de análise, não recomendação de investimento. Opções podem causar perdas relevantes;
+      a liquidez pode impedir a execução pelo preço indicado. POP e valores teóricos dependem de modelo
+      e premissas e não garantem resultado. Este aplicativo não envia ordens.
+    </footer>
+  </main>
+
+  <div class="splitter" id="splitter" role="separator" aria-orientation="vertical" aria-label="Largura do gráfico do ativo" tabindex="0"
+       title="Arraste para ajustar a largura do gráfico · setas ←/→ · duplo clique: largura padrão"></div>
+  <aside class="side" id="side" aria-label="Gráfico do ativo-objeto">
+    <button class="side-toggle" id="side-toggle" aria-expanded="true" title="Recolher/expandir gráfico do ativo">⟩</button>
+    <div class="side-body">
+      <div class="side-head">
+        <h2 id="side-title">Ativo-objeto</h2>
+        <button type="button" class="max-btn" id="max-candles">⤢ Maximizar</button>
+        <div class="tf" role="group" aria-label="Timeframe">
+          <button data-tf="d1" class="active">Diário</button>
+          <button data-tf="w1">Semanal</button>
+          <button data-tf="h4">240 min</button>
+        </div>
+      </div>
+      <div class="ema-legend">
+        <span><i class="sw" style="background:#d000d0"></i>EMA 17</span>
+        <span><i class="sw" style="background:#ff8c00"></i>EMA 34</span>
+        <span id="bar-info" class="muted small"></span>
+      </div>
+      <div id="kchart" class="kchart"></div>
+      <div id="levels" class="levels small"></div>
+      <p class="muted small" id="candle-note"></p>
+    </div>
+  </aside>
+</div>
+
+<div id="tooltip" class="tooltip" hidden></div>
+<script src="/static/vendor/klinecharts.min.js"></script>
+<script src="/static/format.js"></script>
+<script src="/static/payoff.js"></script>
+<script src="/static/candles.js"></script>
+<script src="/static/tracking.js"></script>
+<script src="/static/app.js"></script>
+</body>
+</html>

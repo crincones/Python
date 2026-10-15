@@ -1,0 +1,61 @@
+date,description,source
+2023-02-20,Carnaval,observado_mt5
+2023-02-21,Carnaval,observado_mt5
+2023-04-07,Sexta-feira Santa,observado_mt5
+2023-04-21,Tiradentes,observado_mt5
+2023-05-01,Dia do Trabalho,observado_mt5
+2023-06-08,Corpus Christi,observado_mt5
+2023-09-07,Independência,observado_mt5
+2023-10-12,Nossa Senhora Aparecida,observado_mt5
+2023-11-02,Finados,observado_mt5
+2023-11-15,Proclamação da República,observado_mt5
+2023-12-25,Natal,observado_mt5
+2023-12-29,Último dia útil do ano,observado_mt5
+2024-01-01,Confraternização Universal,observado_mt5
+2024-02-12,Carnaval,observado_mt5
+2024-02-13,Carnaval,observado_mt5
+2024-03-29,Sexta-feira Santa,observado_mt5
+2024-05-01,Dia do Trabalho,observado_mt5
+2024-05-30,Corpus Christi,observado_mt5
+2024-11-15,Proclamação da República,observado_mt5
+2024-11-20,Consciência Negra,observado_mt5
+2024-12-24,Véspera de Natal,observado_mt5
+2024-12-25,Natal,observado_mt5
+2024-12-31,Último dia útil do ano,observado_mt5
+2025-01-01,Confraternização Universal,observado_mt5
+2025-03-03,Carnaval,observado_mt5
+2025-03-04,Carnaval,observado_mt5
+2025-04-18,Sexta-feira Santa,observado_mt5
+2025-04-21,Tiradentes,observado_mt5
+2025-05-01,Dia do Trabalho,observado_mt5
+2025-06-19,Corpus Christi,observado_mt5
+2025-11-20,Consciência Negra,observado_mt5
+2025-12-24,Véspera de Natal,observado_mt5
+2025-12-25,Natal,observado_mt5
+2025-12-31,Último dia útil do ano,observado_mt5
+2026-01-01,Confraternização Universal,observado_mt5
+2026-02-16,Carnaval,observado_mt5
+2026-02-17,Carnaval,observado_mt5
+2026-04-03,Sexta-feira Santa,observado_mt5
+2026-04-21,Tiradentes,observado_mt5
+2026-05-01,Dia do Trabalho,observado_mt5
+2026-06-04,Corpus Christi,observado_mt5
+2026-09-07,Independência,observado_mt5
+2026-10-12,Nossa Senhora Aparecida,previsto_confirmar_b3
+2026-11-02,Finados,previsto_confirmar_b3
+2026-11-20,Consciência Negra,previsto_confirmar_b3
+2026-12-24,Véspera de Natal,previsto_confirmar_b3
+2026-12-25,Natal,previsto_confirmar_b3
+2026-12-31,Último dia útil do ano,previsto_confirmar_b3
+2027-01-01,Confraternização Universal,previsto_confirmar_b3
+2027-02-08,Carnaval,previsto_confirmar_b3
+2027-02-09,Carnaval,previsto_confirmar_b3
+2027-03-26,Sexta-feira Santa,previsto_confirmar_b3
+2027-04-21,Tiradentes,previsto_confirmar_b3
+2027-05-27,Corpus Christi,previsto_confirmar_b3
+2027-09-07,Independência,previsto_confirmar_b3
+2027-10-12,Nossa Senhora Aparecida,previsto_confirmar_b3
+2027-11-02,Finados,previsto_confirmar_b3
+2027-11-15,Proclamação da República,previsto_confirmar_b3
+2027-12-24,Véspera de Natal,previsto_confirmar_b3
+2027-12-31,Último dia útil do ano,previsto_confirmar_b3
