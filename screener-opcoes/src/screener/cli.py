@@ -313,6 +313,67 @@ def _publish(settings: Settings, report_file: Path) -> bool:
     return True
 
 
+NoNotifyOption = Annotated[
+    bool, typer.Option("--no-notify", help="Não envia o aviso das melhores travas ao Telegram")
+]
+TestOption = Annotated[
+    bool, typer.Option("--test", help="Marca a mensagem como teste e envia mesmo se desativado")
+]
+
+
+@app.command()
+def notify(
+    snapshot: SnapshotOption = "latest",
+    config: ConfigOption = DEFAULT_SETTINGS_PATH,
+    test: TestOption = False,
+) -> None:
+    """Envia ao Telegram as travas do snapshot com score acima de notify.min_score."""
+    settings = _init(config)
+    if test:
+        settings = settings.model_copy(
+            update={"notify": settings.notify.model_copy(update={"enabled": True})}
+        )
+    report_url = settings.publish.public_url if settings.publish.enabled else None
+    if not _notify(settings, snapshot, report_url, test=test):
+        raise typer.Exit(code=1)
+
+
+def _notify(settings: Settings, snapshot: str, report_url: str | None, test: bool = False) -> bool:
+    """Aviso por Telegram. Falha é registrada, não interrompe: relatório e HTML já estão prontos."""
+    import pandas as pd
+
+    from screener.data import store
+    from screener.data.schema import SPREADS_TABLE
+    from screener.notify.alerts import send_alerts
+    from screener.notify.telegram import HttpTelegram, NotifyError, read_token
+
+    if not settings.notify.enabled:
+        log.info("Aviso por Telegram desativado (notify.enabled: false em settings.yaml)")
+        return True
+    path = store.resolve_snapshot(settings.paths.snapshots_dir, snapshot)
+    spreads = store.read_table(path, SPREADS_TABLE)
+    snapshot_time = pd.Timestamp(store.read_meta(path)["snapshot_time"])
+    try:
+        api = HttpTelegram(
+            read_token(settings.notify.token_file),
+            settings.notify.chat_id,
+            settings.notify.timeout_seconds,
+        )
+        send_alerts(
+            api,
+            spreads,
+            settings.notify,
+            settings.spreads.lot_size,
+            snapshot_time,
+            report_url=report_url,
+            test=test,
+        )
+    except NotifyError as exc:
+        log.error("Aviso por Telegram não enviado: %s", exc)
+        return False
+    return True
+
+
 ForceOption = Annotated[
     bool, typer.Option("--force", help="Executa mesmo fora de dia de pregão da B3")
 ]
@@ -324,8 +385,10 @@ def run(
     force: ForceOption = False,
     keep_terminal: KeepTerminalOption = False,
     no_publish: NoPublishOption = False,
+    no_notify: NoNotifyOption = False,
 ) -> None:
-    """collect + analyze + report + publish. Fim de semana ou feriado da B3: não faz nada."""
+    """collect + analyze + report + publish + aviso no Telegram. Fim de semana ou feriado da B3:
+    não faz nada."""
     import pandas as pd
 
     from screener.calendar_b3 import B3Calendar
@@ -346,5 +409,6 @@ def run(
         raise typer.Exit(code=1) from exc
     _analyze(settings, path.name)
     target = _report(settings, path.name)
-    if not no_publish:
-        _publish(settings, target)
+    published = not no_publish and settings.publish.enabled and _publish(settings, target)
+    if not no_notify:
+        _notify(settings, path.name, settings.publish.public_url if published else None)

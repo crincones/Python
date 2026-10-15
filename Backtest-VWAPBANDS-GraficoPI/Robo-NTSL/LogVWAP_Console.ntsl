@@ -1,0 +1,186 @@
+//==================================================================
+// LOGVWAP_CONSOLE  -  ProfitChart / NTSL  -  ESTRATEGIA (so log)
+//
+// Copia do LogCandles_Console.ntsl (Backtest-Momentum-GraficoPI/Robo-NTSL)
+// com dois campos a mais por candle, para reproduzir a VWAP Band da
+// Nelogica com o preco tipico "Media financeira":
+//     Volume    volume financeiro do candle
+//     Quantity  quantidade de contratos do candle
+// Media financeira do candle = Volume / Quantity / multiplicador.
+//
+// Nao envia ordem nenhuma.
+//
+// Decodificar a exportacao do console:
+//     python Robo-NTSL/decodifica_vwap.py <arquivo exportado>
+//
+//==================================================================
+// MODO 2 COMPACTO (padrao) -- varios candles por linha de console
+//
+//   L7;B140;N20|D1260310|1513,186890,75,115,-100,11365,19501,133,1147795,30866,3718652|...|E7
+//
+//   um candle: HHMM, abertura, maxima-abertura, abertura-minima,
+//              fechamento-abertura, agressao compra, agressao venda,
+//              BarDurationF*1000,
+//              Volume/1000 (milhares), Quantity,
+//              Volume/Quantity*100 (em inteiro: sem virgula no texto)
+//   D1AAMMDD no inicio de toda linha e quando o dia muda; E<n> fecha a linha.
+//
+// MODO 1 CSV, um candle por linha:
+//   Data;Hora;Abertura;Maxima;Minima;Fechamento;AgrCompra;AgrVenda;DuracaoMin;VolumeMil;Quantidade;VolPorQtdx100;Barra
+//
+// Um candle ocupa ~60 caracteres no compacto. Se o decodificador acusar
+// linha cortada, baixe RegistrosPorLinha.
+//==================================================================
+
+input
+  DiaIni              (1);
+  MesIni              (3);
+  AnoIni              (2026);
+  UsarDataFinal       (false);
+  DiaFim              (31);
+  MesFim              (12);
+  AnoFim              (2026);
+  Modo                (2);      // 2 = compacto | 1 = CSV
+  RegistrosPorLinha   (20);
+  CasasDuracao        (3);
+  ExigirBarraFechada  (true);
+
+var
+  fO, fH, fL, fC           : Float;
+  fAgrC, fAgrV, fDur       : Float;
+  fVol, fQtd               : Float;
+  nO, nC, nDur             : Integer;
+  nVolMil, nQtd, nVpq      : Integer;
+  dataInt, horaInt         : Integer;
+  dataIni, dataFim         : Integer;
+  dia, mes, ano, hh, mm    : Integer;
+  sDia, sMes, sHh, sMm     : String;
+  sTexto, sRec             : String;
+  noPeriodo, depoisDoFim   : Boolean;
+  barraValida, ultimaBarra : Boolean;
+
+  ultimaLogada             : Integer;
+  cabecalhoFeito           : Boolean;
+  buffer                   : String;
+  nRec, nLinha             : Integer;
+  barraIniLinha            : Integer;
+  dataUltimaRec            : Integer;
+
+begin
+  //--- leituras antes de qualquer if ---------------------------------
+  fO    := Open;
+  fH    := High;
+  fL    := Low;
+  fC    := Close;
+  fAgrC := AgressionVolBuy;
+  fAgrV := AgressionVolSell;
+  fDur  := BarDurationF;
+  fVol  := Volume;
+  fQtd  := Quantity;
+  dataInt := Date;
+  horaInt := Time;
+
+  dataIni := (AnoIni - 1900) * 10000 + MesIni * 100 + DiaIni;
+  dataFim := (AnoFim - 1900) * 10000 + MesFim * 100 + DiaFim;
+  noPeriodo   := (dataInt >= dataIni) and ((not UsarDataFinal) or (dataInt <= dataFim));
+  depoisDoFim := UsarDataFinal and (dataInt > dataFim);
+
+  barraValida := (CurrentBar <> ultimaLogada) or (CurrentBar = 0);
+  if ExigirBarraFechada then
+    barraValida := barraValida and (MaxBarsForward > 0);
+  ultimaBarra := (MaxBarsForward = 1);
+
+  nO      := Round(fO);
+  nC      := Round(fC);
+  nDur    := Round(fDur * 1000);
+  nVolMil := Round(fVol / 1000);
+  nQtd    := Round(fQtd);
+  if fQtd > 0 then
+    nVpq := Round(fVol / fQtd * 100)
+  else
+    nVpq := 0;
+
+  //==================================================================
+  // MODO 2 -- COMPACTO
+  //==================================================================
+  if Modo = 2 then
+  begin
+    if barraValida and depoisDoFim and (nRec > 0) then
+    begin
+      nLinha := nLinha + 1;
+      ConsoleLog("L" + nLinha + ";B" + barraIniLinha + ";N" + nRec + buffer + "|E" + nLinha,
+                 RGB(200, 200, 200));
+      buffer := "";
+      nRec   := 0;
+    end;
+
+    if barraValida and noPeriodo then
+    begin
+      if nRec = 0 then
+      begin
+        buffer        := "";
+        barraIniLinha := CurrentBar;
+        dataUltimaRec := 0;
+      end;
+
+      if dataInt <> dataUltimaRec then
+      begin
+        buffer        := buffer + "|D" + dataInt;
+        dataUltimaRec := dataInt;
+      end;
+
+      sRec := "" + horaInt + "," + nO
+              + "," + (Round(fH) - nO)
+              + "," + (nO - Round(fL))
+              + "," + (nC - nO)
+              + "," + Round(fAgrC)
+              + "," + Round(fAgrV)
+              + "," + nDur
+              + "," + nVolMil
+              + "," + nQtd
+              + "," + nVpq;
+      buffer := buffer + "|" + sRec;
+      nRec   := nRec + 1;
+      ultimaLogada := CurrentBar;
+
+      if (nRec >= RegistrosPorLinha) or ultimaBarra then
+      begin
+        nLinha := nLinha + 1;
+        ConsoleLog("L" + nLinha + ";B" + barraIniLinha + ";N" + nRec + buffer + "|E" + nLinha,
+                   RGB(200, 200, 200));
+        buffer := "";
+        nRec   := 0;
+      end;
+    end;
+  end
+
+  //==================================================================
+  // MODO 1 -- CSV, UM CANDLE POR LINHA
+  //==================================================================
+  else if barraValida and noPeriodo then
+  begin
+    dia := Mod(dataInt, 100);
+    mes := Mod(Round(IntPortion(dataInt / 100)), 100);
+    ano := 1900 + Round(IntPortion(dataInt / 10000));
+    hh  := Round(IntPortion(horaInt / 100));
+    mm  := Mod(horaInt, 100);
+    if dia < 10 then sDia := "0" + dia else sDia := "" + dia;
+    if mes < 10 then sMes := "0" + mes else sMes := "" + mes;
+    if hh  < 10 then sHh  := "0" + hh  else sHh  := "" + hh;
+    if mm  < 10 then sMm  := "0" + mm  else sMm  := "" + mm;
+
+    if not cabecalhoFeito then
+    begin
+      ConsoleLog("Data;Hora;Abertura;Maxima;Minima;Fechamento;AgrCompra;AgrVenda;DuracaoMin;VolumeMil;Quantidade;VolPorQtdx100;Barra",
+                 RGB(200, 200, 200));
+      cabecalhoFeito := true;
+    end;
+    sTexto := sDia + "/" + sMes + "/" + ano + ";" + sHh + ":" + sMm
+              + ";" + nO + ";" + Round(fH) + ";" + Round(fL) + ";" + nC
+              + ";" + Round(fAgrC) + ";" + Round(fAgrV)
+              + ";" + FloatToString(fDur, CasasDuracao)
+              + ";" + nVolMil + ";" + nQtd + ";" + nVpq + ";" + CurrentBar;
+    ConsoleLog(sTexto, RGB(200, 200, 200));
+    ultimaLogada := CurrentBar;
+  end;
+end;

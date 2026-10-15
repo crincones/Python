@@ -1,0 +1,1311 @@
+
+/*
+ * Name: Obscu
+ * Version: 4.0.5
+ * Author: Grow Shine Services Pvt. Ltd.
+ * Download From: https://themes.grow-shine.com/ OR https://www.customersupporttheme.com
+ * Corporate Website : https://www.grow-shine.com
+ * License: You must have a valid license purchased only from customersupporttheme.com in order to legally use the theme for your project.
+ * Copyright: © 2016 - 2023 Grow Shine Services Pvt. Ltd. All Rights Reserved.
+*/
+
+// Vanilla JS debounce function, by Josh W. Comeau:
+// https://www.joshwcomeau.com/snippets/javascript/debounce/
+function debounce(callback, wait) {
+  let timeoutId = null;
+  return (...args) => {
+    window.clearTimeout(timeoutId);
+    timeoutId = window.setTimeout(() => {
+      callback.apply(null, args);
+    }, wait);
+  };
+}
+
+// Define variables for search field
+let searchFormFilledClassName = "search-has-value";
+let searchFormSelector = "form[role='search']";
+
+// Clear the search input, and then return focus to it
+function clearSearchInput(event) {
+  event.target.closest(searchFormSelector).classList.remove(searchFormFilledClassName);
+
+  let input;
+  if (event.target.tagName === "INPUT") {
+    input = event.target;
+  } else if (event.target.tagName === "BUTTON") {
+    input = event.target.previousElementSibling;
+  } else {
+    input = event.target.closest("button").previousElementSibling;
+  }
+  input.value = "";
+  input.focus();
+}
+
+// Have the search input and clear button respond
+// when someone presses the escape key, per:
+// https://twitter.com/adambsilver/status/1152452833234554880
+function clearSearchInputOnKeypress(event) {
+  const searchInputDeleteKeys = ["Delete", "Escape"];
+  if (searchInputDeleteKeys.includes(event.key)) {
+    clearSearchInput(event);
+  }
+}
+
+// Create an HTML button that all users -- especially keyboard users --
+// can interact with, to clear the search input.
+// To learn more about this, see:
+// https://adrianroselli.com/2019/07/ignore-typesearch.html#Delete
+// https://www.scottohara.me/blog/2022/02/19/custom-clear-buttons.html
+function buildClearSearchButton(inputId) {
+  const button = document.createElement("button");
+  button.setAttribute("type", "button");
+  button.setAttribute("aria-controls", inputId);
+  button.classList.add("clear-button");
+  const buttonLabel = window.searchClearButtonLabelLocalized;
+  const icon = `<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' focusable='false' role='img' viewBox='0 0 12 12' aria-label='${buttonLabel}'><path stroke='currentColor' stroke-linecap='round' stroke-width='2' d='M3 9l6-6m0 6L3 3'/></svg>`;
+  button.innerHTML = icon;
+  button.addEventListener("click", clearSearchInput);
+  button.addEventListener("keyup", clearSearchInputOnKeypress);
+  return button;
+}
+
+// Append the clear button to the search form
+function appendClearSearchButton(input, form) {
+  searchClearButton = buildClearSearchButton(input.id);
+  form.append(searchClearButton);
+  if (input.value.length > 0) {
+    form.classList.add(searchFormFilledClassName);
+  }
+}
+
+// Add a class to the search form when the input has a value;
+// Remove that class from the search form when the input doesn't have a value.
+// Do this on a delay, rather than on every keystroke.
+const toggleClearSearchButtonAvailability = debounce(function(event) {
+  const form = event.target.closest(searchFormSelector);
+  form.classList.toggle(searchFormFilledClassName, event.target.value.length > 0);
+}, 200)
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Key map
+  var ENTER = 13;
+  var ESCAPE = 27;
+  var SPACE = 32;
+  var UP = 38;
+  var DOWN = 40;
+  var TAB = 9;
+
+  function closest (element, selector) {
+    if (Element.prototype.closest) {
+      return element.closest(selector);
+    }
+    do {
+      if (Element.prototype.matches && element.matches(selector)
+        || Element.prototype.msMatchesSelector && element.msMatchesSelector(selector)
+        || Element.prototype.webkitMatchesSelector && element.webkitMatchesSelector(selector)) {
+        return element;
+      }
+      element = element.parentElement || element.parentNode;
+    } while (element !== null && element.nodeType === 1);
+    return null;
+  }
+
+  // social share popups
+  Array.prototype.forEach.call(document.querySelectorAll('.share a'), function(anchor) {
+    anchor.addEventListener('click', function(e) {
+      e.preventDefault();
+      window.open(this.href, '', 'height = 500, width = 500');
+    });
+  });
+
+  // In some cases we should preserve focus after page reload
+  function saveFocus() {
+    var activeElementId = document.activeElement.getAttribute("id");
+    sessionStorage.setItem('returnFocusTo', '#' + activeElementId);
+  }
+  var returnFocusTo = sessionStorage.getItem('returnFocusTo');
+  if (returnFocusTo) {
+    sessionStorage.removeItem('returnFocusTo');
+    var returnFocusToEl = document.querySelector(returnFocusTo);
+    returnFocusToEl && returnFocusToEl.focus && returnFocusToEl.focus();
+  }
+
+  // show form controls when the textarea receives focus or backbutton is used and value exists
+  var commentContainerTextarea = document.querySelector('.comment-container textarea'),
+    commentContainerFormControls = document.querySelector('.comment-form-controls, .comment-ccs');
+
+  if (commentContainerTextarea) {
+    commentContainerTextarea.addEventListener('focus', function focusCommentContainerTextarea() {
+      commentContainerFormControls.style.display = 'block';
+      commentContainerTextarea.removeEventListener('focus', focusCommentContainerTextarea);
+    });
+
+    if (commentContainerTextarea.value !== '') {
+      commentContainerFormControls.style.display = 'block';
+    }
+  }
+
+  // Expand Request comment form when Add to conversation is clicked
+  var showRequestCommentContainerTrigger = document.querySelector('.request-container .comment-container .comment-show-container'),
+    requestCommentFields = document.querySelectorAll('.request-container .comment-container .comment-fields'),
+    requestCommentSubmit = document.querySelector('.request-container .comment-container .request-submit-comment');
+
+  if (showRequestCommentContainerTrigger) {
+    showRequestCommentContainerTrigger.addEventListener('click', function() {
+      showRequestCommentContainerTrigger.style.display = 'none';
+      Array.prototype.forEach.call(requestCommentFields, function(e) { e.style.display = 'block'; });
+      requestCommentSubmit.style.display = 'inline-block';
+
+      if (commentContainerTextarea) {
+        commentContainerTextarea.focus();
+      }
+    });
+  }
+
+  // Mark as solved button
+  var requestMarkAsSolvedButton = document.querySelector('.request-container .mark-as-solved:not([data-disabled])'),
+    requestMarkAsSolvedCheckbox = document.querySelector('.request-container .comment-container input[type=checkbox]'),
+    requestCommentSubmitButton = document.querySelector('.request-container .comment-container input[type=submit]');
+
+  if (requestMarkAsSolvedButton) {
+    requestMarkAsSolvedButton.addEventListener('click', function() {
+      requestMarkAsSolvedCheckbox.setAttribute('checked', true);
+      requestCommentSubmitButton.disabled = true;
+      this.setAttribute('data-disabled', true);
+      // Element.closest is not supported in IE11
+      closest(this, 'form').submit();
+    });
+  }
+
+  // Change Mark as solved text according to whether comment is filled
+  var requestCommentTextarea = document.querySelector('.request-container .comment-container textarea');
+
+  if (requestCommentTextarea) {
+    requestCommentTextarea.addEventListener('input', function() {
+      if (requestCommentTextarea.value === '') {
+        if (requestMarkAsSolvedButton) {
+          requestMarkAsSolvedButton.innerText = requestMarkAsSolvedButton.getAttribute('data-solve-translation');
+        }
+        requestCommentSubmitButton.disabled = true;
+      } else {
+        if (requestMarkAsSolvedButton) {
+          requestMarkAsSolvedButton.innerText = requestMarkAsSolvedButton.getAttribute('data-solve-and-submit-translation');
+        }
+        requestCommentSubmitButton.disabled = false;
+      }
+    });
+  }
+
+  // Disable submit button if textarea is empty
+  if (requestCommentTextarea && requestCommentTextarea.value === '') {
+    requestCommentSubmitButton.disabled = true;
+  }
+
+  // Submit requests filter form on status or organization change in the request list page
+  Array.prototype.forEach.call(document.querySelectorAll('#request-status-select, #request-organization-select'), function(el) {
+    el.addEventListener('change', function(e) {
+      e.stopPropagation();
+      saveFocus();
+      closest(this, 'form').submit();
+    });
+  });
+
+  // Submit requests filter form on search in the request list page
+  var quickSearch = document.querySelector('#quick-search');
+  quickSearch && quickSearch.addEventListener('keyup', function(e) {
+    if (e.keyCode === ENTER) {
+      e.stopPropagation();
+      saveFocus();
+      closest(this, 'form').submit();
+    }
+  });
+
+  function toggleNavigation(toggle, menu) {
+    var isExpanded = menu.getAttribute('aria-expanded') === 'true';
+    menu.setAttribute('aria-expanded', !isExpanded);
+    toggle.setAttribute('aria-expanded', !isExpanded);
+  }
+
+  function closeNavigation(toggle, menu) {
+    menu.setAttribute('aria-expanded', false);
+    toggle.setAttribute('aria-expanded', false);
+    toggle.focus();
+  }
+
+  var burgerMenu = document.querySelector('.header .menu-button');
+  var userMenu = document.querySelector('#user-nav');
+
+  burgerMenu.addEventListener('click', function(e) {
+    e.stopPropagation();
+    toggleNavigation(this, userMenu);
+  });
+
+
+  userMenu.addEventListener('keyup', function(e) {
+    if (e.keyCode === ESCAPE) {
+      e.stopPropagation();
+      closeNavigation(burgerMenu, this);
+    }
+  });
+
+  if (userMenu.children.length === 0) {
+    burgerMenu.style.display = 'none';
+  }
+
+  // Toggles expanded aria to collapsible elements
+  var collapsible = document.querySelectorAll('.collapsible-nav, .collapsible-sidebar');
+
+  Array.prototype.forEach.call(collapsible, function(el) {
+    var toggle = el.querySelector('.collapsible-nav-toggle, .collapsible-sidebar-toggle');
+
+    el.addEventListener('click', function(e) {
+      toggleNavigation(toggle, this);
+    });
+
+    el.addEventListener('keyup', function(e) {
+      if (e.keyCode === ESCAPE) {
+        closeNavigation(toggle, this);
+      }
+    });
+  });
+
+  // Submit organization form in the request page
+  var requestOrganisationSelect = document.querySelector('#request-organization select');
+
+  if (requestOrganisationSelect) {
+    requestOrganisationSelect.addEventListener('change', function() {
+      closest(this, 'form').submit();
+    });
+  }
+
+  // If a section has more than 6 subsections, we collapse the list, and show a trigger to display them all
+  var seeAllTrigger = document.querySelector("#see-all-sections-trigger");
+  var subsectionsList = document.querySelector(".section-list");
+
+  if (subsectionsList && subsectionsList.children.length > 6) {
+    seeAllTrigger.setAttribute("aria-hidden", false);
+
+    seeAllTrigger.addEventListener("click", function(e) {
+      subsectionsList.classList.remove("section-list--collapsed");
+      seeAllTrigger.parentNode.removeChild(seeAllTrigger);
+    });
+  }
+
+  // If multibrand search has more than 5 help centers or categories collapse the list
+  var multibrandFilterLists = document.querySelectorAll(".multibrand-filter-list");
+  Array.prototype.forEach.call(multibrandFilterLists, function(filter) {
+    if (filter.children.length > 6) {
+      // Display the show more button
+      var trigger = filter.querySelector(".see-all-filters");
+      trigger.setAttribute("aria-hidden", false);
+
+      // Add event handler for click
+      trigger.addEventListener("click", function(e) {
+        e.stopPropagation();
+        trigger.parentNode.removeChild(trigger);
+        filter.classList.remove("multibrand-filter-list--collapsed")
+      })
+    }
+  });
+
+  // If there are any error notifications below an input field, focus that field
+  var notificationElm = document.querySelector(".notification-error");
+  if (
+    notificationElm &&
+    notificationElm.previousElementSibling &&
+    typeof notificationElm.previousElementSibling.focus === "function"
+  ) {
+    notificationElm.previousElementSibling.focus();
+  }
+
+  // Dropdowns
+
+  function Dropdown(toggle, menu) {
+    this.toggle = toggle;
+    this.menu = menu;
+
+    this.menuPlacement = {
+      top: menu.classList.contains("dropdown-menu-top"),
+      end: menu.classList.contains("dropdown-menu-end")
+    };
+
+    this.toggle.addEventListener("click", this.clickHandler.bind(this));
+    this.toggle.addEventListener("keydown", this.toggleKeyHandler.bind(this));
+    this.menu.addEventListener("keydown", this.menuKeyHandler.bind(this));
+  };
+
+  Dropdown.prototype = {
+
+    get isExpanded() {
+      return this.menu.getAttribute("aria-expanded") === "true";
+    },
+
+    get menuItems() {
+      return Array.prototype.slice.call(this.menu.querySelectorAll("[role='menuitem']"));
+    },
+
+    dismiss: function() {
+      if (!this.isExpanded) return;
+
+      this.menu.setAttribute("aria-expanded", false);
+      this.menu.classList.remove("dropdown-menu-end", "dropdown-menu-top");
+    },
+
+    open: function() {
+      if (this.isExpanded) return;
+
+      this.menu.setAttribute("aria-expanded", true);
+      this.handleOverflow();
+    },
+
+    handleOverflow: function() {
+      var rect = this.menu.getBoundingClientRect();
+
+      var overflow = {
+        right: rect.left < 0 || rect.left + rect.width > window.innerWidth,
+        bottom: rect.top < 0 || rect.top + rect.height > window.innerHeight
+      };
+
+      if (overflow.right || this.menuPlacement.end) {
+        this.menu.classList.add("dropdown-menu-end");
+      }
+
+      if (overflow.bottom || this.menuPlacement.top) {
+        this.menu.classList.add("dropdown-menu-top");
+      }
+
+      if (this.menu.getBoundingClientRect().top < 0) {
+        this.menu.classList.remove("dropdown-menu-top")
+      }
+    },
+
+    focusNextMenuItem: function(currentItem) {
+      if (!this.menuItems.length) return;
+
+      var currentIndex = this.menuItems.indexOf(currentItem);
+      var nextIndex = currentIndex === this.menuItems.length - 1 || currentIndex < 0 ? 0 : currentIndex + 1;
+
+      this.menuItems[nextIndex].focus();
+    },
+
+    focusPreviousMenuItem: function(currentItem) {
+      if (!this.menuItems.length) return;
+
+      var currentIndex = this.menuItems.indexOf(currentItem);
+      var previousIndex = currentIndex <= 0 ? this.menuItems.length - 1 : currentIndex - 1;
+
+      this.menuItems[previousIndex].focus();
+    },
+
+    clickHandler: function() {
+      if (this.isExpanded) {
+        this.dismiss();
+      } else {
+        this.open();
+      }
+    },
+
+    toggleKeyHandler: function(e) {
+      switch (e.keyCode) {
+        case ENTER:
+        case SPACE:
+        case DOWN:
+          e.preventDefault();
+          this.open();
+          this.focusNextMenuItem();
+          break;
+        case UP:
+          e.preventDefault();
+          this.open();
+          this.focusPreviousMenuItem();
+          break;
+        case ESCAPE:
+          this.dismiss();
+          this.toggle.focus();
+          break;
+      }
+    },
+
+    menuKeyHandler: function(e) {
+      var firstItem = this.menuItems[0];
+      var lastItem = this.menuItems[this.menuItems.length - 1];
+      var currentElement = e.target;
+
+      switch (e.keyCode) {
+        case ESCAPE:
+          this.dismiss();
+          this.toggle.focus();
+          break;
+        case DOWN:
+          e.preventDefault();
+          this.focusNextMenuItem(currentElement);
+          break;
+        case UP:
+          e.preventDefault();
+          this.focusPreviousMenuItem(currentElement);
+          break;
+        case TAB:
+          if (e.shiftKey) {
+            if (currentElement === firstItem) {
+              this.dismiss();
+            } else {
+              e.preventDefault();
+              this.focusPreviousMenuItem(currentElement);
+            }
+          } else if (currentElement === lastItem) {
+            this.dismiss();
+          } else {
+            e.preventDefault();
+            this.focusNextMenuItem(currentElement);
+          }
+          break;
+        case ENTER:
+        case SPACE:
+          e.preventDefault();
+          currentElement.click();
+          break;
+      }
+    }
+  }
+
+  var dropdowns = [];
+  var dropdownToggles = Array.prototype.slice.call(document.querySelectorAll(".dropdown-toggle"));
+
+  dropdownToggles.forEach(function(toggle) {
+    var menu = toggle.nextElementSibling;
+    if (menu && menu.classList.contains("dropdown-menu")) {
+      dropdowns.push(new Dropdown(toggle, menu));
+    }
+  });
+
+  document.addEventListener("click", function(evt) {
+    dropdowns.forEach(function(dropdown) {
+      if (!dropdown.toggle.contains(evt.target)) {
+        dropdown.dismiss();
+      }
+    });
+  });
+});
+
+jQuery(document).ready(function($){
+
+  $(".accordion_title").on("click", function () {
+     var $title = $(this);
+     $title.toggleClass("open");
+     $title.parents(".accordion_block").find(".accordion_content").slideToggle();
+  });
+
+  // Tabs
+  $('#tabs-nav li:first-child').addClass('active');
+  $('.tab-content').hide();
+  $('.tab-content:first').show();
+
+  // Click function
+  $('#tabs-nav li').click(function(){
+    $('#tabs-nav li').removeClass('active');
+    $(this).addClass('active');
+    $('.tab-content').hide();
+
+    var activeTab = $(this).find('a').attr('href');
+    $(activeTab).fadeIn();
+    return false;
+  });
+
+  // Copyright
+  $(".attribution").text("Grow Shine Services Pvt. Ltd.").attr("href", "https://themes.grow-shine.com").attr('target','_blank');
+  $(".reserved").text("All Rights Reserved.");
+
+  // Function of set year
+  var x = new Date();
+  var y = x.getFullYear();
+  $('#year').html(y);
+
+});
+
+var overlay = document.createElement("div");
+overlay.id = "cookie-policy-overlay";
+overlay.style.position = "fixed";
+overlay.style.top = 0;
+overlay.style.left = 0;
+overlay.style.width = "100%";
+overlay.style.height = "100%";
+overlay.style.background = "rgba(0, 0, 0, 0.5)";
+overlay.style.zIndex = "99";
+overlay.style.display = "none";
+
+document.body.appendChild(overlay);
+
+document.getElementById("cookie-policy-btn").addEventListener("click", function(){
+    var expirationTime = new Date();
+    expirationTime.setHours(expirationTime.getHours() + 2);
+    localStorage.setItem("cookiePolicyAccepted", "true");
+    localStorage.setItem("cookiePolicyExpiration", expirationTime);
+    localStorage.setItem("overlayVisible", "false");
+    document.getElementById("cookie-policy-footer").style.display = "none";
+    document.getElementById("cookie-policy-overlay").style.display = "none";
+});
+
+var cookiePolicyExpiration = localStorage.getItem("cookiePolicyExpiration");
+if(localStorage.getItem("cookiePolicyAccepted") === "true" && cookiePolicyExpiration){
+    if(new Date() < new Date(cookiePolicyExpiration)){
+        document.getElementById("cookie-policy-footer").style.display = "none";
+        if(localStorage.getItem("overlayVisible") === "true"){
+            document.getElementById("cookie-policy-overlay").style.display = "block";
+        }else{
+            document.getElementById("cookie-policy-overlay").style.display = "none";
+        }
+    }else{
+        localStorage.removeItem("cookiePolicyAccepted");
+        localStorage.removeItem("cookiePolicyExpiration");
+        localStorage.setItem("overlayVisible", "true");
+    }
+}else{
+    document.getElementById("cookie-policy-overlay").style.display = "block";
+}
+
+/* CHATBOT CONFIGURACOES SCRIPT.JS 
+const chatbotWindow = document.getElementById('chatbotWindow');
+const chatbotIcon = document.getElementById('chatbotIcon');
+const chatbotMinimizeBtn = document.getElementById('chatbotMinimizeBtn');
+let newChatbot = true;
+let chatbotInitialized = false;
+
+if (!newChatbot) {
+    chatbotIcon.style.display = 'none';
+} else {
+    function initChatbot() {
+        zE(function () {
+            if (zE('webWidget:get', 'chat:isChatting')) {
+                console.log('Está em Chat!');
+                zE('webWidget', 'open');
+                chatbotIcon.style.display = 'none';
+            } else {
+                console.log('Não está em Chat!');
+                zE('webWidget', 'hide');
+                if (chatbotWindow.style.display === 'none') {
+                    chatbotIcon.style.display = 'flex';
+                }
+            }
+        });
+    }
+
+    if (window.zendeskReady) {
+        initChatbot();
+    } else {
+        window.addEventListener('zendeskReady', initChatbot);
+    }
+}
+
+function closeChatbot() {
+    chatbotWindow.style.display = 'none';
+}
+
+chatbotMinimizeBtn.addEventListener('click', function () {
+    chatbotWindow.style.display = 'none';
+    chatbotIcon.style.display = 'flex';
+});
+
+chatbotIcon.addEventListener('click', function () {
+    chatbotWindow.style.display = 'flex';
+    chatbotIcon.style.display = 'none';
+    if (!chatbotInitialized) {
+        initializeChatbot();
+        chatbotInitialized = true;
+    }
+});
+
+
+function disableOptions(optionsContainer) {
+    const options = optionsContainer.querySelectorAll('.chatbot-option');
+    options.forEach(option => {
+        option.classList.add('disabled');
+        option.onclick = null;
+    });
+}
+
+function showOptionsWithDelay(optionsContainer) {
+    const options = Array.from(optionsContainer.children);
+    optionsContainer.style.display = 'flex';
+    options.forEach((option, index) => {
+        setTimeout(() => {
+            option.classList.add('chatbot-show');
+        }, index * 250);
+    });
+    setTimeout(() => {
+        options.forEach(option => {
+            if (!option.classList.contains('offline-disabled')) {
+                option.classList.remove('disabled');
+                option.style.pointerEvents = 'auto';
+            }
+        });
+    }, options.length * 250);
+}
+
+function scrollToBottom() {
+    const messagesContainer = document.getElementById('chatbotMessages');
+    messagesContainer.scroll({
+        top: messagesContainer.scrollHeight,
+        behavior: 'smooth'
+    });
+}
+
+function initializeChatbot() {
+    const messagesContainer = document.getElementById('chatbotMessages');
+    const typingIndicator = document.getElementById('typingIndicator');
+
+    typingIndicator.style.display = 'block';
+    messagesContainer.appendChild(typingIndicator);
+    scrollToBottom();
+    setTimeout(() => {
+        typingIndicator.style.display = 'none';
+
+        const infoMessage = document.createElement('div');
+        infoMessage.classList.add('chatbot-message', 'bot');
+        infoMessage.innerHTML = `Acompanhe seus atendimentos em <a href="https://ajuda.nelogica.com.br/hc/pt-br/requests" target="_blank">https://ajuda.nelogica.com.br/hc/pt-br/requests</a>.`;
+        messagesContainer.appendChild(infoMessage);
+        typingIndicator.style.display = 'block';
+        messagesContainer.appendChild(typingIndicator);
+        scrollToBottom();
+
+        setTimeout(() => {
+            typingIndicator.style.display = 'none';
+            const cpfRequestContainer = document.createElement('div');
+            cpfRequestContainer.classList.add('chatbot-message', 'bot', 'cpf-request');
+            cpfRequestContainer.innerHTML = `
+                <label for="cpfInput">Digite seu CPF:</label>
+                <div class="input-container">
+                    <input type="text" id="cpfInput" placeholder="CPF">
+                    <div class="input-button-container">
+                        <input type="checkbox" id="foreignCheckbox">
+                        <label for="foreignCheckbox">Sou Estrangeiro</label>
+                    </div>
+                </div>
+                <span id="cpfHint" class="cpf-hint">Digite um CPF válido</span>
+                <button id="cpfSubmitBtn" disabled class="disabled">Avançar</button>
+            `;
+            messagesContainer.appendChild(cpfRequestContainer);
+            document.getElementById('cpfInput').focus();
+
+            document.getElementById('cpfInput').addEventListener('input', updateSubmitButtonState);
+            document.getElementById('foreignCheckbox').addEventListener('change', updateSubmitButtonState);
+            scrollToBottom();
+
+            document.getElementById('cpfInput').addEventListener('keypress', function (event) {
+                if (event.key === 'Enter' && !document.getElementById('cpfSubmitBtn').disabled) {
+                    event.preventDefault();
+                    submitCPF();
+                }
+            });
+
+            document.getElementById('cpfSubmitBtn').addEventListener('click', submitCPF);
+            function validateCPF(cpf) {
+                if (/^\d{11}$/.test(cpf)) {
+                    let sum = 0;
+                    for (let i = 0; i < 9; i++) {
+                        sum += parseInt(cpf.charAt(i)) * (10 - i);
+                    }
+                    let remainder = 11 - (sum % 11);
+                    if (remainder === 10 || remainder === 11) {
+                        remainder = 0;
+                    }
+                    if (remainder !== parseInt(cpf.charAt(9))) {
+                        return false;
+                    }
+
+                    sum = 0;
+                    for (let i = 0; i < 10; i++) {
+                        sum += parseInt(cpf.charAt(i)) * (11 - i);
+                    }
+                    remainder = 11 - (sum % 11);
+                    if (remainder === 10 || remainder === 11) {
+                        remainder = 0;
+                    }
+                    return remainder === parseInt(cpf.charAt(10));
+                }
+                return false;
+            }
+
+            function updateCPFInputStyle(isValid) {
+                const cpfInput = document.getElementById('cpfInput');
+                const cpfHint = document.getElementById('cpfHint');
+
+                if (isValid) {
+                    cpfInput.classList.remove('invalid');
+                    cpfHint.style.display = 'none';
+                } else {
+                    cpfInput.classList.add('invalid');
+                    cpfHint.style.display = 'inline';
+                }
+            }
+
+            function updateSubmitButtonState() {
+                const cpfInput = document.getElementById('cpfInput').value;
+                const foreignCheckbox = document.getElementById('foreignCheckbox').checked;
+                const submitBtn = document.getElementById('cpfSubmitBtn');
+                const isValidCPF = validateCPF(cpfInput);
+
+                submitBtn.disabled = !(foreignCheckbox || isValidCPF);
+
+                if (foreignCheckbox || isValidCPF) {
+                    submitBtn.disabled = false;
+                    updateCPFInputStyle(true);
+                } else {
+                    submitBtn.disabled = true;
+                    updateCPFInputStyle(false);
+                }
+            }
+
+            function submitCPF() {
+                localStorage.removeItem('userCPF');
+                const userCPF = document.getElementById('cpfInput').value;
+                const foreignCheckbox = document.getElementById('foreignCheckbox').checked;
+
+                if (!foreignCheckbox) {
+                    localStorage.setItem('userCPF', userCPF);
+                } else {
+                    localStorage.setItem('userCPF', 'Cliente Estrangeiro');
+                }
+
+                cpfRequestContainer.style.display = 'none';
+
+                const userMessage = document.createElement('div');
+                userMessage.classList.add('chatbot-message', 'user');
+                userMessage.textContent = foreignCheckbox ? "Sou Estrangeiro" : `CPF digitado: ${userCPF}`;
+                messagesContainer.appendChild(userMessage);
+
+                const botMessage = document.createElement('div');
+                botMessage.classList.add('chatbot-message', 'bot');
+                botMessage.textContent = foreignCheckbox
+                    ? "Obrigado! Você pode prosseguir sem CPF."
+                    : `Obrigado! O CPF ${userCPF} foi registrado.`;
+                messagesContainer.appendChild(botMessage);
+
+                typingIndicator.style.display = 'block';
+                messagesContainer.appendChild(typingIndicator);
+                scrollToBottom();
+
+                setTimeout(() => {
+                    typingIndicator.style.display = 'none';
+
+                    const mainOptionsContainer = document.createElement('div');
+                    mainOptionsContainer.className = 'chatbot-options';
+                    mainOptionsContainer.id = 'mainOptions';
+                    /*mainOptionsContainer.innerHTML = `
+                        <div class="chatbot-option disabled offline-disabled" id="moduleSubscriptionBtn" onclick="handleMainOptionClick('Assinatura de Módulos Opcionais', this)">Assinatura de Módulos Opcionais</div>
+                        <div class="chatbot-option disabled offline-disabled" id="platformSubscriptionBtn" onclick="handleMainOptionClick('Assinatura de Plataformas', this)">Assinatura de Plataformas</div>
+                        <div class="chatbot-option disabled offline-disabled" id="paymentBtn" onclick="handleMainOptionClick('Pagamentos / Cobranças', this)">Pagamentos / Cobranças</div>
+                        <div class="chatbot-option disabled" onclick="handleUpdateOptionClick('Suporte Técnico', this)">Suporte Técnico</div>
+                    `;
+                    mainOptionsContainer.innerHTML = `
+                        <div class="chatbot-option disabled" onclick="handleMainOptionClick('Assinatura de Produtos', this)">Assinatura de Produtos</div>
+                        <div class="chatbot-option disabled" onclick="handleMainOptionClick('Pagamentos / Cobranças', this)">Pagamentos / Cobranças</div>
+                        <div class="chatbot-option disabled" onclick="handleMainOptionClick('Suporte Técnico', this)">Suporte Técnico</div>
+                    `;
+                    messagesContainer.appendChild(mainOptionsContainer);
+                    showOptionsWithDelay(mainOptionsContainer);
+                    scrollToBottom();
+                    zE(function () {
+                        let moduleDepartment = zE('webWidget:get', 'chat:department', 'Assinatura de Módulos Opcionais');
+                        let platformDepartment = zE('webWidget:get', 'chat:department', 'Assinatura de Plataformas');
+                        let paymentDepartment = zE('webWidget:get', 'chat:department', 'Pagamentos / Cobranças');
+
+                        if (moduleDepartment.status !== 'offline') {
+                            const moduleBtn = document.getElementById('moduleSubscriptionBtn');
+                            moduleBtn.classList.remove('offline-disabled');
+                            moduleBtn.textContent = 'Assinatura de Módulos Opcionais';
+                        } else {
+                            const moduleBtn = document.getElementById('moduleSubscriptionBtn');
+                            moduleBtn.textContent += ' (OFF)';
+                        }
+
+                        if (platformDepartment.status !== 'offline') {
+                            const platformBtn = document.getElementById('platformSubscriptionBtn');
+                            platformBtn.classList.remove('offline-disabled');
+                            platformBtn.textContent = 'Assinatura de Plataformas';
+                        } else {
+                            const platformBtn = document.getElementById('platformSubscriptionBtn');
+                            platformBtn.textContent += ' (OFF)';
+                        }
+
+                        if (paymentDepartment.status !== 'offline') {
+                            const paymentBtn = document.getElementById('paymentBtn');
+                            paymentBtn.classList.remove('offline-disabled');
+                            paymentBtn.textContent = 'Pagamentos / Cobranças';
+                        } else {
+                            const paymentBtn = document.getElementById('paymentBtn');
+                            paymentBtn.textContent += ' (OFF)';
+                        }
+                    });
+                }, 1000);
+            }
+        }, 1000);
+    }, 1000);
+}
+
+window.handleUpdateOptionClick = function (option, element) {
+    const messagesContainer = document.getElementById('chatbotMessages');
+    const userMessage = document.createElement('div');
+    userMessage.classList.add('chatbot-message', 'user');
+    userMessage.textContent = `Você selecionou: ${option}`;
+    messagesContainer.appendChild(userMessage);
+    scrollToBottom();
+
+    disableOptions(element.parentElement);
+
+    if (option === 'Suporte Técnico') {
+        typingIndicator.style.display = 'block';
+        messagesContainer.appendChild(typingIndicator);
+        scrollToBottom();
+        setTimeout(() => {
+            typingIndicator.style.display = 'none';
+            const infoMessage = document.createElement('div');
+            infoMessage.classList.add('chatbot-message', 'bot');
+            infoMessage.innerHTML = `
+              <div style="display: flex; flex-direction: column;">
+                  <span>Assim que entrar no atendimento, você poderá enviar imagens, vídeos e outros arquivos em:</span>
+                  <img src="https://ajuda.nelogica.com.br/hc/article_attachments/26823686955291" alt="Anexar Imagem" onload="scrollToBottom()">
+              </div>
+            `;
+            messagesContainer.appendChild(infoMessage);
+        }, 1000);
+
+        setTimeout(() => {
+            typingIndicator.style.display = 'block';
+            messagesContainer.appendChild(typingIndicator);
+            scrollToBottom();
+
+            setTimeout(() => {
+                typingIndicator.style.display = 'none';
+                const infoMessage = document.createElement('div');
+                infoMessage.classList.add('chatbot-message', 'bot');
+                infoMessage.innerHTML = `
+              <div style="display: flex; flex-direction: column;">
+                  <span>Saiba como coletar evidências em <a href="https://ajuda.nelogica.com.br/hc/pt-br/sections/14748640834075-Tutoriais-Suporte" target="_blank">Central de Ajuda: Tutoriais do Suporte</a>.</span>
+                  <button class="advance-button chatbot-submit-btn" style="align-self: flex-end; margin-top: 10px;">Avançar</button>
+              </div>
+            `;
+                messagesContainer.appendChild(infoMessage);
+                scrollToBottom();
+              
+                const advanceButton = infoMessage.querySelector('.advance-button');
+                advanceButton.addEventListener('click', () => {
+                    const userMessage = document.createElement('div');
+                    userMessage.classList.add('chatbot-message', 'user');
+                    userMessage.textContent = `Avançar.`;
+                    messagesContainer.appendChild(userMessage);
+
+                    advanceButton.disabled = true;
+                    advanceButton.style.backgroundColor = '#ccc';
+                    showTechnicalSupportDepartments();
+                });
+            }, 1000);
+        }, 1000);
+    }
+}
+
+window.handleMainOptionClick = function (option, element) {
+    const messagesContainer = document.getElementById('chatbotMessages');
+    const typingIndicator = document.getElementById('typingIndicator');
+
+    const userMessage = document.createElement('div');
+    userMessage.classList.add('chatbot-message', 'user');
+    userMessage.textContent = `Você selecionou: ${option}`;
+    messagesContainer.appendChild(userMessage);
+    scrollToBottom();
+
+    disableOptions(document.getElementById('mainOptions'));
+  	
+    if (option === 'Suporte Técnico') {
+        showTechnicalSupportDepartments();
+    } else if (option === 'Assinatura de Produtos') {
+        showProductDepartments();
+    } else {
+      	handleOptionClick(option, element);
+    }
+};
+
+function showTechnicalSupportDepartments() {
+    const messagesContainer = document.getElementById('chatbotMessages');
+    const typingIndicator = document.getElementById('typingIndicator');
+
+    typingIndicator.style.display = 'block';
+    messagesContainer.appendChild(typingIndicator);
+    scrollToBottom();
+
+    setTimeout(() => {
+        typingIndicator.style.display = 'none';
+
+        const botMessage = document.createElement('div');
+        botMessage.classList.add('chatbot-message', 'bot');
+        botMessage.textContent = 'Selecione uma das opções de Suporte Técnico abaixo:';
+        messagesContainer.appendChild(botMessage);
+
+        const supportOptions = document.createElement('div');
+        supportOptions.className = 'chatbot-options';
+        supportOptions.innerHTML = `
+            <div class="chatbot-option disabled" onclick="handleOptionClick('Acesso/Senhas', this)">Acesso/Senhas</div>
+            <div class="chatbot-option disabled" onclick="handleOptionClick('Negociação', this)">Negociação/Ordens/Posição</div>
+            <div class="chatbot-option disabled" onclick="handleOptionClick('Copy', this)">Copy Invest</div>
+            <div class="chatbot-option disabled" onclick="handleOptionClick('Automação/Estratégias', this)">Automação/Estratégias</div>
+            <div class="chatbot-option disabled" onclick="handleOptionClick('Plataforma', this)">Plataforma/Funcionalidades</div>
+        `;
+        messagesContainer.appendChild(supportOptions);
+        showOptionsWithDelay(supportOptions);
+        scrollToBottom();
+    }, 1000);
+}
+
+function showProductDepartments() {
+    const messagesContainer = document.getElementById('chatbotMessages');
+    const typingIndicator = document.getElementById('typingIndicator');
+
+    typingIndicator.style.display = 'block';
+    messagesContainer.appendChild(typingIndicator);
+    scrollToBottom();
+
+    setTimeout(() => {
+        typingIndicator.style.display = 'none';
+
+        const botMessage = document.createElement('div');
+        botMessage.classList.add('chatbot-message', 'bot');
+        botMessage.textContent = 'Quais dos nossos produtos você tem interesse?';
+        messagesContainer.appendChild(botMessage);
+
+        const supportOptions = document.createElement('div');
+        supportOptions.className = 'chatbot-options';
+        supportOptions.innerHTML = `
+            <div class="chatbot-option disabled" onclick="handleOptionClick('Comercial Profit', this)">Profit</div>
+            <div class="chatbot-option disabled" onclick="handleOptionClick('Comercial Automação de Estratégias', this)">Automação de Estratégias/Robôs</div>
+            <div class="chatbot-option disabled" onclick="handleOptionClick('Comercial Copy Invest', this)">Copy Invest</div>
+            <div class="chatbot-option disabled" onclick="handleOptionClick('Comercial Invest Academy', this)">Invest Academy/Cursos/Mentorias</div>
+            <div class="chatbot-option disabled" onclick="handleOptionClick('Comercial Outros', this)">Outros</div>
+        `;
+        messagesContainer.appendChild(supportOptions);
+        showOptionsWithDelay(supportOptions);
+        scrollToBottom();
+    }, 1000);
+}
+
+window.handleOptionClick = function (option, element) {
+    if (option === 'Automação/Estratégias') {
+        openChatAutomation();
+    } else if (option === 'Plataforma') {
+        openChatPlatform();
+    } else if (option === 'Copy') {
+        openChatCopy();
+    } else if (option === 'Acesso/Senhas') {
+        openChatAccess();
+    } else if (option === 'Negociação') {
+        openChatNegotiation();
+    } else if (option === 'Comercial Outros') {
+        openRelacionamentoChat();
+    } else if (option === 'Comercial Profit') {
+        openComercialChat();
+    } else if (option === 'Comercial Automação de Estratégias') {
+        openComercialAutomacaoChat();
+    } else if (option === 'Comercial Invest Academy') {
+        openComercialInvestAcademyChat();
+    } else if (option === 'Comercial Copy Invest') {
+        openComercialCopyInvestChat();
+    } else if (option === 'Pagamentos / Cobranças') {
+        openFinanceiroChat();
+    }
+}
+
+function openChatPlatform() {
+    closeChatbot();
+    zE(function () {
+        let ChatDepartment = zE('webWidget:get', 'chat:department', 'Suporte - Plataforma');
+        if (ChatDepartment.status == "offline") {
+            $zopim(function () {
+                $zopim.livechat.window.show();
+                $zopim.livechat.departments.filter('Suporte 24h');
+                $zopim.livechat.prechatForm.setGreetings("Você selecionou o Suporte de Plataformas.");
+                $zopim.livechat.departments.setVisitorDepartment('Suporte 24h');
+                $zopim.livechat.window.setTitle("Suporte Plataformas");
+                let storedCPF = localStorage.getItem('userCPF');
+                console.log(storedCPF);
+                $zopim.livechat.setOnChatStart(function () {
+                    $zopim.livechat.say("CPF: " + storedCPF);
+                    $zopim.livechat.say("Departamento: Suporte Plataformas");
+                });
+            });
+        } else {
+            $zopim(function () {
+                $zopim.livechat.window.show();
+                $zopim.livechat.departments.filter('Suporte - Plataforma');
+                $zopim.livechat.prechatForm.setGreetings("Você selecionou o Suporte de Plataformas.");
+                $zopim.livechat.departments.setVisitorDepartment('Suporte - Plataforma');
+                $zopim.livechat.window.setTitle("Suporte Plataformas");
+                let storedCPF = localStorage.getItem('userCPF');
+                console.log(storedCPF);
+                $zopim.livechat.setOnChatStart(function () {
+                    $zopim.livechat.say("CPF: " + storedCPF);
+                    $zopim.livechat.say("Departamento: Suporte Plataformas");
+                });
+            });
+        }
+
+    });
+}
+
+function openChatAutomation() {
+    closeChatbot();
+    zE(function () {
+        let ChatDepartment = zE('webWidget:get', 'chat:department', 'Suporte - Automação');
+        if (ChatDepartment.status == "offline") {
+            $zopim(function () {
+                $zopim.livechat.window.show();
+                $zopim.livechat.departments.filter('Suporte - Automação 24h');
+                $zopim.livechat.prechatForm.setGreetings("Você selecionou o Suporte de Automações e Estratégias.");
+                $zopim.livechat.departments.setVisitorDepartment('Suporte - Automação 24h');
+                $zopim.livechat.window.setTitle("Suporte Automação/Estratégias");
+                let storedCPF = localStorage.getItem('userCPF');
+                console.log(storedCPF);
+                $zopim.livechat.setOnChatStart(function () {
+                    $zopim.livechat.say("CPF: " + storedCPF);
+                    $zopim.livechat.say("Departamento: Suporte Automação/Estratégias");
+                });
+            });
+        } else {
+            $zopim(function () {
+                $zopim.livechat.window.show();
+                $zopim.livechat.departments.filter('Suporte - Automação');
+                $zopim.livechat.prechatForm.setGreetings("Você selecionou o Suporte de Automações e Estratégias.");
+                $zopim.livechat.departments.setVisitorDepartment('Suporte - Automação');
+                $zopim.livechat.window.setTitle("Suporte Automação/Estratégias");
+                let storedCPF = localStorage.getItem('userCPF');
+                console.log(storedCPF);
+                $zopim.livechat.setOnChatStart(function () {
+                    $zopim.livechat.say("CPF: " + storedCPF);
+                    $zopim.livechat.say("Departamento: Suporte Automação/Estratégias");
+                });
+            });
+        }
+    });
+}
+
+function openChatCopy() {
+    closeChatbot();
+    zE(function () {
+        let ChatDepartment = zE('webWidget:get', 'chat:department', 'Suporte - Copy Invest');
+        if (ChatDepartment.status == "offline") {
+            $zopim(function () {
+                $zopim.livechat.window.show();
+                $zopim.livechat.departments.filter('Suporte - Copy Invest 24h');
+                $zopim.livechat.prechatForm.setGreetings("Você selecionou o Suporte Copy Invest.");
+                $zopim.livechat.departments.setVisitorDepartment('Suporte - Copy Invest 24h');
+                $zopim.livechat.window.setTitle("Suporte Copy Invest");
+                let storedCPF = localStorage.getItem('userCPF');
+                console.log(storedCPF);
+                $zopim.livechat.setOnChatStart(function () {
+                    $zopim.livechat.say("CPF: " + storedCPF);
+                    $zopim.livechat.say("Departamento: Suporte Copy Invest");
+                });
+            });
+        } else {
+            $zopim(function () {
+                $zopim.livechat.window.show();
+                $zopim.livechat.departments.filter('Suporte - Copy Invest');
+                $zopim.livechat.prechatForm.setGreetings("Você selecionou o Suporte Copy Invest.");
+                $zopim.livechat.departments.setVisitorDepartment('Suporte - Copy Invest');
+                $zopim.livechat.window.setTitle("Suporte Copy Invest");
+                let storedCPF = localStorage.getItem('userCPF');
+                console.log(storedCPF);
+                $zopim.livechat.setOnChatStart(function () {
+                    $zopim.livechat.say("CPF: " + storedCPF);
+                    $zopim.livechat.say("Departamento: Suporte Copy Invest");
+                });
+            });
+        }
+    });
+}
+
+function openChatNegotiation() {
+    closeChatbot();
+    zE(function () {
+        let ChatDepartment = zE('webWidget:get', 'chat:department', 'Suporte - Negociação');
+        if (ChatDepartment.status == "offline") {
+            $zopim(function () {
+                $zopim.livechat.window.show();
+                $zopim.livechat.departments.filter('Suporte 24h');
+                $zopim.livechat.prechatForm.setGreetings("Você selecionou o Suporte Negociações.");
+                $zopim.livechat.departments.setVisitorDepartment('Suporte 24h');
+                $zopim.livechat.window.setTitle("Suporte Negociações");
+                let storedCPF = localStorage.getItem('userCPF');
+                console.log(storedCPF);
+                $zopim.livechat.setOnChatStart(function () {
+                    $zopim.livechat.say("CPF: " + storedCPF);
+                    $zopim.livechat.say("Departamento: Suporte Negociações");
+                });
+            });
+        } else {
+            $zopim(function () {
+                $zopim.livechat.window.show();
+                $zopim.livechat.departments.filter('Suporte - Negociação');
+                $zopim.livechat.prechatForm.setGreetings("Você selecionou o Suporte Negociações.");
+                $zopim.livechat.departments.setVisitorDepartment('Suporte - Negociação');
+                $zopim.livechat.window.setTitle("Suporte Negociações");
+                let storedCPF = localStorage.getItem('userCPF');
+                console.log(storedCPF);
+                $zopim.livechat.setOnChatStart(function () {
+                    $zopim.livechat.say("CPF: " + storedCPF);
+                    $zopim.livechat.say("Departamento: Suporte Negociações");
+                });
+            });
+
+        }
+    });
+}
+
+function openChatAccess() {
+    closeChatbot();
+    zE(function () {
+        let ChatDepartment = zE('webWidget:get', 'chat:department', 'Suporte - Acesso');
+        if (ChatDepartment.status == "offline") {
+            $zopim(function () {
+                $zopim.livechat.window.show();
+                $zopim.livechat.departments.filter('Suporte 24h');
+                $zopim.livechat.prechatForm.setGreetings("Você selecionou o Suporte Acessos e Senhas.");
+                $zopim.livechat.departments.setVisitorDepartment('Suporte 24h');
+                $zopim.livechat.window.setTitle("Suporte Acessos e Senhas");
+                let storedCPF = localStorage.getItem('userCPF');
+                console.log(storedCPF);
+                $zopim.livechat.setOnChatStart(function () {
+                    $zopim.livechat.say("CPF: " + storedCPF);
+                    $zopim.livechat.say("Departamento: Suporte Acesso/Senhas");
+                });
+            });
+        } else {
+            $zopim(function () {
+                $zopim.livechat.window.show();
+                $zopim.livechat.departments.filter('Suporte - Acesso');
+                $zopim.livechat.prechatForm.setGreetings("Você selecionou o Suporte Acessos e Senhas.");
+                $zopim.livechat.departments.setVisitorDepartment('Suporte - Acesso');
+                $zopim.livechat.window.setTitle("Suporte Acessos e Senhas");
+                let storedCPF = localStorage.getItem('userCPF');
+                console.log(storedCPF);
+                $zopim.livechat.setOnChatStart(function () {
+                    $zopim.livechat.say("CPF: " + storedCPF);
+                    $zopim.livechat.say("Departamento: Suporte Acesso/Senhas");
+                });
+            });
+        }
+    });
+}
+
+function openFinanceiroChat() {
+    closeChatbot();
+    zE(function () {
+        $zopim(function () {
+            $zopim.livechat.window.show();
+            $zopim.livechat.departments.filter('Pagamentos / Cobranças');
+            $zopim.livechat.prechatForm.setGreetings("Você selecionou Pagamentos / Cobranças. \n\n Nosso horário de atendimento é das 09:00 às 18:00 (Segunda a Sexta), horário de Brasília (GMT-3).");
+            $zopim.livechat.departments.setVisitorDepartment('Pagamentos / Cobranças');
+            $zopim.livechat.window.setTitle("Pagamentos / Cobranças");
+            let storedCPF = localStorage.getItem('userCPF');
+            console.log(storedCPF);
+            $zopim.livechat.setOnChatStart(function () {
+                $zopim.livechat.say("CPF: " + storedCPF);
+                $zopim.livechat.say("Departamento: Pagamentos / Cobranças");
+            });
+        });
+    });
+}
+
+function openRelacionamentoChat() {
+    closeChatbot();
+    zE(function () {
+        $zopim(function () {
+            $zopim.livechat.window.show();
+            $zopim.livechat.departments.filter('Assinatura de Módulos Opcionais');
+            $zopim.livechat.prechatForm.setGreetings("Você selecionou Assinatura de Módulos Opcionais. \n\n Nosso horário de atendimento é das 09:00 às 18:00 (Segunda a Sexta), horário de Brasília (GMT-3).");
+            $zopim.livechat.departments.setVisitorDepartment('Assinatura de Módulos Opcionais');
+            $zopim.livechat.window.setTitle("Assinatura de Módulos Opcionais");
+            let storedCPF = localStorage.getItem('userCPF');
+            console.log(storedCPF);
+            $zopim.livechat.setOnChatStart(function () {
+                $zopim.livechat.say("CPF: " + storedCPF);
+                $zopim.livechat.say("Departamento: Assinatura de Módulos Opcionais");
+            });
+        });
+    });
+}
+
+function openComercialAutomacaoChat() {
+    closeChatbot();
+    zE(function () {
+        $zopim(function () {
+            $zopim.livechat.window.show();
+            $zopim.livechat.departments.filter('Comercial - Automação');
+            $zopim.livechat.prechatForm.setGreetings("Você selecionou Automação de Estratégias e Robôs. \n\n Nosso horário de atendimento é das 09:00 às 18:00 (Segunda a Sexta), horário de Brasília (GMT-3).");
+            $zopim.livechat.departments.setVisitorDepartment('Comercial - Automação');
+            $zopim.livechat.window.setTitle("Automação de Estratégias e Robôs");
+            let storedCPF = localStorage.getItem('userCPF');
+            console.log(storedCPF);
+            $zopim.livechat.setOnChatStart(function () {
+                $zopim.livechat.say("CPF: " + storedCPF);
+                $zopim.livechat.say("Departamento: Comercial Automação de Estratégias e Robôs");
+            });
+        });
+    });
+}
+
+function openComercialCopyInvestChat() {
+    closeChatbot();
+    zE(function () {
+        $zopim(function () {
+            $zopim.livechat.window.show();
+            $zopim.livechat.departments.filter('Comercial - Copy Invest');
+            $zopim.livechat.prechatForm.setGreetings("Você selecionou Copy Invest. \n\n Nosso horário de atendimento é das 09:00 às 18:00 (Segunda a Sexta), horário de Brasília (GMT-3).");
+            $zopim.livechat.departments.setVisitorDepartment('Comercial - Copy Invest');
+            $zopim.livechat.window.setTitle("Copy Invest");
+            let storedCPF = localStorage.getItem('userCPF');
+            console.log(storedCPF);
+            $zopim.livechat.setOnChatStart(function () {
+                $zopim.livechat.say("CPF: " + storedCPF);
+                $zopim.livechat.say("Departamento: Comercial Copy Invest");
+            });
+        });
+    });
+}
+
+function openComercialInvestAcademyChat() {
+    closeChatbot();
+    zE(function () {
+        $zopim(function () {
+            $zopim.livechat.window.show();
+            $zopim.livechat.departments.filter('Comercial - Invest Academy');
+            $zopim.livechat.prechatForm.setGreetings("Você selecionou Invest Academy. \n\n Nosso horário de atendimento é das 09:00 às 18:00 (Segunda a Sexta), horário de Brasília (GMT-3).");
+            $zopim.livechat.departments.setVisitorDepartment('Comercial - Invest Academy');
+            $zopim.livechat.window.setTitle("Invest Academy");
+            let storedCPF = localStorage.getItem('userCPF');
+            console.log(storedCPF);
+            $zopim.livechat.setOnChatStart(function () {
+                $zopim.livechat.say("CPF: " + storedCPF);
+                $zopim.livechat.say("Departamento: Comercial Invest Academy");
+            });
+        });
+    });
+}
+
+
+function openComercialChat() {
+    closeChatbot();
+    zE(function () {
+        $zopim(function () {
+            $zopim.livechat.window.show();
+            $zopim.livechat.departments.filter('Assinatura de Plataformas');
+            $zopim.livechat.prechatForm.setGreetings("Você selecionou Assinatura de Plataformas. \n\n Nosso horário de atendimento é das 09:00 às 18:00 (Segunda a Sexta), horário de Brasília (GMT-3).");
+            $zopim.livechat.departments.setVisitorDepartment('Assinatura de Plataformas');
+            $zopim.livechat.window.setTitle("Assinatura de Plataformas");
+            let storedCPF = localStorage.getItem('userCPF');
+            console.log(storedCPF);
+            $zopim.livechat.setOnChatStart(function () {
+                $zopim.livechat.say("CPF: " + storedCPF);
+                $zopim.livechat.say("Departamento: Assinatura de Plataformas");
+            });
+        });
+    });
+} 
+*/

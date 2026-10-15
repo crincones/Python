@@ -1,0 +1,43 @@
+# Estratégia do pipeline mínimo (CLAUDE.md, seção 43). Nenhum valor aqui é "o melhor": são o
+# ponto de partida. Variações entram na pesquisa por etapas (seção 16).
+
+trend:
+  d1: {ma_type: SMA, ma_period: 21, slope_period: 5}
+  h4: {ma_type: SMA, ma_period: 21, slope_period: 5}
+
+pullback:
+  min_bars: 2                   # candles H1 consecutivos contra a tendência
+  max_bars: 5
+
+reference:
+  ma_type: SMA                  # MM21 D1
+  ma_period: 21
+  atr_period: 14                # ATR D1 (Wilder) que normaliza a distância
+  h4_ma_period: 21              # só registrada (distance_to_h4_ma)
+  impulse_lookback: 20          # barras H1 antes da retração para medir o impulso
+
+entry:
+  valid_bars: 1                 # a ordem stop vale só na barra seguinte ao sinal
+
+risk:
+  stop: structural              # extremo da retração ± buffer
+  stop_buffer_atr_h1: 0.0
+  atr_period_h1: 14
+  target_r: 2.0
+  max_holding_bars: 70          # ~10 pregões de H1; depois sai no fechamento
+  benchmark_stop_lookback: 3    # benchmarks sem retração: stop no extremo das últimas N barras
+
+variants:
+  # Grupos da hipótese MM21 D1 (seção 11) e benchmarks (seção 17).
+  # filter: none | trend | pullback ; max_distance_atr: null = sem filtro ; touch: toque da MM
+  # trigger: break (rompimento da barra do sinal) | immediate (abertura da barra seguinte)
+  - {name: R_aleatorio,   filter: random,   trigger: break}
+  - {name: T_tendencia,   filter: trend,    trigger: break}
+  - {name: A_retracao,    filter: pullback, trigger: break}
+  - {name: B_dist_1.00,   filter: pullback, trigger: break, max_distance_atr: 1.00}
+  - {name: C_dist_0.75,   filter: pullback, trigger: break, max_distance_atr: 0.75}
+  - {name: D_dist_0.50,   filter: pullback, trigger: break, max_distance_atr: 0.50}
+  - {name: E_dist_0.30,   filter: pullback, trigger: break, max_distance_atr: 0.30}
+  - {name: F_toque_mm21,  filter: pullback, trigger: break, touch: true}
+  - {name: A_imediata,    filter: pullback, trigger: immediate}
+  - {name: D_imediata,    filter: pullback, trigger: immediate, max_distance_atr: 0.50}

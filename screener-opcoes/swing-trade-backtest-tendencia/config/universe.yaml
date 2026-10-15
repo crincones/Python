@@ -1,0 +1,35 @@
+# Universo e dados. Caminhos relativos são resolvidos a partir da raiz do projeto.
+
+mt5:
+  terminal_path: C:\Users\Carlos\AppData\Roaming\MetaQuotes\Terminal\Metatrader5B3\terminal64.exe
+  portable: true                # o terminal da XP roda com /portable
+  launch_if_closed: true        # abre minimizado se estiver fechado...
+  close_if_launched: true       # ...e fecha só o que ele mesmo abriu
+  startup_timeout_seconds: 180
+  startup_stable_seconds: 5
+  shutdown_timeout_seconds: 60
+  init_retries: 3
+  retry_wait_seconds: 2.0
+  history_retries: 3            # repete copy_rates_range enquanto o histórico sincroniza
+  server_timezone: America/Sao_Paulo   # epoch do MT5 = relógio de Brasília codificado como UTC
+
+data:
+  start_date: 2021-01-01        # baixa mais que o período de teste (aquecimento dos indicadores)
+  end_date: null                # null = hoje
+  test_start_date: 2022-01-01   # início do período avaliado no backtest
+  timeframes: [D1, H4, H1]
+  min_history_years: 2.0        # abaixo disso o ativo é testado, mas a limitação é registrada
+
+universe:
+  # Pastas (campo path) do MT5 da XP; symbols_get(group=...) filtra pelo nome, não pela pasta.
+  stock_path: BOVESPA\A VISTA
+  options_path: BOVESPA\OPCOES
+  # ETFs e índices não são ações: ficam fora mesmo tendo opções.
+  excluded: [IBOV11, BOVA11, SMAL11, IVVB11, BOVV11, DIVO11]
+  liquidity_window: 60          # pregões D1 da média de volume financeiro (close × real_volume)
+  min_average_daily_value: 5000000
+  robustness_thresholds: [5000000, 10000000, 20000000, 50000000]
+  pilot_assets: 5               # pipeline mínimo: só os N mais líquidos (0 = todos)
+
+quality:
+  max_overnight_gap_pct: 0.20   # gap D1 maior que isso é sinalizado (split/grupamento/ajuste?)
