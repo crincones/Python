@@ -48,9 +48,7 @@ class QuoteStore:
         path = self._path(underlying)
         return pd.read_pickle(path) if path.exists() else None
 
-    def load(
-        self, underlying: str, today: dt.date, calendar: B3Calendar
-    ) -> pd.DataFrame | None:
+    def load(self, underlying: str, today: dt.date, calendar: B3Calendar) -> pd.DataFrame | None:
         """Cotações salvas, com prazos (dias úteis/corridos) recalculados para `today`.
         Séries já vencidas são descartadas."""
         with self._lock:
@@ -62,9 +60,7 @@ class QuoteStore:
             return None
         expirations = pd.Series(frame["expiration_date"].to_numpy(), index=frame.index)
         frame["dte_business_days"] = calendar.sessions_until(today, expirations)
-        frame["dte_calendar_days"] = (
-            pd.to_datetime(expirations) - pd.Timestamp(today)
-        ).dt.days
+        frame["dte_calendar_days"] = (pd.to_datetime(expirations) - pd.Timestamp(today)).dt.days
         return frame.reset_index(drop=True)
 
     def spot(self, underlying: str) -> tuple[float | None, pd.Timestamp | None]:

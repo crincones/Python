@@ -67,6 +67,8 @@ def synthetic_chain(calendar: B3Calendar, half_spread: float = 0.02) -> pd.DataF
                         "tick_size": 0.01,
                         "underlying_price": SPOT,
                         "read_time": now,
+                        "volume_source": "sessão",
+                        "ref_note": None,
                     }
                 )
     return pd.DataFrame(rows)[list(CHAIN_COLUMNS)]

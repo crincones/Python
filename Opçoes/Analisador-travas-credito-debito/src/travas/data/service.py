@@ -16,6 +16,7 @@ import pandas as pd
 
 from travas.calendar_b3 import B3Calendar
 from travas.data import market_data
+from travas.data.b3_instruments import B3Instruments
 from travas.data.mt5_client import MT5Client, MT5Error
 from travas.data.normalize import ema, normalize_chain, option_catalog
 from travas.data.quote_store import QuoteStore
@@ -48,7 +49,10 @@ class MarketDataService:
         self._catalog: pd.DataFrame | None = None
         self._catalog_time = 0.0
         self._chains: dict[tuple, tuple[float, pd.DataFrame, dict]] = {}
+        self._account_key: tuple | None = None
+        self._daily_cache = None
         self._quotes = QuoteStore(settings.paths.quotes_dir)
+        self._instruments = B3Instruments(settings.paths.quotes_dir.parent / "b3", self._calendar)
         self._clock = lambda: pd.Timestamp.now(tz=LOCAL_TIMEZONE).to_pydatetime()
 
     def market(self) -> MarketStatus:
@@ -84,6 +88,7 @@ class MarketDataService:
                 self._state = _State(phase="erro", error=_diagnostic(exc))
                 raise
             self._client = client
+            self._account_key = (terminal["server"], terminal["login"])
             # Login da conta não é exibido nem logado além do necessário.
             self._state = _State(
                 phase="conectado",
@@ -126,12 +131,43 @@ class MarketDataService:
         for attempt in (1, 2):
             client = self._require()
             try:
-                return option_catalog(client.symbols(), self._settings.mt5.server_timezone)
+                today = pd.Timestamp.now(tz=LOCAL_TIMEZONE).date()
+                return option_catalog(
+                    client.symbols(),
+                    self._settings.mt5.server_timezone,
+                    self._instruments.reference(today),
+                )
             except MT5Error as exc:
                 if attempt == 2:
                     raise MarketDataUnavailable(str(exc)) from exc
                 client.close()  # força reconexão no próximo _require
         raise AssertionError("inalcançável")
+
+    def _check_account(self) -> None:
+        """A conta logada no terminal pode mudar (ex.: XP → Genial no mesmo terminal). Quando muda,
+        atualiza o estado e descarta caches montados com a corretora anterior."""
+        try:
+            summary = self._client.terminal_summary()
+        except MT5Error:
+            return
+        current = (summary["server"], summary["login"])
+        if self._account_key is not None and current != self._account_key:
+            log.info("Conta do MT5 mudou para %s: caches descartados", summary["server"])
+            self._catalog = None
+            self._chains = {}
+            self._daily_cache = None
+        self._account_key = current
+        self._state.terminal = {
+            "build": summary["build"],
+            "server": summary["server"],
+            "company": summary["company"],
+            "connected": summary["connected"],
+        }
+
+    def broker_name(self) -> str:
+        """Nome curto da corretora da conta logada (ex.: "XP Investimentos")."""
+        company = (self._state.terminal or {}).get("company") or "corretora"
+        return " ".join(company.split()[:2])
 
     def status(self) -> dict:
         s = self._state
@@ -139,6 +175,8 @@ class MarketDataService:
         if s.phase == "conectado" and self._lock.acquire(timeout=0.5):
             try:
                 connected_now = self._client is not None and self._client.is_connected()
+                if connected_now:
+                    self._check_account()
             finally:
                 self._lock.release()
         return {
@@ -153,6 +191,7 @@ class MarketDataService:
                 pd.Timestamp.now(tz=LOCAL_TIMEZONE).date()
             ),
             "market": self.market().to_dict(),
+            "broker": self.broker_name(),
         }
 
     # ---- dados -----------------------------------------------------------------------------
@@ -166,19 +205,12 @@ class MarketDataService:
             return self._catalog
 
     def underlyings(self) -> pd.DataFrame:
+        """Todos os ativos com opções listadas: lista e nº de séries da B3 (arquivo oficial),
+        marcando os que têm opções no MT5 da corretora logada (`has_mt5_options`). Sem o
+        arquivo da B3, cai para a lista do MT5."""
         catalog = self.catalog()
         today = pd.Timestamp.now(tz=LOCAL_TIMEZONE).date()
-        alive = catalog[catalog["expiration_date"] >= today]
-        return (
-            alive.groupby("underlying")
-            .agg(
-                listed_series=("symbol", "size"),
-                expirations=("expiration_date", "nunique"),
-                next_expiration=("expiration_date", "min"),
-            )
-            .sort_values("listed_series", ascending=False)
-            .reset_index()
-        )
+        return merge_underlyings(catalog, *self._instruments.summary(today), today)
 
     def quote(self, underlying: str) -> market_data.UnderlyingQuote:
         """Cotação do ativo. Fora do pregão: último preço salvo durante o pregão, se houver."""
@@ -240,8 +272,13 @@ class MarketDataService:
                 client = self._require()
                 try:
                     chain = market_data.fetch_chain(
-                        client, self.catalog(), underlying, effective, self._calendar,
+                        client,
+                        self.catalog(),
+                        underlying,
+                        effective,
+                        self._calendar,
                         self._settings,
+                        self._instruments.reference(started.date()),
                     )
                 except MT5Error as exc:
                     raise MarketDataUnavailable(str(exc)) from exc
@@ -291,11 +328,17 @@ class MarketDataService:
             with self._lock:
                 client = self._require()
                 try:
-                    raw = market_data.fetch_series_quotes(client, underlying, missing)
+                    raw = market_data.fetch_series_quotes(
+                        client, underlying, missing, self._settings.mt5.server_timezone
+                    )
                 except MT5Error as exc:
                     raise MarketDataUnavailable(str(exc)) from exc
             fresh = normalize_chain(
-                raw, now.date(), self._settings.mt5.server_timezone, self._calendar
+                raw,
+                now.date(),
+                self._settings.mt5.server_timezone,
+                self._calendar,
+                self._instruments.reference(now.date()),
             )
             if market.is_open:
                 self._quotes.save(underlying, fresh, now)
@@ -309,7 +352,7 @@ class MarketDataService:
         market = self.market()
         ttl = 60 if market.is_open else 900
         key = tuple(sorted(tickers))
-        cached = getattr(self, "_daily_cache", None)
+        cached = self._daily_cache
         if cached and cached[0] == key and time.monotonic() - cached[1] <= ttl:
             return cached[2], {**cached[3], "from_cache": True}
         with self._lock:
@@ -354,6 +397,35 @@ class MarketDataService:
             ),
         }
         return bars, meta
+
+
+def merge_underlyings(
+    catalog: pd.DataFrame, b3: pd.DataFrame | None, b3_date, today
+) -> pd.DataFrame:
+    alive = catalog[catalog["expiration_date"] >= today]
+    mt5 = (
+        alive.groupby("underlying")
+        .agg(
+            mt5_series=("symbol", "size"),
+            expirations=("expiration_date", "nunique"),
+            mt5_next=("expiration_date", "min"),
+        )
+        .reset_index()
+    )
+    if b3 is None or b3.empty:
+        merged = mt5.assign(b3_series=pd.NA, category=None, next_expiration=mt5["mt5_next"])
+    else:
+        merged = b3.merge(mt5, on="underlying", how="outer")
+        merged["next_expiration"] = merged["mt5_next"].fillna(merged["next_expiration"])
+    merged["mt5_series"] = merged["mt5_series"].fillna(0).astype(int)
+    merged["has_mt5_options"] = merged["mt5_series"] > 0
+    merged["listed_series"] = merged["b3_series"].fillna(merged["mt5_series"]).astype(int)
+    merged = merged.drop(columns=["mt5_next"]).sort_values(
+        ["listed_series", "underlying"], ascending=[False, True]
+    )
+    merged = merged.reset_index(drop=True)
+    merged.attrs["b3_date"] = b3_date
+    return merged
 
 
 def _filter_scope(stored: pd.DataFrame, scope: market_data.ChainScope) -> pd.DataFrame:

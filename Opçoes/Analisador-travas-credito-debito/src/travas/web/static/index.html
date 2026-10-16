@@ -57,6 +57,12 @@
           <span class="tip" title="Para travas de débito: (1) conhecendo o alvo, a perna mais afastada (a vendida) deve ficar antes do alvo; (2) o custo (débito natural) não deve passar de 1/4 da distância entre os strikes — equivale a lucro máximo ≥ 3 × perda máxima. Informe o preço-alvo para aplicar o critério (1).">?</span>
           <span id="nobre-hint" class="muted small"></span>
         </div>
+        <div class="nobre-box" id="style-box">
+          <span class="strong small">Estilo de exercício:</span>
+          <label class="check-inline"><input type="checkbox" id="european_short"> perna vendida europeia <span class="muted">(evita exercício antecipado)</span></label>
+          <span class="tip" title="O risco de ser exercido antes do vencimento (atribuição) é da perna VENDIDA americana — principalmente dentro do dinheiro, com pouco valor extrínseco ou perto da data-com de dividendos. A perna comprada só é exercida se você quiser. Na XP todas as puts são europeias; as calls são mistas.">?</span>
+          <span id="style-hint" class="muted small"></span>
+        </div>
         <div class="row">
           <div class="field">
             <label for="target_price">Preço-alvo (R$)</label>
@@ -292,6 +298,8 @@
           </div>
           <label class="small">Tamanho
             <select id="hm-size"><option value="turnover">Volume médio 20d</option><option value="cap">Valor de mercado (aprox.)</option><option value="equal">Igual</option></select></label>
+          <label class="small">Ativos
+            <select id="hm-universe"><option value="all">Todos com opções na B3</option><option value="mt5">Só com opções cotadas no MT5</option></select></label>
           <label class="check-inline"><input type="checkbox" id="hm-group" checked> Agrupar por setor</label>
           <button id="hm-refresh">Atualizar</button>
         </div>

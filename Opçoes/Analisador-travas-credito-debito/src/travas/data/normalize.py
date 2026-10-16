@@ -41,7 +41,27 @@ CHAIN_COLUMNS: dict[str, str] = {
     "tick_size": "trade_tick_size",
     "underlying_price": "Último do ativo-objeto (ou mid) lido junto com a série",
     "read_time": "Momento da leitura no terminal (relógio do PC)",
+    "volume_source": "Origem de negócios/volume: sessão (symbol_info) ou barra D1 de hoje",
+    "ref_note": "Divergência do MT5 corrigida pela B3 (strike/vencimento); nulo se ok",
 }
+
+
+def _volume_fallback(raw: pd.DataFrame) -> pd.DataFrame:
+    """Algumas corretoras (ex.: Genial) não preenchem session_deals/volume/aw nas opções. Nesses
+    casos usa a barra D1 de hoje da própria opção: negócios ≈ tick_volume, quantidade =
+    real_volume, preço médio ≈ fechamento da barra (aproximação, marcada em volume_source)."""
+    raw = raw.copy()
+    raw["volume_source"] = "sessão"
+    if "d1_real_volume" not in raw:
+        return raw
+    empty = (raw["session_volume"] == 0) & (raw["session_deals"] == 0)
+    use = empty & raw["d1_real_volume"].fillna(0).gt(0)
+    raw.loc[use, "session_deals"] = raw.loc[use, "d1_tick_volume"]
+    raw.loc[use, "session_volume"] = raw.loc[use, "d1_real_volume"]
+    raw.loc[use, "session_aw"] = raw.loc[use, "d1_close"]
+    raw.loc[use, "volume_source"] = "barra D1"
+    raw.loc[empty & ~use, "volume_source"] = "sem negócios hoje"
+    return raw
 
 
 def zero_as_missing(values: pd.Series) -> pd.Series:
@@ -54,14 +74,36 @@ def reference_price(last: pd.Series, bid: pd.Series, ask: pd.Series) -> pd.Serie
     return last.fillna((bid + ask) / 2)
 
 
-def option_catalog(symbols: pd.DataFrame, server_timezone: str) -> pd.DataFrame:
-    """Campos estáticos de todas as opções listadas (symbols_get). Opção = option_strike > 0."""
+UNDERLYING_TICKER_RE = r"[A-Z0-9]{4}\d{1,2}"  # PETR4, BOVA11, TAEE11, AAPL34…
+
+
+def resolve_underlying(
+    names: pd.Series, basis: pd.Series, reference: pd.DataFrame | None
+) -> pd.Series:
+    """Ativo-objeto de cada opção: o mapa oficial da B3 (ticker → ativo) prevalece; sem ele, o
+    `basis` do MT5 quando tem formato de ticker de ativo. Corrige corretoras que preenchem o
+    `basis` com o próprio ticker da opção (ex.: Genial: "YDUQK886"). Sem resolução → NaN."""
+    mapped = names.map(reference["underlying"]) if reference is not None else names.map({})
+    valid_basis = basis.where(basis.fillna("").str.fullmatch(UNDERLYING_TICKER_RE))
+    return mapped.fillna(valid_basis)
+
+
+def option_catalog(
+    symbols: pd.DataFrame, server_timezone: str, reference: pd.DataFrame | None = None
+) -> pd.DataFrame:
+    """Campos estáticos das opções de ações/ETFs/índice (symbols_get): option_strike > 0 e grupo
+    BOVESPA (opções da BM&F, ex. dólar, ficam fora). Séries sem ativo-objeto resolvido saem."""
     options = symbols[symbols["option_strike"] > 0]
+    if "path" in options:
+        options = options[options["path"].fillna("").str.startswith("BOVESPA")]
+    underlying = resolve_underlying(options["name"], options["basis"], reference)
+    options = options[underlying.notna()]
+    underlying = underlying[underlying.notna()]
     expiration = server_epoch_to_local(options["expiration_time"].to_numpy(), server_timezone)
-    return pd.DataFrame(
+    catalog = pd.DataFrame(
         {
             "symbol": options["name"].to_numpy(),
-            "underlying": options["basis"].to_numpy(),
+            "underlying": underlying.to_numpy(),
             "option_type": options["option_right"].map(OPTION_TYPE_BY_RIGHT).to_numpy(),
             "exercise_style": options["option_mode"].map(EXERCISE_STYLE_BY_MODE).to_numpy(),
             "strike": options["option_strike"].to_numpy(dtype="float64"),
@@ -69,16 +111,71 @@ def option_catalog(symbols: pd.DataFrame, server_timezone: str) -> pd.DataFrame:
             "contract_size": options["trade_contract_size"].to_numpy(dtype="float64"),
         }
     )
+    return apply_reference(catalog, reference)
+
+
+STRIKE_TOLERANCE = 0.005
+
+
+def apply_reference(catalog: pd.DataFrame, reference: pd.DataFrame | None) -> pd.DataFrame:
+    """Strike, vencimento e estilo oficiais da B3 prevalecem sobre o MT5; a divergência fica
+    registrada em `ref_note` (nulo quando bate ou quando a série não está na referência)."""
+    catalog = catalog.copy()
+    catalog["ref_note"] = None
+    if reference is None or catalog.empty:
+        return catalog
+    ref = reference.reindex(catalog["symbol"])
+    has = ref["strike"].notna().to_numpy()
+    notes: list[str | None] = []
+    for i, (mt5_k, b3_k, mt5_d, b3_d) in enumerate(
+        zip(
+            catalog["strike"],
+            ref["strike"],
+            catalog["expiration_date"],
+            ref["expiration_date"],
+            strict=True,
+        )
+    ):
+        if not has[i]:
+            notes.append(None)
+            continue
+        parts = []
+        if abs(float(mt5_k) - float(b3_k)) > STRIKE_TOLERANCE:
+            parts.append(f"strike corrigido pela B3 (MT5 informava {mt5_k:.2f})".replace(".", ","))
+        if pd.notna(b3_d) and mt5_d != b3_d:
+            parts.append(f"vencimento corrigido pela B3 (MT5 informava {mt5_d:%d/%m/%Y})")
+        notes.append("; ".join(parts) or None)
+    catalog.loc[has, "strike"] = ref["strike"].to_numpy()[has]
+    catalog.loc[has, "expiration_date"] = ref["expiration_date"].to_numpy()[has]
+    style = ref["exercise_style"].to_numpy()
+    valid_style = has & pd.notna(style)
+    catalog.loc[valid_style, "exercise_style"] = style[valid_style]
+    catalog["ref_note"] = pd.Series(notes, index=catalog.index, dtype=object)
+    return catalog
 
 
 def normalize_chain(
-    raw: pd.DataFrame, today: dt.date, server_timezone: str, calendar: B3Calendar
+    raw: pd.DataFrame,
+    today: dt.date,
+    server_timezone: str,
+    calendar: B3Calendar,
+    reference: pd.DataFrame | None = None,
 ) -> pd.DataFrame:
-    """`raw`: symbol_info das séries + read_time + underlying_bid/ask/last/time (brutos)."""
+    """`raw`: symbol_info das séries + read_time + underlying_bid/ask/last/time (brutos), e
+    opcionalmente d1_tick_volume/d1_real_volume/d1_close (barra D1 de hoje da opção)."""
     if raw.empty:
         return pd.DataFrame(columns=list(CHAIN_COLUMNS))
     raw = raw.reset_index(drop=True)
-    catalog = option_catalog(raw, server_timezone)
+    if "path" in raw:  # mesmas regras do catálogo, alinhando as linhas
+        keep = (
+            raw["path"].fillna("").str.startswith("BOVESPA")
+            & resolve_underlying(raw["name"], raw["basis"], reference).notna()
+        )
+        raw = raw[keep].reset_index(drop=True)
+        if raw.empty:
+            return pd.DataFrame(columns=list(CHAIN_COLUMNS))
+    raw = _volume_fallback(raw)
+    catalog = option_catalog(raw, server_timezone, reference)
     bid, ask, last = (zero_as_missing(raw[c]) for c in ("bid", "ask", "last"))
     has_book = bid.notna() & ask.notna() & (ask >= bid)
     mid = ((bid + ask) / 2).where(has_book)
@@ -112,6 +209,8 @@ def normalize_chain(
         tick_size=raw["trade_tick_size"].astype("float64").to_numpy(),
         underlying_price=reference_price(u_last, u_bid, u_ask).to_numpy(),
         read_time=raw["read_time"].to_numpy(),
+        volume_source=raw["volume_source"].to_numpy(),
+        ref_note=catalog["ref_note"].to_numpy(),
     )
     return (
         frame[list(CHAIN_COLUMNS)]

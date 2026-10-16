@@ -136,6 +136,9 @@ class AnalysisParams:
     nobre_target_required: bool = False  # True = exige perna vendida antes do alvo
     nobre_max_cost_fraction: float = NOBRE_MAX_COST_FRACTION  # 1/4 (padrão) ou 1/3
     nobre_prefer_close: bool = True  # strikes mais próximos primeiro no ranking
+    # Exige perna VENDIDA europeia: o risco de exercício antecipado (atribuição) é da vendida
+    # americana; a comprada só é exercida se o titular (o usuário) quiser.
+    european_short: bool = False
     costs_brl: float = 0.0
     max_results: int = 300
 
@@ -251,6 +254,8 @@ def _leg_info(row: pd.Series, side: Side) -> dict:
         "deals": int(row["deals"]) if pd.notna(row["deals"]) else None,
         "volume_qty": _f(row["volume_qty"]),
         "turnover_brl": _f(row["turnover_brl"]),
+        "volume_source": row.get("volume_source"),
+        "ref_note": row.get("ref_note") if isinstance(row.get("ref_note"), str) else None,
         "contract_size": _f(row["contract_size"]),
         "iv": _f(row["iv"]),
         "iv_status": row["iv_status"],
@@ -319,6 +324,10 @@ def evaluate_pair(prep: PreparedChain, long_row: pd.Series, short_row: pd.Series
         "invalid": [],
         "warnings": [],
     }
+    style_errors = exercise_style_errors(p, short_row)
+    if style_errors:
+        result["invalid"].extend(style_errors)
+        return result
     if natural is None:
         result["invalid"].append("sem bid/ask para o preço natural (não estimável)")
         return result
@@ -452,12 +461,25 @@ def evaluate_pair(prep: PreparedChain, long_row: pd.Series, short_row: pd.Series
     )
     result["limit"] = _limit_dict(limit)
     result["early_exercise"] = early_exercise_alert(prep, short_row)
+    for row_, side in ((long_row, "comprada"), (short_row, "vendida")):
+        note = row_.get("ref_note")
+        if isinstance(note, str) and note:
+            result["warnings"].append(f"{row_['symbol']} ({side}): {note}")
     if nobre_active:
         if not nobre["cost_ok"]:
             result["invalid"].append(NOBRE_COST_REASON)
         if p.nobre_target_required and nobre["target_ok"] is False:
             result["invalid"].append(NOBRE_TARGET_REASON)
     return result
+
+
+EUROPEAN_SHORT_REASON = "filtro de estilo: perna vendida americana (pode ser exercida antes)"
+
+
+def exercise_style_errors(p: AnalysisParams, short_row: pd.Series) -> list[str]:
+    if p.european_short and short_row["exercise_style"] != "european":
+        return [EUROPEAN_SHORT_REASON]
+    return []
 
 
 def early_exercise_alert(prep: PreparedChain, short_row: pd.Series) -> str | None:
@@ -655,6 +677,7 @@ def assumptions(prep: PreparedChain) -> dict:
         ),
         "weights": p.weights,
         "settlement_note": SETTLEMENT_NOTE,
+        "exercise_style_filter": ["perna vendida europeia"] if p.european_short else [],
     }
 
 

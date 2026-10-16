@@ -31,12 +31,18 @@
     try {
       const s = await api("/api/status");
       renderMarket(s.market);
+      if (s.broker && s.broker !== state.broker) {
+        const changed = state.broker && state.broker !== s.broker;
+        state.broker = s.broker;
+        // Conta trocada no terminal: recarrega a lista (outra corretora, outras opções).
+        if (changed) { state.underlyingsLoaded = false; state.underlying = null; }
+      }
       box.className = "conn " + (s.phase === "conectado" && s.server_connected !== false ? "ok" : s.phase === "erro" ? "err" : "wait");
       if (s.phase === "conectado") {
         const t = s.terminal || {};
         text.textContent = s.server_connected === false
           ? "MT5 aberto, SEM conexão com a corretora"
-          : `MT5 conectado · ${t.server || ""}${s.is_session_today ? "" : " · hoje não é pregão"}`;
+          : `MT5 conectado · ${esc(s.broker || "")} (${t.server || ""})${s.is_session_today ? "" : " · hoje não é pregão"}`;
         if (!state.underlyingsLoaded) loadUnderlyings();
       } else if (s.phase === "erro") {
         text.textContent = `MT5 indisponível: ${s.error}`;
@@ -63,7 +69,9 @@
     state.underlyingsLoaded = true;
     try {
       const list = await api("/api/underlyings");
-      $("underlyings").innerHTML = list.map((u) => `<option value="${esc(u.underlying)}">${esc(u.underlying)} · ${u.listed_series} séries</option>`).join("");
+      // Ordem por nº de séries (B3). Sem opções no MT5 da corretora: listado, mas sinalizado.
+      $("underlyings").innerHTML = list.map((u) => `<option value="${esc(u.underlying)}">${esc(u.underlying)} · ${FMT.int(u.listed_series)} séries${u.category ? " · " + esc(u.category) : ""}${u.has_mt5_options ? "" : " · sem cotações de opções no MT5"}</option>`).join("");
+      state.underlyingInfo = Object.fromEntries(list.map((u) => [u.underlying, u]));
       if ($("underlying").value) onUnderlying();
     } catch (e) {
       state.underlyingsLoaded = false;
@@ -82,7 +90,9 @@
     try {
       const q = await api(`/api/quote/${encodeURIComponent(u)}`);
       const origin = q.source === "ultimo_pregao" ? " (último pregão)" : q.source === "mt5_fora_pregao" ? " (MT5 fora do pregão)" : "";
-      $("spot-info").innerHTML = `${tickerIcon(u, 14)}Spot ${FMT.price(q.price)}${origin} · ${FMT.datetime(q.quote_time)}`;
+      const info = (state.underlyingInfo || {})[u];
+      const noOpts = info && !info.has_mt5_options ? ` · <span class="neg">opções sem cotação no MT5 da ${esc(state.broker || "corretora")} (${FMT.int(info.listed_series)} séries na B3)</span>` : "";
+      $("spot-info").innerHTML = `${tickerIcon(u, 14)}Spot ${FMT.price(q.price)}${origin} · ${FMT.datetime(q.quote_time)}${noOpts}`;
       state.spot = q.price;
     } catch (e) {
       $("spot-info").textContent = e.message;
@@ -235,6 +245,8 @@
   // ---------- formulário ----------
   function updateKindText() {
     $("kind-desc").textContent = KIND_TEXT[`${radio("direction")}|${radio("flow")}`];
+    const usesPuts = (radio("direction") === "alta") !== (radio("flow") === "debito");
+    $("style-hint").textContent = usesPuts ? "esta estrutura usa puts (na XP todas são europeias)" : "";
     // Filtro Rafael Nobre só existe para travas de débito.
     const debit = radio("flow") === "debito";
     $("nobre-box").classList.toggle("disabled", !debit);
@@ -275,6 +287,7 @@
       nobre_target_required: $("nobre_target_required").checked,
       nobre_max_cost_fraction: Number($("nobre_fraction").value),
       nobre_prefer_close: $("nobre_prefer_close").checked,
+      european_short: $("european_short").checked,
       refresh: $("refresh").checked,
       liquidity: {
         max_spread_pct_mid: pctOrNull("max_spread_pct_mid"),
@@ -322,8 +335,8 @@
     { key: "rank", label: "#", val: (r) => r.rank, fmt: (r) => r.rank },
     { key: "score", label: "Score", val: (r) => r.score, fmt: (r) => `${FMT.num(r.score, 0)}${r.score_capped ? "*" : ""}` },
     { key: "expiration", label: "Vencimento", l: true, val: (r) => r.expiration, fmt: (r) => `${FMT.date(r.expiration)} <span class="muted">(${r.dte_business_days} du)</span>` },
-    { key: "long", label: "Compra", l: true, val: (r) => r.legs[0].strike, fmt: (r) => `${FMT.price(r.legs[0].strike)} <span class="muted">${esc(r.legs[0].symbol)}</span>` },
-    { key: "short", label: "Venda", l: true, val: (r) => r.legs[1].strike, fmt: (r) => `${FMT.price(r.legs[1].strike)} <span class="muted">${esc(r.legs[1].symbol)}</span>` },
+    { key: "long", label: "Compra", l: true, val: (r) => r.legs[0].strike, fmt: (r) => `${FMT.price(r.legs[0].strike)} <span class="muted">${esc(r.legs[0].symbol)}</span>${styleTag(r.legs[0])}` },
+    { key: "short", label: "Venda", l: true, val: (r) => r.legs[1].strike, fmt: (r) => `${FMT.price(r.legs[1].strike)} <span class="muted">${esc(r.legs[1].symbol)}</span>${styleTag(r.legs[1])}` },
     { key: "width", label: "Largura", tip: "Distância entre os strikes (R$)", val: (r) => r.width, fmt: (r) => FMT.price(r.width) },
     { key: "entry", label: "Entrada natural", tip: "Por ação: compra no ask, venda no bid", val: (r) => r.entry_natural, fmt: (r) => FMT.price(r.entry_natural) },
     { key: "mid", label: "Mid", val: (r) => r.entry_mid, fmt: (r) => FMT.price(r.entry_mid) },
@@ -337,6 +350,11 @@
     { key: "liq", label: "Liquidez", val: (r) => r.liquidity_score, fmt: (r) => liqBadge(r) },
     { key: "alerts", label: "Alertas", l: true, val: (r) => (r.early_exercise || "").startsWith("RISCO") ? 1 : 0, fmt: (r) => alertsCell(r) },
   ];
+
+  function styleTag(leg) {
+    const eur = leg.exercise_style === "european";
+    return ` <span class="style-tag ${eur ? "eur" : "amer"}" title="${eur ? "Europeia: só exerce no vencimento" : "Americana: pode ser exercida a qualquer momento"}">${eur ? "E" : "A"}</span>`;
+  }
 
   function nobreBadge(n) {
     if (!n) return "—";
@@ -368,8 +386,10 @@
     warn.textContent = c.realtime_warning ? `Atenção: ${c.realtime_warning}.` : "";
     const nobreNote = a.nobre ? `<div class="small"><b>Filtro Rafael Nobre:</b> ${esc(a.nobre.note)}</div>` +
       (a.nobre.warning ? `<div class="warn">${esc(a.nobre.warning)}</div>` : "") : "";
+    const styleNote = a.assumptions.exercise_style_filter && a.assumptions.exercise_style_filter.length
+      ? `<div class="small"><b>Estilo de exercício:</b> ${esc(a.assumptions.exercise_style_filter.join(" e "))}</div>` : "";
     const disc = Object.entries(a.discarded).map(([k, v]) => `${esc(k)}: ${v}`).join(" · ");
-    $("discarded").innerHTML = nobreNote + `${a.total_ranked} travas ranqueadas de ${a.candidates_evaluated} avaliadas` + (disc ? ` · descartadas — ${disc}` : "") +
+    $("discarded").innerHTML = nobreNote + styleNote + `${a.total_ranked} travas ranqueadas de ${a.candidates_evaluated} avaliadas` + (disc ? ` · descartadas — ${disc}` : "") +
       (a.atm_iv.length ? ` · IV ATM: ${a.atm_iv.map((x) => `${FMT.date(x.expiration)} ${FMT.pct(x.atm_iv)}`).join(", ")}` : " · sem IV ATM confiável (POP indisponível)");
     $("ranking-note").textContent = `${a.assumptions.ranking_note} * = score limitado por liquidez/cotação. Valores totais para ${a.results[0] ? a.results[0].quantity : ""} opções por perna. ${a.assumptions.entry_basis}.`;
     renderTable();
@@ -506,10 +526,10 @@
     const rows = d.legs.map((l) => `<tr>
       <td class="l">${l.side === "compra" ? "Compra" : "Venda"}</td><td class="l">${esc(l.symbol)}</td><td class="l">${l.option_type} ${l.exercise_style === "american" ? "americana" : "europeia"}</td>
       <td>${FMT.price(l.strike)}</td><td>${FMT.price(l.bid)}</td><td>${FMT.price(l.ask)}</td><td>${FMT.price(l.mid)}</td><td>${FMT.price(l.last)}</td>
-      <td>${FMT.pct(l.spread_pct_mid)}</td><td>${FMT.int(l.deals)}</td><td>${FMT.brl(l.turnover_brl)}</td>
+      <td>${FMT.pct(l.spread_pct_mid)}</td><td title="${esc(l.volume_source || "")}">${FMT.int(l.deals)}${l.volume_source === "barra D1" ? "*" : ""}</td><td title="${esc(l.volume_source || "")}">${FMT.brl(l.turnover_brl)}${l.volume_source === "barra D1" ? "*" : ""}</td>
       <td>${FMT.datetime(l.quote_time)} <span class="muted">(${FMT.age(l.quote_age_seconds)})</span></td>
       <td title="${esc(l.iv_status)}">${FMT.pct(l.iv)}</td>
-      <td class="l">${l.flags.length ? `<span class="badge bad">${esc(l.flags.join(", "))}</span>` : '<span class="badge ok">ok</span>'}</td></tr>`).join("");
+      <td class="l">${l.flags.length ? `<span class="badge bad">${esc(l.flags.join(", "))}</span>` : '<span class="badge ok">ok</span>'}${l.ref_note ? ` <span class="badge mid" title="${esc(l.ref_note)}">dado corrigido (B3)</span>` : ""}</td></tr>`).join("");
     $("legs").innerHTML = `<thead><tr><th class="l">Lado</th><th class="l">Ticker</th><th class="l">Tipo</th><th>Strike</th><th>Bid</th><th>Ask</th><th>Mid</th><th>Último</th><th>Spread</th><th>Negócios</th><th>Volume R$</th><th>Último tick</th><th>IV</th><th class="l">Qualidade</th></tr></thead><tbody>${rows}</tbody>`;
   }
 
@@ -536,7 +556,7 @@
       `Probabilidade de toque: princípio da reflexão (monitoramento contínuo); aproximação.`,
       d.simulation.assumptions,
       a.settlement_note,
-      "Open interest não disponível no MT5 da XP; volume e negócios não equivalem a contratos em aberto.",
+      `Open interest não disponível no MT5 (${state.broker || "corretora"}); volume e negócios não equivalem a contratos em aberto.`,
     ];
     $("assumptions").innerHTML = items.map((t) => `<li>${esc(t)}</li>`).join("");
   }
@@ -589,7 +609,7 @@
   function savePrefs() {
     clearTimeout(saveTimer);
     saveTimer = setTimeout(() => {
-      const prefs = { side_width: state.sideWidth || null, nobre_filter: $("nobre_filter").checked, nobre_target_required: $("nobre_target_required").checked, nobre_fraction: $("nobre_fraction").value, nobre_prefer_close: $("nobre_prefer_close").checked, direction: radio("direction"), flow: radio("flow"), tf: state.tf, side: state.side, tab: state.tab, include_illiquid: $("include_illiquid").checked, tracking: Tracking.prefs(), heatmap: Heatmap.prefs() };
+      const prefs = { side_width: state.sideWidth || null, nobre_filter: $("nobre_filter").checked, nobre_target_required: $("nobre_target_required").checked, nobre_fraction: $("nobre_fraction").value, nobre_prefer_close: $("nobre_prefer_close").checked, european_short: $("european_short").checked, direction: radio("direction"), flow: radio("flow"), tf: state.tf, side: state.side, tab: state.tab, include_illiquid: $("include_illiquid").checked, tracking: Tracking.prefs(), heatmap: Heatmap.prefs() };
       for (const f of PREF_FIELDS) prefs[f] = $(f).value;
       fetch("/api/preferences", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(prefs) }).catch(() => {});
     }, 600);
@@ -613,6 +633,7 @@
     $("nobre_filter").checked = !!prefs.nobre_filter;
     $("nobre_target_required").checked = !!prefs.nobre_target_required;
     if (prefs.nobre_fraction) $("nobre_fraction").value = prefs.nobre_fraction;
+    $("european_short").checked = !!prefs.european_short;
     if (prefs.nobre_prefer_close !== undefined) $("nobre_prefer_close").checked = !!prefs.nobre_prefer_close;
     if (prefs.tf) state.tf = prefs.tf;
     document.querySelectorAll(".tf button").forEach((b) => b.classList.toggle("active", b.dataset.tf === state.tf));
@@ -628,7 +649,7 @@
     state.defaults = def;
     applyDefaults(def, prefs);
     updateKindText();
-    document.querySelectorAll("input[name=direction], input[name=flow], #nobre_filter, #target_price, #target_pct").forEach((r) => r.addEventListener("change", () => { updateKindText(); savePrefs(); }));
+    document.querySelectorAll("input[name=direction], input[name=flow], #nobre_filter, #target_price, #target_pct, #european_short").forEach((r) => r.addEventListener("change", () => { updateKindText(); savePrefs(); }));
     $("underlying").addEventListener("change", onUnderlying);
     $("form").addEventListener("submit", onSubmit);
     $("form").addEventListener("change", savePrefs);
@@ -739,6 +760,6 @@
     $("tab-analysis").scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  window.App = { analyzeTicker, api, showUnderlying, setLevels, toggleMax, savePrefs, tooltip: () => $("tooltip") };
+  window.App = { broker: () => state.broker || "corretora", analyzeTicker, api, showUnderlying, setLevels, toggleMax, savePrefs, tooltip: () => $("tooltip") };
   init();
 })();

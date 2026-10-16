@@ -83,7 +83,32 @@ def underlying_quote(client: MT5Client, symbol: str, server_timezone: str) -> Un
     raise MT5Error(f"ativo {symbol} não encontrado no terminal")
 
 
-def fetch_series_quotes(client: MT5Client, underlying: str, symbols: list[str]) -> pd.DataFrame:
+def _attach_d1(client: MT5Client, infos: pd.DataFrame, server_tz: str) -> pd.DataFrame:
+    """Para séries sem negócios/volume da sessão, lê a barra D1 de HOJE da própria opção."""
+    infos = infos.copy()
+    for col in ("d1_tick_volume", "d1_real_volume", "d1_close"):
+        infos[col] = float("nan")
+    today = pd.Timestamp.now(tz=LOCAL_TIMEZONE).date()
+    empty = (infos["session_volume"] == 0) & (infos["session_deals"] == 0) & (infos["time"] > 0)
+    for idx in infos.index[empty]:
+        try:
+            rates = client.rates(infos.at[idx, "name"], "d1", 1)
+        except MT5Error:
+            continue
+        if rates.empty:
+            continue
+        bar = rates.iloc[-1]
+        bar_day = server_epoch_to_local(pd.Series([bar["time"]]), server_tz).iloc[0].date()
+        if bar_day == today:
+            infos.at[idx, "d1_tick_volume"] = float(bar["tick_volume"])
+            infos.at[idx, "d1_real_volume"] = float(bar["real_volume"])
+            infos.at[idx, "d1_close"] = float(bar["close"])
+    return infos
+
+
+def fetch_series_quotes(
+    client: MT5Client, underlying: str, symbols: list[str], server_tz: str = LOCAL_TIMEZONE
+) -> pd.DataFrame:
     """symbol_info das séries, com a cotação do ativo lida junto de cada lote."""
     frames = []
     for _ in client.selected_batches([underlying]):  # mantém o ativo-objeto selecionado
@@ -97,7 +122,7 @@ def fetch_series_quotes(client: MT5Client, underlying: str, symbols: list[str]) 
                 infos[f"underlying_{field}"] = spot[field].iloc[0] if not spot.empty else 0.0
             infos["underlying_time"] = spot["time"].iloc[0] if not spot.empty else 0
             infos["read_time"] = read_time
-            frames.append(infos)
+            frames.append(_attach_d1(client, infos, server_tz))
     return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
 
 
@@ -154,6 +179,7 @@ def fetch_chain(
     scope: ChainScope,
     calendar: B3Calendar,
     settings: Settings,
+    reference: pd.DataFrame | None = None,
 ) -> pd.DataFrame:
     today = pd.Timestamp.now(tz=LOCAL_TIMEZONE).date()
     candidates = candidate_symbols(catalog, underlying, scope, today, calendar)
@@ -163,10 +189,10 @@ def fetch_chain(
     log.info("%s: coletando %d séries", underlying, len(symbols))
     problem = None
     for attempt in range(1, FEED_RETRIES + 1):
-        raw = fetch_series_quotes(client, underlying, symbols)
+        raw = fetch_series_quotes(client, underlying, symbols, settings.mt5.server_timezone)
         problem = feed_problem(raw)
         if problem is None:
-            return normalize_chain(raw, today, settings.mt5.server_timezone, calendar)
+            return normalize_chain(raw, today, settings.mt5.server_timezone, calendar, reference)
         log.warning("%s: %s (tentativa %d)", underlying, problem, attempt)
         client.cool_down()
     raise MT5Error(f"feed do MT5 com problema em {underlying}: {problem}")

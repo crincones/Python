@@ -2,7 +2,7 @@
 // tamanho = volume médio 20d, valor de mercado aproximado ou igual; agrupado por setor (B3).
 const Heatmap = (() => {
   const $ = (id) => document.getElementById(id);
-  const st = { data: null, metric: "1d", size: "turnover", group: true, selected: null, ready: false, loading: false };
+  const st = { data: null, metric: "1d", size: "turnover", group: true, universe: "all", selected: null, ready: false, loading: false };
   const api = (...a) => App.api(...a);
 
   const METRICS = {
@@ -136,6 +136,7 @@ const Heatmap = (() => {
       <table style="margin-top:.3rem">${row("Preço", FMT.price(item.price))}${row("Dia", signedPct(c["1d"].pct))}${row("Semana", signedPct(c["1w"].pct))}${row("Mês", signedPct(c["1m"].pct))}${row("Ano", signedPct(c["1y"].pct))}
       ${row("Volume hoje", compact(item.turnover_today))}${row("Média 20d", compact(item.turnover_avg20))}${row("Negócios (sessão)", FMT.int(item.deals_session))}
       ${row("Vol. histórica 20d", FMT.pct(item.hv20))}${row("Valor de mercado (aprox.)", compact(item.market_cap_approx))}</table>
+      <div class="muted">${FMT.int(item.listed_series)} séries de opções na B3${item.has_mt5_options ? "" : ` · ◦ opções sem cotação no MT5 da ${esc(App.broker())} (não dá para analisar travas)`}</div>
       <div class="muted">Clique para ver o resumo</div>`;
   }
 
@@ -167,7 +168,7 @@ const Heatmap = (() => {
         html += `<button class="hm-tile${st.selected === it.ticker ? " sel" : ""}" data-t="${esc(it.ticker)}" data-tip="${esc(tip(it))}"
           style="left:${t.x}px;top:${t.y}px;width:${Math.max(0, t.w - 1)}px;height:${Math.max(0, t.h - 1)}px;background:${rgb(c)};color:${fg};font-size:${fs}px"
           aria-label="${esc(it.ticker)} ${esc(l1)}">
-          ${minSide > 22 ? `<span class="hm-head">${showIcon ? tickerIcon(it.ticker, Math.round(Math.min(28, fs * 1.2))) : ""}<b>${esc(it.ticker)}</b></span>` : ""}
+          ${minSide > 22 ? `<span class="hm-head">${showIcon ? tickerIcon(it.ticker, Math.round(Math.min(28, fs * 1.2))) : ""}<b>${esc(it.ticker)}${it.has_mt5_options ? "" : "◦"}</b></span>` : ""}
           ${showL1 ? `<span class="hm-v1">${esc(l1)}</span>` : ""}${showL2 ? `<span class="hm-v2">${esc(l2)}</span>` : ""}</button>`;
       }
     }
@@ -207,14 +208,16 @@ const Heatmap = (() => {
     $("hm-meta").textContent = "Coletando barras diárias no MT5 e cadastro na B3… (a 1ª carga pode levar alguns segundos)";
     $("hm-refresh").disabled = true;
     try {
-      Busy.show($("hm-map-host"), st.data ? "Atualizando…" : "Carregando o heatmap (MT5 + B3)…");
+      Busy.show($("hm-map-host"), st.data ? "Atualizando…" : "Carregando o heatmap (MT5 + B3)… ~40 s; na 1ª vez numa conta/terminal novo pode levar alguns minutos (o terminal baixa o histórico dos ativos)");
       try {
-        st.data = await api("/api/heatmap");
+        st.data = await api(`/api/heatmap?universe=${st.universe}`);
       } finally {
         Busy.hide($("hm-map-host"));
       }
       const d = st.data;
-      $("hm-meta").innerHTML = `${d.items.length} ativos com opções · dados de ${FMT.datetime(d.collected_at)}${d.from_cache ? " (cache)" : ""} · ${esc(d.market.label)}` +
+      const noOpts = d.items.filter((i) => !i.has_mt5_options).length;
+      $("hm-meta").innerHTML = `${d.items.length} ativos com opções na B3${noOpts ? ` (${noOpts} sem cotação das opções no MT5, marcados com ◦)` : ""}` +
+        `${d.without_bars && d.without_bars.length ? ` · sem histórico no MT5: ${esc(d.without_bars.join(", "))}` : ""} · dados de ${FMT.datetime(d.collected_at)}${d.from_cache ? " (cache)" : ""} · ${esc(d.market.label)}` +
         (d.b3_errors.length ? ` · <span class="neg">B3 indisponível para ${esc(d.b3_errors.join(", "))}</span>` : "") +
         (d.excluded.length ? ` · fora: ${esc(d.excluded.join(", "))} (índice)` : "");
       $("hm-notes").textContent = d.notes.join(" ");
@@ -270,7 +273,8 @@ const Heatmap = (() => {
     $("hm-detail").innerHTML = `
       <div class="card-head">
         <h2>${tickerIcon(d.ticker, 28)}${esc(d.ticker)} <span class="muted small">${company}</span></h2>
-        <button id="hm-analyze" class="primary">Analisar travas de ${esc(d.ticker)}</button>
+        ${d.has_mt5_options ? `<button id="hm-analyze" class="primary">Analisar travas de ${esc(d.ticker)}</button>`
+          : `<span class="warn small">Opções de ${esc(d.ticker)} (${FMT.int(d.listed_series)} séries na B3) sem cotação no MT5 da ${esc(App.broker())}: não dá para analisar travas.</span>`}
       </div>
       <p class="small">${sector ? `<b>Setor (B3):</b> ${sector}` : ""}${p.listing_segment ? ` · <b>Listagem:</b> ${esc(p.listing_segment)}` : ""}${p.website ? ` · <a href="https://${esc(p.website.replace(/^https?:\/\//, ""))}" target="_blank" rel="noopener noreferrer">${esc(p.website)}</a>` : ""}</p>
       ${p.activity ? `<p class="small muted">${esc(p.activity)}</p>` : ""}
@@ -308,13 +312,14 @@ const Heatmap = (() => {
       <h3>Eventos societários <span class="muted small">(desdobramentos, grupamentos, bonificações, subscrições)</span></h3>
       ${ev.available === false ? "" : `<div class="table-wrap"><table class="legs small"><thead><tr><th class="l">Evento</th><th>Data-com</th><th>Aprovação</th><th>Fator / %</th></tr></thead><tbody>${stockRows || '<tr><td class="l" colspan="4">Sem registros</td></tr>'}</tbody></table></div>`}
       <p class="muted small">${esc(d.mergers_note)} Dados de mercado: MT5 (${FMT.datetime(d.collected_at)}); cadastro e proventos: API pública da B3.</p>`;
-    $("hm-analyze").addEventListener("click", () => App.analyzeTicker(d.ticker));
+    if ($("hm-analyze")) $("hm-analyze").addEventListener("click", () => App.analyzeTicker(d.ticker));
   }
 
   async function loadIv(ticker, d) {
     try {
       const iv = await api(`/api/heatmap/${encodeURIComponent(ticker)}/iv`);
       if (st.selected !== ticker || !$("hm-iv")) return;
+      if (iv.unavailable) { $("hm-iv").innerHTML = `<p class="muted">${esc(iv.unavailable)}</p>`; return; }
       const hv20 = d.metrics.hv["20"];
       const rows = iv.atm_iv.map((r) => `<tr><td>${FMT.date(r.expiration)}</td><td>${r.dte_business_days}</td><td>${FMT.pct(r.atm_iv)}</td><td>${FMT.ok(hv20) && hv20 > 0 ? FMT.num(r.atm_iv / hv20, 2) + "×" : "—"}</td></tr>`).join("");
       $("hm-iv").innerHTML = (iv.warning ? `<div class="warn">${esc(iv.warning)}</div>` : "") +
@@ -337,6 +342,7 @@ const Heatmap = (() => {
     }));
     $("hm-size").addEventListener("change", () => { st.size = $("hm-size").value; render(); App.savePrefs(); });
     $("hm-group").addEventListener("change", () => { st.group = $("hm-group").checked; render(); App.savePrefs(); });
+    $("hm-universe").addEventListener("change", () => { st.universe = $("hm-universe").value; App.savePrefs(); load(); });
     $("hm-refresh").addEventListener("click", load);
     $("hm-map").addEventListener("click", (ev) => {
       const tile = ev.target.closest(".hm-tile");
@@ -358,15 +364,17 @@ const Heatmap = (() => {
     document.querySelectorAll("#hm-metric button").forEach((x) => x.classList.toggle("active", x.dataset.m === st.metric));
     $("hm-size").value = st.size;
     $("hm-group").checked = st.group;
+    $("hm-universe").value = st.universe;
     if (!st.data) load();
     else render();
   }
 
-  const prefs = () => ({ metric: st.metric, size: st.size, group: st.group });
+  const prefs = () => ({ metric: st.metric, size: st.size, group: st.group, universe: st.universe });
   function applyPrefs(p) {
     if (p.metric && METRICS[p.metric]) st.metric = p.metric;
     if (p.size) st.size = p.size;
     if (p.group !== undefined) st.group = !!p.group;
+    if (p.universe === "all" || p.universe === "mt5") st.universe = p.universe;
   }
 
   return { activate, prefs, applyPrefs, squarify };

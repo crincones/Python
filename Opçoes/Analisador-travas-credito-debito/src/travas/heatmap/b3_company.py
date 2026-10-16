@@ -107,8 +107,9 @@ class B3Companies:
         os.replace(tmp, self._cache_path(root))
 
     # ---------- consultas ----------
-    def profile(self, ticker: str) -> dict:
-        """Cadastro (setor etc.) da raiz do ticker, com cache de 30 dias."""
+    def profile(self, ticker: str, category: str | None = None) -> dict:
+        """Cadastro (setor etc.) da raiz do ticker, com cache de 30 dias. `category` (do arquivo
+        de instrumentos da B3: Ação, ETF, BDR…) define o setor quando não há cadastro."""
         root = ticker[:4].upper()
         cached = self._load(root)
         if cached.get("detail_at") and time.time() - cached["detail_at"] < DETAIL_TTL:
@@ -122,11 +123,10 @@ class B3Companies:
                 (r for r in found.get("results", []) if r.get("issuingCompany") == root), None
             )
             if match is None:
-                data = {
-                    "root": root,
-                    "is_company": False,
-                    "sector": ETF_SECTOR if ticker.endswith("11") else UNKNOWN_SECTOR,
-                }
+                fallback = {"ETF": ETF_SECTOR, "BDR": "BDRs"}.get(category or "")
+                if fallback is None:
+                    fallback = ETF_SECTOR if ticker.endswith("11") else UNKNOWN_SECTOR
+                data = {"root": root, "is_company": False, "sector": fallback, "category": category}
             else:
                 detail = self._get("GetDetail", {"codeCVM": match["codeCVM"], "language": "pt-br"})
                 classes = [
@@ -166,7 +166,8 @@ class B3Companies:
         prof = self.profile(ticker)
         root = prof["root"]
         if not prof.get("is_company"):
-            return {"available": False, "reason": "ETF ou ativo sem cadastro de empresa na B3"}
+            kind = {"ETF": "ETF", "BDR": "BDR"}.get(prof.get("category") or "", "ETF ou ativo")
+            return {"available": False, "reason": f"{kind} sem cadastro de empresa na B3"}
         cached = self._load(root)
         sup = cached.get("supplement")
         if not sup or time.time() - cached.get("supplement_at", 0) >= SUPPLEMENT_TTL:
@@ -186,10 +187,14 @@ class B3Companies:
         isin = (prof.get("isins") or {}).get(ticker.upper())
         return parse_supplement(sup or {}, isin)
 
-    def prefetch(self, tickers: list[str], workers: int = 6) -> dict[str, dict]:
+    def prefetch(
+        self, tickers: list[str], categories: dict[str, str] | None = None, workers: int = 8
+    ) -> dict[str, dict]:
         """Cadastro de vários ativos em paralelo (usado para agrupar o heatmap por setor)."""
+        cats = categories or {}
         with ThreadPoolExecutor(max_workers=workers) as pool:
-            return dict(zip(tickers, pool.map(self.profile, tickers), strict=True))
+            profiles = pool.map(lambda t: self.profile(t, cats.get(t)), tickers)
+            return dict(zip(tickers, profiles, strict=True))
 
 
 def parse_supplement(sup: dict, isin: str | None) -> dict:

@@ -80,6 +80,7 @@ class AnalyzeIn(BaseModel):
     nobre_target_required: bool = False
     nobre_max_cost_fraction: float = 0.25
     nobre_prefer_close: bool = True
+    european_short: bool = False
 
     @field_validator("nobre_max_cost_fraction")
     @classmethod
@@ -179,6 +180,7 @@ def create_app(
     @app.get("/api/options/{underlying}")
     def options(underlying: str) -> list[dict]:
         """Opções vigentes do ativo (catálogo real do MT5), para montar estruturas."""
+        _require_mt5_options(service, underlying.upper())
         catalog = service.catalog()
         today = pd.Timestamp.now(tz=LOCAL_TIMEZONE).date()
         rows = catalog[
@@ -215,6 +217,7 @@ def create_app(
     @app.post("/api/analyze")
     def run_analysis(body: AnalyzeIn) -> dict:
         underlying = body.underlying.upper()
+        _require_mt5_options(service, underlying)
         quote = service.quote(underlying)
         if quote.price is None:
             raise MarketDataUnavailable(f"{underlying} sem cotação no terminal")
@@ -291,6 +294,20 @@ def create_app(
     return app
 
 
+def _require_mt5_options(service: MarketDataService, underlying: str) -> None:
+    """Ativo com opções na B3 mas sem elas no MT5 da corretora: explica em vez de "nada
+    encontrado"."""
+    u = service.underlyings().set_index("underlying")
+    if underlying in u.index and not u.loc[underlying, "has_mt5_options"]:
+        n = int(u.loc[underlying, "listed_series"])
+        raise HTTPException(
+            422,
+            f"A {service.broker_name()} não disponibiliza no MT5 as opções de {underlying} "
+            f"({n:,} séries listadas na "
+            "B3). Sem cotações das opções não é possível analisar travas deste ativo.",
+        )
+
+
 def _params(body: AnalyzeIn, spot: float, settings: Settings) -> AnalysisParams:
     a = settings.analysis
     liq = settings.liquidity.model_dump()
@@ -347,6 +364,7 @@ def _params(body: AnalyzeIn, spot: float, settings: Settings) -> AnalysisParams:
         nobre_target_required=body.nobre_target_required,
         nobre_max_cost_fraction=body.nobre_max_cost_fraction,
         nobre_prefer_close=body.nobre_prefer_close,
+        european_short=body.european_short,
         costs_brl=body.costs_brl,
         max_results=a.max_results,
     )

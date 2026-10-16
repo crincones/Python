@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
+from typing import Literal
 
 import pandas as pd
 from fastapi import APIRouter, HTTPException
@@ -28,25 +29,44 @@ def heatmap_router(settings: Settings, service: MarketDataService, clean: Callab
     router = APIRouter(prefix="/api/heatmap")
     b3 = B3Companies(settings.paths.quotes_dir.parent / "b3")
 
-    def _tickers() -> list[str]:
-        return [t for t in service.underlyings()["underlying"].tolist() if t not in EXCLUDED]
+    def _universe(universe: str = "all"):
+        """Ativos com opções (lista da B3), sem índices; `mt5` = só os com opções no MT5."""
+        u = service.underlyings()
+        u = u[~u["underlying"].isin(EXCLUDED) & (u["category"].fillna("") != "Índice")]
+        if universe == "mt5":
+            u = u[u["has_mt5_options"]]
+        return u
+
+    def _tickers(universe: str = "all") -> list[str]:
+        return _universe(universe)["underlying"].tolist()
 
     @router.get("")
-    def heatmap() -> dict:
-        tickers = _tickers()
+    def heatmap(universe: Literal["all", "mt5"] = "all") -> dict:
+        info = _universe(universe).set_index("underlying")
+        tickers = info.index.tolist()
         daily, meta = service.daily_set(tickers)
-        profiles = b3.prefetch(tickers)
+        categories = info["category"].dropna().to_dict()
+        profiles = b3.prefetch(tickers, categories)
         companies = [t for t in tickers if profiles.get(t, {}).get("is_company")]
         with ThreadPoolExecutor(max_workers=6) as pool:
             events = dict(zip(companies, pool.map(b3.events, companies), strict=True))
         shares = {t: e.get("total_shares") for t, e in events.items() if e.get("available")}
         items = build_items(daily, profiles, shares)
+        for item in items:  # o que o usuário pode analisar (cotações de opções no MT5)
+            row = info.loc[item["ticker"]]
+            item["has_mt5_options"] = bool(row["has_mt5_options"])
+            item["listed_series"] = int(row["listed_series"])
+            item["category"] = row["category"] if pd.notna(row["category"]) else None
+        missing_bars = sorted(set(tickers) - set(daily))
         b3_errors = sorted(t for t, p in profiles.items() if p.get("error"))
         return clean(
             {
                 **meta,
                 "items": items,
-                "excluded": sorted(EXCLUDED),
+                "universe": universe,
+                "universe_total": len(tickers),
+                "without_bars": missing_bars,
+                "excluded": sorted(EXCLUDED | {"índices (IBOV11, SMLL11…)"}),
                 "b3_errors": b3_errors,
                 "notes": [
                     "Variações em pregões (janela móvel): dia 1, semana 5, mês 21, ano 252.",
@@ -55,6 +75,8 @@ def heatmap_router(settings: Settings, service: MarketDataService, clean: Callab
                     "Negócios: só os da sessão atual (o MT5 não fornece histórico de negócios).",
                     "Valor de mercado aproximado = preço deste ticker × total de ações (B3).",
                     "Setor: classificação setorial da B3.",
+                    "Lista de ativos com opções: arquivo oficial de instrumentos da B3; o MT5 da "
+                    "XP só cota as opções de parte deles (marcados no detalhe).",
                 ],
             }
         )
@@ -63,11 +85,13 @@ def heatmap_router(settings: Settings, service: MarketDataService, clean: Callab
     def details(ticker: str) -> dict:
         ticker = ticker.upper()
         daily, meta = service.daily_set(_tickers())
+        universe = _universe().set_index("underlying")
         if ticker not in daily:
             raise HTTPException(404, f"{ticker} fora do universo com opções")
         bars, info = daily[ticker]
         metrics = compute(bars, info.get("session_deals"))
-        profile = b3.profile(ticker)
+        category = universe.loc[ticker, "category"] if ticker in universe.index else None
+        profile = b3.profile(ticker, category if isinstance(category, str) else None)
         events = b3.events(ticker)
         today = pd.Timestamp.now(tz=LOCAL_TIMEZONE).date().isoformat()
         cap = (
@@ -90,6 +114,12 @@ def heatmap_router(settings: Settings, service: MarketDataService, clean: Callab
         return clean(
             {
                 "ticker": ticker,
+                "has_mt5_options": bool(universe.loc[ticker, "has_mt5_options"])
+                if ticker in universe.index
+                else False,
+                "listed_series": int(universe.loc[ticker, "listed_series"])
+                if ticker in universe.index
+                else None,
                 "description": info.get("description"),
                 "metrics": metrics,
                 "profile": profile,
@@ -108,6 +138,20 @@ def heatmap_router(settings: Settings, service: MarketDataService, clean: Callab
     def implied_vol(ticker: str) -> dict:
         """IV ATM por vencimento (mesma metodologia da análise) contra a vol histórica."""
         ticker = ticker.upper()
+        universe = _universe().set_index("underlying")
+        if ticker in universe.index and not universe.loc[ticker, "has_mt5_options"]:
+            n = int(universe.loc[ticker, "listed_series"])
+            return clean(
+                {
+                    "ticker": ticker,
+                    "atm_iv": [],
+                    "unavailable": (
+                        f"A {service.broker_name()} não disponibiliza no MT5 as opções de "
+                        f"{ticker} ({n:,} séries listadas na B3): sem cotações não há IV "
+                        "implícita."
+                    ),
+                }
+            )
         quote = service.quote(ticker)
         if quote.price is None:
             raise MarketDataUnavailable(f"{ticker} sem cotação")

@@ -35,6 +35,27 @@ mercado **fechado** (pré-abertura, após o fechamento, sem pregão), usa essas 
 pregão, com prazos recalculados para hoje, e avisa na tela. Séries nunca capturadas no pregão
 são lidas do MT5 e marcadas como "lida fora do pregão" (podem estar zeradas ou distorcidas).
 
+## Corretoras (conta logada no MT5)
+
+O app usa a conta que estiver logada no terminal — não pede nem guarda usuário/senha. Trocar de
+conta no próprio terminal (ex.: XP → Genial) é detectado no status; os caches da conta anterior
+são descartados e as mensagens passam a citar a corretora atual. Diferenças medidas em 15/10/2026:
+
+| | XP (XPMT5-PRD) | Genial (GenialInvestimentos-PRD) |
+|---|---|---|
+| Ativos com opções no MT5 | 48 | 218 (de 243 na B3; inclui SMAL11, EMBJ3, BPAC11, PETR3…) |
+| Séries por ativo | todas (PETR4: 3.246) | parte (PETR4: ~934) |
+| Negócios/volume da sessão nas opções | preenchidos | zerados → usa a barra D1 de hoje da opção (marcado "barra D1") |
+| Ativo-objeto (`basis`) | correto | parte das séries traz o próprio ticker da opção |
+| Strike / vencimento | corretos | parte sem ajuste de provento; vencimento em feriado (20/11) |
+| Relógio dos timestamps | Brasília codificado como UTC | igual |
+
+Por isso o **arquivo de instrumentos da B3** é a referência de ativo-objeto, strike, vencimento e
+estilo de cada opção: quando o MT5 diverge, vale a B3 e a perna recebe o aviso "dado corrigido
+(B3)". A lista de ativos (campo Ativo) mostra todos os 243 com opções na B3, por nº de séries,
+marcando os que a corretora logada não cota. Primeira carga do heatmap completo numa conta nova:
+alguns minutos (o terminal baixa o histórico D1 de ~200 ativos); depois, ~40 s.
+
 ## Ícones dos ativos
 
 Os ~3.000 ícones do repositório público thefintz/icones-b3 ficam em `data/icones/` (fora do
@@ -150,7 +171,7 @@ src/travas/
   tracking/                   acompanhamento: modelos, avaliação (P&L, alertas, grupos), store JSON
   api/app.py                  FastAPI (nenhuma rota de ordem); api/tracking_routes.py
   web/static/                 HTML/JS, payoff em SVG, KLineCharts 10.0.4 (empacotado localmente)
-tests/                        109 testes: 4 travas, extremos, breakevens, POP, preço-limite, API…
+tests/                        122 testes: 4 travas, extremos, breakevens, POP, preço-limite, API…
 ```
 
 ## Definições (fonte de verdade: código em `src/travas/options`)

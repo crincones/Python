@@ -42,6 +42,19 @@ class FakeService:
             raise MarketDataUnavailable("MT5 erro: terminal fechado")
         return UnderlyingQuote(underlying, 30.99, 31.0, SPOT, SPOT, pd.Timestamp.now(tz="UTC"), 5)
 
+    def broker_name(self):
+        return "Corretora Teste"
+
+    def underlyings(self):
+        return pd.DataFrame(
+            {
+                "underlying": ["TEST3", "SEMO3", "IBOV11"],
+                "listed_series": [44, 900, 500],
+                "has_mt5_options": [True, False, True],
+                "category": ["Ação", "Ação", "Índice"],
+            }
+        )
+
     def catalog(self):
         c = synthetic_chain(self.calendar)
         return c[
@@ -207,7 +220,6 @@ def test_heatmap_routes(client, monkeypatch):
 
     from travas.heatmap import b3_company
 
-    client.service.underlyings = lambda: pd.DataFrame({"underlying": ["TEST3", "IBOV11"]})
     client.service.daily_set = lambda tickers: (
         {
             t: (bars(np.linspace(20, 31, 300)), {"description": t, "session_deals": 50})
@@ -225,7 +237,7 @@ def test_heatmap_routes(client, monkeypatch):
         "trading_name": "TESTE",
         "isins": {"TEST3": "BRTESTACNOR0"},
     }
-    monkeypatch.setattr(b3_company.B3Companies, "profile", lambda self, t: profile)
+    monkeypatch.setattr(b3_company.B3Companies, "profile", lambda self, t, c=None: profile)
     monkeypatch.setattr(
         b3_company.B3Companies,
         "events",
@@ -240,9 +252,15 @@ def test_heatmap_routes(client, monkeypatch):
     r = client.get("/api/heatmap")
     assert r.status_code == 200, r.text
     items = r.json()["items"]
-    assert [i["ticker"] for i in items] == ["TEST3"]  # IBOV11 fora (índice)
-    assert items[0]["sector"] == "Financeiro"
-    assert items[0]["market_cap_approx"] == pytest.approx(31_000)
+    assert [i["ticker"] for i in items] == ["SEMO3", "TEST3"]  # IBOV11 fora (índice)
+    by = {i["ticker"]: i for i in items}
+    assert by["TEST3"]["has_mt5_options"] and not by["SEMO3"]["has_mt5_options"]
+    only_mt5 = client.get("/api/heatmap?universe=mt5").json()["items"]
+    assert [i["ticker"] for i in only_mt5] == ["TEST3"]
+    iv = client.get("/api/heatmap/SEMO3/iv").json()
+    assert "não disponibiliza" in iv["unavailable"]
+    assert by["TEST3"]["sector"] == "Financeiro"
+    assert by["TEST3"]["market_cap_approx"] == pytest.approx(31_000)
     d = client.get("/api/heatmap/TEST3").json()
     assert d["profile"]["trading_name"] == "TESTE" and d["events"]["upcoming"] == []
     assert client.get("/api/heatmap/NADA3").status_code == 404
@@ -257,3 +275,15 @@ def test_nobre_fraction_validation(client):
     r = client.post("/api/analyze", json={**base, "nobre_max_cost_fraction": 0.3333})
     assert r.status_code == 200, r.text
     assert "1/3" in r.json()["nobre"]["note"]
+
+
+def test_underlying_without_mt5_options_is_explained(client):
+    r = client.post(
+        "/api/analyze", json={"underlying": "SEMO3", "direction": "alta", "flow": "debito"}
+    )
+    assert r.status_code == 422
+    assert (
+        "Corretora Teste não disponibiliza no MT5 as opções de SEMO3 (900 séries"
+        in r.json()["detail"]
+    )
+    assert client.get("/api/options/SEMO3").status_code == 422
