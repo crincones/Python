@@ -76,7 +76,12 @@ class FakeService:
 def client(calendar, tmp_path):
     settings = SETTINGS.model_copy(
         update={
-            "paths": SETTINGS.paths.model_copy(update={"preferences_file": tmp_path / "p.json"})
+            "paths": SETTINGS.paths.model_copy(
+                update={
+                    "preferences_file": tmp_path / "p.json",
+                    "watchlist_file": tmp_path / "fav.json",
+                }
+            )
         }
     )
     service = FakeService(calendar)
@@ -189,6 +194,17 @@ def test_tracking_flow(client):
         json={"exit_date": "2026-10-20", "exit_net": 1.2, "exit_flow": "credito"},
     )
     assert closed.json()["status"] == "encerrada"
+    ev = client.post("/api/tracking/evaluate", json={}).json()
+    assert ev["totals"]["realized_pnl"] == pytest.approx(120 - 80)
+    rep = client.get("/api/tracking/report").json()
+    assert rep["stats"]["trades"] == 1 and rep["stats"]["win_rate"] == 1
+    assert client.get("/api/tracking/report?start=2026-10-21").json()["stats"]["trades"] == 0
+    csv_r = client.get("/api/tracking/export.csv?scope=encerradas")
+    assert csv_r.status_code == 200 and "attachment" in csv_r.headers["content-disposition"]
+    lines = csv_r.content.decode("utf-8-sig").splitlines()
+    assert len(lines) == 2 and lines[1].split(";")[5] == "Encerrada"
+    assert len(client.get("/api/tracking/export.csv?detail=pernas").text.splitlines()) == 3
+    assert client.get("/api/tracking/export.csv?scope=abertas").text.count("\n") == 1
     assert client.delete(f"/api/tracking/positions/{pid}").status_code == 200
     assert client.get("/api/tracking/positions").json() == []
 
@@ -287,3 +303,21 @@ def test_underlying_without_mt5_options_is_explained(client):
         in r.json()["detail"]
     )
     assert client.get("/api/options/SEMO3").status_code == 422
+
+
+def test_watchlist_routes(client):
+    assert client.get("/api/watchlist").json() == {"items": []}
+    r = client.put("/api/watchlist/petr4", json={"price": 31.5})
+    assert r.status_code == 200 and r.json()["ticker"] == "PETR4"
+    assert r.json()["price_at_add"] == 31.5
+    client.put("/api/watchlist/SMAL11")
+    # Marcar de novo não duplica nem troca o preço de referência.
+    client.put("/api/watchlist/PETR4", json={"price": 40})
+    items = client.get("/api/watchlist").json()["items"]
+    assert [i["ticker"] for i in items] == ["PETR4", "SMAL11"]
+    assert items[0]["price_at_add"] == 31.5 and items[1]["price_at_add"] is None
+    assert client.put("/api/watchlist/PETR", json={}).status_code == 422
+    assert client.put("/api/watchlist/VALE3", json={"price": -1}).status_code == 422
+    assert client.delete("/api/watchlist/PETR4").status_code == 200
+    assert client.delete("/api/watchlist/PETR4").status_code == 404
+    assert [i["ticker"] for i in client.get("/api/watchlist").json()["items"]] == ["SMAL11"]

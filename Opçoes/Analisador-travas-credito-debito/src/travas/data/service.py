@@ -373,11 +373,12 @@ class MarketDataService:
 
     def candles(self, underlying: str, timeframe: str) -> tuple[pd.DataFrame, dict]:
         s = self._settings.candles
+        requested = s.monthly_bars if timeframe == "mn1" else s.bars
         with self._lock:
             client = self._require()
             try:
                 bars = market_data.fetch_bars(
-                    client, underlying, timeframe, s.bars, self._settings.mt5.server_timezone
+                    client, underlying, timeframe, requested, self._settings.mt5.server_timezone
                 )
             except MT5Error as exc:
                 raise MarketDataUnavailable(str(exc)) from exc
@@ -387,13 +388,14 @@ class MarketDataService:
         meta = {
             "timeframe": timeframe,
             "bars": len(bars),
+            "requested": requested,
             "last_bar_time": bars["time"].iloc[-1].isoformat() if len(bars) else None,
             "last_bar_forming": bool(bars["forming"].iloc[-1]) if len(bars) else None,
             "ema_fast": s.ema_fast,
             "ema_slow": s.ema_slow,
             "ema_method": (
                 "EMA α = 2/(n+1), semente no 1º fechamento coletado, "
-                f"primeiros n valores ocultos (aquecimento); {s.bars} barras coletadas"
+                "primeiros n valores ocultos (aquecimento)"
             ),
         }
         return bars, meta

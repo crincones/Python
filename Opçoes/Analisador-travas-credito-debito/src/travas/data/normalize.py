@@ -223,7 +223,8 @@ BAR_PERIODS = {
     "d1": pd.Timedelta(days=1),
     "w1": pd.Timedelta(days=7),
     "h4": pd.Timedelta(hours=4),
-}
+    "h1": pd.Timedelta(hours=1),
+}  # "mn1": duração variável, tratada à parte (até o 1º dia do mês seguinte)
 
 
 def normalize_bars(
@@ -249,7 +250,11 @@ def normalize_bars(
             ]
         )
     frame = rates.sort_values("time").drop_duplicates("time").reset_index(drop=True)
-    end_epoch = frame["time"] + BAR_PERIODS[timeframe].total_seconds()
+    if timeframe == "mn1":
+        start = pd.to_datetime(frame["time"], unit="s")  # relógio do servidor, sem fuso
+        end_epoch = (start + pd.offsets.MonthBegin(1)).map(pd.Timestamp.timestamp)
+    else:
+        end_epoch = frame["time"] + BAR_PERIODS[timeframe].total_seconds()
     return pd.DataFrame(
         {
             "time": server_epoch_to_local(frame["time"].to_numpy(), server_timezone).array,

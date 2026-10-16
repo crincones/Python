@@ -75,6 +75,11 @@ Os gráficos de payoff e de candles têm o botão **⤢ Maximizar** (Esc ou "Res
 largura do gráfico do ativo é ajustável arrastando a divisória à esquerda dele (setas ←/→ com a
 divisória em foco; duplo clique volta ao padrão); a largura fica salva nas preferências.
 
+Gráfico do ativo: tempos **mensal** (100 barras), **semanal**, **diário**, **240 min** e **60 min**
+(400 barras cada; configurável em `candles` no `config/settings.yaml`). Ao carregar, todas as barras
+ficam visíveis (até 0,25 px por barra); a roda do mouse dá zoom e **⇔ Tudo** volta a mostrar todas.
+Se o MT5 tiver menos histórico que o pedido, a nota abaixo do gráfico informa.
+
 ### Aba Heatmap
 
 Mapa de calor (treemap) dos ativos com opções listadas (IBOV11 fica fora: é índice).
@@ -89,6 +94,11 @@ Mapa de calor (treemap) dos ativos com opções listadas (IBOV11 fica fora: é �
   pagamento, valor, soma e % dos últimos 12 meses) e eventos em ações (desdobramento, grupamento,
   bonificação, subscrição). Fusões/aquisições não constam da fonte. "Analisar travas" abre a
   Análise com o ativo.
+- **Seguimento**: a ☆ ao lado do nome no gráfico do ativo (qualquer aba) marca o ativo para
+  acompanhar. A lista fica num painel à esquerda do heatmap, recolhido por padrão: preço, variação
+  no dia (D), em 21 pregões (M) e desde a estrela (★, comparada ao fechamento exibido no gráfico ao
+  marcar), com ordenação; clicar abre o ativo no gráfico e o resumo; × deixa de seguir. Os ativos
+  marcados ganham ★ no mapa. Dados em `data/favoritos.json` (fora do git).
 - Fontes: MT5 (preços/volumes) e a API pública de empresas listadas da B3 (cadastro, proventos,
   eventos), com cache em `data/b3/`. A 1ª carga leva ~30 s; depois vem do cache.
 - Fontes avaliadas e NÃO usadas: Investing.com (bloqueio anti-robô do Cloudflare), opcoes.net.br
@@ -137,6 +147,19 @@ Registra estruturas já montadas — travas ou qualquer combinação de opções
   estrutura encerrada).
 - Estruturas com vencimentos diferentes: a curva "no 1º vencimento" e os extremos dependem do
   modelo para as pernas posteriores e são marcados como estimados.
+- **Totais da carteira** (acima dos grupos): total = P&L aberto pelo natural + realizado; também
+  aberto pelo natural e pelo mid, realizado, total pelo mid, risco máximo aberto e custos. Estrutura
+  aberta sem cotação fica fora do total aberto e é sinalizada (−n).
+- **Relatório das encerradas** (painel expansível abaixo das posições), filtrável por período da
+  saída e por grupo: P&L líquido, lucro/prejuízo bruto, taxa de acerto, fator de lucro, payoff,
+  expectativa, maior ganho/perda, sequências, drawdown máximo (com datas), fator de recuperação,
+  retorno sobre o risco, R médio, SQN, dias médios na operação; gráficos de P&L acumulado com
+  drawdown, P&L por mês, por operação, distribuição do R e por ativo; quebras por estrutura,
+  sentido (débito/crédito), motivo de saída, grupo e ativo; tabela ordenável das operações.
+  R = P&L ÷ perda máxima da estrutura na entrada. Calculado só com os registros (não usa o MT5).
+- **Exportar CSV**: todas, abertas ou encerradas (uma linha por estrutura) ou uma linha por perna;
+  o relatório exporta as encerradas do período. Formato do Excel pt-BR (`;`, vírgula decimal,
+  dd/mm/aaaa, UTF-8 com BOM). Abertas levam o P&L com as cotações do MT5 no momento.
 - Dados em `data/acompanhamento.json` (fora do git), com cópia `.bak` da versão anterior.
 
 Filtros avançados (opcionais): cenários conservador/otimista, prazo, strikes, largura, perda
@@ -197,7 +220,7 @@ tests/                        122 testes: 4 travas, extremos, breakevens, POP, p
 - **Preço-limite**: mid + agressividade × (natural − mid), arredondado ao tick a favor do usuário,
   limitado pela relação lucro/perda mínima e pelo orçamento de perda, com faixa mid↔natural e
   impacto em lucro, perda, breakeven e L/P. Sem bid/ask válido: "não estimável".
-- **EMA** (candles): α = 2/(n+1), semente no 1º fechamento das 400 barras coletadas, primeiros n
+- **EMA** (candles): α = 2/(n+1), semente no 1º fechamento das barras coletadas, primeiros n
   valores ocultos. Calculada no backend.
 
 ## Limitações conhecidas

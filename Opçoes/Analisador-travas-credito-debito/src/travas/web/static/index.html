@@ -187,13 +187,38 @@
           <label class="check-inline"><input type="checkbox" id="trk-auto"> Atualizar a cada 60 s</label>
           <label class="check-inline"><input type="checkbox" id="trk-closed"> Mostrar encerradas</label>
           <button id="trk-refresh">Atualizar cotações</button>
+          <select id="trk-export" aria-label="Exportar operações em CSV" title="Exportar em CSV (Excel pt-BR: ; e vírgula decimal)">
+            <option value="">Exportar CSV…</option>
+            <option value="todas|estruturas">Todas as estruturas</option>
+            <option value="abertas|estruturas">Só abertas</option>
+            <option value="encerradas|estruturas">Só encerradas</option>
+            <option value="todas|pernas">Todas, uma linha por perna</option>
+          </select>
           <button id="trk-new" class="primary">+ Nova estrutura</button>
         </div>
       </div>
       <div class="muted small" id="trk-meta">Nenhuma atualização ainda.</div>
       <div id="trk-market" class="warn" hidden></div>
       <div id="trk-errors" class="warn" hidden></div>
-      <div id="trk-groups"></div>
+      <div class="busy-host" id="trk-live">
+        <div class="trk-totals" id="trk-totals" hidden></div>
+        <div id="trk-groups"></div>
+      </div>
+      <details class="report" id="trk-report">
+        <summary><span class="report-title">Relatório das operações encerradas</span> <span class="muted small" id="rp-summary"></span></summary>
+        <div class="rp-filters">
+          <label class="small">Período (data de saída)
+            <select id="rp-period">
+              <option value="all">Tudo</option><option value="ytd">Este ano</option><option value="12m">Últimos 12 meses</option>
+              <option value="6m">Últimos 6 meses</option><option value="3m">Últimos 3 meses</option><option value="mtd">Este mês</option><option value="custom">Personalizado</option>
+            </select></label>
+          <label class="small rp-custom" hidden>De <input type="date" id="rp-start"></label>
+          <label class="small rp-custom" hidden>Até <input type="date" id="rp-end"></label>
+          <label class="small">Grupo <select id="rp-group"><option value="">Todos</option></select></label>
+          <button type="button" id="rp-export" title="CSV das encerradas do período">Exportar CSV do período</button>
+        </div>
+        <div class="busy-host" id="rp-host"><div id="rp-body"><p class="muted">Abra para carregar.</p></div></div>
+      </details>
     </section>
 
     <section class="card" id="trk-form-card" hidden>
@@ -289,6 +314,21 @@
    </div>
 
    <div id="tab-heatmap" hidden>
+   <div class="hm-layout">
+    <aside class="hm-watch collapsed" id="hm-watch" aria-label="Ativos em seguimento">
+      <button type="button" class="hm-watch-toggle" id="hm-watch-toggle" aria-expanded="false"
+              title="Mostrar/ocultar os ativos com estrela">
+        <span class="hm-watch-star">★</span><span class="hm-watch-label">Seguimento</span><span class="hm-watch-count" id="hm-watch-count"></span>
+      </button>
+      <div class="hm-watch-body">
+        <div class="hm-watch-sort small">Ordenar
+          <select id="hm-watch-sort"><option value="added">ordem de inclusão</option><option value="ticker">ticker</option><option value="1d">variação no dia</option><option value="since">variação desde a ★</option></select>
+        </div>
+        <ul class="hm-watch-list" id="hm-watch-list"></ul>
+        <p class="muted small" id="hm-watch-note">Marque a ☆ no gráfico do ativo para segui-lo aqui.</p>
+      </div>
+    </aside>
+    <div class="hm-main">
     <section class="card">
       <div class="card-head">
         <h2>Heatmap <span class="muted small">ativos com opções listadas</span></h2>
@@ -310,6 +350,8 @@
       <p class="muted small" id="hm-notes"></p>
     </section>
     <section class="card" id="hm-detail" hidden></section>
+    </div>
+   </div>
    </div>
 
     <footer class="disclaimer small">
@@ -325,13 +367,20 @@
     <button class="side-toggle" id="side-toggle" aria-expanded="true" title="Recolher/expandir gráfico do ativo">⟩</button>
     <div class="side-body">
       <div class="side-head">
-        <h2 id="side-title">Ativo-objeto</h2>
+        <div class="side-name">
+          <h2 id="side-title">Ativo-objeto</h2>
+          <button type="button" class="star-btn" id="star-btn" aria-pressed="false" disabled
+                  title="Seguir este ativo (lista na aba Heatmap)">☆</button>
+        </div>
         <button type="button" class="max-btn" id="max-candles">⤢ Maximizar</button>
         <div class="tf" role="group" aria-label="Timeframe">
-          <button data-tf="d1" class="active">Diário</button>
-          <button data-tf="w1">Semanal</button>
-          <button data-tf="h4">240 min</button>
+          <button data-tf="mn1" title="Mensal (até 100 barras)">Mês</button>
+          <button data-tf="w1" title="Semanal (400 barras)">Sem.</button>
+          <button data-tf="d1" class="active" title="Diário (400 barras)">Dia</button>
+          <button data-tf="h4" title="240 minutos (400 barras)">240m</button>
+          <button data-tf="h1" title="60 minutos (400 barras)">60m</button>
         </div>
+        <button type="button" class="max-btn" id="fit-candles" title="Mostrar todas as barras carregadas (zoom com a roda do mouse)">⇔ Tudo</button>
       </div>
       <div class="ema-legend">
         <span><i class="sw" style="background:#d000d0"></i>EMA 17</span>
@@ -348,8 +397,10 @@
 <div id="tooltip" class="tooltip" hidden></div>
 <script src="/static/vendor/klinecharts.min.js"></script>
 <script src="/static/format.js"></script>
+<script src="/static/watchlist.js"></script>
 <script src="/static/payoff.js"></script>
 <script src="/static/candles.js"></script>
+<script src="/static/report.js"></script>
 <script src="/static/tracking.js"></script>
 <script src="/static/heatmap.js"></script>
 <script src="/static/app.js"></script>

@@ -27,6 +27,7 @@ paths:
   logs_dir: logs
   preferences_file: config/preferencias.json   # preferências da interface (sem credenciais)
   tracking_file: data/acompanhamento.json      # estruturas acompanhadas (fora do git)
+  watchlist_file: data/favoritos.json           # ativos com estrela (fora do git)
   quotes_dir: data/cotacoes                    # últimas cotações do pregão (fora do git)
   icons_dir: data/icones                       # ícones dos ativos baixados (fora do git)
 
@@ -84,7 +85,8 @@ early_exercise:
   min_extrinsic_pct_premium: 0.02
 
 candles:
-  bars: 400
+  bars: 400          # barras pedidas ao MT5 em 60 min, 240 min, diário e semanal
+  monthly_bars: 100  # mensal
   ema_fast: 17
   ema_slow: 34
 

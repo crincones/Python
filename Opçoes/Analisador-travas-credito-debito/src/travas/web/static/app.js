@@ -122,12 +122,38 @@
     if (u && u !== state.underlying) {
       state.underlying = u;
       $("side-title").innerHTML = tickerIcon(u, 24) + esc(u);
+      updateStar();
       Candles.setLevels([]); // não deixa linhas da outra aba à vista enquanto carrega
       loadCandles(); // aplica state.levels ao terminar
     } else if (!candlesLoading) {
       Candles.setLevels(state.levels);
     } // carregando candles: loadCandles aplica as linhas quando o ativo certo estiver na tela
     renderLevelsLegend();
+  }
+
+  // ---------- seguimento (estrela) ----------
+  function updateStar() {
+    const b = $("star-btn"), u = state.underlying, on = !!u && Watch.has(u);
+    b.disabled = !u;
+    b.textContent = on ? "★" : "☆";
+    b.classList.toggle("on", on);
+    b.setAttribute("aria-pressed", String(on));
+    b.title = !u ? "Selecione um ativo" : on ? `Deixar de seguir ${u}` : `Seguir ${u} (lista na aba Heatmap)`;
+  }
+
+  async function onStar() {
+    const u = state.underlying;
+    if (!u) return;
+    const b = $("star-btn");
+    b.disabled = true;
+    try {
+      const price = state.lastClose && state.lastClose.ticker === u ? state.lastClose.price : null;
+      await Watch.toggle(u, price);
+    } catch (e) {
+      $("candle-note").textContent = `Não foi possível atualizar o seguimento: ${e.message}`;
+    } finally {
+      updateStar();
+    }
   }
 
   // ---------- maximizar gráficos ----------
@@ -215,7 +241,7 @@
     const token = ++candlesRequest;
     candlesLoading = true;
     $("candle-note").textContent = "Carregando candles…";
-    const tfName = { d1: "diário", w1: "semanal", h4: "240 min" }[state.tf] || state.tf;
+    const tfName = { mn1: "mensal", w1: "semanal", d1: "diário", h4: "240 min", h1: "60 min" }[state.tf] || state.tf;
     Busy.show($("kchart-host"), `Carregando ${u} (${tfName})…`);
     try {
       const data = await api(`/api/candles/${encodeURIComponent(u)}?tf=${state.tf}`);
@@ -223,10 +249,13 @@
       if (token !== candlesRequest) return;
       candlesLoading = false;
       Candles.setData($("kchart"), u, state.tf, data.bars);
+      const last = data.bars[data.bars.length - 1];
+      state.lastClose = { ticker: u, price: last ? last.close : null };
       Candles.setLevels(state.levels);
       const m = data.meta;
       $("bar-info").textContent = `Última barra: ${FMT.datetime(m.last_bar_time)}${m.last_bar_forming ? " (em formação)" : " (fechada)"}`;
-      $("candle-note").textContent = `${m.bars} barras do MT5. ${m.ema_method}. Breakevens se referem ao vencimento, salvo indicação.` +
+      const short = m.requested && m.bars < m.requested ? ` (pedidas ${m.requested}: o MT5 só tem esse histórico)` : "";
+      $("candle-note").textContent = `${m.bars} barras do MT5${short}, todas visíveis ao carregar (roda do mouse: zoom; ⇔ Tudo: volta a mostrar todas). ${m.ema_method}. Breakevens se referem ao vencimento, salvo indicação.` +
         (state.tf === "h4" ? " No 240 min, as barras seguem o relógio do servidor (08h, 12h, 16h): a primeira do dia cobre só parte do pregão." : "");
     } catch (e) {
       if (token !== candlesRequest) return;
@@ -635,7 +664,7 @@
     if (prefs.nobre_fraction) $("nobre_fraction").value = prefs.nobre_fraction;
     $("european_short").checked = !!prefs.european_short;
     if (prefs.nobre_prefer_close !== undefined) $("nobre_prefer_close").checked = !!prefs.nobre_prefer_close;
-    if (prefs.tf) state.tf = prefs.tf;
+    if (["mn1", "w1", "d1", "h4", "h1"].includes(prefs.tf)) state.tf = prefs.tf;
     document.querySelectorAll(".tf button").forEach((b) => b.classList.toggle("active", b.dataset.tf === state.tf));
     if (prefs.side_width) setSideWidth(Number(prefs.side_width), false);
     if (prefs.side === false) setSide(false);
@@ -651,6 +680,9 @@
     updateKindText();
     document.querySelectorAll("input[name=direction], input[name=flow], #nobre_filter, #target_price, #target_pct, #european_short").forEach((r) => r.addEventListener("change", () => { updateKindText(); savePrefs(); }));
     $("underlying").addEventListener("change", onUnderlying);
+    $("star-btn").addEventListener("click", onStar);
+    Watch.on(updateStar);
+    Watch.load();
     $("form").addEventListener("submit", onSubmit);
     $("form").addEventListener("change", savePrefs);
     $("ranking").querySelector("thead").addEventListener("click", onHeaderClick);
@@ -670,9 +702,10 @@
     setupTooltips();
     fullListWhenComplete($("underlying"));
     fullListWhenComplete($("tf-underlying"));
+    $("fit-candles").addEventListener("click", () => Candles.fitAll());
     $("max-candles").addEventListener("click", () => {
       if (!state.side) setSide(true);
-      toggleMax($("side"), $("max-candles"), () => Candles.resize());
+      toggleMax($("side"), $("max-candles"), () => { Candles.resize(); requestAnimationFrame(Candles.fitAll); });
     });
     $("max-payoff").addEventListener("click", () => toggleMax($("payoff-wrap"), $("max-payoff"), drawPayoff));
     document.addEventListener("keydown", (ev) => {

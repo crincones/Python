@@ -33,6 +33,16 @@ const Tracking = (() => {
     $("trk-close-form").addEventListener("submit", saveClose);
     $("tc-cancel").addEventListener("click", () => { $("trk-close-card").hidden = true; });
     $("trk-groups").addEventListener("click", onGroupsClick);
+    $("trk-export").addEventListener("change", () => {
+      const v = $("trk-export").value;
+      $("trk-export").value = "";
+      if (!v) return;
+      const [scope, detail] = v.split("|");
+      const label = scope === "encerradas" ? "Gerando CSV…" : "Gerando CSV (cotações das abertas no MT5)…";
+      downloadFile(`/api/tracking/export.csv?scope=${scope}&detail=${detail}`, $("trk-live"), label)
+        .catch((e) => { $("trk-errors").hidden = false; $("trk-errors").textContent = `Exportação falhou: ${e.message}`; });
+    });
+    Report.setup();
     $("tf-legs").addEventListener("click", (ev) => { if (ev.target.matches(".rm-leg")) ev.target.closest("tr").remove(); });
     $("tf-legs").addEventListener("change", (ev) => { if (ev.target.matches(".leg-sym")) describeLeg(ev.target.closest("tr")); });
     let raf = 0;
@@ -57,7 +67,7 @@ const Tracking = (() => {
     $("trk-refresh").disabled = true;
     $("trk-meta").textContent = "Atualizando cotações no MT5…";
     try {
-      const host = $("trk-groups").closest(".card");
+      const host = $("trk-live");
       Busy.show(host, "Atualizando cotações…");
       try {
         st.data = await api("/api/tracking/evaluate", json("POST", evalBody()));
@@ -72,6 +82,8 @@ const Tracking = (() => {
       $("trk-errors").hidden = !errs.length;
       $("trk-errors").textContent = errs.length ? `Problemas: ${errs.join(" · ")}` : "";
       render();
+      Report.setSummary(st.data.totals);
+      Report.refresh();
       if (st.detailKey) openDetail(st.detailKind, st.detailKey, true);
     } catch (e) {
       $("trk-meta").textContent = `Erro ao atualizar: ${e.message}`;
@@ -91,6 +103,7 @@ const Tracking = (() => {
     if (!d) return;
     const showClosed = $("trk-closed").checked;
     $("trk-group-list").innerHTML = d.groups.map((g) => `<option value="${esc(g.group)}">`).join("");
+    renderTotals(d.totals);
     if (!d.positions.length) {
       $("trk-groups").innerHTML = '<p class="muted">Nenhuma estrutura registrada. Use "+ Nova estrutura" ou, na aba Análise, "Adicionar ao acompanhamento".</p>';
       return;
@@ -115,6 +128,23 @@ const Tracking = (() => {
           <tbody>${rows.map(rowHtml).join("")}</tbody>
         </table></div></div>`;
     }).join("");
+  }
+
+  // Totais da carteira: P&L aberto (zerar agora) + realizado das encerradas.
+  function renderTotals(t) {
+    const box = $("trk-totals");
+    box.hidden = !t || (!t.open_count && !t.closed_count);
+    if (box.hidden) return;
+    const missing = (n) => (n ? ` <span class="badge bad" data-tip="${n} estrutura(s) aberta(s) sem cotação: fora deste total">−${n}</span>` : "");
+    const cell = (label, value, tip, big) => `<div class="trk-total${big ? " big" : ""}" data-tip="${esc(tip)}" tabindex="0"><span>${label}</span><b>${value}</b></div>`;
+    box.innerHTML =
+      cell("Total (aberto natural + realizado)", pnlSpan(t.total_natural) + missing(t.open_missing_natural), "P&L das abertas se zeradas agora (vendendo no bid e recomprando no ask) somado ao realizado das encerradas", true) +
+      cell(`Aberto · natural (${t.open_count})`, pnlSpan(t.open_pnl_natural) + missing(t.open_missing_natural), "Soma do P&L das estruturas abertas pelo natural (zerar agora)") +
+      cell("Aberto · mid", pnlSpan(t.open_pnl_mid) + missing(t.open_missing_mid), "Soma do P&L das abertas pelo preço médio (referência; não é preço de execução)") +
+      cell(`Realizado (${t.closed_count})`, pnlSpan(t.realized_pnl), "Soma do P&L das estruturas encerradas, após custos informados") +
+      cell("Total pelo mid", pnlSpan(t.total_mid), "P&L aberto pelo mid + realizado") +
+      cell("Risco máx. aberto", FMT.brl(t.open_max_loss), "Soma das perdas máximas das estruturas abertas") +
+      cell("Custos informados", FMT.brl(t.costs_total), "Corretagem/emolumentos registrados (já descontados do P&L)");
   }
 
   // Alertas resumidos num selo; o texto completo aparece ao passar o mouse (ou com foco).
@@ -402,7 +432,7 @@ const Tracking = (() => {
     st.detailKind = kind;
     st.detailKey = key;
     const url = kind === "group" ? `/api/tracking/groups/${encodeURIComponent(key)}/detail` : `/api/tracking/positions/${key}/detail`;
-    const host = $("trk-detail-card").hidden ? $("trk-groups").closest(".card") : $("trk-detail-card");
+    const host = $("trk-detail-card").hidden ? $("trk-live") : $("trk-detail-card");
     if (!silent) Busy.show(host, kind === "group" ? "Montando o payoff do grupo…" : "Abrindo a estrutura…");
     let d;
     try {
@@ -499,12 +529,13 @@ const Tracking = (() => {
 
   // ---------- preferências ----------
   function prefs() {
-    return { vol: $("trk-vol").value, auto: $("trk-auto").checked, closed: $("trk-closed").checked };
+    return { vol: $("trk-vol").value, auto: $("trk-auto").checked, closed: $("trk-closed").checked, report: Report.prefs() };
   }
   function applyPrefs(p) {
     if (p.vol !== undefined) $("trk-vol").value = p.vol;
     $("trk-auto").checked = !!p.auto;
     $("trk-closed").checked = !!p.closed;
+    Report.applyPrefs(p.report);
     setAuto();
   }
 

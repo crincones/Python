@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import datetime as dt
 import logging
 import time
 from collections.abc import Callable
+from typing import Literal
 
 import pandas as pd
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
 from travas.data.service import MarketDataService, MarketDataUnavailable
@@ -24,7 +27,9 @@ from travas.tracking.evaluate import (
     evaluate_position,
     group_summaries,
 )
+from travas.tracking.export import legs_csv, structures_csv
 from travas.tracking.models import ExitIn, PositionIn
+from travas.tracking.report import closed_report, portfolio_totals
 from travas.tracking.store import TrackingStore
 
 log = logging.getLogger(__name__)
@@ -184,8 +189,52 @@ def tracking_router(
                 "evaluated_at": pd.Timestamp.now(tz=LOCAL_TIMEZONE).isoformat(),
                 "positions": evaluated,
                 "groups": group_summaries(evaluated),
+                "totals": portfolio_totals(evaluated),
                 "errors": errors,
             }
+        )
+
+    @router.get("/report")
+    def report(
+        start: dt.date | None = None, end: dt.date | None = None, group: str | None = None
+    ) -> dict:
+        """Relatório das encerradas: só usa os registros (P&L realizado), sem consultar o MT5."""
+        closed = [r for r in store.list() if r.get("status") == "encerrada"]
+        evaluated, errors = _evaluate(closed, EvaluateIn(), fresh=False)
+        return clean({**closed_report(evaluated, start, end, group or None), "errors": errors})
+
+    @router.get("/export.csv")
+    def export_csv(
+        scope: Literal["todas", "abertas", "encerradas"] = "todas",
+        detail: Literal["estruturas", "pernas"] = "estruturas",
+        start: dt.date | None = None,
+        end: dt.date | None = None,
+    ) -> Response:
+        records = store.list()
+        if scope == "abertas":
+            records = [r for r in records if r.get("status") == "aberta"]
+        elif scope == "encerradas":
+            records = [r for r in records if r.get("status") == "encerrada"]
+        if start or end:
+
+            def in_period(r: dict) -> bool:
+                if r.get("status") != "encerrada":
+                    return True
+                when = (r.get("exit") or {}).get("exit_date") or ""
+                return (not start or when >= start.isoformat()) and (
+                    not end or when <= end.isoformat()
+                )
+
+            records = [r for r in records if in_period(r)]
+        # Abertas: P&L com as cotações do MT5 (cache de até 2 min); sem cotação, campo vazio.
+        evaluated, _ = _evaluate(records, EvaluateIn(), fresh=False)
+        text = structures_csv(evaluated) if detail == "estruturas" else legs_csv(evaluated)
+        stamp = pd.Timestamp.now(tz=LOCAL_TIMEZONE).strftime("%Y%m%d_%H%M")
+        name = f"acompanhamento_{detail}_{scope}_{stamp}.csv"
+        return Response(
+            content=text.encode("utf-8"),
+            media_type="text/csv; charset=utf-8",
+            headers={"Content-Disposition": f'attachment; filename="{name}"'},
         )
 
     @router.post("/positions/{position_id}/detail")

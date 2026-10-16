@@ -2,7 +2,7 @@
 // tamanho = volume médio 20d, valor de mercado aproximado ou igual; agrupado por setor (B3).
 const Heatmap = (() => {
   const $ = (id) => document.getElementById(id);
-  const st = { data: null, metric: "1d", size: "turnover", group: true, universe: "all", selected: null, ready: false, loading: false };
+  const st = { data: null, metric: "1d", size: "turnover", group: true, universe: "all", selected: null, ready: false, loading: false, watchOpen: false, watchSort: "added" };
   const api = (...a) => App.api(...a);
 
   const METRICS = {
@@ -168,7 +168,7 @@ const Heatmap = (() => {
         html += `<button class="hm-tile${st.selected === it.ticker ? " sel" : ""}" data-t="${esc(it.ticker)}" data-tip="${esc(tip(it))}"
           style="left:${t.x}px;top:${t.y}px;width:${Math.max(0, t.w - 1)}px;height:${Math.max(0, t.h - 1)}px;background:${rgb(c)};color:${fg};font-size:${fs}px"
           aria-label="${esc(it.ticker)} ${esc(l1)}">
-          ${minSide > 22 ? `<span class="hm-head">${showIcon ? tickerIcon(it.ticker, Math.round(Math.min(28, fs * 1.2))) : ""}<b>${esc(it.ticker)}${it.has_mt5_options ? "" : "◦"}</b></span>` : ""}
+          ${minSide > 22 ? `<span class="hm-head">${showIcon ? tickerIcon(it.ticker, Math.round(Math.min(28, fs * 1.2))) : ""}<b>${esc(it.ticker)}${it.has_mt5_options ? "" : "◦"}</b>${Watch.has(it.ticker) ? `<span class="hm-star" title="Em seguimento">★</span>` : ""}</span>` : ""}
           ${showL1 ? `<span class="hm-v1">${esc(l1)}</span>` : ""}${showL2 ? `<span class="hm-v2">${esc(l2)}</span>` : ""}</button>`;
       }
     }
@@ -222,6 +222,7 @@ const Heatmap = (() => {
         (d.excluded.length ? ` · fora: ${esc(d.excluded.join(", "))} (índice)` : "");
       $("hm-notes").textContent = d.notes.join(" ");
       render();
+      renderWatch();
     } catch (e) {
       $("hm-meta").innerHTML = `<span class="neg">Erro: ${esc(e.message)}</span>`;
     } finally {
@@ -230,10 +231,58 @@ const Heatmap = (() => {
     }
   }
 
+  // ---------- seguimento (ativos com estrela) ----------
+  const sincePct = (w, it) => (it && FMT.ok(it.price) && FMT.ok(w.price_at_add) && w.price_at_add > 0 ? it.price / w.price_at_add - 1 : null);
+  const cls = (v) => (FMT.ok(v) ? (v > 0 ? "pos" : v < 0 ? "neg" : "") : "muted");
+
+  function renderWatch() {
+    const list = Watch.items();
+    $("hm-watch-count").textContent = list.length ? String(list.length) : "";
+    $("hm-watch-note").hidden = list.length > 0;
+    const byTicker = new Map(((st.data && st.data.items) || []).map((i) => [i.ticker, i]));
+    const rows = list.map((w, idx) => ({ w, idx, it: byTicker.get(w.ticker) }));
+    const key = {
+      added: (r) => r.idx,
+      ticker: (r) => r.w.ticker,
+      "1d": (r) => (r.it && FMT.ok(r.it.changes["1d"].pct) ? -r.it.changes["1d"].pct : Infinity),
+      since: (r) => { const v = sincePct(r.w, r.it); return FMT.ok(v) ? -v : Infinity; },
+    }[st.watchSort] || ((r) => r.idx);
+    rows.sort((a, b) => { const x = key(a), y = key(b); return x < y ? -1 : x > y ? 1 : 0; });
+    $("hm-watch-list").innerHTML = rows.map(({ w, it }) => {
+      const d1 = it ? it.changes["1d"].pct : null, d1m = it ? it.changes["1m"].pct : null, since = sincePct(w, it);
+      const added = new Date(w.added_at).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
+      const sinceTip = FMT.ok(w.price_at_add)
+        ? `Desde a ★ (${added}, ${FMT.price(w.price_at_add)}): preço do heatmap ÷ preço do gráfico quando foi marcado`
+        : `Marcado em ${added}, sem preço de referência`;
+      return `<li class="${st.selected === w.ticker ? "sel" : ""}">
+        <button type="button" class="hm-watch-item" data-t="${esc(w.ticker)}" title="Ver ${esc(w.ticker)} no gráfico e o resumo">
+          <span class="hm-watch-name">${tickerIcon(w.ticker, 18)}<b>${esc(w.ticker)}</b></span>
+          <span class="hm-watch-price">${it ? FMT.price(it.price) : "—"}</span>
+          <span class="hm-watch-chg small"><span class="${cls(d1)}" title="Variação no dia">D ${signedPct(d1, 1)}</span>
+            <span class="${cls(d1m)}" title="Variação em 21 pregões">M ${signedPct(d1m, 1)}</span>
+            <span class="${cls(since)}" title="${esc(sinceTip)}">★ ${signedPct(since, 1)}</span></span>
+        </button>
+        <button type="button" class="hm-watch-del" data-del="${esc(w.ticker)}" title="Deixar de seguir ${esc(w.ticker)}" aria-label="Deixar de seguir ${esc(w.ticker)}">×</button>
+      </li>`;
+    }).join("");
+  }
+
+  function setWatchOpen(open) {
+    st.watchOpen = open;
+    $("hm-watch").classList.toggle("collapsed", !open);
+    $("hm-watch-toggle").setAttribute("aria-expanded", String(open));
+  }
+
+  Watch.on(() => {
+    renderWatch();
+    if (st.data && !$("tab-heatmap").hidden) render();
+  });
+
   // ---------- detalhe do ativo ----------
   async function select(ticker) {
     st.selected = ticker;
     render();
+    renderWatch();
     const card = $("hm-detail");
     card.hidden = false;
     card.innerHTML = `<div class="busy-host" style="min-height:120px"><p class="muted">Carregando ${esc(ticker)}…</p></div>`;
@@ -344,6 +393,18 @@ const Heatmap = (() => {
     $("hm-group").addEventListener("change", () => { st.group = $("hm-group").checked; render(); App.savePrefs(); });
     $("hm-universe").addEventListener("change", () => { st.universe = $("hm-universe").value; App.savePrefs(); load(); });
     $("hm-refresh").addEventListener("click", load);
+    $("hm-watch-toggle").addEventListener("click", () => { setWatchOpen(!st.watchOpen); App.savePrefs(); });
+    $("hm-watch-sort").addEventListener("change", () => { st.watchSort = $("hm-watch-sort").value; renderWatch(); App.savePrefs(); });
+    $("hm-watch-list").addEventListener("click", (ev) => {
+      const del = ev.target.closest("[data-del]");
+      if (del) {
+        del.disabled = true;
+        Watch.remove(del.dataset.del).catch((e) => { $("hm-watch-note").hidden = false; $("hm-watch-note").textContent = `Erro: ${e.message}`; });
+        return;
+      }
+      const item = ev.target.closest(".hm-watch-item");
+      if (item) select(item.dataset.t);
+    });
     $("hm-map").addEventListener("click", (ev) => {
       const tile = ev.target.closest(".hm-tile");
       if (tile) select(tile.dataset.t);
@@ -365,16 +426,21 @@ const Heatmap = (() => {
     $("hm-size").value = st.size;
     $("hm-group").checked = st.group;
     $("hm-universe").value = st.universe;
+    $("hm-watch-sort").value = st.watchSort;
+    setWatchOpen(st.watchOpen);
+    renderWatch();
     if (!st.data) load();
     else render();
   }
 
-  const prefs = () => ({ metric: st.metric, size: st.size, group: st.group, universe: st.universe });
+  const prefs = () => ({ metric: st.metric, size: st.size, group: st.group, universe: st.universe, watch_open: st.watchOpen, watch_sort: st.watchSort });
   function applyPrefs(p) {
     if (p.metric && METRICS[p.metric]) st.metric = p.metric;
     if (p.size) st.size = p.size;
     if (p.group !== undefined) st.group = !!p.group;
     if (p.universe === "all" || p.universe === "mt5") st.universe = p.universe;
+    st.watchOpen = !!p.watch_open; // recolhido por padrão
+    if (["added", "ticker", "1d", "since"].includes(p.watch_sort)) st.watchSort = p.watch_sort;
   }
 
   return { activate, prefs, applyPrefs, squarify };

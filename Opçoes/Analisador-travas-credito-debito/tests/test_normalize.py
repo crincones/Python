@@ -38,3 +38,38 @@ def test_bars_forming_and_no_fabricated_gaps():
     assert len(bars) == 3
     assert bars["forming"].tolist() == [False, False, True]
     assert str(bars["time"].iloc[0]) == "2026-10-12 00:00:00-03:00"
+
+
+def _rates(times):
+    n = len(times)
+    return pd.DataFrame(
+        {
+            "time": times,
+            "open": [1.0] * n,
+            "high": [1.0] * n,
+            "low": [1.0] * n,
+            "close": [1.0] * n,
+            "tick_volume": [1] * n,
+            "real_volume": [1] * n,
+        }
+    )
+
+
+def test_monthly_bar_forms_until_next_month():
+    ts = [pd.Timestamp(d).tz_localize("UTC").timestamp() for d in ("2026-09-01", "2026-10-01")]
+    late_oct = pd.Timestamp("2026-10-31 23:00").tz_localize("UTC").timestamp()
+    nov = pd.Timestamp("2026-11-01 00:00:01").tz_localize("UTC").timestamp()
+    assert normalize_bars(_rates(ts), "mn1", "America/Sao_Paulo", late_oct)["forming"].tolist() == [
+        False,
+        True,
+    ]
+    assert normalize_bars(_rates(ts), "mn1", "America/Sao_Paulo", nov)["forming"].tolist() == [
+        False,
+        False,
+    ]
+
+
+def test_hourly_bar_forming():
+    t0 = pd.Timestamp("2026-10-16 10:00").tz_localize("UTC").timestamp()
+    bars = normalize_bars(_rates([t0, t0 + 3600]), "h1", "America/Sao_Paulo", t0 + 3600 + 60)
+    assert bars["forming"].tolist() == [False, True]

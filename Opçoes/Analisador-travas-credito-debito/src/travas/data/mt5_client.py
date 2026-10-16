@@ -260,7 +260,13 @@ class MT5Client:
         return pd.DataFrame(rates)
 
 
-TIMEFRAMES = {"d1": mt5.TIMEFRAME_D1, "w1": mt5.TIMEFRAME_W1, "h4": mt5.TIMEFRAME_H4}
+TIMEFRAMES = {
+    "mn1": mt5.TIMEFRAME_MN1,
+    "w1": mt5.TIMEFRAME_W1,
+    "d1": mt5.TIMEFRAME_D1,
+    "h4": mt5.TIMEFRAME_H4,
+    "h1": mt5.TIMEFRAME_H1,
+}
 
 OPTION_RIGHT_NAMES = {
     mt5.SYMBOL_OPTION_RIGHT_CALL: "call",

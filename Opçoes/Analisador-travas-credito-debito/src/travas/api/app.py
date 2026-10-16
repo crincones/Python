@@ -20,6 +20,7 @@ from pydantic import BaseModel, Field, field_validator
 
 from travas.api.heatmap_routes import heatmap_router
 from travas.api.tracking_routes import tracking_router
+from travas.api.watchlist_routes import watchlist_router
 from travas.data.icons import IconCache
 from travas.data.market_data import ChainScope
 from travas.data.service import MarketDataService, MarketDataUnavailable
@@ -37,6 +38,7 @@ from travas.options.models import Direction, Flow
 from travas.settings import Settings
 from travas.timeutils import LOCAL_TIMEZONE
 from travas.tracking.store import TrackingStore
+from travas.watchlist.store import WatchlistStore
 
 log = logging.getLogger(__name__)
 STATIC_DIR = Path(__file__).resolve().parents[1] / "web" / "static"
@@ -115,9 +117,11 @@ def create_app(
     settings: Settings,
     service: MarketDataService | None = None,
     store: TrackingStore | None = None,
+    watchlist: WatchlistStore | None = None,
 ) -> FastAPI:
     service = service or MarketDataService(settings)
     store = store or TrackingStore(settings.paths.tracking_file)
+    watchlist = watchlist or WatchlistStore(settings.paths.watchlist_file)
     contexts: OrderedDict[str, tuple[PreparedChain, dict]] = OrderedDict()
 
     @asynccontextmanager
@@ -190,13 +194,14 @@ def create_app(
 
     app.include_router(tracking_router(settings, service, store, clean))
     app.include_router(heatmap_router(settings, service, clean))
+    app.include_router(watchlist_router(watchlist))
 
     @app.get("/api/quote/{underlying}")
     def quote(underlying: str) -> dict:
         return clean(service.quote(underlying.upper()).to_dict())
 
     @app.get("/api/candles/{underlying}")
-    def candles(underlying: str, tf: Literal["d1", "w1", "h4"] = "d1") -> dict:
+    def candles(underlying: str, tf: Literal["mn1", "w1", "d1", "h4", "h1"] = "d1") -> dict:
         bars, meta = service.candles(underlying.upper(), tf)
         records = [
             {

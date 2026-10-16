@@ -4,7 +4,12 @@ const Candles = (() => {
   const EMA_FAST_COLOR = "#d000d0"; // magenta
   const EMA_SLOW_COLOR = "#ff8c00"; // laranja
   const EMA_WIDTH = 2.5;
-  const PERIODS = { d1: { type: "day", span: 1 }, w1: { type: "week", span: 1 }, h4: { type: "hour", span: 4 } };
+  const PERIODS = {
+    mn1: { type: "month", span: 1 }, w1: { type: "week", span: 1 }, d1: { type: "day", span: 1 },
+    h4: { type: "hour", span: 4 }, h1: { type: "hour", span: 1 },
+  };
+  const RIGHT_GAP_BARS = 3; // folga à direita da última barra
+  const MIN_BAR_SPACE = 0.25;
   let chart = null;
   let bars = [];
   let levels = [];
@@ -79,6 +84,8 @@ const Candles = (() => {
     chart = klinecharts.init(dom, {
       locale: "pt-BR",
       timezone: "America/Sao_Paulo",
+      // Mínimo padrão é 1 px/barra: num painel estreito, 400 barras não caberiam.
+      layout: { barSpaceLimit: { min: MIN_BAR_SPACE, max: 50 } },
       thousandsSeparator: { sign: "." },
       decimalFold: { threshold: 99 },
       styles: {
@@ -132,6 +139,20 @@ const Candles = (() => {
     c.setPeriod(PERIODS[tf]);
     c.resetData();
     drawLevels();
+    requestAnimationFrame(fitAll);
+  }
+
+  // Ajusta o espaçamento para caberem TODAS as barras carregadas (o padrão do KLineCharts mostra
+  // só as ~60 últimas e esconde o resto à esquerda). Espaço por barra entre MIN_BAR_SPACE e 50 px.
+  function fitAll() {
+    if (!chart || !bars.length) return;
+    const size = chart.getSize("candle_pane", "main");
+    const width = size && size.width ? size.width : 0;
+    if (!width) return;
+    const space = Math.max(MIN_BAR_SPACE, Math.min(50, width / (bars.length + RIGHT_GAP_BARS)));
+    chart.setBarSpace(space);
+    chart.setOffsetRightDistance(space * RIGHT_GAP_BARS);
+    chart.scrollToRealTime();
   }
 
   let fitKey = "";
@@ -169,10 +190,12 @@ const Candles = (() => {
     return {
       ticker: chart.getSymbol() && chart.getSymbol().ticker,
       bars: chart.getDataList().length,
+      barSpace: chart.getBarSpace(),
+      visible: chart.getVisibleRange ? chart.getVisibleRange() : null,
       overlays: chart.getOverlays({ name: "nivel" }).map((o) => o.extendData.label),
       range: range ? [range.from, range.to] : null,
     };
   }
 
-  return { setData, setLevels, resize, debug };
+  return { setData, setLevels, resize, fitAll, debug };
 })();

@@ -90,3 +90,21 @@ const Busy = (() => {
   }
   return { show, hide };
 })();
+
+// Baixa um arquivo gerado pelo backend mostrando o "carregando" no elemento `host` enquanto isso.
+async function downloadFile(url, host, label = "Gerando arquivo…") {
+  if (host) Busy.show(host, label);
+  try {
+    const r = await fetch(url);
+    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || `HTTP ${r.status}`);
+    const name = (/filename="([^"]+)"/.exec(r.headers.get("Content-Disposition") || "") || [])[1] || "arquivo.csv";
+    const href = URL.createObjectURL(await r.blob());
+    const a = Object.assign(document.createElement("a"), { href, download: name });
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(href), 10_000);
+  } finally {
+    if (host) Busy.hide(host);
+  }
+}

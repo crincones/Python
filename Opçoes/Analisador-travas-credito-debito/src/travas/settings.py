@@ -48,6 +48,7 @@ class PathSettings(_Strict):
     logs_dir: Path
     preferences_file: Path
     tracking_file: Path
+    watchlist_file: Path = Path("data/favoritos.json")
     quotes_dir: Path
     icons_dir: Path
 
@@ -137,6 +138,7 @@ class EarlyExerciseSettings(_Strict):
 
 class CandleSettings(_Strict):
     bars: PositiveInt
+    monthly_bars: PositiveInt = 100  # mensal: histórico do MT5 costuma ser curto
     ema_fast: PositiveInt
     ema_slow: PositiveInt
 
