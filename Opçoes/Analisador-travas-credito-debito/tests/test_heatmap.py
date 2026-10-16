@@ -149,3 +149,11 @@ def test_build_items_excludes_index_and_estimates_cap():
     assert [i["ticker"] for i in items] == ["PETR4"]
     assert items[0]["market_cap_approx"] == pytest.approx(40_000)
     assert items[0]["sector"] == "Petróleo" and items[0]["name"] == "PETROBRAS"
+
+
+def test_technical_uses_configured_ema_periods():
+    closes = np.linspace(10, 20, 260)
+    t = compute(bars(closes), ema_periods=(17, 72))["technical"]
+    assert (t["ema_fast_period"], t["ema_slow_period"]) == (17, 72)
+    expected = pd.Series(closes).ewm(span=72, adjust=False).mean().iloc[-1]
+    assert t["ema_slow"] == pytest.approx(expected)

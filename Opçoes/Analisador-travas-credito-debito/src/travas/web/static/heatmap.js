@@ -346,7 +346,7 @@ const Heatmap = (() => {
         ])}<div id="hm-iv" class="small"><p class="muted">Calculando IV ATM a partir da cadeia de opções…</p></div></div>
         <div><h3>Resumo técnico (D1) <span class="muted small">${bull} de ${signals.length} sinais de alta</span></h3>${kv([
           ["RSI 14", `${FMT.num(t.rsi14, 1)} · ${esc(t.rsi_label || "—")}`],
-          ["EMA 17 × EMA 34", t.ema_trend ? `tendência de ${esc(t.ema_trend)} (${FMT.price(t.ema17)} × ${FMT.price(t.ema34)})` : "—"],
+          [`EMA ${t.ema_fast_period} × EMA ${t.ema_slow_period}`, t.ema_trend ? `tendência de ${esc(t.ema_trend)} (${FMT.price(t.ema_fast)} × ${FMT.price(t.ema_slow)})` : "—"],
           ["Preço × SMA 50", `${ok(t.above_sma50)} (${FMT.price(t.sma50)})`],
           ["Preço × SMA 200", `${ok(t.above_sma200)} (${FMT.price(t.sma200)})`],
           ["Máxima 52 semanas", `${FMT.price(t.high52)} (${signedPct(t.from_high52_pct, 1)})`],

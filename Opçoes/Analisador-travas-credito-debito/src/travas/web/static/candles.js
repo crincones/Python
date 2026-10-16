@@ -1,4 +1,5 @@
-// Gráfico do ativo-objeto com KLineCharts 10: candles D1/W1/H4, EMA 17/34 calculadas no backend
+// Gráfico do ativo-objeto com KLineCharts 10: candles, EMAs calculadas no backend (períodos de
+// config/settings.yaml, vindos da API)
 // (mesma fórmula documentada) e níveis da operação sobrepostos.
 const Candles = (() => {
   const EMA_FAST_COLOR = "#d000d0"; // magenta
@@ -14,6 +15,18 @@ const Candles = (() => {
   let bars = [];
   let levels = [];
   let ready = false;
+  // Só rótulos: os valores das EMAs vêm prontos da API. Atualizados por setEmaPeriods().
+  let emaPeriods = [17, 34];
+  const emaFigures = ([fast, slow]) => [
+    { key: "fast", title: `EMA ${fast}: `, type: "line", styles: () => ({ color: EMA_FAST_COLOR, size: EMA_WIDTH }) },
+    { key: "slow", title: `EMA ${slow}: `, type: "line", styles: () => ({ color: EMA_SLOW_COLOR, size: EMA_WIDTH }) },
+  ];
+
+  function setEmaPeriods(fast, slow) {
+    if (!fast || !slow || (fast === emaPeriods[0] && slow === emaPeriods[1])) return;
+    emaPeriods = [fast, slow];
+    if (chart) chart.overrideIndicator({ name: "EMA_API", calcParams: emaPeriods, figures: emaFigures(emaPeriods) });
+  }
 
   function registerOnce() {
     if (ready) return;
@@ -29,11 +42,8 @@ const Candles = (() => {
       shortName: "EMA",
       series: "price",
       precision: 2,
-      calcParams: [17, 34],
-      figures: [
-        { key: "fast", title: "EMA 17: ", type: "line", styles: () => ({ color: EMA_FAST_COLOR, size: EMA_WIDTH }) },
-        { key: "slow", title: "EMA 34: ", type: "line", styles: () => ({ color: EMA_SLOW_COLOR, size: EMA_WIDTH }) },
-      ],
+      calcParams: emaPeriods,
+      figures: emaFigures(emaPeriods),
       calc: (list) => list.map((b) => ({
         fast: b.ema_fast === null ? undefined : b.ema_fast,
         slow: b.ema_slow === null ? undefined : b.ema_slow,
@@ -197,5 +207,5 @@ const Candles = (() => {
     };
   }
 
-  return { setData, setLevels, resize, fitAll, debug };
+  return { setData, setLevels, resize, fitAll, setEmaPeriods, debug };
 })();

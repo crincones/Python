@@ -60,8 +60,13 @@ def rsi_wilder(closes: pd.Series, period: int = 14) -> float | None:
     return 100 - 100 / (1 + float(gain.iloc[-1]) / last_loss)
 
 
-def compute(bars: pd.DataFrame, session_deals: float | None = None) -> dict:
-    """`bars`: colunas time, open, high, low, close, real_volume, forming (ordem cronológica)."""
+def compute(
+    bars: pd.DataFrame,
+    session_deals: float | None = None,
+    ema_periods: tuple[int, int] = (17, 34),
+) -> dict:
+    """`bars`: colunas time, open, high, low, close, real_volume, forming (ordem cronológica).
+    `ema_periods`: (rápida, lenta), os mesmos do gráfico (config/settings.yaml → candles)."""
     if bars.empty:
         return {"available": False, "reason": "sem barras diárias no MT5"}
     bars = bars.reset_index(drop=True)
@@ -91,8 +96,13 @@ def compute(bars: pd.DataFrame, session_deals: float | None = None) -> dict:
     window = bars.iloc[-TRADING_DAYS:]
     high52, low52 = _f(window["high"].max()), _f(window["low"].min())
     price = out["price"]
-    ema17 = closes.ewm(span=17, adjust=False).mean().iloc[-1] if len(closes) >= 17 else None
-    ema34 = closes.ewm(span=34, adjust=False).mean().iloc[-1] if len(closes) >= 34 else None
+    n_fast, n_slow = ema_periods
+    ema_fast = (
+        closes.ewm(span=n_fast, adjust=False).mean().iloc[-1] if len(closes) >= n_fast else None
+    )
+    ema_slow = (
+        closes.ewm(span=n_slow, adjust=False).mean().iloc[-1] if len(closes) >= n_slow else None
+    )
     sma50 = closes.iloc[-50:].mean() if len(closes) >= 50 else None
     sma200 = closes.iloc[-200:].mean() if len(closes) >= 200 else None
     rsi = rsi_wilder(closes)
@@ -101,11 +111,13 @@ def compute(bars: pd.DataFrame, session_deals: float | None = None) -> dict:
         "rsi_label": None
         if rsi is None
         else ("sobrecomprado" if rsi >= 70 else "sobrevendido" if rsi <= 30 else "neutro"),
-        "ema17": _f(ema17),
-        "ema34": _f(ema34),
+        "ema_fast_period": n_fast,
+        "ema_slow_period": n_slow,
+        "ema_fast": _f(ema_fast),
+        "ema_slow": _f(ema_slow),
         "ema_trend": None
-        if ema17 is None or ema34 is None
-        else ("alta" if ema17 > ema34 else "baixa"),
+        if ema_fast is None or ema_slow is None
+        else ("alta" if ema_fast > ema_slow else "baixa"),
         "sma50": _f(sma50),
         "sma200": _f(sma200),
         "above_sma50": None if sma50 is None else bool(price > sma50),

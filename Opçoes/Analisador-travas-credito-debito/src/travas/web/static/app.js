@@ -248,6 +248,9 @@
       // Resposta atrasada de um pedido anterior (troca rápida de aba/ativo): descarta.
       if (token !== candlesRequest) return;
       candlesLoading = false;
+      Candles.setEmaPeriods(data.meta.ema_fast, data.meta.ema_slow);
+      $("ema-fast-label").textContent = `EMA ${data.meta.ema_fast}`;
+      $("ema-slow-label").textContent = `EMA ${data.meta.ema_slow}`;
       Candles.setData($("kchart"), u, state.tf, data.bars);
       const last = data.bars[data.bars.length - 1];
       state.lastClose = { ticker: u, price: last ? last.close : null };

@@ -89,7 +89,8 @@ def heatmap_router(settings: Settings, service: MarketDataService, clean: Callab
         if ticker not in daily:
             raise HTTPException(404, f"{ticker} fora do universo com opções")
         bars, info = daily[ticker]
-        metrics = compute(bars, info.get("session_deals"))
+        c = settings.candles
+        metrics = compute(bars, info.get("session_deals"), (c.ema_fast, c.ema_slow))
         category = universe.loc[ticker, "category"] if ticker in universe.index else None
         profile = b3.profile(ticker, category if isinstance(category, str) else None)
         events = b3.events(ticker)

@@ -90,7 +90,7 @@ Mapa de calor (treemap) dos ativos com opções listadas (IBOV11 fica fora: é �
   de ações da B3) ou igual. **Agrupamento** pela classificação setorial da B3.
 - **Clique num ativo**: setor/atividade/listagem (B3); variações; volatilidade histórica 20/60/252
   × IV ATM por vencimento (mesma metodologia da análise); resumo técnico calculado com as barras
-  do MT5 (RSI 14, EMA 17×34, SMA 50/200, máx./mín. 52 semanas); proventos em dinheiro (data-com,
+  do MT5 (RSI 14, EMA rápida × lenta do gráfico, SMA 50/200, máx./mín. 52 semanas); proventos em dinheiro (data-com,
   pagamento, valor, soma e % dos últimos 12 meses) e eventos em ações (desdobramento, grupamento,
   bonificação, subscrição). Fusões/aquisições não constam da fonte. "Analisar travas" abre a
   Análise com o ativo.

@@ -88,7 +88,7 @@ candles:
   bars: 400          # barras pedidas ao MT5 em 60 min, 240 min, diário e semanal
   monthly_bars: 100  # mensal
   ema_fast: 17
-  ema_slow: 34
+  ema_slow: 72
 
 # Pregão regular de opções da B3 (horário de Brasília). CONFERIR na B3 quando houver mudança de
 # horário. Fora deste intervalo, o app usa as últimas cotações capturadas com o mercado aberto.
