@@ -21,7 +21,7 @@ O sistema é uma ferramenta de análise e apoio à decisão. **Não envia ordens
 
 Antes de escolher definitivamente a arquitetura, examine o exemplo existente em:
 
-`C:\Users\Carlos\Documents\GitHub\Python\screener-opcoes`
+`C:\Users\Carlos\Documents\GitHub\Python\Opçoes\screener-opcoes`
 
 Reutilize código e padrões úteis desse projeto, especialmente conexão MT5, descoberta de símbolos, coleta de cotações e tratamento de opções. Não presuma que o caminho existe em outros ambientes: se estiver indisponível, informe isso e solicite acesso ou configure o caminho local.
 
