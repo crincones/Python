@@ -1,4 +1,4 @@
-# CLAUDE.md — Analisador de Travas de Opções B3
+# CLAUDE.md — Dash CIRP Opções (travas de opções B3)
 
 ## 1. Objetivo do projeto
 

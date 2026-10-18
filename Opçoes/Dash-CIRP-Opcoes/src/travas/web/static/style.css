@@ -338,3 +338,10 @@ h2 .tk { margin-right: .45rem; }
 .rp-bar-v { position: relative; }
 .rp-table th.sortable { cursor: pointer; user-select: none; }
 .rp-table th.sortable:hover { color: var(--accent); }
+
+/* Aba Ativo protegido */
+.pr-table-wrap { max-height: 58vh; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px; }
+#tab-protected .kind-desc { line-height: 1.45; }
+.flow-box { border-left-width: 5px; }
+.flow-box.flow-credit { background: #e7f4ec; border-color: var(--profit); }
+.flow-box.flow-debit { background: var(--warn-bg); border-color: var(--warn-border); }

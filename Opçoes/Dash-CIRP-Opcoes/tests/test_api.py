@@ -156,7 +156,7 @@ def test_preferences_roundtrip(client):
 def test_index_served(client):
     r = client.get("/")
     assert r.status_code == 200
-    assert "Analisador de Travas" in r.text
+    assert "Dash CIRP Opções" in r.text
     assert client.get("/static/vendor/klinecharts.min.js").status_code == 200
 
 
@@ -321,3 +321,26 @@ def test_watchlist_routes(client):
     assert client.delete("/api/watchlist/PETR4").status_code == 200
     assert client.delete("/api/watchlist/PETR4").status_code == 404
     assert [i["ticker"] for i in client.get("/api/watchlist").json()["items"]] == ["SMAL11"]
+
+
+def test_protected_scan_and_detail(client):
+    r = client.post("/api/protected/scan", json={"underlying": "test3"})
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["underlying"] == "TEST3"
+    assert client.service.scopes[-1].option_types == ("call", "put")
+    assert body["results"]
+    assert all(row["risk_zero"] for row in body["results"])
+    first = body["results"][0]
+    d = client.get(f"/api/protected/detail/{body['scan_id']}/{first['id']}")
+    assert d.status_code == 200, d.text
+    detail = d.json()
+    assert detail["simulation"]["model_available"]
+    assert detail["limit"]["suggested"] is not None
+    assert detail["assumptions"]["notes"]
+    assert client.get(f"/api/protected/detail/xxx/{first['id']}").status_code == 404
+
+
+def test_protected_without_mt5_options(client):
+    r = client.post("/api/protected/scan", json={"underlying": "SEMO3"})
+    assert r.status_code == 422

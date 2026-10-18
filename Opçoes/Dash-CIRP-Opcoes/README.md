@@ -1,4 +1,4 @@
-# Analisador de Travas (B3 via MetaTrader 5)
+# Dash CIRP Opções — travas de opções B3 via MetaTrader 5
 
 Aplicativo local para gerar, ranquear e examinar **travas verticais** de opções de ações da B3:
 alta/baixa × débito/crédito. Ferramenta de análise: **não envia ordens** nem acessa a conta para
@@ -166,6 +166,46 @@ Filtros avançados (opcionais): cenários conservador/otimista, prazo, strikes, 
 máxima por operação, liquidez mínima por perna, volatilidade própria, juros, custos,
 agressividade do preço-limite, lucro/perda mínimo e pesos do ranking. As preferências ficam em
 `config/preferencias.json` (sem credenciais; fora do git).
+
+## Aba Ativo protegido (estruturas do Rafael Nobre)
+
+Varre, com **só o ativo como entrada**, duas estruturas de mesmo vencimento por ação comprada:
+
+- **Collar**: compra o ativo, compra 1 put Kp, vende 1 call Kc (Kp < Kc). Vale Kp abaixo da put,
+  acompanha o ativo entre os strikes e fica travado em Kc acima.
+- **Collar + borboleta**: compra o ativo e 1 put Kp, vende **2** calls K1 e compra 1 call K2
+  (Kp < K1 < K2). Vale Kp abaixo da put, acompanha o ativo até K1 (máximo), cai até 2·K1 − K2 em K2
+  e fica plano acima. Exemplo do vídeo (BOVA11, put 183, calls 190/195, custo 178,81): queda
+  +2,34%, alta forte +3,46%, máximo +6,26% em 190 (o vídeo arredonda para 6,24%) — coberto em
+  `tests/test_protected.py`.
+
+Só entram estruturas cujo **piso no vencimento** (menor valor possível) cobre o custo natural de
+montagem mais os custos informados — o "risco zero" do vídeo. O piso vale só no vencimento, com
+todas as pernas mantidas, sem exercício antecipado das calls vendidas e sem proventos no período.
+Pela paridade put-call, com preços justos o piso rende no máximo cerca do CDI; o ganho acima vem
+de o ativo terminar entre os strikes.
+
+Ranking (pesos visíveis e editáveis; padrão em `protected` no `config/settings.yaml`): piso,
+ativo parado e máximo como % do CDI do período, probabilidade de superar o CDI no vencimento
+(lognormal, IV ATM; omitida sem IV confiável), liquidez da pior perna e custo de execução. O
+detalhe mostra payoff, simulação temporal, custo-limite indicativo e as pernas para digitar no
+ProfitChart. Estruturas com ação ainda não podem ser enviadas ao Acompanhamento.
+
+**Quantidade ou valor a investir** (antes ou depois do scan, sem nova coleta): os dois campos são
+ligados — digitar a quantidade (ações = puts) mostra o investimento; digitar o valor mostra a
+quantidade, arredondada para baixo a múltiplos de `protected.lot_size` (100). No modo valor, cada
+estrutura usa a maior quantidade que cabe no valor (custo diferente por estrutura). Lista,
+detalhe, gráfico e pernas são recalculados no navegador a partir dos valores por ação; com custos
+fixos informados, os retornos mudam com a quantidade, mas a ordem do score continua a do scan.
+
+**Call vendida só europeia**: checkbox que só filtra a lista já calculada (sem novo scan). A API
+devolve as `max_results` melhores no geral e as `max_results` melhores com call vendida europeia,
+então o filtro mostra até 200 europeias mesmo quando elas não estão entre as 200 melhores gerais.
+
+**Débito ou crédito**: a operação completa é sempre débito (compra do ativo). A coluna "Opções" e
+o alerta no detalhe mostram se o **pacote de opções** (put comprada − calls vendidas + call
+comprada), sozinho, sai a débito (você paga além do ativo) ou a crédito (as calls vendidas pagam a
+put e sobra caixa), pelo natural; ⚠ indica que pelo mid o sentido é outro.
 
 ## Arquitetura
 

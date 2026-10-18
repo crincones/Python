@@ -19,6 +19,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, field_validator
 
 from travas.api.heatmap_routes import heatmap_router
+from travas.api.protected_routes import protected_router
 from travas.api.tracking_routes import tracking_router
 from travas.api.watchlist_routes import watchlist_router
 from travas.data.icons import IconCache
@@ -130,7 +131,7 @@ def create_app(
         yield
         service.close()
 
-    app = FastAPI(title="Analisador de Travas B3", lifespan=lifespan)
+    app = FastAPI(title="Dash CIRP Opções", lifespan=lifespan)
 
     @app.middleware("http")
     async def _no_stale_assets(request, call_next):
@@ -158,6 +159,7 @@ def create_app(
                 "liquidity": settings.liquidity.model_dump(),
                 "rate_annual": settings.pricing.risk_free_rate_annual,
                 "candles": settings.candles.model_dump(),
+                "protected": settings.protected.model_dump(),
             }
         )
 
@@ -195,6 +197,7 @@ def create_app(
     app.include_router(tracking_router(settings, service, store, clean))
     app.include_router(heatmap_router(settings, service, clean))
     app.include_router(watchlist_router(watchlist))
+    app.include_router(protected_router(settings, service, clean, _require_mt5_options))
 
     @app.get("/api/quote/{underlying}")
     def quote(underlying: str) -> dict:

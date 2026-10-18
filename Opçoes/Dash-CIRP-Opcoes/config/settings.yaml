@@ -1,4 +1,4 @@
-# Configuração do Analisador de Travas. Valores marcados "PROVISÓRIO" são padrões iniciais.
+# Configuração do Dash CIRP Opções. Valores marcados "PROVISÓRIO" são padrões iniciais.
 # Caminhos relativos são resolvidos a partir da raiz do projeto.
 # Os filtros de análise (vencimentos, strikes, liquidez, pesos, vol, juros) também podem ser
 # alterados na interface; estes são apenas os padrões.
@@ -78,6 +78,29 @@ analysis:
     reward_risk: 0.15
     pop: 0.15
     liquidity: 0.25
+    execution_cost: 0.10
+
+# Aba "Ativo protegido" (Rafael Nobre): ativo + put + calls vendidas, piso no vencimento ≥ custo.
+protected:
+  dte_min_business_days: 5
+  dte_max_business_days: 90      # limitado também por collection.max_dte_business_days
+  put_min_pct_spot: 0.85          # strikes de put entre 85% e 110% do spot
+  put_max_pct_spot: 1.10
+  call_max_pct_spot: 1.25         # calls até 125% do spot
+  max_wing_pct_spot: 0.08         # borboleta: distância K2 − K1 até 8% do spot
+  min_floor_return: 0.0           # 0 = piso ≥ custo ("risco zero"); 0.01 = piso ≥ custo + 1%
+  quantity: 100                   # ações (opções: 1 put, 1 ou 2 calls vendidas, 1 call comprada por ação)
+  lot_size: 100                   # valor a investir → quantidade arredondada para baixo a múltiplos disto
+  limit_aggressiveness: 0.25
+  illiquid_score_cap: 40
+  max_results: 200
+  max_candidates: 4000            # acima disso só as melhores pelo piso são avaliadas por completo
+  weights:                        # somam 1; ajustáveis na interface
+    floor: 0.30
+    unchanged: 0.15
+    max: 0.15
+    prob_cdi: 0.10
+    liquidity: 0.20
     execution_cost: 0.10
 
 early_exercise:

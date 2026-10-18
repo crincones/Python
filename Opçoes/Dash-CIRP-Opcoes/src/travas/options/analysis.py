@@ -528,27 +528,29 @@ def _limit_dict(limit) -> dict:
     }
 
 
-def score_candidates(rows: list[dict], weights: dict[str, float], cap: float) -> None:
+def score_candidates(
+    rows: list[dict],
+    weights: dict[str, float],
+    cap: float,
+    ranking: dict[str, tuple[str, bool, str]] = RANKING_COMPONENTS,
+) -> None:
     """Score 0–100 = Σ peso × percentil (entre as travas desta análise), com pesos
     redistribuídos quando um componente não está disponível para a trava. Trava com perna
     reprovada em liquidez/cotação fica limitada a `cap`."""
     if not rows:
         return
     frame = pd.DataFrame(
-        {
-            name: [r.get(metric) for r in rows]
-            for name, (metric, _, _) in RANKING_COMPONENTS.items()
-        },
+        {name: [r.get(metric) for r in rows] for name, (metric, _, _) in ranking.items()},
         dtype="float64",
     )
     pct = pd.DataFrame(index=frame.index)
-    for name, (_, higher, _) in RANKING_COMPONENTS.items():
+    for name, (_, higher, _) in ranking.items():
         pct[name] = frame[name].rank(pct=True, ascending=higher, method="average")
     for i, row in enumerate(rows):
         available = {n: w for n, w in weights.items() if w > 0 and pd.notna(pct.at[i, n])}
         total_w = sum(available.values())
         components = {}
-        for name, (_, higher, description) in RANKING_COMPONENTS.items():
+        for name, (_, higher, description) in ranking.items():
             value = pct.at[i, name]
             components[name] = {
                 "percentile": None if pd.isna(value) else float(value),

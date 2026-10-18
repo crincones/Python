@@ -131,6 +131,41 @@ class AnalysisSettings(_Strict):
     max_results: PositiveInt
 
 
+class ProtectedWeights(_Strict):
+    floor: NonNegativeFloat  # retorno mínimo (piso) ÷ CDI do período
+    unchanged: NonNegativeFloat  # retorno com o ativo parado ÷ CDI
+    max: NonNegativeFloat  # retorno máximo ÷ CDI
+    prob_cdi: NonNegativeFloat  # probabilidade de superar o CDI no vencimento
+    liquidity: NonNegativeFloat  # pior perna
+    execution_cost: NonNegativeFloat  # (natural − mid) ÷ lucro máximo, menor é melhor
+
+    @model_validator(mode="after")
+    def _sum(self) -> ProtectedWeights:
+        total = sum(self.model_dump().values())
+        if abs(total - 1.0) > WEIGHT_SUM_TOLERANCE:
+            raise ValueError(f"pesos do ativo protegido devem somar 1, somam {total}")
+        return self
+
+
+class ProtectedSettings(_Strict):
+    """Aba Ativo protegido: ativo + put + calls vendidas (collar e collar + borboleta)."""
+
+    dte_min_business_days: NonNegativeInt
+    dte_max_business_days: PositiveInt
+    put_min_pct_spot: PositiveFloat  # faixa de strikes da put (fração do spot)
+    put_max_pct_spot: PositiveFloat
+    call_max_pct_spot: PositiveFloat  # strike máximo das calls
+    max_wing_pct_spot: PositiveFloat  # borboleta: K2 − K1 ≤ isto × spot
+    min_floor_return: float  # piso ≥ custo × (1 + isto); 0 = "risco zero"
+    quantity: PositiveInt  # ações (lote)
+    lot_size: PositiveInt  # múltiplo usado ao converter valor a investir em quantidade
+    limit_aggressiveness: float
+    illiquid_score_cap: float
+    max_results: PositiveInt
+    max_candidates: PositiveInt
+    weights: ProtectedWeights
+
+
 class EarlyExerciseSettings(_Strict):
     min_extrinsic_brl: NonNegativeFloat
     min_extrinsic_pct_premium: NonNegativeFloat
@@ -156,6 +191,7 @@ class Settings(_Strict):
     candles: CandleSettings
     market_hours: MarketHoursSettings
     icons: IconSettings
+    protected: ProtectedSettings
 
 
 def load_settings(path: Path = DEFAULT_SETTINGS_PATH) -> Settings:

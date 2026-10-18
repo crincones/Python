@@ -3,16 +3,17 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Analisador de Travas</title>
+  <title>Dash CIRP Opções</title>
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
 <header class="topbar">
-  <div class="brand">Analisador de Travas <span class="muted">B3 · opções</span></div>
+  <div class="brand">Dash CIRP Opções <span class="muted">B3 · travas</span></div>
   <nav class="tabs" role="tablist" aria-label="Seções">
     <button data-tab="analysis" class="active" role="tab">Análise</button>
     <button data-tab="tracking" role="tab">Acompanhamento</button>
     <button data-tab="heatmap" role="tab">Heatmap</button>
+    <button data-tab="protected" role="tab" title="Ativo + put + calls vendidas com piso no vencimento ≥ custo">Ativo protegido</button>
   </nav>
   <div id="market" class="market-pill" role="status" aria-live="polite" hidden></div>
   <div id="conn" class="conn" role="status" aria-live="polite">
@@ -354,6 +355,126 @@
    </div>
    </div>
 
+   <div id="tab-protected" hidden>
+    <section class="card" aria-labelledby="pr-title">
+      <h2 id="pr-title">Ativo protegido <span class="muted small">ativo + put + calls vendidas · estruturas do Rafael Nobre</span></h2>
+      <div class="kind-desc small">
+        <b>Collar:</b> compra o ativo, compra uma put (proteção) e vende uma call acima.
+        <b>Collar + borboleta:</b> compra o ativo e a put, vende <b>2</b> calls num strike K1 e compra 1 call num strike K2 acima (trava a alta da call vendida a mais).
+        Só entram estruturas cujo <b>piso no vencimento</b> (menor valor possível) cobre o custo de montagem — o "risco zero" do vídeo.
+        Esse piso vale só no vencimento, mantendo todas as pernas, sem exercício antecipado das calls e com os custos informados.
+        <span class="tip" title="Pela paridade put-call, com preços justos o piso rende no máximo cerca do CDI do período. O ganho acima disso depende de o ativo terminar entre os strikes (o máximo da borboleta é no strike das calls vendidas).">?</span>
+      </div>
+      <form id="pr-form" autocomplete="off" novalidate>
+        <div class="row">
+          <div class="field">
+            <label for="pr-underlying">Ativo-objeto</label>
+            <div class="with-icon"><span id="pr-underlying-icon"></span><input id="pr-underlying" list="underlyings" required placeholder="ex.: BOVA11" class="upper"></div>
+            <small id="pr-spot" class="muted hint"></small>
+          </div>
+          <fieldset class="seg">
+            <legend>Estruturas</legend>
+            <label><input type="checkbox" id="pr-k-collar" checked> Collar</label>
+            <label><input type="checkbox" id="pr-k-fly" checked> Collar + borboleta</label>
+          </fieldset>
+          <fieldset class="seg">
+            <legend>Call vendida</legend>
+            <label title="Só filtra a lista já calculada (não refaz o scan). Europeia só pode ser exercida no vencimento: sem risco de exercício antecipado desmontar a proteção."><input type="checkbox" id="pr-european"> só europeia</label>
+          </fieldset>
+          <div class="field">
+            <label for="pr-quantity" title="Ações compradas = puts compradas; calls vendidas = 1× (collar) ou 2× (borboleta); call comprada = 1×">Quantidade (ações = puts)</label>
+            <input id="pr-quantity" type="number" min="0" step="100">
+          </div>
+          <div class="field">
+            <label for="pr-amount" title="Quantidade = maior múltiplo do lote cujo custo (com os custos informados) cabe neste valor, estrutura por estrutura">ou valor a investir (R$)</label>
+            <input id="pr-amount" type="number" min="0" step="any">
+          </div>
+        </div>
+        <p id="pr-size-hint" class="muted small"></p>
+        <details class="advanced">
+          <summary>Filtros e premissas (opcional)</summary>
+          <div class="grid">
+            <div class="field"><label for="pr-dte_min">Dias úteis até venc. (mín)</label><input id="pr-dte_min" type="number" min="0" step="1"></div>
+            <div class="field"><label for="pr-dte_max">Dias úteis até venc. (máx)</label><input id="pr-dte_max" type="number" min="1" step="1"></div>
+            <div class="field"><label for="pr-min_floor" title="0 = piso igual ao custo; 1 = piso pelo menos 1% acima do custo">Piso mínimo acima do custo (%)</label><input id="pr-min_floor" type="number" step="any"></div>
+            <div class="field"><label for="pr-costs">Custos estimados da operação (R$)</label><input id="pr-costs" type="number" step="any" min="0" value="0"></div>
+            <div class="field"><label for="pr-rate">CDI / juros (% a.a.)</label><input id="pr-rate" type="number" step="any"></div>
+            <div class="field"><label for="pr-aggr">Agressividade do preço-limite (0–100%)</label><input id="pr-aggr" type="number" min="0" max="100" step="any"></div>
+            <div class="field"><label for="pr-max_spread">Spread bid/ask máx. (% do mid)</label><input id="pr-max_spread" type="number" step="any" min="0"></div>
+            <div class="field"><label for="pr-min_deals">Negócios mín. no dia (por perna)</label><input id="pr-min_deals" type="number" min="0" step="1"></div>
+            <div class="field"><label for="pr-min_turnover">Volume financeiro mín. (R$)</label><input id="pr-min_turnover" type="number" min="0" step="any"></div>
+            <div class="field"><label for="pr-max_age">Idade máx. da cotação (s)</label><input id="pr-max_age" type="number" min="1"></div>
+            <div class="field check"><label><input id="pr-illiquid" type="checkbox"> Incluir pernas ilíquidas/cotação antiga (score limitado)</label></div>
+          </div>
+          <h3>Pesos do ranking <span class="muted">(normalizados para somar 100%)</span></h3>
+          <div class="grid weights">
+            <div class="field"><label for="pr-w_floor">Piso (% do CDI)</label><input id="pr-w_floor" type="number" min="0" step="any"></div>
+            <div class="field"><label for="pr-w_unchanged">Ativo parado (% do CDI)</label><input id="pr-w_unchanged" type="number" min="0" step="any"></div>
+            <div class="field"><label for="pr-w_max">Máximo (% do CDI)</label><input id="pr-w_max" type="number" min="0" step="any"></div>
+            <div class="field"><label for="pr-w_prob_cdi">Prob. de superar o CDI</label><input id="pr-w_prob_cdi" type="number" min="0" step="any"></div>
+            <div class="field"><label for="pr-w_liquidity">Liquidez</label><input id="pr-w_liquidity" type="number" min="0" step="any"></div>
+            <div class="field"><label for="pr-w_execution_cost">Custo de execução</label><input id="pr-w_execution_cost" type="number" min="0" step="any"></div>
+          </div>
+        </details>
+        <div class="actions">
+          <button type="submit" id="pr-btn" class="primary">Escanear</button>
+          <label class="check-inline"><input type="checkbox" id="pr-refresh"> Forçar nova coleta</label>
+          <span id="pr-msg" class="msg" role="status" aria-live="polite"></span>
+        </div>
+      </form>
+    </section>
+
+    <section class="card" id="pr-results-card" hidden>
+      <div class="card-head">
+        <h2>Estruturas com piso ≥ custo</h2>
+        <div class="muted" id="pr-results-meta"></div>
+      </div>
+      <div id="pr-warning" class="warn" hidden></div>
+      <div id="pr-discarded" class="muted small"></div>
+      <div class="table-wrap pr-table-wrap">
+        <table id="pr-table" class="ranking"><thead></thead><tbody></tbody></table>
+      </div>
+      <p class="muted small" id="pr-note"></p>
+    </section>
+
+    <section class="card" id="pr-detail-card" hidden>
+      <div class="card-head">
+        <h2 id="pr-detail-title">Estrutura</h2>
+        <div class="muted" id="pr-detail-sub"></div>
+      </div>
+      <div id="pr-flow"></div>
+      <div id="pr-alerts"></div>
+      <div class="detail-grid">
+        <div class="payoff-wrap" id="pr-payoff-wrap">
+          <div class="chart-head">
+            <h3>Payoff <span class="muted small">(resultado total da operação, R$)</span></h3>
+            <button type="button" class="max-btn" id="pr-max">⤢ Maximizar</button>
+          </div>
+          <div class="legend" id="pr-legend"></div>
+          <div class="busy-host" id="pr-payoff-host"><div id="pr-payoff" class="payoff" role="img" aria-label="Gráfico de payoff da estrutura protegida"></div></div>
+          <div class="time-control" id="pr-time">
+            <label for="pr-slider">Data simulada:</label>
+            <input type="range" id="pr-slider" min="0" max="0" value="0">
+            <output id="pr-time-label"></output>
+          </div>
+          <p class="muted small" id="pr-sim-note"></p>
+        </div>
+        <div>
+          <h3>Custo-limite indicativo <span class="tip" title="Custo líquido por ação da montagem (débito) para conferir manualmente no ProfitChart. Indicativo: execução não garantida. Nenhuma ordem é enviada por este aplicativo.">?</span></h3>
+          <div id="pr-limit"></div>
+          <h3>Retornos no vencimento</h3>
+          <div id="pr-metrics" class="metrics"></div>
+        </div>
+      </div>
+      <h3>Pernas <span class="muted small">(digitar manualmente no ProfitChart)</span></h3>
+      <div class="table-wrap"><table id="pr-legs" class="legs"></table></div>
+      <h3>Composição do score</h3>
+      <div id="pr-score"></div>
+      <h3>Premissas, metodologia e gestão</h3>
+      <ul id="pr-assumptions" class="small"></ul>
+    </section>
+   </div>
+
     <footer class="disclaimer small">
       Ferramenta de análise, não recomendação de investimento. Opções podem causar perdas relevantes;
       a liquidez pode impedir a execução pelo preço indicado. POP e valores teóricos dependem de modelo
@@ -403,6 +524,7 @@
 <script src="/static/report.js"></script>
 <script src="/static/tracking.js"></script>
 <script src="/static/heatmap.js"></script>
+<script src="/static/protected.js"></script>
 <script src="/static/app.js"></script>
 </body>
 </html>

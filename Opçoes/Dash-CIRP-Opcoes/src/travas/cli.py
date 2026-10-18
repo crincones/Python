@@ -63,13 +63,13 @@ def cmd_serve(settings: Settings, open_browser: bool, port: int | None = None) -
     url = f"http://{settings.server.host}:{port}/"
     if open_browser:
         webbrowser.open(url)
-    log.info("Analisador em %s", url)
+    log.info("Dash CIRP Opções em %s", url)
     uvicorn.run(create_app(settings), host=settings.server.host, port=port, log_level="info")
     return 0
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(prog="travas", description="Analisador de travas B3")
+    parser = argparse.ArgumentParser(prog="travas", description="Dash CIRP Opções (travas B3)")
     sub = parser.add_subparsers(dest="command", required=True)
     check = sub.add_parser(
         "check", help="audita dados disponíveis no MT5 e grava docs/viabilidade_dados.md"

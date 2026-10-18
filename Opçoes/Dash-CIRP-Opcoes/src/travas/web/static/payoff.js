@@ -129,6 +129,9 @@ const Payoff = (() => {
     if (FMT.ok(d.max_profit)) {
       svg.appendChild(el("text", { x: W - M.r - 4, y: Y(d.max_profit) - 5, "text-anchor": "end", fill: "#157a3c" }, `Lucro máx. ${FMT.brl(d.max_profit)}`));
     }
+    if (FMT.ok(d.min_profit)) { // piso positivo (estruturas protegidas): não há perda no vencimento
+      svg.appendChild(el("text", { x: M.l + 4, y: Y(d.min_profit) + 14, fill: "#157a3c" }, `Lucro mín. (piso) ${FMT.brl(d.min_profit)}`));
+    }
     if (FMT.ok(d.max_loss)) {
       svg.appendChild(el("text", { x: M.l + 4, y: Y(-d.max_loss) + 14, fill: "#b42318" }, `Perda máx. ${FMT.brl(-d.max_loss)}`));
     }

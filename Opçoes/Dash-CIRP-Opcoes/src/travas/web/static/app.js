@@ -3,7 +3,7 @@
   const $ = (id) => document.getElementById(id);
   const state = { defaults: null, analysis: null, detail: null, sort: null, tf: "d1", side: true, underlying: null, levels: [], tab: "analysis",
     // Cada aba tem o próprio ativo e as próprias linhas no gráfico; nada vaza de uma para outra.
-    chart: { analysis: { underlying: null, levels: [] }, tracking: { underlying: null, levels: [] }, heatmap: { underlying: null, levels: [] } } };
+    chart: { analysis: { underlying: null, levels: [] }, tracking: { underlying: null, levels: [] }, heatmap: { underlying: null, levels: [] }, protected: { underlying: null, levels: [] } } };
 
   const KIND_TEXT = {
     "alta|debito": "Trava de alta com débito: compra call de strike menor e vende call de strike maior. Paga débito; ganha se o ativo subir acima do breakeven.",
@@ -226,8 +226,10 @@
     $("tab-analysis").hidden = name !== "analysis";
     $("tab-tracking").hidden = name !== "tracking";
     $("tab-heatmap").hidden = name !== "heatmap";
+    $("tab-protected").hidden = name !== "protected";
     if (name === "tracking") Tracking.activate();
     if (name === "heatmap") Heatmap.activate();
+    if (name === "protected") Protected.activate();
     applyChart();
     savePrefs();
   }
@@ -633,6 +635,7 @@
     $("side-toggle").textContent = open ? "⟩" : "⟨";
     if (open) { setTimeout(() => { loadCandles(); Candles.resize(); }, 60); }
     if (state.detail) setTimeout(drawPayoff, 200);
+    setTimeout(Protected.redraw, 200);
     savePrefs();
   }
 
@@ -641,7 +644,7 @@
   function savePrefs() {
     clearTimeout(saveTimer);
     saveTimer = setTimeout(() => {
-      const prefs = { side_width: state.sideWidth || null, nobre_filter: $("nobre_filter").checked, nobre_target_required: $("nobre_target_required").checked, nobre_fraction: $("nobre_fraction").value, nobre_prefer_close: $("nobre_prefer_close").checked, european_short: $("european_short").checked, direction: radio("direction"), flow: radio("flow"), tf: state.tf, side: state.side, tab: state.tab, include_illiquid: $("include_illiquid").checked, tracking: Tracking.prefs(), heatmap: Heatmap.prefs() };
+      const prefs = { side_width: state.sideWidth || null, nobre_filter: $("nobre_filter").checked, nobre_target_required: $("nobre_target_required").checked, nobre_fraction: $("nobre_fraction").value, nobre_prefer_close: $("nobre_prefer_close").checked, european_short: $("european_short").checked, direction: radio("direction"), flow: radio("flow"), tf: state.tf, side: state.side, tab: state.tab, include_illiquid: $("include_illiquid").checked, tracking: Tracking.prefs(), heatmap: Heatmap.prefs(), protected: Protected.prefs() };
       for (const f of PREF_FIELDS) prefs[f] = $(f).value;
       fetch("/api/preferences", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(prefs) }).catch(() => {});
     }, 600);
@@ -673,7 +676,8 @@
     if (prefs.side === false) setSide(false);
     if (prefs.tracking) Tracking.applyPrefs(prefs.tracking);
     if (prefs.heatmap) Heatmap.applyPrefs(prefs.heatmap);
-    if (prefs.tab === "tracking" || prefs.tab === "heatmap") switchTab(prefs.tab);
+    Protected.init(def, prefs.protected);
+    if (["tracking", "heatmap", "protected"].includes(prefs.tab)) switchTab(prefs.tab);
   }
 
   async function init() {
@@ -705,6 +709,7 @@
     setupTooltips();
     fullListWhenComplete($("underlying"));
     fullListWhenComplete($("tf-underlying"));
+    fullListWhenComplete($("pr-underlying"));
     $("fit-candles").addEventListener("click", () => Candles.fitAll());
     $("max-candles").addEventListener("click", () => {
       if (!state.side) setSide(true);

@@ -1,7 +1,7 @@
 [project]
 name = "travas"
 version = "0.1.0"
-description = "Analisador de travas verticais (alta/baixa, crédito/débito) de opções da B3 via MetaTrader 5"
+description = "Dash CIRP Opções: travas verticais (alta/baixa, crédito/débito) de opções da B3 via MetaTrader 5"
 readme = "README.md"
 requires-python = ">=3.14,<3.15"
 dependencies = [
