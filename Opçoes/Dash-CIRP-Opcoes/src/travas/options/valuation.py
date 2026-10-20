@@ -39,11 +39,15 @@ def structure_value(
     """Valor de mercado teórico da posição (R$ totais, comprado +, vendido −).
 
     `t_years` pode ser um prazo por perna. Perna com prazo ≤ 0 vale o intrínseco (não usa σ).
+    Perna de ativo vale o próprio preço (não usa σ nem prazo).
     """
     s = np.asarray(spot, dtype=np.float64)
     value = np.zeros_like(s)
     terms = _per_leg(t_years, len(structure.legs))
     for leg, sigma, t in zip(structure.legs, sigmas, terms, strict=True):
+        if leg.option_type is OptionType.STOCK:
+            value = value + leg.side.sign * leg.units * s
+            continue
         premium = pricing.price(
             s,
             leg.strike,
@@ -85,6 +89,9 @@ def structure_greeks(
     }
     terms = _per_leg(t_years, len(structure.legs))
     for leg, sigma, t in zip(structure.legs, sigmas, terms, strict=True):
+        if leg.option_type is OptionType.STOCK:
+            total["delta"] += leg.side.sign * leg.units
+            continue
         g = pricing.greeks(spot, leg.strike, t, rate, sigma, leg.option_type is OptionType.CALL)
         k = leg.side.sign * leg.units
         total["delta"] += k * float(g["delta"])
@@ -111,3 +118,9 @@ def zero_crossings(xs: FloatArray, ys: FloatArray) -> list[float]:
 
 def valid_sigmas(sigmas: Sequence[float | None]) -> bool:
     return all(s is not None and math.isfinite(s) and s > 0 for s in sigmas)
+
+
+def model_sigmas_ok(structure: Structure, sigmas: Sequence[float | None]) -> bool:
+    """σ válido em todas as opções (perna de ativo não usa σ)."""
+    pairs = zip(structure.legs, sigmas, strict=True)
+    return valid_sigmas([s for leg, s in pairs if leg.option_type is not OptionType.STOCK])

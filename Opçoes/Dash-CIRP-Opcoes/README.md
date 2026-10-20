@@ -31,9 +31,66 @@ Ou dê duplo clique em `iniciar.bat`.
 O app confere o relógio de Brasília antes de buscar cotações (`market_hours` em
 `config/settings.yaml`, padrão 10:00–17:55, conferir na B3; fins de semana e feriados pelo
 calendário). Com o mercado **aberto**, lê o MT5 e salva as cotações em `data/cotacoes/`. Com o
-mercado **fechado** (pré-abertura, após o fechamento, sem pregão), usa essas últimas cotações do
-pregão, com prazos recalculados para hoje, e avisa na tela. Séries nunca capturadas no pregão
-são lidas do MT5 e marcadas como "lida fora do pregão" (podem estar zeradas ou distorcidas).
+mercado **fechado** (pré-abertura, após o fechamento, sem pregão), a fonte é escolhida no
+indicador de mercado do topo (padrão em `collection.off_hours_source`, a escolha fica salva):
+
+- **Fechamento oficial (B3)** — padrão. Arquivo público "TradeInformationConsolidatedFile" do
+  último pregão publicado (`data/b3/negocios_<data>.csv`): cada série pelo **último negócio do
+  dia** e o ativo pelo **fechamento** — o mesmo que o ProfitChart mostra com o mercado fechado
+  (conferido em 16/10/2026: 82 de 82 séries de BBAS3 iguais). Negócios e volume são os do dia
+  inteiro. O arquivo **não traz bid/ask nem horário**: o preço é indicativo (natural = mid =
+  último, marcado "B3" nas pernas), não há spread nem idade de cotação para avaliar, e os
+  negócios de cada perna podem ter sido em horários diferentes. Série sem negócio no dia fica
+  sem preço ("sem negócio no dia (B3)"). Se o arquivo do último pregão ainda não saiu (a B3
+  publica à noite) ou estiver inacessível, vale a opção abaixo, com aviso.
+- **Capturas do pregão (bid/ask)** — últimas cotações salvas pelo app durante o pregão, com
+  prazos recalculados para hoje. Séries nunca capturadas no pregão são lidas do MT5 e marcadas
+  como "lida fora do pregão" (podem estar zeradas ou distorcidas).
+- **Snapshot do servidor (bid/ask)** — o snapshot mais recente gravado pelo coletor do servidor
+  (seção abaixo): bid/ask de todas as séries **no mesmo horário** (11:00 ou 16:30), 3 próximos
+  vencimentos mensais (mais semanais até 15 du) e strikes a até 30% do spot. O indicador mostra o horário do snapshot. Sem acesso
+  ao servidor, usa o último já baixado (`data/snapshots/`, avisado como "offline"); ativo fora do
+  snapshot ou capturas locais mais novas que ele: valem as capturas, com aviso.
+
+Cada coleta salva só as séries do seu escopo, então o arquivo do ativo mistura capturas de
+horários diferentes. Ao ler as cotações salvas, a **idade de cada série é medida contra a captura
+principal do recorte usado** (a com mais séries; o preço do ativo da análise é o dessa captura),
+não contra a última do arquivo — que pode ser uma atualização de 2 pernas do Acompanhamento e
+deixaria a cadeia inteira como "cotação antiga" (score limitado a 40*). Uma perna de horas antes vira
+"cotação antiga" e não é combinada com outra perna como se fossem do mesmo momento (caso real:
+put 21,54 das 11:10 + put 22,04 das 14:06 davam um crédito inflado). Vale para Análise de travas, Ativo
+protegido, Acompanhamento e Simulador. O spot de cada análise é o da captura de referência (fora
+do pregão) ou o lido junto com o lote mais recente da coleta (pregão aberto).
+
+## Snapshots no servidor (MT5 no Linux)
+
+Um servidor Debian com o MT5 rodando sem tela (Wine + Xvfb, serviços `mt5-xvfb` e
+`mt5-terminal` do systemd do usuário) grava snapshots da cadeia em horários fixos. O pacote
+`MetaTrader5` só existe para Windows, então o coletor roda num **Python 3.14 para Windows dentro
+do mesmo prefixo Wine** (`C:\Python314`), com o código deste repositório em `~/travas`:
+
+```
+~/travas/travas.sh snapshot --slot 1100     # coleta agora, rótulo 1100
+~/travas/travas.sh b3-archive               # arquiva o fechamento oficial da B3
+```
+
+| Unidade (systemd --user) | Quando | O quê |
+|---|---|---|
+| `travas-snapshot-1100.timer`, `-1630.timer` | seg–sex 11:00 e 16:30 (America/Sao_Paulo) | `travas snapshot`: os 30 ativos com opções mais líquidas (volume financeiro médio das opções nos 5 últimos fechamentos da B3 arquivados) que tenham opções no MT5, do mais líquido ao menos; 3 próximos vencimentos **mensais** (3ª sexta-feira, ou o pregão anterior se for feriado) mais os semanais com até 15 dias úteis, strikes a ±30% do spot |
+| `travas-b3-archive.timer` | 22:00 e 07:30 | `travas b3-archive`: `TradeInformationConsolidatedFile` dos últimos 5 pregões que faltarem |
+| `snapshots-http.service` | sempre | `python3 -m http.server 8766` só no IP do Tailscale (100.113.24.44), somente leitura |
+
+Feriados da B3 são pulados pelo coletor (calendário do projeto), e horário perdido não é
+recuperado (um snapshot das 11:00 nunca é gravado às 13:00). O coletor espera até 15 min pelo
+terminal conectado e pelo feed vivo; se não conseguir, grava só o manifesto com status
+"falhou". Arquivos em `~/snapshots/<data>/`: `<HHMM>.csv.gz` (colunas da cadeia + `captured_at`),
+`<HHMM>.json` (status completo/parcial/falhou, contagens por ativo, erros, terminal) e
+`negocios_b3.csv`; `index.json` lista tudo. São imutáveis e formam um histórico (~1–2 MB por
+snapshot). O app lê `snapshots.server_url` (`config/settings.yaml`) por qualquer máquina na
+mesma rede Tailscale.
+
+A CPU do servidor (AMD A6, sem SSE4.1/AVX) não roda o NumPy ≥ 2.4: lá é instalado o
+`numpy==2.3.5` (base SSE3); o restante segue as versões do `pyproject.toml`.
 
 ## Corretoras (conta logada no MT5)
 
@@ -62,7 +119,7 @@ Os ~3.000 ícones do repositório público thefintz/icones-b3 ficam em `data/ico
 git; baixados em 15/10/2026). Ticker sem arquivo local é buscado sob demanda na mesma fonte. O repositório não declara licença e os logos são marcas das empresas: uso local, sem
 redistribuição. Sem ícone (ex.: IBOV11), aparecem as iniciais. Desative em `icons.enabled`.
 
-## Uso
+## Uso (aba Análise de travas)
 
 1. Escolha direção (alta/baixa), estrutura (débito/crédito) e o ativo.
 2. Informe o preço-alvo **ou** a variação esperada (%), e opcionalmente o horizonte (data).
@@ -70,6 +127,29 @@ redistribuição. Sem ícone (ex.: IBOV11), aparecem as iniciais. Desative em `i
    máximo e faixa de strikes) — tipicamente 15–30 s; a cadeia fica em cache por 60 s.
 4. Clique numa linha do ranking para ver pernas, métricas, payoff, simulação temporal,
    preço-limite e composição do score. O painel do ativo (KLineCharts) mostra os níveis.
+
+**Quantidade ou valor a investir**: depois de analisar, mudar "Opções por perna" ou "valor a
+investir (R$)" refaz na hora todos os totais do ranking e do detalhe (perda/lucro máximos,
+cenários, garantia, capital, curvas do payoff, saída na data simulada, gregas, preço-limite), sem
+nova coleta nem nova análise. Com valor a investir, cada trava usa a maior quantidade múltipla do
+lote (`analysis.lot_size`, padrão 100) cujo capital (débito pago ou garantia estimada) cabe no
+valor. Com custos fixos > 0, o score continua o da quantidade analisada; travas que passam do
+orçamento de perda nessa quantidade recebem o alerta "acima do orçamento".
+
+**Garantia** (coluna "Garantia est." e bloco no detalhe): estimativa pelo risco no vencimento —
+obrigação das pernas vendidas não coberta pelas compradas (pior caso, sem prêmios) menos o
+crédito recebido. Trava de crédito: largura × quantidade − crédito (= perda máxima); a
+"conservadora" é a largura inteira, para corretora que não aceita o crédito como garantia. Trava
+de débito: em geral zero (vendida coberta pela comprada; o capital é o débito). Vendida americana
+coberta por comprada europeia recebe aviso. O valor real é calculado pela B3 (CORE) e pela
+corretora e não vem pelo MT5: confira antes de operar.
+
+**Sair na data simulada** (abaixo do controle de tempo, também no Ativo protegido e no
+Simulador): para a data escolhida, quanto custa zerar (recebe/paga, total e por unidade) e o
+saldo da operação, no preço atual do ativo, no alvo e num preço digitado. Antes do vencimento é
+valor teórico (Black-Scholes, premissas exibidas); no vencimento, o intrínseco. "Saldo pelo
+natural" desconta meia largura do book atual de cada perna (spread de saída estimado). A dica do
+gráfico de payoff também mostra o valor para zerar em cada preço.
 
 Os gráficos de payoff e de candles têm o botão **⤢ Maximizar** (Esc ou "Restaurar" volta). A
 largura do gráfico do ativo é ajustável arrastando a divisória à esquerda dele (setas ←/→ com a
@@ -93,7 +173,7 @@ Mapa de calor (treemap) dos ativos com opções listadas (IBOV11 fica fora: é �
   do MT5 (RSI 14, EMA rápida × lenta do gráfico, SMA 50/200, máx./mín. 52 semanas); proventos em dinheiro (data-com,
   pagamento, valor, soma e % dos últimos 12 meses) e eventos em ações (desdobramento, grupamento,
   bonificação, subscrição). Fusões/aquisições não constam da fonte. "Analisar travas" abre a
-  Análise com o ativo.
+  Análise de travas com o ativo.
 - **Seguimento**: a ☆ ao lado do nome no gráfico do ativo (qualquer aba) marca o ativo para
   acompanhar. A lista fica num painel à esquerda do heatmap, recolhido por padrão: preço, variação
   no dia (D), em 21 pregões (M) e desde a estrela (★, comparada ao fechamento exibido no gráfico ao
@@ -119,13 +199,43 @@ Opção no formulário de análise, habilitada só para débito:
 O ranking mostra a coluna "R. Nobre" (custo em % da largura e posição da vendida) e o detalhe
 lista os dois critérios.
 
+### Stop 1:1 — Credit Spread Investing (travas de crédito)
+
+Opção no formulário, habilitada só para crédito. Manejo ativo do canal Credit Spread Investing:
+a trava é **encerrada quando o prejuízo atinge o lucro máximo**, isto é, quando o custo para
+desmontá-la chega a 2 × o crédito (`credit_stop.loss_multiple` = 1 em `config/settings.yaml`).
+Com o filtro ligado, cada trava ganha:
+
+- **Fronteira do stop**: preço do ativo que aciona o stop em cada pregão até o vencimento, pelo
+  valor teórico de desmontar (Black-Scholes com a IV de cada perna). No vencimento é exata
+  (strike vendido ∓ 2 × crédito). A coluna "Stop (ativo)" mostra a mais próxima do spot e a
+  distância; o gráfico do ativo ganha a linha "Stop 1:1".
+- **Monte Carlo do manejo** (4.000 caminhos lognormais, drift = juros, σ do POP, passo diário
+  com ponte browniana para o stop dentro do dia; os mesmos sorteios para todas as travas):
+  probabilidade de acionar o stop, de ficar com o crédito inteiro, de lucro com o manejo, e o
+  **resultado esperado com o stop** (stop: −crédito − custo de saída; sem stop: crédito − valor
+  no vencimento). Custo de saída = natural − mid da trava hoje.
+- **Ranking próprio** (pesos em `credit_stop.weights`): resultado esperado com o stop ÷ perda no
+  stop (30%), probabilidade de **não** acionar o stop (30%), crédito ÷ garantia (10%), liquidez da
+  pior perna (20%: a saída no stop precisa de book) e custo de saída ÷ crédito (10%).
+- Ficam fora: crédito ≥ metade da largura (perda máxima ≤ crédito, o stop não se aplica), travas
+  em que o preço atual já acionaria o stop (em geral book largo: 2 × crédito natural abaixo do
+  valor de desmontar) e travas sem IV para o modelo.
+
+**Leitura importante**: com o crédito igual ao valor teórico, o stop 1:1 tem ~50% de chance em
+**qualquer** distância — travas longe do dinheiro pagam pouco, e dobrar um crédito pequeno exige
+um movimento pequeno, sobretudo no início (muito valor de tempo). Distância do strike não é, por
+si, proteção. O que dá vantagem ao manejo é crédito **acima** do modelo (IV da opção vendida
+acima da IV ATM — o skew das puts), custo de saída baixo e liquidez para sair no stop; o ranking
+mede exatamente isso. Resultado esperado e probabilidades são de modelo, não garantia.
+
 ### Aba Acompanhamento
 
 Registra estruturas já montadas — travas ou qualquer combinação de opções do mesmo ativo
 (borboleta, calendário, diagonal, perna isolada, até 8 pernas) — organizadas em **grupos**.
 
 - Entrada: "+ Nova estrutura" (tickers reais do MT5, validados no catálogo) ou, no detalhe de uma
-  trava da Análise, "+ Adicionar ao acompanhamento" (pré-preenche pernas e preço sugerido; ajuste
+  trava da Análise de travas, "+ Adicionar ao acompanhamento" (pré-preenche pernas e preço sugerido; ajuste
   para o preço efetivamente executado).
 - **Preço de entrada**: o preço líquido por unidade (débito pago ou crédito recebido) basta para
   o P&L total quando todas as pernas têm a mesma quantidade e entram/saem juntas. Informe o preço
@@ -167,6 +277,26 @@ máxima por operação, liquidez mínima por perna, volatilidade própria, juros
 agressividade do preço-limite, lucro/perda mínimo e pesos do ranking. As preferências ficam em
 `config/preferencias.json` (sem credenciais; fora do git).
 
+### Google Agenda (vencimentos das estruturas abertas)
+
+Na aba Acompanhamento, **Conectar Google Agenda** cria a agenda "Dash CIRP – Vencimentos" e
+mantém nela **um evento por vencimento de cada estrutura aberta** (12:00 do dia do vencimento,
+com lembretes ao meio-dia em D-5, D-1 e no próprio dia; pregões pelo calendário da B3). Criar ou
+editar uma estrutura cria/atualiza o evento; **encerrar ou excluir apaga o evento**. A
+sincronização roda a cada mudança no Acompanhamento, ao abrir o app e a cada 30 min
+(`google_calendar` no `config/settings.yaml`: horários, lembretes, intervalo, `enabled`).
+
+- Permissão mínima (`calendar.app.created`): o app só enxerga e altera agendas criadas por ele.
+- Credencial: OAuth "App para computador" do Google Cloud (Calendar API ativada), arquivo
+  `client_secret*.json` na raiz do projeto (no `.gitignore`). O login e a autorização são feitos
+  por você na página do Google; o app recebe o retorno em 127.0.0.1 (PKCE) e nunca vê a senha.
+- O token de acesso fica **cifrado pela DPAPI do Windows** (só a sua conta de usuário decifra) em
+  `data/google_agenda.json`, com o id da agenda. "Desconectar" revoga o acesso no Google e apaga
+  o token (a agenda e os eventos ficam; apague a agenda no Google se quiser).
+- Reconciliação: cada evento guarda o id da estrutura e o vencimento em propriedades privadas; a
+  agenda é a fonte da verdade (duplicados e eventos de estruturas encerradas são apagados).
+- Os testes automáticos rodam com a agenda desligada e nunca acessam a sua conta.
+
 ## Aba Ativo protegido (estruturas do Rafael Nobre)
 
 Varre, com **só o ativo como entrada**, duas estruturas de mesmo vencimento por ação comprada:
@@ -207,6 +337,26 @@ o alerta no detalhe mostram se o **pacote de opções** (put comprada − calls 
 comprada), sozinho, sai a débito (você paga além do ativo) ou a crédito (as calls vendidas pagam a
 put e sobra caixa), pelo natural; ⚠ indica que pelo mid o sentido é outro.
 
+## Aba Simulador
+
+Monta qualquer estrutura de um ativo: opções de qualquer vencimento (calendário/diagonal
+incluídos) e o próprio ativo (venda coberta, collar…), até 12 pernas.
+
+- **Grade do vencimento**: calls e puts com bid/ask/IV (strikes a ±30% do spot, ATM centralizado,
+  ITM com fundo leve); **C** compra e **V** vende a série na "quantidade por clique". Clicar de
+  novo soma; o lado oposto reduz (zerou, a perna sai). A grade marca a posição montada.
+- Ou digite o ticker (Enter = compra, Shift+Enter = venda) e use **+ Ativo (compra/venda)**.
+- Na tabela de pernas: lado, quantidade, **preço** (vazio = natural do book: compra no ask, venda
+  no bid; sem book, último negócio sinalizado) e **vol.** (vazia = vol. geral ou IV da série).
+  Tudo é recalculado ao editar; "Inverter lados" troca compra ↔ venda.
+- Resultado: payoff no vencimento (exato; com vencimentos diferentes, no 1º vencimento com as
+  pernas posteriores pelo modelo), valor teórico na data simulada, sair na data simulada, zerar
+  agora (natural e mid), POP (só com um vencimento; σ = média das σ das opções), gregas e garantia
+  (não estimável com call vendida a descoberto ou vencimentos diferentes).
+- Avisos: cotação antiga/sem book, pernas capturadas em momentos diferentes, preço digitado
+  manualmente, risco de exercício antecipado em vendida americana ITM.
+- Pernas, vencimento e premissas ficam salvos nas preferências.
+
 ## Arquitetura
 
 ```
@@ -219,6 +369,9 @@ src/travas/
     market_data.py            cotação, cadeia do ativo (escopo), candles
     normalize.py              symbol_info → tabelas; candles; EMA
     service.py                conexão única com trava (API MT5 não é thread-safe), cache, reconexão
+    b3_trades.py              fechamento oficial da B3 (último negócio do dia) com o mercado fechado
+    snapshots.py              snapshots do servidor: gravação, índice, cliente HTTP, cadeia por ativo
+    snapshot_collector.py     `travas snapshot` (servidor com MT5): coleta de todos os ativos
     feasibility.py            relatório `travas check`
   options/                    cálculo puro, testado sem MT5
     models.py                 Leg, Structure, as 4 travas
@@ -231,10 +384,14 @@ src/travas/
     limit_price.py            preço natural, mid, teórico e preço-limite sugerido
     analysis.py               geração, métricas, ranking e simulação temporal
     simulation.py             curvas de P&L de qualquer estrutura (inclusive vencimentos diferentes)
-  tracking/                   acompanhamento: modelos, avaliação (P&L, alertas, grupos), store JSON
-  api/app.py                  FastAPI (nenhuma rota de ordem); api/tracking_routes.py
+    credit_stop.py            stop 1:1 das travas de crédito: fronteira do stop e Monte Carlo do manejo
+    margin.py                 garantia estimada pelo risco no vencimento e spread de saída
+    simulator.py              aba Simulador: pernas livres (opções e o próprio ativo)
+  tracking/                   acompanhamento: modelos, avaliação (P&L, alertas, grupos), store JSON;
+                              gcal.py (Google Agenda: OAuth, API, reconciliação), secure_store.py (DPAPI)
+  api/app.py                  FastAPI (nenhuma rota de ordem); api/*_routes.py por aba
   web/static/                 HTML/JS, payoff em SVG, KLineCharts 10.0.4 (empacotado localmente)
-tests/                        122 testes: 4 travas, extremos, breakevens, POP, preço-limite, API…
+tests/                        223 testes: 4 travas, extremos, breakevens, POP, preço-limite, garantia, simulador, API…
 ```
 
 ## Definições (fonte de verdade: código em `src/travas/options`)

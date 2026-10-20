@@ -168,9 +168,25 @@ def tracking_router(
             if leg.get("source") == "ultimo_pregao" and leg.get("captured_at")
         ]
         outside = sorted({leg["symbol"] for leg in legs if leg.get("source") == "mt5_fora_pregao"})
+        closing = any(leg.get("source") == "fechamento_b3" for leg in legs)
+        snapshot = [
+            leg["captured_at"]
+            for leg in legs
+            if leg.get("source") == "snapshot_servidor" and leg.get("captured_at")
+        ]
         quotes_note = None
         if not market.is_open:
             parts = [market.label]
+            if closing:
+                parts.append(
+                    "pernas pelo fechamento oficial da B3 (último negócio do pregão, indicativo, "
+                    "sem bid/ask)"
+                )
+            if snapshot:
+                when = min(snapshot)[:16].replace("T", " ")
+                parts.append(
+                    f"pernas pelo snapshot do servidor de {when} (bid/ask daquele horário)"
+                )
             if captured:
                 when = max(captured)[:16].replace("T", " ")
                 parts.append(f"usando as últimas cotações capturadas no pregão (até {when})")

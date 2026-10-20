@@ -41,6 +41,19 @@ class B3Calendar:
         sessions = days[np.is_busday(days, holidays=self._holidays)]
         return [pd.Timestamp(d).date() for d in sessions]
 
+    def monthly_expiration(self, year: int, month: int) -> dt.date:
+        """Vencimento mensal das opções sobre ações na B3: 3ª sexta-feira do mês; se não houver
+        pregão nela, o pregão anterior (ex.: 19/11/2026, com o feriado de 20/11)."""
+        first = dt.date(year, month, 1)
+        third_friday = first + dt.timedelta(days=(4 - first.weekday()) % 7 + 14)
+        rolled = np.busday_offset(
+            np.datetime64(third_friday, "D"), 0, roll="backward", holidays=self._holidays
+        )
+        return pd.Timestamp(rolled).date()
+
+    def is_monthly_expiration(self, day: dt.date) -> bool:
+        return day == self.monthly_expiration(day.year, day.month)
+
     def previous_sessions(self, day: dt.date, count: int) -> list[dt.date]:
         """Os `count` pregões imediatamente anteriores a `day` (exclusivo), do mais antigo ao
         mais recente."""

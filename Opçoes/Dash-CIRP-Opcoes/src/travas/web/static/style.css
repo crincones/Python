@@ -197,6 +197,7 @@ h2 .tk { margin-right: .45rem; }
 .market-pill { font-size: .85rem; padding: .15rem .6rem; border-radius: 10px; border: 1px solid; }
 .market-pill.open { color: var(--profit); border-color: var(--profit); }
 .market-pill.closed { color: #8a6100; border-color: var(--warn-border); background: var(--warn-bg); }
+.market-pill select { font-size: .8rem; padding: 0 .2rem; color: inherit; background: #fff; border: 1px solid var(--warn-border); border-radius: 6px; }
 
 /* Alertas compactos com tooltip */
 .alert-chip { display: inline-flex; gap: .25rem; align-items: center; padding: 0 .45rem; border-radius: 9px; border: 1px solid var(--warn-border);
@@ -345,3 +346,40 @@ h2 .tk { margin-right: .45rem; }
 .flow-box { border-left-width: 5px; }
 .flow-box.flow-credit { background: #e7f4ec; border-color: var(--profit); }
 .flow-box.flow-debit { background: var(--warn-bg); border-color: var(--warn-border); }
+
+/* Saída na data simulada e garantia */
+.exit-box { margin-top: .6rem; border: 1px solid var(--border); border-radius: 8px; padding: .5rem .7rem; background: #fafbfc; }
+.exit-head { display: flex; gap: .6rem; align-items: baseline; flex-wrap: wrap; }
+.exit-price { margin-left: auto; color: var(--muted); }
+.exit-price input { width: 7rem; margin-left: .3rem; }
+.exit-box p { margin: .3rem 0 0; }
+.margin-box { margin-bottom: .4rem; }
+.margin-box .metrics { margin-bottom: .3rem; }
+.warn-text { color: #8a6100; }
+
+/* Simulador */
+.sm-builder { display: grid; grid-template-columns: repeat(auto-fit, minmax(470px, 1fr)); gap: 1rem; margin-top: .8rem; }
+.sm-chain-head { display: flex; justify-content: space-between; gap: .6rem; flex-wrap: wrap; margin-bottom: .3rem; }
+.sm-chain-scroll { max-height: 430px; overflow: auto; border: 1px solid var(--border); border-radius: 6px; }
+.sm-chain { width: 100%; }
+.sm-chain thead th { position: sticky; top: 0; background: var(--surface); z-index: 1; }
+.sm-chain thead tr:first-child th { height: 1.6rem; }
+.sm-chain thead tr:nth-child(2) th { top: 1.6rem; }
+.sm-pos { width: 3.6rem; min-width: 3.6rem; text-align: left; }
+#sm-legs td, #sm-legs th { padding: .2rem .3rem; white-space: nowrap; }
+.sm-chain td, .sm-chain th { padding: .15rem .35rem; }
+.sm-side-h { text-align: center; color: var(--muted); font-weight: 600; }
+.sm-strike { background: #f1f3f7; text-align: center; white-space: nowrap; }
+.sm-atm .sm-strike { background: var(--accent-weak); }
+.sm-atm td { border-top: 1px solid var(--accent); border-bottom: 1px solid var(--accent); }
+.sm-itm { background: #fbfaf3; }
+.sm-act { white-space: nowrap; }
+.sm-act button { padding: 0 .45rem; font-size: .8rem; font-weight: 600; line-height: 1.4rem; margin-right: .15rem; }
+.sm-act .sm-b { color: var(--profit); border-color: var(--profit); }
+.sm-act .sm-s { color: var(--loss); border-color: var(--loss); }
+.sm-act .sm-b:hover { background: var(--profit-fill); }
+.sm-act .sm-s:hover { background: var(--loss-fill); }
+.sm-add { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; margin-bottom: .4rem; }
+.sm-sep { flex: 0 0 .6rem; }
+#sm-legs select, #sm-legs input { padding: .2rem .3rem; }
+#sm-legs td:nth-child(3) { white-space: normal; min-width: 9rem; }

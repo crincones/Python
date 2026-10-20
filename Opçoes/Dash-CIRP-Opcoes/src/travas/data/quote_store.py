@@ -18,6 +18,12 @@ import pandas as pd
 from travas.calendar_b3 import B3Calendar
 
 
+def reference_capture(captured: pd.Series) -> pd.Timestamp:
+    """Captura com mais séries (empate: a mais recente)."""
+    counts = pd.to_datetime(captured).value_counts()
+    return max(counts[counts == counts.max()].index)
+
+
 class QuoteStore:
     def __init__(self, directory: Path) -> None:
         self._dir = directory
@@ -50,7 +56,8 @@ class QuoteStore:
 
     def load(self, underlying: str, today: dt.date, calendar: B3Calendar) -> pd.DataFrame | None:
         """Cotações salvas, com prazos (dias úteis/corridos) recalculados para `today`.
-        Séries já vencidas são descartadas."""
+        Séries já vencidas são descartadas. As idades são as da captura de cada série: alinhe
+        o recorte usado com `align_captures` antes de combinar séries."""
         with self._lock:
             stored = self._load_raw(underlying)
         if stored is None or stored.empty:
@@ -62,6 +69,26 @@ class QuoteStore:
         frame["dte_business_days"] = calendar.sessions_until(today, expirations)
         frame["dte_calendar_days"] = (pd.to_datetime(expirations) - pd.Timestamp(today)).dt.days
         return frame.reset_index(drop=True)
+
+    @staticmethod
+    def align_captures(frame: pd.DataFrame) -> tuple[pd.DataFrame, float | None]:
+        """Alinha um recorte de cotações salvas à sua captura principal.
+
+        Cada coleta salva só o seu escopo, então o recorte pode misturar capturas de horários
+        diferentes. A referência é a captura com mais séries no recorte (empate: a mais recente)
+        — nunca simplesmente a última do arquivo, que pode ser uma atualização de 2 pernas do
+        acompanhamento e tornaria "antiga" a cadeia inteira. As demais séries somam à idade a
+        distância (antes ou depois) até a referência: uma perna de horas antes vira "cotação
+        antiga" em vez de ser combinada como atual com outra perna e com outro preço do ativo.
+        Devolve o recorte e o preço do ativo lido na captura de referência."""
+        if frame.empty:
+            return frame, None
+        captured = pd.to_datetime(frame["captured_at"])
+        reference = reference_capture(captured)
+        gap = (captured - reference).abs().dt.total_seconds()
+        aligned = frame.assign(quote_age_seconds=frame["quote_age_seconds"] + gap)
+        prices = frame.loc[captured == reference, "underlying_price"].dropna()
+        return aligned, (float(prices.iloc[-1]) if len(prices) else None)
 
     def spot(self, underlying: str) -> tuple[float | None, pd.Timestamp | None]:
         """Último preço do ativo registrado junto das séries e o horário da captura."""

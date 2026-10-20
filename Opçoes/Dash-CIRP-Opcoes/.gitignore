@@ -7,3 +7,5 @@ __pycache__/
 /logs/
 /data/
 config/preferencias.json
+# Credencial OAuth do Google (baixada do Cloud Console): nunca versionar
+client_secret*.json

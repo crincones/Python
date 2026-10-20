@@ -155,7 +155,7 @@ const Protected = (() => {
       const q = await api(`/api/quote/${encodeURIComponent(u)}`);
       st.spot = q.price;
       syncSizeFields();
-      const origin = q.source === "ultimo_pregao" ? " (último pregão)" : q.source === "mt5_fora_pregao" ? " (MT5 fora do pregão)" : "";
+      const origin = FMT.origin(q.source);
       const book = FMT.ok(q.bid) && FMT.ok(q.ask) ? ` · bid ${FMT.price(q.bid)} / ask ${FMT.price(q.ask)}` : "";
       $("pr-spot").innerHTML = `${tickerIcon(u, 14)}Spot ${FMT.price(q.price)}${origin}${book} · ${FMT.datetime(q.quote_time)}`;
     } catch (e) {
@@ -445,7 +445,7 @@ const Protected = (() => {
     const rows = d.legs.map((l) => `<tr>
       <td class="l">${l.side === "compra" ? "Compra" : "Venda"}</td><td class="l">${esc(l.symbol)}</td><td class="l">${l.option_type} ${l.exercise_style === "american" ? "americana" : "europeia"}</td>
       <td>${FMT.int((l.contracts * q) / d.quantity)} opções${l.ratio > 1 ? ` <span class="muted">(${l.ratio}× por ação)</span>` : ""}</td>
-      <td>${FMT.price(l.strike)}</td><td>${FMT.price(l.bid)}</td><td>${FMT.price(l.ask)}</td><td>${FMT.price(l.mid)}</td><td>${FMT.price(l.last)}</td>
+      <td>${FMT.price(l.strike)}</td><td>${FMT.price(l.bid)}</td><td>${FMT.price(l.ask)}</td><td>${FMT.price(l.mid)}</td><td>${FMT.price(l.last)}${l.price_basis === "ultimo_b3" ? ' <span class="badge mid" title="Preço usado: último negócio do pregão (fechamento oficial da B3), indicativo; sem bid/ask">B3</span>' : ""}</td>
       <td>${FMT.pct(l.spread_pct_mid)}</td><td title="${esc(l.volume_source || "")}">${FMT.int(l.deals)}${l.volume_source === "barra D1" ? "*" : ""}</td><td title="${esc(l.volume_source || "")}">${FMT.brl(l.turnover_brl)}${l.volume_source === "barra D1" ? "*" : ""}</td>
       <td>${FMT.datetime(l.quote_time)} <span class="muted">(${FMT.age(l.quote_age_seconds)})</span></td>
       <td title="${esc(l.iv_status)}">${FMT.pct(l.iv)}</td>
@@ -505,6 +505,10 @@ const Protected = (() => {
     const expiry = sim.expiry_pnl.map(f);
     return {
       ...sim,
+      // Fluxo de entrada e spread de saída proporcionais à quantidade; custos são fixos.
+      entry_cash: FMT.ok(sim.entry_cash) ? (sim.entry_cash * q) / base : null,
+      exit_spread_cost: FMT.ok(sim.exit_spread_cost) ? (sim.exit_spread_cost * q) / base : null,
+      costs,
       expiry_pnl: expiry,
       expiry_breakevens: zeroCrossings(sim.spots, expiry),
       dates: sim.dates.map((day) => { const pnl = day.pnl.map(f); return { ...day, pnl, breakevens: zeroCrossings(sim.spots, pnl) }; }),
@@ -546,6 +550,7 @@ const Protected = (() => {
       ...(showModel ? sel.breakevens.map((b) => ({ label: `Equil. ${FMT.date(sel.date)}`, value: b, color: "#1f5fbf", dashed: true, dash: [2, 3] })) : []),
     ];
     App.setLevels(levels, "protected");
+    ExitPanel.render($("pr-exit-box"), { sim, index: i, spot: d.spot, target: null, units: sized(d).q });
   }
 
   // ---------- preferências ----------

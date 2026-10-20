@@ -192,7 +192,12 @@ def evaluate_position(
             if q is not None
             else (None,) * 4
         )
-        close_px = bid if leg.side is Side.LONG else ask
+        # Preço por lado (liquidity.price_columns): no fechamento da B3, o último negócio.
+        if q is not None and "px_sell" in q:
+            close_px = _f(q["px_sell"]) if leg.side is Side.LONG else _f(q["px_buy"])
+            mid = _f(q["px_mid"])
+        else:
+            close_px = bid if leg.side is Side.LONG else ask
         if close_px is None:
             natural_ok = False
         else:
@@ -229,6 +234,9 @@ def evaluate_position(
                 "mid": mid,
                 "last": last,
                 "close_price_natural": close_px,
+                "price_basis": q.get("price_basis")
+                if q is not None and isinstance(q.get("price_basis"), str)
+                else None,
                 "quote_time": q["quote_time"].isoformat()
                 if q is not None and pd.notna(q["quote_time"])
                 else None,

@@ -17,6 +17,10 @@ from travas.options.models import Direction, Flow
 from travas.settings import load_settings
 
 SETTINGS = load_settings()
+# Testes nunca falam com o Google Agenda real (a conta conectada do usuário).
+SETTINGS = SETTINGS.model_copy(
+    update={"google_calendar": SETTINGS.google_calendar.model_copy(update={"enabled": False})}
+)
 TODAY = dt.date(2026, 10, 14)
 SPOT = 31.0
 SIGMA = 0.35

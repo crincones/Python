@@ -27,8 +27,10 @@ class MissingPriceError(ValueError):
 
 
 def intrinsic(leg: Leg, spot: ArrayLike) -> FloatArray:
-    """Valor intrínseco por unidade no vencimento."""
+    """Valor intrínseco por unidade no vencimento (perna de ativo: o próprio preço)."""
     s = np.asarray(spot, dtype=np.float64)
+    if leg.option_type is OptionType.STOCK:
+        return s.copy()
     if leg.option_type is OptionType.CALL:
         return np.maximum(s - leg.strike, 0.0)
     return np.maximum(leg.strike - s, 0.0)
@@ -92,10 +94,13 @@ def _ratio(num: float, den: float) -> float:
 def expiry_profile(structure: Structure, costs: float = 0.0) -> ExpiryProfile:
     xs = np.array([0.0, *structure.strikes])
     values = pnl_at_expiry(structure, xs, costs)
-    slope_right = sum(
+    stock = sum(
+        leg.side.sign * leg.units for leg in structure.legs if leg.option_type is OptionType.STOCK
+    )
+    slope_right = stock + sum(
         leg.side.sign * leg.units for leg in structure.legs if leg.option_type is OptionType.CALL
     )
-    slope_left = -sum(
+    slope_left = stock - sum(
         leg.side.sign * leg.units for leg in structure.legs if leg.option_type is OptionType.PUT
     )
 

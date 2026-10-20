@@ -24,6 +24,13 @@ const FMT = (() => {
       const t = new Date(iso);
       return t.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" });
     },
+    // Origem da cotação do ativo (rótulo após o preço; vazio = MT5 com o mercado aberto).
+    origin: (source) => ({
+      fechamento_b3: " (fechamento oficial B3)",
+      ultimo_pregao: " (último pregão)",
+      snapshot_servidor: " (snapshot do servidor)",
+      mt5_fora_pregao: " (MT5 fora do pregão)",
+    })[source] || "",
     age: (s) => {
       if (!ok(s)) return dash;
       if (s < 120) return `${n0.format(s)} s`;

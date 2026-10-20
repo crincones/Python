@@ -156,6 +156,11 @@ const Payoff = (() => {
         const vm = lerp(ym);
         html += `<br>Em ${FMT.date(sel.date)} (modelo): <b class="${vm >= 0 ? "pos" : "neg"}">${FMT.signedBrl(vm)}</b>`;
       }
+      if (FMT.ok(sim.entry_cash)) { // valor para zerar = P&L − entrada + custos
+        const exit = (showModel ? lerp(ym) : ve) - sim.entry_cash + (sim.costs || 0);
+        const word = Math.abs(exit) < 0.005 ? "zero a zero" : exit > 0 ? `recebe ${FMT.brl(exit)}` : `paga ${FMT.brl(-exit)}`;
+        html += `<br>Para zerar ${showModel ? `em ${FMT.date(sel.date)}` : "no vencimento"}: ${word}`;
+      }
       tooltip.innerHTML = html;
       tooltip.hidden = false;
       tooltip.style.left = ev.clientX + 14 + "px";

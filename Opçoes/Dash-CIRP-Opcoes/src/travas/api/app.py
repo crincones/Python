@@ -18,13 +18,15 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, field_validator
 
+from travas.api.calendar_routes import calendar_router
 from travas.api.heatmap_routes import heatmap_router
 from travas.api.protected_routes import protected_router
+from travas.api.simulator_routes import simulator_router
 from travas.api.tracking_routes import tracking_router
 from travas.api.watchlist_routes import watchlist_router
 from travas.data.icons import IconCache
 from travas.data.market_data import ChainScope
-from travas.data.service import MarketDataService, MarketDataUnavailable
+from travas.data.service import OFF_HOURS_SOURCES, MarketDataService, MarketDataUnavailable
 from travas.options.analysis import (
     AnalysisParams,
     PreparedChain,
@@ -36,8 +38,9 @@ from travas.options.analysis import (
 )
 from travas.options.liquidity import LiquidityRules
 from travas.options.models import Direction, Flow
-from travas.settings import Settings
+from travas.settings import PROJECT_ROOT, Settings
 from travas.timeutils import LOCAL_TIMEZONE
+from travas.tracking.gcal import CalendarSync
 from travas.tracking.store import TrackingStore
 from travas.watchlist.store import WatchlistStore
 
@@ -84,6 +87,7 @@ class AnalyzeIn(BaseModel):
     nobre_max_cost_fraction: float = 0.25
     nobre_prefer_close: bool = True
     european_short: bool = False
+    credit_stop: bool = False
 
     @field_validator("nobre_max_cost_fraction")
     @classmethod
@@ -125,9 +129,35 @@ def create_app(
     watchlist = watchlist or WatchlistStore(settings.paths.watchlist_file)
     contexts: OrderedDict[str, tuple[PreparedChain, dict]] = OrderedDict()
 
+    def _read_preferences() -> dict:
+        path = settings.paths.preferences_file
+        if not path.exists():
+            return {}
+        try:
+            return json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            log.warning("Preferências corrompidas em %s; ignoradas", path)
+            return {}
+
+    def _apply_off_hours_source(prefs: dict) -> None:
+        source = prefs.get("off_hours_source")
+        if source in OFF_HOURS_SOURCES and hasattr(service, "set_off_hours_source"):
+            service.set_off_hours_source(source)
+
+    _apply_off_hours_source(_read_preferences())
+    gcal = CalendarSync(
+        settings.google_calendar,
+        settings.paths.google_calendar_file,
+        PROJECT_ROOT,
+        store.list,
+        service.calendar,
+    )
+    store.on_change = gcal.request_sync  # criar/editar/encerrar/excluir → sincroniza a agenda
+
     @asynccontextmanager
     async def lifespan(_: FastAPI):
         service.connect_in_background()
+        gcal.start()
         yield
         service.close()
 
@@ -197,7 +227,9 @@ def create_app(
     app.include_router(tracking_router(settings, service, store, clean))
     app.include_router(heatmap_router(settings, service, clean))
     app.include_router(watchlist_router(watchlist))
+    app.include_router(calendar_router(gcal))
     app.include_router(protected_router(settings, service, clean, _require_mt5_options))
+    app.include_router(simulator_router(settings, service, clean, _require_mt5_options))
 
     @app.get("/api/quote/{underlying}")
     def quote(underlying: str) -> dict:
@@ -235,11 +267,7 @@ def create_app(
         chain, meta = service.chain(underlying, scope, force=body.refresh)
         if chain.empty:
             raise HTTPException(404, f"nenhuma opção de {underlying} encontrada no escopo")
-        spot = (
-            float(chain["underlying_price"].dropna().iloc[-1])
-            if chain["underlying_price"].notna().any()
-            else spot
-        )
+        spot = meta.get("spot") or spot
         today = pd.Timestamp.now(tz=LOCAL_TIMEZONE).date()
         prep = prepare_chain(chain, spot, today, service.calendar, params)
         result = analyze_prepared(prep)
@@ -276,14 +304,7 @@ def create_app(
 
     @app.get("/api/preferences")
     def get_preferences() -> dict:
-        path = settings.paths.preferences_file
-        if not path.exists():
-            return {}
-        try:
-            return json.loads(path.read_text(encoding="utf-8"))
-        except json.JSONDecodeError:
-            log.warning("Preferências corrompidas em %s; ignoradas", path)
-            return {}
+        return _read_preferences()
 
     @app.put("/api/preferences")
     def put_preferences(prefs: dict) -> dict:
@@ -292,6 +313,7 @@ def create_app(
         if len(text) > 100_000:
             raise HTTPException(413, "preferências grandes demais")
         settings.paths.preferences_file.write_text(text, encoding="utf-8")
+        _apply_off_hours_source(prefs)  # fonte com o mercado fechado vale já na próxima coleta
         return {"ok": True}
 
     @app.get("/")
@@ -373,6 +395,10 @@ def _params(body: AnalyzeIn, spot: float, settings: Settings) -> AnalysisParams:
         nobre_max_cost_fraction=body.nobre_max_cost_fraction,
         nobre_prefer_close=body.nobre_prefer_close,
         european_short=body.european_short,
+        credit_stop=body.credit_stop,
+        credit_stop_loss_multiple=settings.credit_stop.loss_multiple,
+        credit_stop_paths=settings.credit_stop.paths,
+        credit_stop_weights=settings.credit_stop.weights.model_dump(),
         costs_brl=body.costs_brl,
         max_results=a.max_results,
     )

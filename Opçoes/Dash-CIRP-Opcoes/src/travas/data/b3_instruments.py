@@ -161,7 +161,12 @@ class B3Instruments:
 
     def summary(self, today: dt.date) -> tuple[pd.DataFrame | None, dt.date | None]:
         """Resumo mais recente disponível (cache em disco por dia). None se a B3 falhar e não
-        houver cache."""
+        houver cache.
+
+        Do pregão mais recente para trás: usa o cache do dia ou baixa o arquivo dele; só passa
+        a um dia anterior se esse não estiver publicado. (Antes o cache de qualquer dia
+        anterior vencia o download do mais novo: em 19/10/2026 o app seguia com o arquivo de
+        15/10, sem as 850 séries lançadas depois.)"""
         with self._lock:
             if self._memo and self._memo[0] == today:
                 return self._memo[1], self._memo[1].attrs.get("file_date")
@@ -171,7 +176,6 @@ class B3Instruments:
                     table = pd.read_csv(path, parse_dates=["next_expiration"])
                     table["next_expiration"] = table["next_expiration"].dt.date
                     return self._remember(today, table, day)
-            for day in self._candidate_days(today):
                 try:
                     raw = self._download(day)
                 except (urllib.error.URLError, TimeoutError, OSError, ValueError) as exc:

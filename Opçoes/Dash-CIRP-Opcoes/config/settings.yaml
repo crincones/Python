@@ -30,6 +30,7 @@ paths:
   watchlist_file: data/favoritos.json           # ativos com estrela (fora do git)
   quotes_dir: data/cotacoes                    # últimas cotações do pregão (fora do git)
   icons_dir: data/icones                       # ícones dos ativos baixados (fora do git)
+  snapshots_dir: data/snapshots                # snapshots baixados do servidor (fora do git)
 
 server:
   host: 127.0.0.1                 # só local
@@ -47,6 +48,20 @@ collection:
   catalog_cache_minutes: 30
   chain_cache_seconds: 60         # reaproveita a cadeia coletada por até 60 s
   stale_feed_minutes: 15          # tick do ativo mais velho que isso = dados não estão em tempo real
+  # Mercado fechado: "b3" = fechamento oficial da B3 (último negócio de cada série, sem bid/ask);
+  # "capturas" = últimas cotações capturadas pelo app no pregão (bid/ask de horários diversos);
+  # "servidor" = snapshot mais recente do coletor do servidor (bid/ask, ver `snapshots`).
+  off_hours_source: b3
+
+# Snapshots da cadeia gravados por `travas snapshot` no servidor com MT5 (systemd, 11:00 e
+# 16:30 nos pregões) e servidos por HTTP só na rede Tailscale. O app baixa o mais recente.
+snapshots:
+  server_url: http://100.113.24.44:8766
+  timeout_seconds: 8
+  expirations: 3                  # coletor: próximos 3 vencimentos MENSAIS (3ª sexta) de cada ativo
+  weekly_max_business_days: 15    # + semanais com até 15 dias úteis (0 = só mensais)
+  max_underlyings: 30             # coletor: só os 30 ativos com opções mais líquidas
+  liquidity_sessions: 5           # liquidez = volume financeiro médio das opções nesses pregões
 
 liquidity:                        # PROVISÓRIO: mínimos por perna (ajustáveis na interface)
   max_spread_pct_mid: 0.20        # (ask − bid) / mid
@@ -70,6 +85,7 @@ analysis:
   dte_max_business_days: 60
   max_width_pct_spot: 0.15        # largura máxima da trava em % do spot
   quantity: 100                   # opções por perna na simulação
+  lot_size: 100                   # valor a investir → quantidade em múltiplos disto
   limit_aggressiveness: 0.25      # preço-limite = mid + 25% do caminho até o preço natural
   illiquid_score_cap: 40          # estruturas com perna reprovada nunca passam disso
   max_results: 300
@@ -79,6 +95,32 @@ analysis:
     pop: 0.15
     liquidity: 0.25
     execution_cost: 0.10
+
+# Filtro "Stop 1:1" das travas de crédito (canal Credit Spread Investing): a trava é encerrada
+# quando o prejuízo iguala o lucro máximo (custo para desmontar = 2 × crédito). Ranking próprio.
+credit_stop:
+  loss_multiple: 1.0              # stop quando a perda = 1 × crédito
+  paths: 4000                     # Monte Carlo (mesmos sorteios para todas as travas)
+  weights:                        # somam 1
+    expected: 0.30                # resultado esperado com o stop ÷ perda no stop
+    no_stop: 0.30                 # probabilidade de NÃO acionar o stop até o vencimento
+    capital: 0.10                 # crédito ÷ garantia (largura − crédito)
+    liquidity: 0.20               # pior perna: a saída no stop precisa de liquidez
+    exit_cost: 0.10               # (natural − mid) ÷ crédito
+
+# Google Agenda: um evento por vencimento de cada estrutura aberta no Acompanhamento, apagado
+# quando ela é encerrada. Conectar na aba Acompanhamento. Credencial OAuth "App para computador"
+# (client_secret*.json na raiz do projeto, fora do git); token cifrado em data/google_agenda.json.
+google_calendar:
+  enabled: true
+  calendar_name: "Dash CIRP – Vencimentos"   # agenda criada pelo app (só ela é alterada)
+  event_time: "12:00"             # evento no dia do vencimento, horário de Brasília
+  event_minutes: 30
+  reminders:                      # pregões antes do vencimento + horário (notificação no celular)
+    - {business_days_before: 5, time: "12:00"}
+    - {business_days_before: 1, time: "12:00"}
+    - {business_days_before: 0, time: "12:00"}
+  sync_minutes: 30                # além de sincronizar a cada mudança no Acompanhamento
 
 # Aba "Ativo protegido" (Rafael Nobre): ativo + put + calls vendidas, piso no vencimento ≥ custo.
 protected:

@@ -107,9 +107,17 @@ def _attach_d1(client: MT5Client, infos: pd.DataFrame, server_tz: str) -> pd.Dat
 
 
 def fetch_series_quotes(
-    client: MT5Client, underlying: str, symbols: list[str], server_tz: str = LOCAL_TIMEZONE
+    client: MT5Client,
+    underlying: str,
+    symbols: list[str],
+    server_tz: str = LOCAL_TIMEZONE,
+    d1_fallback: bool = True,
 ) -> pd.DataFrame:
-    """symbol_info das séries, com a cotação do ativo lida junto de cada lote."""
+    """symbol_info das séries, com a cotação do ativo lida junto de cada lote.
+
+    `d1_fallback=False` dispensa a barra D1 das séries sem negócios na sessão (necessária só em
+    corretoras que não preenchem session_*, como a Genial; na XP cada consulta de série sem
+    barra falha com "Call failed" e custa ~1 s)."""
     frames = []
     for _ in client.selected_batches([underlying]):  # mantém o ativo-objeto selecionado
         for batch in client.selected_batches(symbols, heartbeat=underlying):
@@ -122,7 +130,7 @@ def fetch_series_quotes(
                 infos[f"underlying_{field}"] = spot[field].iloc[0] if not spot.empty else 0.0
             infos["underlying_time"] = spot["time"].iloc[0] if not spot.empty else 0
             infos["read_time"] = read_time
-            frames.append(_attach_d1(client, infos, server_tz))
+            frames.append(_attach_d1(client, infos, server_tz) if d1_fallback else infos)
     return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
 
 
@@ -142,12 +150,16 @@ def feed_problem(raw: pd.DataFrame) -> str | None:
 
 @dataclass(frozen=True)
 class ChainScope:
-    """O que coletar: classe(s) de opção, prazo máximo (dias úteis) e faixa absoluta de strikes."""
+    """O que coletar: classe(s) de opção, prazo máximo (dias úteis), faixa absoluta de strikes e,
+    opcionalmente, só os N próximos vencimentos MENSAIS mais os semanais com até
+    `weekly_max_dte` dias úteis (anteriores ao último mensal escolhido)."""
 
     option_types: tuple[str, ...]
     max_dte: int
     strike_low: float
     strike_high: float
+    monthly_expirations: int | None = None
+    weekly_max_dte: int = 0
 
 
 def candidate_symbols(
@@ -169,7 +181,35 @@ def candidate_symbols(
     )
     keep = frame["dte_business_days"] <= scope.max_dte
     keep &= frame["strike"].between(scope.strike_low, scope.strike_high)
+    if scope.monthly_expirations is not None:
+        keep &= frame["expiration_date"].isin(
+            select_expirations(
+                frame["expiration_date"].unique(),
+                today,
+                calendar,
+                scope.monthly_expirations,
+                scope.weekly_max_dte,
+            )
+        )
     return frame[keep]
+
+
+def select_expirations(
+    expirations, today: dt.date, calendar: B3Calendar, monthly: int, weekly_max_dte: int
+) -> set[dt.date]:
+    """Os `monthly` próximos vencimentos mensais (3ª sexta) e os semanais com até
+    `weekly_max_dte` dias úteis que vençam antes do último mensal escolhido."""
+    ordered = sorted(d for d in expirations if d >= today)
+    months = [d for d in ordered if calendar.is_monthly_expiration(d)][:monthly]
+    if not months:
+        return set()
+    dte = calendar.sessions_until(today, pd.Series(ordered))
+    weeklies = {
+        d
+        for d, n in zip(ordered, dte, strict=True)
+        if d not in months and n <= weekly_max_dte and d < months[-1]
+    }
+    return set(months) | weeklies
 
 
 def fetch_chain(
@@ -180,6 +220,7 @@ def fetch_chain(
     calendar: B3Calendar,
     settings: Settings,
     reference: pd.DataFrame | None = None,
+    d1_fallback: bool = True,
 ) -> pd.DataFrame:
     today = pd.Timestamp.now(tz=LOCAL_TIMEZONE).date()
     candidates = candidate_symbols(catalog, underlying, scope, today, calendar)
@@ -189,7 +230,9 @@ def fetch_chain(
     log.info("%s: coletando %d séries", underlying, len(symbols))
     problem = None
     for attempt in range(1, FEED_RETRIES + 1):
-        raw = fetch_series_quotes(client, underlying, symbols, settings.mt5.server_timezone)
+        raw = fetch_series_quotes(
+            client, underlying, symbols, settings.mt5.server_timezone, d1_fallback
+        )
         problem = feed_problem(raw)
         if problem is None:
             return normalize_chain(raw, today, settings.mt5.server_timezone, calendar, reference)

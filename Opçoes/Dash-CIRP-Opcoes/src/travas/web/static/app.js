@@ -1,9 +1,9 @@
 // Controlador da interface. Todos os cálculos vêm da API Python; aqui só exibição.
 (() => {
   const $ = (id) => document.getElementById(id);
-  const state = { defaults: null, analysis: null, detail: null, sort: null, tf: "d1", side: true, underlying: null, levels: [], tab: "analysis",
+  const state = { defaults: null, analysis: null, detail: null, view: null, size: { mode: "qty" }, sort: null, tf: "d1", side: true, underlying: null, levels: [], tab: "analysis",
     // Cada aba tem o próprio ativo e as próprias linhas no gráfico; nada vaza de uma para outra.
-    chart: { analysis: { underlying: null, levels: [] }, tracking: { underlying: null, levels: [] }, heatmap: { underlying: null, levels: [] }, protected: { underlying: null, levels: [] } } };
+    chart: { analysis: { underlying: null, levels: [] }, tracking: { underlying: null, levels: [] }, heatmap: { underlying: null, levels: [] }, protected: { underlying: null, levels: [] }, simulator: { underlying: null, levels: [] } } };
 
   const KIND_TEXT = {
     "alta|debito": "Trava de alta com débito: compra call de strike menor e vende call de strike maior. Paga débito; ganha se o ativo subir acima do breakeven.",
@@ -11,7 +11,7 @@
     "alta|credito": "Trava de alta com crédito: vende put de strike maior e compra put de strike menor. Recebe crédito; ganha se o ativo ficar acima do breakeven.",
     "baixa|credito": "Trava de baixa com crédito: vende call de strike menor e compra call de strike maior. Recebe crédito; ganha se o ativo ficar abaixo do breakeven.",
   };
-  const PREF_FIELDS = ["underlying", "quantity", "dte_min", "dte_max", "strike_min", "strike_max", "max_width", "max_loss_total",
+  const PREF_FIELDS = ["underlying", "quantity", "invest_amount", "dte_min", "dte_max", "strike_min", "strike_max", "max_width", "max_loss_total",
     "max_spread_pct_mid", "min_deals", "min_turnover_brl", "max_quote_age_seconds", "vol_override", "rate_annual", "costs_brl",
     "limit_aggressiveness", "min_reward_risk", "w_scenario", "w_reward_risk", "w_pop", "w_liquidity", "w_execution_cost"];
 
@@ -30,7 +30,7 @@
     const box = $("conn"), text = $("conn-text");
     try {
       const s = await api("/api/status");
-      renderMarket(s.market);
+      renderMarket(s.market, s.off_hours_source, s.snapshot);
       if (s.broker && s.broker !== state.broker) {
         const changed = state.broker && state.broker !== s.broker;
         state.broker = s.broker;
@@ -55,14 +55,34 @@
     }
   }
 
-  function renderMarket(m) {
+  // Mercado fechado: escolha da fonte (fechamento oficial da B3, capturas do pregão ou snapshot
+  // gravado pelo coletor do servidor).
+  function renderMarket(m, source, snap) {
     const el = $("market");
     if (!m) { el.hidden = true; return; }
     el.hidden = false;
     el.className = "market-pill " + (m.is_open ? "open" : "closed");
-    el.textContent = m.is_open ? `Mercado aberto (${m.session_open}–${m.session_close})` : `${m.label} · usando últimas cotações do pregão`;
-    el.title = `Pregão regular configurado: ${m.session_open}–${m.session_close} (Brasília). Fora dele o app não usa o book do MT5, que fica vazio/distorcido.`;
     state.market = m;
+    const snapText = !snap ? "" : snap.available
+      ? ` <span class="small" title="${esc(snap.note || "Snapshot mais recente do servidor")}">(${esc(snap.label)}${snap.status === "parcial" ? ", parcial" : ""}${snap.note ? ", offline" : ""})</span>`
+      : ` <span class="small neg" title="${esc(snap.problem || "")}">(indisponível: usando capturas)</span>`;
+    const key = `${m.is_open}|${m.label}|${source}|${snapText}`;
+    if (el.dataset.key === key) return;  // não recria o seletor a cada consulta de status
+    el.dataset.key = key;
+    el.title = `Pregão regular configurado: ${m.session_open}–${m.session_close} (Brasília). Fora dele o app não usa o book do MT5, que fica vazio/distorcido.`;
+    if (m.is_open) { el.textContent = `Mercado aberto (${m.session_open}–${m.session_close})`; return; }
+    state.offHoursSource = source || "b3";
+    el.innerHTML = `${esc(m.label)} · <label>usando <select id="off-hours-source" aria-label="Fonte das cotações com o mercado fechado">
+      <option value="b3" title="Último negócio de cada série e fechamento do ativo no pregão (arquivo oficial da B3, como o ProfitChart). Sem bid/ask: preços indicativos">fechamento oficial (B3)</option>
+      <option value="capturas" title="Últimas cotações com bid/ask capturadas pelo app durante o pregão (horários diversos)">capturas do pregão (bid/ask)</option>
+      <option value="servidor" title="Snapshot mais recente gravado pelo servidor com MT5 (11:00 e 16:30 nos pregões): bid/ask de todas as séries no mesmo horário, 3 próximos vencimentos">snapshot do servidor (bid/ask)</option>
+    </select></label>${snapText}`;
+    $("off-hours-source").value = state.offHoursSource;
+    $("off-hours-source").addEventListener("change", (e) => {
+      state.offHoursSource = e.target.value;
+      el.dataset.key = "";  // o status seguinte redesenha com o snapshot da nova fonte
+      savePrefs(true);
+    });
   }
 
   async function loadUnderlyings() {
@@ -89,7 +109,7 @@
     $("spot-info").textContent = "consultando…";
     try {
       const q = await api(`/api/quote/${encodeURIComponent(u)}`);
-      const origin = q.source === "ultimo_pregao" ? " (último pregão)" : q.source === "mt5_fora_pregao" ? " (MT5 fora do pregão)" : "";
+      const origin = FMT.origin(q.source);
       const info = (state.underlyingInfo || {})[u];
       const noOpts = info && !info.has_mt5_options ? ` · <span class="neg">opções sem cotação no MT5 da ${esc(state.broker || "corretora")} (${FMT.int(info.listed_series)} séries na B3)</span>` : "";
       $("spot-info").innerHTML = `${tickerIcon(u, 14)}Spot ${FMT.price(q.price)}${origin} · ${FMT.datetime(q.quote_time)}${noOpts}`;
@@ -227,9 +247,11 @@
     $("tab-tracking").hidden = name !== "tracking";
     $("tab-heatmap").hidden = name !== "heatmap";
     $("tab-protected").hidden = name !== "protected";
+    $("tab-simulator").hidden = name !== "simulator";
     if (name === "tracking") Tracking.activate();
     if (name === "heatmap") Heatmap.activate();
     if (name === "protected") Protected.activate();
+    if (name === "simulator") Simulator.activate();
     applyChart();
     savePrefs();
   }
@@ -288,6 +310,9 @@
     $("nobre_target_required").disabled = !debit || !$("nobre_filter").checked;
     $("nobre_fraction").disabled = !debit || !$("nobre_filter").checked;
     $("nobre_prefer_close").disabled = !debit || !$("nobre_filter").checked;
+    $("stop-box").classList.toggle("disabled", debit);
+    $("credit_stop").disabled = debit;
+    $("stop-hint").textContent = debit ? "disponível só para travas de crédito" : "";
     $("nobre-hint").textContent = !debit ? "disponível só para travas de débito"
       : $("nobre_filter").checked && num("target_price") === null && num("target_pct") === null
         ? "informe o preço-alvo (ou a variação) para aplicar o critério do alvo" : "";
@@ -310,7 +335,7 @@
       strike_max: num("strike_max"),
       max_width: num("max_width"),
       max_loss_total: num("max_loss_total"),
-      quantity: num("quantity"),
+      quantity: state.size.mode === "qty" ? num("quantity") : null,
       rate_annual: pctOrNull("rate_annual"),
       vol_override: pctOrNull("vol_override"),
       costs_brl: num("costs_brl") || 0,
@@ -322,6 +347,7 @@
       nobre_max_cost_fraction: Number($("nobre_fraction").value),
       nobre_prefer_close: $("nobre_prefer_close").checked,
       european_short: $("european_short").checked,
+      credit_stop: radio("flow") === "credito" && $("credit_stop").checked,
       refresh: $("refresh").checked,
       liquidity: {
         max_spread_pct_mid: pctOrNull("max_spread_pct_mid"),
@@ -364,6 +390,150 @@
     }
   }
 
+  // ---------- quantidade x valor a investir ----------
+  // Tudo por unidade vem da análise; totais são refeitos aqui para a quantidade escolhida, sem
+  // nova coleta nem nova análise. P&L é linear na quantidade, exceto os custos fixos (R$):
+  // total(q) = (total(base) + custos) × q ÷ base − custos.
+  const costsBrl = () => (state.analysis ? state.analysis.assumptions.costs_brl : num("costs_brl") || 0);
+  const lot = () => (state.defaults && state.defaults.analysis.lot_size) || 100;
+  // Capital por opção: débito pago (débito) ou garantia estimada (crédito).
+  const capitalPerOption = (r) => (r.margin && r.margin.available && r.quantity ? r.margin.capital_estimated / r.quantity : null);
+
+  function qtyFor(r) {
+    if (state.size.mode === "amount") {
+      const amount = num("invest_amount");
+      const cpo = capitalPerOption(r);
+      if (amount === null || !(cpo > 0)) return null;
+      return Math.max(0, Math.floor((amount - costsBrl()) / cpo / lot()) * lot());
+    }
+    const q = num("quantity");
+    return q !== null && q > 0 ? Math.floor(q) : null;
+  }
+
+  function scaler(r) {
+    const q = qtyFor(r) ?? r.quantity;
+    const f = r.quantity ? q / r.quantity : 1;
+    const c = costsBrl();
+    const s = String(r.kind || "").startsWith("alta") ? 1 : -1; // inclinação do payoff entre os strikes
+    const u = r.units || r.quantity;
+    return {
+      q, f, c,
+      pnl: (v) => (FMT.ok(v) ? (v + c) * f - c : v),
+      loss: (v) => (FMT.ok(v) ? (v - c) * f + c : v),
+      // Breakeven com custos fixos se desloca c × (1/u − 1/(u·f)) por unidade.
+      be: (list) => (list || []).map((x) => (c && f > 0 ? x - s * c * (1 / u - 1 / (u * f)) : x)),
+      lin: (v) => (FMT.ok(v) ? v * f : v),
+    };
+  }
+
+  function scaleMargin(m, f) {
+    if (!m || !m.available) return m;
+    const out = { ...m };
+    for (const k of ["estimated", "conservative", "obligation", "credit", "debit", "capital_estimated", "capital_conservative"]) {
+      if (FMT.ok(m[k])) out[k] = m[k] * f;
+    }
+    return out;
+  }
+
+  function scaleRow(r) {
+    if (!FMT.ok(r.max_loss)) return r;
+    const z = scaler(r);
+    const maxP = z.pnl(r.max_profit), maxL = z.loss(r.max_loss);
+    const budget = num("max_loss_total");
+    return {
+      ...r,
+      quantity: z.q,
+      units: (r.units || r.quantity) * z.f,
+      max_profit: maxP,
+      max_loss: maxL,
+      reward_risk: maxL > 0 ? maxP / maxL : null,
+      risk_reward: maxP > 0 ? maxL / maxP : null,
+      scenario_pnl: z.pnl(r.scenario_pnl),
+      net_premium_total: z.lin(r.net_premium_total),
+      entry_total: z.lin(r.entry_total),
+      breakevens: z.be(r.breakevens),
+      margin: scaleMargin(r.margin, z.f),
+      credit_stop: r.credit_stop ? { ...r.credit_stop, expected_pnl_total: z.lin(r.credit_stop.expected_pnl_total), stop_loss_total: z.lin(r.credit_stop.stop_loss_total) } : r.credit_stop,
+      _over_budget: budget !== null && z.q > 0 && maxL > budget + 1e-9,
+      _scaled: z.f !== 1,
+    };
+  }
+
+  function zeroCrossings(xs, ys) {
+    const out = [];
+    for (let i = 0; i < xs.length - 1; i++) {
+      const a = ys[i], b = ys[i + 1];
+      if (a === 0) out.push(xs[i]);
+      else if (a * b < 0) out.push(xs[i] + (xs[i + 1] - xs[i]) * (-a / (b - a)));
+    }
+    return out;
+  }
+
+  // Detalhe na quantidade escolhida (curvas, cenários, gregas, preço-limite, garantia).
+  function scaleDetail(d) {
+    const row = scaleRow(d);
+    const z = scaler(d);
+    const sim = d.simulation;
+    const g = d.greeks;
+    const impacts = {};
+    for (const [k, imp] of Object.entries((d.limit && d.limit.impacts) || {})) {
+      if (!imp) { impacts[k] = imp; continue; }
+      const mp = z.pnl(imp.max_profit), ml = z.loss(imp.max_loss);
+      impacts[k] = { ...imp, max_profit: mp, max_loss: ml, breakevens: z.be(imp.breakevens), reward_risk: ml > 0 ? mp / ml : null };
+    }
+    const expiry = (sim.expiry_pnl || []).map(z.pnl);
+    return {
+      ...row,
+      scenarios: (d.scenarios || []).map((s) => ({ ...s, pnl: z.pnl(s.pnl) })),
+      greeks: g ? Object.fromEntries(Object.entries(g).map(([k, v]) => [k, z.lin(v)])) : g,
+      limit: d.limit ? { ...d.limit, impacts } : d.limit,
+      simulation: {
+        ...sim,
+        expiry_pnl: expiry,
+        expiry_breakevens: z.be(sim.expiry_breakevens),
+        entry_cash: z.lin(sim.entry_cash),
+        exit_spread_cost: z.lin(sim.exit_spread_cost),
+        costs: z.c,
+        dates: (sim.dates || []).map((day) => { const pnl = day.pnl.map(z.pnl); return { ...day, pnl, breakevens: zeroCrossings(sim.spots, pnl) }; }),
+      },
+    };
+  }
+
+  // Estrutura de referência para converter quantidade ↔ valor nos campos do formulário.
+  function refStructure() {
+    if (state.detail && FMT.ok(state.detail.max_loss)) return { r: state.detail, label: "estrutura aberta" };
+    const first = state.analysis && state.analysis.results.find((r) => capitalPerOption(r) > 0);
+    return first ? { r: first, label: "1ª do ranking" } : null;
+  }
+
+  function syncSizeFields() {
+    const ref = refStructure();
+    const hint = [];
+    if (ref) {
+      const cpo = capitalPerOption(ref.r);
+      if (state.size.mode === "qty") {
+        const q = num("quantity");
+        $("invest_amount").value = q && cpo > 0 ? +(q * cpo + costsBrl()).toFixed(2) : "";
+      } else {
+        $("quantity").value = qtyFor(ref.r) ?? "";
+      }
+      if (cpo > 0) hint.push(`Conversão pela ${ref.label}: capital de ${FMT.price(cpo)} por opção (débito pago ou garantia estimada)${costsBrl() ? ` + custos de ${FMT.brl(costsBrl())}` : ""}.`);
+    }
+    if (state.size.mode === "amount") hint.push(`Valor a investir: cada trava usa a maior quantidade múltipla de ${lot()} cujo capital cabe no valor.`);
+    else if (num("quantity") && num("quantity") % lot()) hint.push(`Atenção: quantidade fora do lote de ${lot()}.`);
+    if (state.analysis) hint.push("Mudar quantidade ou valor recalcula os totais na hora, sem nova coleta.");
+    $("size-hint").textContent = hint.join(" ");
+  }
+
+  // Quantidade/valor mudou: refaz só a exibição (sem nova coleta nem nova análise).
+  function onSizeInput(mode) {
+    state.size.mode = mode;
+    syncSizeFields();
+    if (state.analysis) { renderRankingNote(); renderTable(); }
+    if (state.detail) renderSized();
+    savePrefs();
+  }
+
   // ---------- ranking ----------
   const COLS = [
     { key: "rank", label: "#", val: (r) => r.rank, fmt: (r) => r.rank },
@@ -371,19 +541,26 @@
     { key: "expiration", label: "Vencimento", l: true, val: (r) => r.expiration, fmt: (r) => `${FMT.date(r.expiration)} <span class="muted">(${r.dte_business_days} du)</span>` },
     { key: "long", label: "Compra", l: true, val: (r) => r.legs[0].strike, fmt: (r) => `${FMT.price(r.legs[0].strike)} <span class="muted">${esc(r.legs[0].symbol)}</span>${styleTag(r.legs[0])}` },
     { key: "short", label: "Venda", l: true, val: (r) => r.legs[1].strike, fmt: (r) => `${FMT.price(r.legs[1].strike)} <span class="muted">${esc(r.legs[1].symbol)}</span>${styleTag(r.legs[1])}` },
+    { key: "size", label: "Qtd · capital", tip: "Opções por perna e capital comprometido (débito pago ou garantia estimada), para a quantidade ou o valor escolhido", val: (r) => (r.margin && r.margin.available ? r.margin.capital_estimated : null), fmt: (r) => `${FMT.int(r.quantity)} <span class="muted">· ${r.margin && r.margin.available ? FMT.brl(r.margin.capital_estimated) : "—"}</span>` },
     { key: "width", label: "Largura", tip: "Distância entre os strikes (R$)", val: (r) => r.width, fmt: (r) => FMT.price(r.width) },
     { key: "entry", label: "Entrada natural", tip: "Por ação: compra no ask, venda no bid", val: (r) => r.entry_natural, fmt: (r) => FMT.price(r.entry_natural) },
     { key: "mid", label: "Mid", val: (r) => r.entry_mid, fmt: (r) => FMT.price(r.entry_mid) },
     { key: "max_loss", label: "Perda máx.", val: (r) => r.max_loss, fmt: (r) => FMT.brl(r.max_loss) },
     { key: "max_profit", label: "Lucro máx.", val: (r) => r.max_profit, fmt: (r) => FMT.brl(r.max_profit) },
     { key: "be", label: "Breakeven", tip: "Breakeven no vencimento", val: (r) => r.breakevens[0], fmt: (r) => r.breakevens.map(FMT.price).join(" / ") },
+    { key: "margin", label: "Garantia est.", tip: "Garantia estimada pelo risco no vencimento (crédito: largura − crédito; débito: em geral zero). O valor real é da B3 (CORE)/corretora.", val: (r) => (r.margin && r.margin.available ? r.margin.estimated : null), fmt: (r) => (r.margin && r.margin.available ? FMT.brl(r.margin.estimated) : "—") },
     { key: "rr", label: "Lucro/Perda", tip: "Lucro máximo ÷ perda máxima", val: (r) => r.reward_risk, fmt: (r) => FMT.ratio(r.reward_risk) },
     { key: "pop", label: "POP", tip: "Probabilidade de lucro no vencimento (modelo lognormal). Ver metodologia no detalhe.", val: (r) => r.pop, fmt: (r) => FMT.pct(r.pop, 0) },
     { key: "scenario", label: "No alvo", tip: "Resultado estimado no preço-alvo (no vencimento ou, com horizonte, pelo modelo)", val: (r) => r.scenario_pnl, fmt: (r) => `<span class="${(r.scenario_pnl ?? 0) >= 0 ? "pos" : "neg"}">${FMT.signedBrl(r.scenario_pnl)}</span>` },
     { key: "nobre", label: "R. Nobre", tip: "Filtro Rafael Nobre: custo ≤ 1/4 (ou 1/3) da largura e perna vendida antes do alvo", show: () => state.analysis && state.analysis.nobre && state.analysis.nobre.active, val: (r) => (r.nobre ? (r.nobre.target_ok === false ? 0 : 1) * 10 - r.nobre.cost_ratio : null), fmt: (r) => nobreBadge(r.nobre) },
+    { key: "stop_px", label: "Stop (ativo)", tip: "Preço do ativo que aciona o stop 1:1 (o mais próximo do spot até o vencimento) e distância do spot", show: stopActive, val: (r) => (r.credit_stop ? Math.abs(r.credit_stop.stop_distance_pct) : null), fmt: (r) => (r.credit_stop ? `${FMT.price(r.credit_stop.stop_price_nearest)} <span class="muted">(${FMT.pct(r.credit_stop.stop_distance_pct, 1)})</span>` : "—") },
+    { key: "stop_prob", label: "P(stop)", tip: "Probabilidade de acionar o stop até o vencimento (Monte Carlo, monitoramento contínuo)", show: stopActive, val: (r) => (r.credit_stop ? r.credit_stop.prob_stop : null), fmt: (r) => (r.credit_stop ? FMT.pct(r.credit_stop.prob_stop, 0) : "—") },
+    { key: "stop_ev", label: "Esperado c/ stop", tip: "Resultado esperado com o manejo (stop 1:1), na quantidade escolhida. Modelo; não é garantia", show: stopActive, val: (r) => (r.credit_stop ? r.credit_stop.expected_pnl_total : null), fmt: (r) => (r.credit_stop ? `<span class="${r.credit_stop.expected_pnl_total >= 0 ? "pos" : "neg"}">${FMT.signedBrl(r.credit_stop.expected_pnl_total)}</span>` : "—") },
     { key: "liq", label: "Liquidez", val: (r) => r.liquidity_score, fmt: (r) => liqBadge(r) },
     { key: "alerts", label: "Alertas", l: true, val: (r) => (r.early_exercise || "").startsWith("RISCO") ? 1 : 0, fmt: (r) => alertsCell(r) },
   ];
+
+  function stopActive() { return !!(state.analysis && state.analysis.credit_stop && state.analysis.credit_stop.active); }
 
   function styleTag(leg) {
     const eur = leg.exercise_style === "european";
@@ -407,6 +584,8 @@
     const out = [];
     if (r.early_exercise && r.early_exercise.startsWith("RISCO")) out.push(`<span class="badge bad" title="${esc(r.early_exercise)}">exercício antecipado</span>`);
     if (r.data_flags.length) out.push(`<span class="badge mid" title="${esc(r.data_flags.join(", "))}">dados</span>`);
+    if (r._over_budget) out.push(`<span class="badge bad" title="Perda máxima acima do orçamento informado nesta quantidade">acima do orçamento</span>`);
+    if (r.quantity === 0) out.push(`<span class="badge bad" title="O valor a investir não cobre um lote desta trava">valor insuficiente</span>`);
     return out.join(" ");
   }
 
@@ -420,21 +599,32 @@
     warn.textContent = c.realtime_warning ? `Atenção: ${c.realtime_warning}.` : "";
     const nobreNote = a.nobre ? `<div class="small"><b>Filtro Rafael Nobre:</b> ${esc(a.nobre.note)}</div>` +
       (a.nobre.warning ? `<div class="warn">${esc(a.nobre.warning)}</div>` : "") : "";
+    const stopNote = a.credit_stop ? `<div class="small"><b>Stop 1:1 (Credit Spread Investing):</b> ${esc(a.credit_stop.note)}</div>` : "";
     const styleNote = a.assumptions.exercise_style_filter && a.assumptions.exercise_style_filter.length
       ? `<div class="small"><b>Estilo de exercício:</b> ${esc(a.assumptions.exercise_style_filter.join(" e "))}</div>` : "";
     const disc = Object.entries(a.discarded).map(([k, v]) => `${esc(k)}: ${v}`).join(" · ");
-    $("discarded").innerHTML = nobreNote + styleNote + `${a.total_ranked} travas ranqueadas de ${a.candidates_evaluated} avaliadas` + (disc ? ` · descartadas — ${disc}` : "") +
+    $("discarded").innerHTML = nobreNote + stopNote + styleNote + `${a.total_ranked} travas ranqueadas de ${a.candidates_evaluated} avaliadas` + (disc ? ` · descartadas — ${disc}` : "") +
       (a.atm_iv.length ? ` · IV ATM: ${a.atm_iv.map((x) => `${FMT.date(x.expiration)} ${FMT.pct(x.atm_iv)}`).join(", ")}` : " · sem IV ATM confiável (POP indisponível)");
-    $("ranking-note").textContent = `${a.assumptions.ranking_note} * = score limitado por liquidez/cotação. Valores totais para ${a.results[0] ? a.results[0].quantity : ""} opções por perna. ${a.assumptions.entry_basis}.`;
+    renderRankingNote();
+    syncSizeFields();
     renderTable();
     if (!a.results.length) {
-      $("ranking").querySelector("tbody").innerHTML = `<tr><td class="l" colspan="${COLS.length}">Nenhuma trava passou nos filtros. Afrouxe liquidez, prazo ou largura, ou inclua as ilíquidas.</td></tr>`;
+      const why = a.empty_reason ? `Nenhuma trava montada: ${esc(a.empty_reason)}.` : "Nenhuma trava passou nos filtros. Afrouxe liquidez, prazo ou largura, ou inclua as ilíquidas.";
+      $("ranking").querySelector("tbody").innerHTML = `<tr><td class="l" colspan="${COLS.length}">${why}</td></tr>`;
     }
+  }
+
+  function renderRankingNote() {
+    const a = state.analysis;
+    const base = a.results[0] ? a.results[0].quantity : null;
+    const qty = state.size.mode === "amount" ? `a quantidade que cabe em ${FMT.brl(num("invest_amount"))} (por trava)` : `${FMT.int(qtyFor({ quantity: base }) ?? base)} opções por perna`;
+    const costs = costsBrl() ? ` O score foi calculado com ${FMT.int(base)} opções; com custos fixos, mudar a quantidade altera os totais exibidos, não a ordem do score.` : "";
+    $("ranking-note").textContent = `${a.assumptions.ranking_note} * = score limitado por liquidez/cotação. Valores totais para ${qty}.${costs} ${a.assumptions.entry_basis}.`;
   }
 
   function renderTable() {
     const a = state.analysis;
-    const rows = [...a.results];
+    const rows = a.results.map(scaleRow);
     if (state.sort) {
       const col = COLS.find((c) => c.key === state.sort.key);
       rows.sort((x, y) => {
@@ -486,13 +676,29 @@
     }
   }
 
+  // Garantia estimada (bloco usado na Análise e no Simulador).
+  function marginHtml(m, maxProfit) {
+    if (!m) return '<span class="muted">—</span>';
+    if (!m.available) return `<div class="limit-box margin-box"><b>Garantia: não estimável.</b><br><span class="small">${esc(m.reason || "")}</span><div class="small muted">${esc(m.method)}</div></div>`;
+    const ret = (cap) => (FMT.ok(maxProfit) && cap > 0 ? FMT.pct(maxProfit / cap, 1) : "—");
+    const lines = [
+      ["Garantia estimada", `<b>${FMT.brl(m.estimated)}</b>`],
+      ["Garantia conservadora", `${FMT.brl(m.conservative)} <span class="muted">(sem usar o crédito)</span>`],
+      [m.debit > 0 ? "Débito pago na entrada" : "Crédito recebido na entrada", FMT.brl(m.debit > 0 ? m.debit : m.credit)],
+      ["Capital comprometido", `${FMT.brl(m.capital_estimated)}${m.capital_conservative !== m.capital_estimated ? ` <span class="muted">a ${FMT.brl(m.capital_conservative)}</span>` : ""}`],
+      ["Lucro máx. ÷ capital", `${ret(m.capital_estimated)}${m.capital_conservative !== m.capital_estimated ? ` <span class="muted">a ${ret(m.capital_conservative)}</span>` : ""}`],
+    ];
+    return `<div class="limit-box margin-box"><div class="metrics one">${lines.map(([k, v]) => `<div><span>${k}</span><span>${v}</span></div>`).join("")}</div>
+      ${m.notes.map((n) => `<div class="small warn-text">${esc(n)}</div>`).join("")}
+      <div class="small muted">${esc(m.method)}</div></div>`;
+  }
+
   // ---------- detalhe ----------
   function renderDetail() {
     const d = state.detail;
     $("detail-card").hidden = false;
     const [L, S] = d.legs;
     $("detail-title").innerHTML = `${tickerIcon(state.analysis.underlying, 24)}${esc(d.kind_label)}: ${esc(L.symbol)} / ${esc(S.symbol)}`;
-    $("detail-sub").textContent = `Vencimento ${FMT.date(d.expiration)} · ${d.dte_business_days} dias úteis (${d.dte_calendar_days} corridos) · largura ${FMT.price(d.width)} · ${d.quantity} opções por perna`;
 
     const alerts = [];
     if (d.collection.realtime_warning) alerts.push(`<div class="warn">${esc(d.collection.realtime_warning)}</div>`);
@@ -501,12 +707,23 @@
     for (const w of d.warnings || []) alerts.push(`<div class="warn">${esc(w)}</div>`);
     $("detail-alerts").innerHTML = alerts.join("");
 
-    renderLimit(d);
-    renderMetrics(d);
     renderLegs(d);
     renderScore(d);
-    renderAssumptions(d);
-    setupSlider(d);
+    syncSizeFields();
+    state.view = scaleDetail(d);
+    renderAssumptions(state.view);
+    setupSlider(state.view); // desenha via renderSized
+  }
+
+  // Partes do detalhe que dependem da quantidade (refeitas ao mudar quantidade ou valor).
+  function renderSized() {
+    const d = (state.view = scaleDetail(state.detail));
+    const insufficient = d.quantity === 0 ? " · valor insuficiente para um lote" : "";
+    $("detail-sub").textContent = `Vencimento ${FMT.date(d.expiration)} · ${d.dte_business_days} dias úteis (${d.dte_calendar_days} corridos) · largura ${FMT.price(d.width)} · ${FMT.int(d.quantity)} opções por perna${d.margin && d.margin.available ? ` · capital ${FMT.brl(d.margin.capital_estimated)}` : ""}${insufficient}`;
+    renderLimit(d);
+    $("margin-box").innerHTML = marginHtml(d.margin, d.max_profit);
+    renderMetrics(d);
+    drawPayoff();
   }
 
   function renderLimit(d) {
@@ -552,14 +769,32 @@
         [`R. Nobre: custo ÷ largura (máx. ${FMT.pct(d.nobre.max_cost_fraction, 1)})`, `${FMT.pct(d.nobre.cost_ratio, 1)} ${d.nobre.cost_ok ? "✓" : "✗ acima"} · teto ${FMT.price(d.nobre.max_cost)}`],
         ["R. Nobre: vendida antes do alvo", d.nobre.target_ok === null ? "sem alvo informado" : d.nobre.target_ok ? "✓ sim" : "✗ não (além do alvo)"],
       ] : []),
+      ...(d.credit_stop ? stopMetrics(d.credit_stop) : []),
     ];
     $("metrics").innerHTML = items.map(([k, v]) => `<div><span>${k}</span><span>${v}</span></div>`).join("");
+  }
+
+  // Stop 1:1 (Credit Spread Investing): métricas do manejo no detalhe.
+  function stopMetrics(s) {
+    const tipEv = "Média dos caminhos simulados: stop = −perda no stop; sem stop = crédito − valor no vencimento";
+    return [
+      ["Stop 1:1: custo para desmontar (gatilho)", `${FMT.price(s.trigger_cost)} por ação (${FMT.num(1 + s.loss_multiple, 0)} × crédito)`],
+      ["Stop 1:1: ativo que aciona hoje", s.stop_price_today === null ? "inatingível hoje" : FMT.price(s.stop_price_today)],
+      ["Stop 1:1: mais próximo até o vencimento", `${FMT.price(s.stop_price_nearest)} (${FMT.pct(s.stop_distance_pct, 1)} do spot · ${FMT.num(s.stop_distance_sigmas, 2)} σ)`],
+      ["Stop 1:1: no vencimento", FMT.price(s.stop_price_expiry)],
+      ["Stop 1:1: perda no stop", `${FMT.brl(s.stop_loss_total)} <span class="muted">(crédito + saída ${FMT.price(s.exit_cost_per_unit)}/ação)</span>`],
+      ["Prob. de acionar o stop", `${FMT.pct(s.prob_stop, 1)}${s.median_stop_day ? ` <span class="muted">(mediana: ${FMT.num(s.median_stop_day, 0)} du)</span>` : ""}`],
+      ["Prob. de ficar com o crédito inteiro", FMT.pct(s.prob_full_credit, 1)],
+      ["Prob. de lucro com o manejo", FMT.pct(s.prob_profit, 1)],
+      ["Resultado esperado com o stop", `<span class="${s.expected_pnl_total >= 0 ? "pos" : "neg"}" title="${tipEv}">${FMT.signedBrl(s.expected_pnl_total)}</span> <span class="muted">(${FMT.pct(s.ev_on_risk, 1)} da perda no stop)</span>`],
+      ["Resultado esperado sem manejo", `<span class="muted">${FMT.signedBrl(s.expected_pnl_no_stop_per_unit * (state.view ? state.view.units : 1))}</span>`],
+    ];
   }
 
   function renderLegs(d) {
     const rows = d.legs.map((l) => `<tr>
       <td class="l">${l.side === "compra" ? "Compra" : "Venda"}</td><td class="l">${esc(l.symbol)}</td><td class="l">${l.option_type} ${l.exercise_style === "american" ? "americana" : "europeia"}</td>
-      <td>${FMT.price(l.strike)}</td><td>${FMT.price(l.bid)}</td><td>${FMT.price(l.ask)}</td><td>${FMT.price(l.mid)}</td><td>${FMT.price(l.last)}</td>
+      <td>${FMT.price(l.strike)}</td><td>${FMT.price(l.bid)}</td><td>${FMT.price(l.ask)}</td><td>${FMT.price(l.mid)}</td><td>${FMT.price(l.last)}${l.price_basis === "ultimo_b3" ? ' <span class="badge mid" title="Preço usado: último negócio do pregão (fechamento oficial da B3), indicativo; sem bid/ask">B3</span>' : ""}</td>
       <td>${FMT.pct(l.spread_pct_mid)}</td><td title="${esc(l.volume_source || "")}">${FMT.int(l.deals)}${l.volume_source === "barra D1" ? "*" : ""}</td><td title="${esc(l.volume_source || "")}">${FMT.brl(l.turnover_brl)}${l.volume_source === "barra D1" ? "*" : ""}</td>
       <td>${FMT.datetime(l.quote_time)} <span class="muted">(${FMT.age(l.quote_age_seconds)})</span></td>
       <td title="${esc(l.iv_status)}">${FMT.pct(l.iv)}</td>
@@ -571,8 +806,8 @@
     const row = state.analysis.results.find((r) => r.id === d.id);
     const comps = row && row.score_components;
     if (!comps) { $("score-box").innerHTML = '<span class="muted">Score disponível na lista ranqueada.</span>'; return; }
-    const colors = { scenario: "#1f5fbf", reward_risk: "#7a2fc0", pop: "#157a3c", liquidity: "#e08a00", execution_cost: "#667085" };
-    const names = { scenario: "Resultado no alvo", reward_risk: "Lucro/perda", pop: "POP", liquidity: "Liquidez", execution_cost: "Custo de execução" };
+    const colors = { scenario: "#1f5fbf", reward_risk: "#7a2fc0", pop: "#157a3c", liquidity: "#e08a00", execution_cost: "#667085", expected: "#1f5fbf", no_stop: "#157a3c", capital: "#7a2fc0", exit_cost: "#667085" };
+    const names = { scenario: "Resultado no alvo", reward_risk: "Lucro/perda", pop: "POP", liquidity: "Liquidez", execution_cost: "Custo de execução", expected: "Esperado c/ stop", no_stop: "Sem acionar o stop", capital: "Crédito ÷ garantia", exit_cost: "Custo de saída" };
     const bar = Object.entries(comps).map(([k, c]) => c.percentile === null ? "" : `<span style="width:${c.effective_weight * c.percentile * 100}%;background:${colors[k]}" title="${names[k]}"></span>`).join("");
     const table = Object.entries(comps).map(([k, c]) => `<tr><td class="l"><i style="display:inline-block;width:10px;height:10px;background:${colors[k]}"></i> ${names[k]}</td><td class="l muted">${esc(c.description)}</td><td>${FMT.pct(c.weight, 0)}</td><td>${FMT.pct(c.effective_weight, 0)}</td><td>${c.percentile === null ? "indisponível" : FMT.pct(c.percentile, 0)}</td></tr>`).join("");
     $("score-box").innerHTML = `<div><b>Score ${FMT.num(row.score, 0)}</b>${row.score_capped ? " (limitado por liquidez)" : ""}</div><div class="score-bar">${bar}</div>
@@ -588,6 +823,7 @@
       `Juros: ${FMT.pct(a.rate_annual, 2)} a.a. (contínua ${FMT.pct(a.rate_continuous, 2)}). Custos considerados: ${FMT.brl(a.costs_brl)}.`,
       `Cenário-alvo: ${d.scenario_at_expiry ? "avaliado no vencimento (payoff exato)" : `avaliado em ${FMT.date(a.horizon_date)} pelo modelo (valor teórico, não payoff)`}.`,
       `Probabilidade de toque: princípio da reflexão (monitoramento contínuo); aproximação.`,
+      ...(d.credit_stop && state.analysis.credit_stop ? [`Stop 1:1: ${state.analysis.credit_stop.method}.`] : []),
       d.simulation.assumptions,
       a.settlement_note,
       `Open interest não disponível no MT5 (${state.broker || "corretora"}); volume e negócios não equivalem a contratos em aberto.`,
@@ -602,11 +838,11 @@
     $("time-control").hidden = !sim.model_available;
     slider.max = Math.max(0, sim.dates.length - 1);
     slider.value = 0;
-    drawPayoff();
+    renderSized();
   }
 
   function drawPayoff() {
-    const d = state.detail;
+    const d = state.view;
     if (!d) return;
     const sim = d.simulation;
     const i = Number($("time-slider").value);
@@ -621,9 +857,11 @@
       ...d.breakevens.map((b) => ({ label: "BE venc.", value: b, color: "#157a3c", dashed: true, size: 1.6, fit: true })),
       ...(showModel ? sel.breakevens.map((b) => ({ label: `Equil. ${FMT.date(sel.date)}`, value: b, color: "#1f5fbf", dashed: true, dash: [2, 3] })) : []),
       ...(d.target_price ? [{ label: "Alvo", value: d.target_price, color: "#7a2fc0", dashed: true, size: 1.4 }] : []),
+      ...(d.credit_stop ? [{ label: "Stop 1:1", value: d.credit_stop.stop_price_nearest, color: "#c0262d", dashed: true, size: 1.6, fit: true }] : []),
       ...d.legs.map((l) => ({ label: `Strike ${l.side === "compra" ? "C" : "V"}`, value: l.strike, color: "#98a2b3", dashed: true, dash: [2, 4], fit: true })),
     ];
     setLevels(levels, "analysis");
+    ExitPanel.render($("exit-box"), { sim, index: i, spot: d.spot, target: d.target_price, units: d.units });
   }
 
   // ---------- painel lateral ----------
@@ -636,18 +874,20 @@
     if (open) { setTimeout(() => { loadCandles(); Candles.resize(); }, 60); }
     if (state.detail) setTimeout(drawPayoff, 200);
     setTimeout(Protected.redraw, 200);
+    setTimeout(Simulator.redraw, 200);
     savePrefs();
   }
 
   // ---------- preferências ----------
   let saveTimer = null;
-  function savePrefs() {
+  function savePrefs(now = false) {
     clearTimeout(saveTimer);
     saveTimer = setTimeout(() => {
-      const prefs = { side_width: state.sideWidth || null, nobre_filter: $("nobre_filter").checked, nobre_target_required: $("nobre_target_required").checked, nobre_fraction: $("nobre_fraction").value, nobre_prefer_close: $("nobre_prefer_close").checked, european_short: $("european_short").checked, direction: radio("direction"), flow: radio("flow"), tf: state.tf, side: state.side, tab: state.tab, include_illiquid: $("include_illiquid").checked, tracking: Tracking.prefs(), heatmap: Heatmap.prefs(), protected: Protected.prefs() };
+      const prefs = { side_width: state.sideWidth || null, nobre_filter: $("nobre_filter").checked, nobre_target_required: $("nobre_target_required").checked, nobre_fraction: $("nobre_fraction").value, nobre_prefer_close: $("nobre_prefer_close").checked, european_short: $("european_short").checked, credit_stop: $("credit_stop").checked, direction: radio("direction"), flow: radio("flow"), tf: state.tf, side: state.side, tab: state.tab, size_mode: state.size.mode, include_illiquid: $("include_illiquid").checked, tracking: Tracking.prefs(), heatmap: Heatmap.prefs(), protected: Protected.prefs(), simulator: Simulator.prefs() };
+      if (state.offHoursSource) prefs.off_hours_source = state.offHoursSource;
       for (const f of PREF_FIELDS) prefs[f] = $(f).value;
       fetch("/api/preferences", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(prefs) }).catch(() => {});
-    }, 600);
+    }, now ? 0 : 600);
   }
 
   function applyDefaults(def, prefs) {
@@ -665,7 +905,9 @@
     if (prefs.direction) document.querySelector(`input[name=direction][value=${prefs.direction}]`).checked = true;
     if (prefs.flow) document.querySelector(`input[name=flow][value=${prefs.flow}]`).checked = true;
     if (prefs.include_illiquid) $("include_illiquid").checked = true;
+    if (prefs.size_mode === "amount" || prefs.size_mode === "qty") state.size.mode = prefs.size_mode;
     $("nobre_filter").checked = !!prefs.nobre_filter;
+    $("credit_stop").checked = !!prefs.credit_stop;
     $("nobre_target_required").checked = !!prefs.nobre_target_required;
     if (prefs.nobre_fraction) $("nobre_fraction").value = prefs.nobre_fraction;
     $("european_short").checked = !!prefs.european_short;
@@ -677,7 +919,8 @@
     if (prefs.tracking) Tracking.applyPrefs(prefs.tracking);
     if (prefs.heatmap) Heatmap.applyPrefs(prefs.heatmap);
     Protected.init(def, prefs.protected);
-    if (["tracking", "heatmap", "protected"].includes(prefs.tab)) switchTab(prefs.tab);
+    Simulator.init(def, prefs.simulator);
+    if (["tracking", "heatmap", "protected", "simulator"].includes(prefs.tab)) switchTab(prefs.tab);
   }
 
   async function init() {
@@ -685,13 +928,16 @@
     state.defaults = def;
     applyDefaults(def, prefs);
     updateKindText();
-    document.querySelectorAll("input[name=direction], input[name=flow], #nobre_filter, #target_price, #target_pct, #european_short").forEach((r) => r.addEventListener("change", () => { updateKindText(); savePrefs(); }));
+    document.querySelectorAll("input[name=direction], input[name=flow], #nobre_filter, #target_price, #target_pct, #european_short, #credit_stop").forEach((r) => r.addEventListener("change", () => { updateKindText(); savePrefs(); }));
     $("underlying").addEventListener("change", onUnderlying);
     $("star-btn").addEventListener("click", onStar);
     Watch.on(updateStar);
     Watch.load();
     $("form").addEventListener("submit", onSubmit);
     $("form").addEventListener("change", savePrefs);
+    $("quantity").addEventListener("input", () => onSizeInput("qty"));
+    $("invest_amount").addEventListener("input", () => onSizeInput("amount"));
+    $("costs_brl").addEventListener("input", syncSizeFields);
     $("ranking").querySelector("thead").addEventListener("click", onHeaderClick);
     $("ranking").querySelector("tbody").addEventListener("click", onRowClick);
     let rafPayoff = 0;
@@ -710,6 +956,7 @@
     fullListWhenComplete($("underlying"));
     fullListWhenComplete($("tf-underlying"));
     fullListWhenComplete($("pr-underlying"));
+    fullListWhenComplete($("sm-underlying"));
     $("fit-candles").addEventListener("click", () => Candles.fitAll());
     $("max-candles").addEventListener("click", () => {
       if (!state.side) setSide(true);
@@ -722,7 +969,7 @@
     $("btn-track").addEventListener("click", () => {
       if (!state.detail) return;
       switchTab("tracking");
-      Tracking.prefillFromAnalysis(state.detail, state.analysis);
+      Tracking.prefillFromAnalysis(state.view || state.detail, state.analysis);
     });
     await pollStatus();
     setInterval(pollStatus, 5000);
@@ -801,6 +1048,6 @@
     $("tab-analysis").scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  window.App = { broker: () => state.broker || "corretora", analyzeTicker, api, showUnderlying, setLevels, toggleMax, savePrefs, tooltip: () => $("tooltip") };
+  window.App = { marginHtml, broker: () => state.broker || "corretora", analyzeTicker, api, showUnderlying, setLevels, toggleMax, savePrefs, tooltip: () => $("tooltip") };
   init();
 })();

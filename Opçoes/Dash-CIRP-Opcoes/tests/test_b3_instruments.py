@@ -6,7 +6,7 @@ import datetime as dt
 
 import pandas as pd
 
-from travas.data.b3_instruments import summarize
+from travas.data.b3_instruments import B3Instruments, summarize
 from travas.data.service import merge_underlyings
 
 TODAY = dt.date(2026, 10, 15)
@@ -57,3 +57,22 @@ def test_merge_marks_assets_without_mt5_options_and_sorts_by_series():
     # Sem o arquivo da B3: cai para a lista do MT5.
     only = merge_underlyings(catalog, None, None, TODAY)
     assert only["underlying"].tolist() == ["PETR4"] and bool(only["has_mt5_options"].iloc[0])
+
+
+def test_newer_file_wins_over_older_cache(calendar, tmp_path):
+    # Caso real (19/10/2026): o cache de 15/10 impedia baixar o arquivo de 16/10.
+    raw = raw_b3().assign(ExrcPric="10,00", OptnStyle="EURO")
+    store = B3Instruments(tmp_path, calendar)
+    store._download = lambda day: raw if day == dt.date(2026, 10, 15) else None
+    assert store.summary(dt.date(2026, 10, 15))[1] == dt.date(2026, 10, 15)
+
+    newer = raw.assign(XprtnDt=raw["XprtnDt"].replace("2026-12-18", "2027-01-15"))
+    fresh = B3Instruments(tmp_path, calendar)
+    fresh._download = lambda day: newer if day == dt.date(2026, 10, 16) else None
+    table, day = fresh.summary(dt.date(2026, 10, 19))  # segunda: hoje ainda sem arquivo
+    assert day == dt.date(2026, 10, 16)
+    assert (
+        "2027-01-15"
+        in fresh.reference(dt.date(2026, 10, 19))["expiration_date"].astype(str).tolist()
+    )
+    assert not (tmp_path / "instrumentos_2026-10-15.csv").exists()  # cache antigo removido

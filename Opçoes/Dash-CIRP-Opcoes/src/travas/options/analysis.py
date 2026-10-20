@@ -16,9 +16,11 @@ import pandas as pd
 
 from travas.calendar_b3 import B3Calendar
 from travas.options import pricing
+from travas.options.credit_stop import credit_stop_metrics
 from travas.options.implied_vol import IVStatus, atm_implied_vol, options_implied_vol
 from travas.options.limit_price import suggest_limit
-from travas.options.liquidity import LiquidityRules, evaluate_liquidity
+from travas.options.liquidity import BASIS_B3_CLOSE, LiquidityRules, evaluate_liquidity
+from travas.options.margin import exit_spread_cost, margin_estimate
 from travas.options.models import (
     Direction,
     Flow,
@@ -48,6 +50,19 @@ RANKING_COMPONENTS: dict[str, tuple[str, bool, str]] = {
     "pop": ("pop", True, "probabilidade de lucro no vencimento"),
     "liquidity": ("liquidity_score", True, "liquidez da pior perna"),
     "execution_cost": ("execution_cost_pct_width", False, "(natural − mid) ÷ largura"),
+}
+
+# Stop 1:1 (travas de crédito, canal Credit Spread Investing): ranking próprio.
+CREDIT_STOP_COMPONENTS: dict[str, tuple[str, bool, str]] = {
+    "expected": (
+        "stop_ev_on_risk",
+        True,
+        "resultado esperado com o stop ÷ perda no stop (Monte Carlo)",
+    ),
+    "no_stop": ("stop_prob_no_stop", True, "probabilidade de NÃO acionar o stop até o vencimento"),
+    "capital": ("stop_credit_on_capital", True, "crédito ÷ garantia (largura − crédito)"),
+    "liquidity": ("liquidity_score", True, "liquidez da pior perna (saída no stop)"),
+    "exit_cost": ("stop_exit_cost_on_credit", False, "(natural − mid) ÷ crédito"),
 }
 
 # Filtro Rafael Nobre (travas de débito):
@@ -139,12 +154,21 @@ class AnalysisParams:
     # Exige perna VENDIDA europeia: o risco de exercício antecipado (atribuição) é da vendida
     # americana; a comprada só é exercida se o titular (o usuário) quiser.
     european_short: bool = False
+    # Stop 1:1 (só travas de crédito): perda no stop = loss_multiple × crédito.
+    credit_stop: bool = False
+    credit_stop_loss_multiple: float = 1.0
+    credit_stop_paths: int = 4000
+    credit_stop_weights: dict[str, float] = field(default_factory=dict)
     costs_brl: float = 0.0
     max_results: int = 300
 
     @property
     def kind(self) -> VerticalKind:
         return vertical_kind(self.direction, self.flow)
+
+    @property
+    def credit_stop_active(self) -> bool:
+        return self.credit_stop and self.flow is Flow.CREDIT
 
 
 @dataclass
@@ -257,6 +281,9 @@ def _leg_info(row: pd.Series, side: Side) -> dict:
         "volume_source": row.get("volume_source"),
         "ref_note": row.get("ref_note") if isinstance(row.get("ref_note"), str) else None,
         "contract_size": _f(row["contract_size"]),
+        "price_basis": row.get("price_basis")
+        if isinstance(row.get("price_basis"), str)
+        else "book",
         "iv": _f(row["iv"]),
         "iv_status": row["iv_status"],
         "sigma": _f(row["sigma"]),
@@ -299,8 +326,9 @@ def evaluate_pair(prep: PreparedChain, long_row: pd.Series, short_row: pd.Series
     dte = int(long_row["dte_business_days"])
     t_now = dte / pricing.BUSINESS_DAYS_PER_YEAR
     width = abs(float(long_row["strike"]) - float(short_row["strike"]))
-    long_ask, short_bid = _f(long_row["ask"]), _f(short_row["bid"])
-    long_mid, short_mid = _f(long_row["mid"]), _f(short_row["mid"])
+    # Preço por lado (liquidity.price_columns): ask/bid/mid; no fechamento da B3, o último.
+    long_ask, short_bid = _f(long_row["px_buy"]), _f(short_row["px_sell"])
+    long_mid, short_mid = _f(long_row["px_mid"]), _f(short_row["px_mid"])
     sign = 1 if p.flow is Flow.DEBIT else -1  # entrada positiva no sentido da estrutura
 
     # Arredonda a 1e-6 para eliminar ruído de ponto flutuante (preços têm tick de R$ 0,01).
@@ -329,8 +357,17 @@ def evaluate_pair(prep: PreparedChain, long_row: pd.Series, short_row: pd.Series
         result["invalid"].extend(style_errors)
         return result
     if natural is None:
-        result["invalid"].append("sem bid/ask para o preço natural (não estimável)")
+        result["invalid"].append(
+            "sem negócio no dia para o preço (não estimável)"
+            if closing_basis(long_row, short_row)
+            else "sem bid/ask para o preço natural (não estimável)"
+        )
         return result
+    if closing_basis(long_row, short_row):
+        result["warnings"].append(
+            "preço pelo último negócio de cada perna no pregão (fechamento B3): indicativo, sem "
+            "bid/ask; os negócios podem ter sido em horários diferentes"
+        )
 
     structure = Structure(
         str(long_row["underlying"]),
@@ -364,6 +401,7 @@ def evaluate_pair(prep: PreparedChain, long_row: pd.Series, short_row: pd.Series
             "execution_cost_pct_width": (natural - mid) / width if mid is not None else None,
         }
     )
+    result["margin"] = margin_estimate(structure)
     if p.max_loss_total is not None and profile.max_loss > p.max_loss_total + 1e-9:
         result["invalid"].append("perda máxima acima do orçamento")
 
@@ -470,6 +508,32 @@ def evaluate_pair(prep: PreparedChain, long_row: pd.Series, short_row: pd.Series
             result["invalid"].append(NOBRE_COST_REASON)
         if p.nobre_target_required and nobre["target_ok"] is False:
             result["invalid"].append(NOBRE_TARGET_REASON)
+    # Só para travas que podem entrar no ranking (perna reprovada sai em analyze_prepared).
+    if p.credit_stop_active and not result["invalid"] and (legs_ok or p.include_illiquid):
+        stop, reason = credit_stop_metrics(
+            structure,
+            natural,
+            mid,
+            width,
+            dte,
+            prep.spot,
+            prep.rate,
+            sigmas,
+            sigma_pop,
+            p.costs_brl / units if units else 0.0,
+            p.credit_stop_loss_multiple,
+            p.credit_stop_paths,
+        )
+        result["credit_stop"] = stop
+        if stop is None:
+            result["invalid"].append(reason)
+        else:
+            result["stop_ev_on_risk"] = stop["ev_on_risk"]
+            result["stop_prob_no_stop"] = stop["prob_no_stop"]
+            result["stop_credit_on_capital"] = stop["credit_on_capital"]
+            result["stop_exit_cost_on_credit"] = stop["exit_cost_on_credit"]
+            stop["expected_pnl_total"] = stop["expected_pnl_per_unit"] * units
+            stop["stop_loss_total"] = stop["stop_loss_per_unit"] * units
     return result
 
 
@@ -491,7 +555,7 @@ def early_exercise_alert(prep: PreparedChain, short_row: pd.Series) -> str | Non
     intrinsic = max(prep.spot - strike, 0.0) if is_call else max(strike - prep.spot, 0.0)
     if intrinsic <= 0:
         return "vendida americana (OTM agora): risco de exercício antecipado baixo, mas existe"
-    premium = _f(short_row["bid"]) or _f(short_row["mid"]) or _f(short_row["last"])
+    premium = _f(short_row["px_sell"]) or _f(short_row["px_mid"]) or _f(short_row["last"])
     if premium is None:
         return "vendida americana ITM sem preço para medir o valor extrínseco"
     extrinsic = premium - intrinsic
@@ -597,7 +661,15 @@ def analyze_prepared(prep: PreparedChain) -> dict:
             )
             continue
         ranked.append(row)
-    score_candidates(ranked, params.weights, params.illiquid_score_cap)
+    if params.credit_stop_active:
+        score_candidates(
+            ranked,
+            params.credit_stop_weights,
+            params.illiquid_score_cap,
+            CREDIT_STOP_COMPONENTS,
+        )
+    else:
+        score_candidates(ranked, params.weights, params.illiquid_score_cap)
     nobre_active = params.nobre_filter and params.flow is Flow.DEBIT
     ranked.sort(
         key=lambda r: (
@@ -626,6 +698,54 @@ def analyze_prepared(prep: PreparedChain) -> dict:
         "expirations": sorted({d.isoformat() for d in prep.chain["expiration_date"].unique()}),
         "assumptions": assumptions(prep),
         "nobre": nobre_summary(params, ranked),
+        "credit_stop": credit_stop_summary(params),
+        "empty_reason": empty_reason(prep) if not ranked and not discarded else None,
+    }
+
+
+def empty_reason(prep: PreparedChain) -> str:
+    """Por que nenhuma trava foi sequer montada: vencimentos fora do prazo pedido ou filtros."""
+    p = prep.params
+    frame = prep.chain[prep.chain["option_type"] == p.kind.option_type.value]
+    available = (
+        frame.drop_duplicates("expiration_date")
+        .sort_values("expiration_date")[["expiration_date", "dte_business_days"]]
+        .itertuples(index=False)
+    )
+    listed = ", ".join(f"{d:%d/%m/%Y} ({n} du)" for d, n in available) or "nenhum"
+    return (
+        f"nenhum vencimento da cadeia coletada atende ao prazo de {max(p.dte_min, 1)} a "
+        f"{p.dte_max} dias úteis{' e aos vencimentos escolhidos' if p.expirations else ''} "
+        f"(disponíveis: {listed}). Ajuste o prazo mínimo/máximo"
+    )
+
+
+def credit_stop_summary(params: AnalysisParams) -> dict | None:
+    if not params.credit_stop:
+        return None
+    if params.flow is not Flow.CREDIT:
+        return {"active": False, "note": "stop 1:1 vale só para travas de crédito"}
+    m = params.credit_stop_loss_multiple
+    loss = "o crédito" if abs(m - 1) < 1e-9 else f"{m:g} × o crédito"
+    return {
+        "active": True,
+        "loss_multiple": m,
+        "weights": params.credit_stop_weights,
+        "note": (
+            f"stop quando o prejuízo atinge {loss} (custo para desmontar = "
+            f"{1 + m:g} × crédito). Ranking próprio: resultado esperado com o stop, chance de não "
+            "acionar o stop, crédito ÷ garantia, liquidez e custo de saída. Travas com crédito ≥ "
+            "metade da largura ficam fora (o stop não se aplica)"
+        ),
+        "method": (
+            "Fronteira do stop: preço do ativo em que o valor teórico de desmontar a trava "
+            "(Black-Scholes com a IV de cada perna) atinge o gatilho, em cada pregão. Monte Carlo "
+            f"lognormal ({params.credit_stop_paths} caminhos, drift = juros, σ do POP), passo "
+            "diário com ponte browniana (stop no meio do dia), mesmos sorteios para todas as "
+            "travas. No stop: perda = crédito + custo de saída (natural − mid de hoje). Sob o "
+            "modelo, crédito igual ao valor teórico dá resultado esperado ≈ 0: o valor positivo "
+            "vem de crédito acima do teórico (IV das vendidas acima da IV ATM) e cai com os custos"
+        ),
     }
 
 
@@ -660,8 +780,16 @@ def nobre_summary(params: AnalysisParams, ranked: list[dict] | None = None) -> d
     return {"active": True, "note": "; ".join(notes), "both_rules": both, "warning": warning}
 
 
+def closing_basis(*rows: pd.Series) -> bool:
+    """Alguma perna precificada pelo fechamento da B3 (último negócio, sem book)."""
+    return any(row.get("price_basis") == BASIS_B3_CLOSE for row in rows)
+
+
 def assumptions(prep: PreparedChain) -> dict:
     p = prep.params
+    closing = "price_basis" in prep.chain and bool(
+        (prep.chain["price_basis"] == BASIS_B3_CLOSE).any()
+    )
     return {
         "rate_annual": p.rate_annual,
         "rate_continuous": prep.rate,
@@ -670,8 +798,17 @@ def assumptions(prep: PreparedChain) -> dict:
         "horizon_business_days": prep.horizon_business_days,
         "target_price": p.target_price,
         "costs_brl": p.costs_brl,
-        "entry_basis": "preço natural: compra no ask, venda no bid",
-        "iv_method": "IV Black-Scholes europeu sobre o mid de cada série (brentq), sem dividendos",
+        "entry_basis": (
+            "último negócio de cada perna no pregão (fechamento oficial da B3): indicativo, "
+            "sem bid/ask; natural = mid = último"
+            if closing
+            else "preço natural: compra no ask, venda no bid"
+        ),
+        "iv_method": (
+            "IV Black-Scholes europeu sobre o "
+            + ("último negócio" if closing else "mid")
+            + " de cada série (brentq), sem dividendos"
+        ),
         "ranking_note": (
             "Percentis relativos às travas desta análise; componentes indisponíveis têm o peso "
             "redistribuído. Pernas reprovadas em liquidez limitam o score a "
@@ -697,7 +834,7 @@ def simulation_grid(
 ) -> dict:
     """Curvas de P&L: no vencimento (exato) e valor teórico em cada pregão até o vencimento."""
     p = prep.params
-    long_ask, short_bid = _f(long_row["ask"]), _f(short_row["bid"])
+    long_ask, short_bid = _f(long_row["px_buy"]), _f(short_row["px_sell"])
     if long_ask is None or short_bid is None:
         return {"available": False, "reason": "sem preço natural"}
     structure = Structure(
@@ -721,4 +858,9 @@ def simulation_grid(
     )
     sim["dte_business_days"] = int(long_row["dte_business_days"])
     sim["rate_continuous"] = prep.rate
+    sim["exit_spread_cost"] = exit_spread_cost(
+        [leg.units for leg in structure.legs],
+        [_f(long_row["bid"]), _f(short_row["bid"])],
+        [_f(long_row["ask"]), _f(short_row["ask"])],
+    )
     return sim

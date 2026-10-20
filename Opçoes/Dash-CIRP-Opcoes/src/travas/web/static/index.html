@@ -10,10 +10,11 @@
 <header class="topbar">
   <div class="brand">Dash CIRP Opções <span class="muted">B3 · travas</span></div>
   <nav class="tabs" role="tablist" aria-label="Seções">
-    <button data-tab="analysis" class="active" role="tab">Análise</button>
+    <button data-tab="analysis" class="active" role="tab">Análise de travas</button>
     <button data-tab="tracking" role="tab">Acompanhamento</button>
     <button data-tab="heatmap" role="tab">Heatmap</button>
     <button data-tab="protected" role="tab" title="Ativo + put + calls vendidas com piso no vencimento ≥ custo">Ativo protegido</button>
+    <button data-tab="simulator" role="tab" title="Monte qualquer estrutura com opções (e o próprio ativo) e simule a passagem do tempo">Simulador</button>
   </nav>
   <div id="market" class="market-pill" role="status" aria-live="polite" hidden></div>
   <div id="conn" class="conn" role="status" aria-live="polite">
@@ -25,7 +26,7 @@
   <main class="main">
    <div id="tab-analysis">
     <section class="card" aria-labelledby="f-title">
-      <h2 id="f-title">Análise</h2>
+      <h2 id="f-title">Análise de travas</h2>
       <form id="form" autocomplete="off">
         <div class="row">
           <fieldset class="seg">
@@ -58,6 +59,12 @@
           <span class="tip" title="Para travas de débito: (1) conhecendo o alvo, a perna mais afastada (a vendida) deve ficar antes do alvo; (2) o custo (débito natural) não deve passar de 1/4 da distância entre os strikes — equivale a lucro máximo ≥ 3 × perda máxima. Informe o preço-alvo para aplicar o critério (1).">?</span>
           <span id="nobre-hint" class="muted small"></span>
         </div>
+        <div class="nobre-box" id="stop-box">
+          <label class="check-inline strong"><input type="checkbox" id="credit_stop"> Stop 1:1 (Credit Spread Investing)</label>
+          <span class="muted small">encerra a trava quando o prejuízo iguala o lucro máximo e ranqueia pelo resultado com esse manejo</span>
+          <span class="tip" title="Manejo ativo do canal Credit Spread Investing: a trava de crédito é encerrada quando o prejuízo atinge o lucro máximo (custo para desmontar = 2 × crédito). Para cada trava: preço do ativo que aciona o stop a cada dia (modelo com a IV de cada perna), probabilidade de acionar o stop e resultado esperado com o manejo (Monte Carlo). Ranking próprio: resultado esperado com o stop ÷ perda no stop, chance de NÃO acionar o stop, crédito ÷ garantia, liquidez e custo de saída. Atenção: com o crédito igual ao valor teórico o stop tem ~50% de chance em qualquer distância (travas longe pagam pouco e o stop fica perto); a vantagem vem de crédito acima do modelo (skew) e de custos baixos.">?</span>
+          <span id="stop-hint" class="muted small"></span>
+        </div>
         <div class="nobre-box" id="style-box">
           <span class="strong small">Estilo de exercício:</span>
           <label class="check-inline"><input type="checkbox" id="european_short"> perna vendida europeia <span class="muted">(evita exercício antecipado)</span></label>
@@ -82,7 +89,12 @@
             <label for="quantity">Opções por perna</label>
             <input id="quantity" type="number" min="1" step="1">
           </div>
+          <div class="field">
+            <label for="invest_amount" title="Capital por trava: débito pago (débito) ou garantia estimada (crédito). Quantidade = maior múltiplo do lote que cabe no valor, trava a trava.">ou valor a investir (R$)</label>
+            <input id="invest_amount" type="number" min="0" step="any">
+          </div>
         </div>
+        <p id="size-hint" class="muted small"></p>
 
         <details class="advanced">
           <summary>Filtros e premissas avançados (opcional)</summary>
@@ -160,11 +172,14 @@
             <input type="range" id="time-slider" min="0" max="0" value="0">
             <output id="time-label"></output>
           </div>
+          <div id="exit-box"></div>
           <p class="muted small" id="sim-assumptions"></p>
         </div>
         <div>
           <h3>Preço-limite indicativo <span class="tip" title="Preço para digitar manualmente no ProfitChart. Indicativo: execução não garantida. Nenhuma ordem é enviada por este aplicativo.">?</span></h3>
           <div id="limit-box"></div>
+          <h3>Garantia <span class="tip" title="Margem que a B3/corretora bloqueia para a perna vendida. Estimativa pelo risco no vencimento; o valor real é calculado pela B3 (CORE) e pela corretora — confira antes de operar.">?</span></h3>
+          <div id="margin-box"></div>
           <h3>Métricas</h3>
           <div id="metrics" class="metrics"></div>
         </div>
@@ -199,6 +214,7 @@
         </div>
       </div>
       <div class="muted small" id="trk-meta">Nenhuma atualização ainda.</div>
+      <div class="nobre-box" id="gcal-box" hidden></div>
       <div id="trk-market" class="warn" hidden></div>
       <div id="trk-errors" class="warn" hidden></div>
       <div class="busy-host" id="trk-live">
@@ -457,6 +473,7 @@
             <input type="range" id="pr-slider" min="0" max="0" value="0">
             <output id="pr-time-label"></output>
           </div>
+          <div id="pr-exit-box"></div>
           <p class="muted small" id="pr-sim-note"></p>
         </div>
         <div>
@@ -472,6 +489,91 @@
       <div id="pr-score"></div>
       <h3>Premissas, metodologia e gestão</h3>
       <ul id="pr-assumptions" class="small"></ul>
+    </section>
+   </div>
+
+   <div id="tab-simulator" hidden>
+    <section class="card" aria-labelledby="sm-title">
+      <div class="card-head">
+        <h2 id="sm-title">Simulador <span class="muted small">qualquer combinação de opções (e do ativo) de um mesmo ativo-objeto</span></h2>
+        <div class="toolbar">
+          <button type="button" id="sm-refresh" title="Ler de novo as cotações das pernas e da grade">Atualizar cotações</button>
+          <button type="button" id="sm-flip" title="Troca compra ↔ venda em todas as pernas">Inverter lados</button>
+          <button type="button" id="sm-clear">Limpar pernas</button>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="sm-underlying">Ativo-objeto</label>
+          <div class="with-icon"><span id="sm-underlying-icon"></span><input id="sm-underlying" list="underlyings" placeholder="ex.: PETR4" class="upper"></div>
+          <small id="sm-spot" class="muted hint"></small>
+        </div>
+        <div class="field"><label for="sm-exp">Vencimento da grade</label><select id="sm-exp"></select></div>
+        <div class="field"><label for="sm-qty" title="Quantidade usada ao clicar na grade (opções ou ações)">Quantidade por clique</label><input id="sm-qty" type="number" min="1" step="100" value="100"></div>
+        <div class="field"><label for="sm-target">Preço-alvo (R$, opcional)</label><input id="sm-target" type="number" step="any" min="0"></div>
+        <div class="field"><label for="sm-vol" title="Usada em todas as opções sem volatilidade própria na perna; vazio = IV de cada série">Vol. geral (% a.a.)</label><input id="sm-vol" type="number" step="any" min="0" placeholder="IV das séries"></div>
+        <div class="field"><label for="sm-rate">Juros (% a.a.)</label><input id="sm-rate" type="number" step="any"></div>
+        <div class="field"><label for="sm-costs">Custos totais (R$)</label><input id="sm-costs" type="number" step="any" min="0" value="0"></div>
+      </div>
+      <div class="sm-builder">
+        <div class="sm-chain-wrap">
+          <div class="sm-chain-head small">
+            <span><b>Grade do vencimento</b> · clique em <b>C</b> (compra) ou <b>V</b> (venda) para adicionar a perna</span>
+            <span id="sm-chain-meta" class="muted"></span>
+          </div>
+          <div class="busy-host" id="sm-chain-host"><div class="table-wrap sm-chain-scroll"><table class="legs small sm-chain" id="sm-chain"><thead></thead><tbody></tbody></table></div></div>
+        </div>
+        <div class="sm-legs-wrap">
+          <div class="sm-add small">
+            <label>Ticker <input id="sm-ticker" list="sm-opts" class="upper" placeholder="digite e Enter" style="width:9rem"></label>
+            <datalist id="sm-opts"></datalist>
+            <button type="button" id="sm-add-buy" title="Adiciona o ticker digitado como compra">+ Compra</button>
+            <button type="button" id="sm-add-sell" title="Adiciona o ticker digitado como venda">+ Venda</button>
+            <span class="sm-sep"></span>
+            <button type="button" id="sm-stock-buy" title="Compra do próprio ativo-objeto (ex.: venda coberta, collar)">+ Ativo (compra)</button>
+            <button type="button" id="sm-stock-sell">+ Ativo (venda)</button>
+          </div>
+          <div class="table-wrap"><table class="legs" id="sm-legs">
+            <thead><tr><th class="l">Lado</th><th>Qtd</th><th class="l">Perna</th><th>Bid / Ask</th><th title="Vazio = preço natural do book (compra no ask, venda no bid)">Preço</th><th title="Vazio = vol. geral ou IV da série">Vol. %</th><th class="l">Cotação</th><th></th></tr></thead>
+            <tbody></tbody>
+          </table></div>
+          <p class="muted small" id="sm-legs-help">Preço vazio = natural do book atual (compra no ask, venda no bid); digite um preço para simular outra entrada. Vol. vazia = vol. geral ou IV da série. Tudo é recalculado ao editar.</p>
+          <span id="sm-msg" class="msg" role="status" aria-live="polite"></span>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" id="sm-result" hidden>
+      <div class="card-head">
+        <h2 id="sm-res-title">Estrutura</h2>
+        <div class="muted" id="sm-res-sub"></div>
+      </div>
+      <div id="sm-alerts"></div>
+      <div class="detail-grid">
+        <div class="payoff-wrap" id="sm-payoff-wrap">
+          <div class="chart-head">
+            <h3>Payoff <span class="muted small">(resultado total, R$)</span></h3>
+            <button type="button" class="max-btn" id="sm-max">⤢ Maximizar</button>
+          </div>
+          <div class="legend" id="sm-legend"></div>
+          <div class="busy-host" id="sm-payoff-host"><div id="sm-payoff" class="payoff" role="img" aria-label="Gráfico de payoff da estrutura simulada"></div></div>
+          <div class="time-control" id="sm-time">
+            <label for="sm-slider">Data simulada:</label>
+            <input type="range" id="sm-slider" min="0" max="0" value="0">
+            <output id="sm-time-label"></output>
+          </div>
+          <div id="sm-exit-box"></div>
+          <p class="muted small" id="sm-sim-note"></p>
+        </div>
+        <div>
+          <h3>Resumo</h3>
+          <div id="sm-metrics" class="metrics one"></div>
+          <h3>Garantia <span class="tip" title="Margem que a B3/corretora bloqueia para as pernas vendidas. Estimativa pelo risco no vencimento; o valor real é calculado pela B3 (CORE) e pela corretora — confira antes de operar.">?</span></h3>
+          <div id="sm-margin"></div>
+        </div>
+      </div>
+      <h3>Premissas</h3>
+      <ul id="sm-assumptions" class="small"></ul>
     </section>
    </div>
 
@@ -520,11 +622,14 @@
 <script src="/static/format.js"></script>
 <script src="/static/watchlist.js"></script>
 <script src="/static/payoff.js"></script>
+<script src="/static/exit.js"></script>
 <script src="/static/candles.js"></script>
 <script src="/static/report.js"></script>
+<script src="/static/gcal.js"></script>
 <script src="/static/tracking.js"></script>
 <script src="/static/heatmap.js"></script>
 <script src="/static/protected.js"></script>
+<script src="/static/simulator.js"></script>
 <script src="/static/app.js"></script>
 </body>
 </html>

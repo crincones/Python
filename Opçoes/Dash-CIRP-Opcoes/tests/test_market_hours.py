@@ -51,6 +51,31 @@ def test_quote_store_merges_and_recomputes_terms(calendar, tmp_path):
     assert price == pytest.approx(31.0) and captured == later
 
 
+def test_quote_store_aligns_series_to_main_capture(calendar, tmp_path):
+    # Caso real (BBAS3, 16/10): put 21,54 salva às 11:10 e put 22,04 às 14:06 formavam uma
+    # trava "atual" com crédito inflado. A série de outra captura envelhece pela distância.
+    store = QuoteStore(tmp_path)
+    chain = synthetic_chain(calendar).assign(quote_age_seconds=10.0)
+    first = pd.Timestamp("2026-10-16 11:10", tz="America/Sao_Paulo")
+    store.save("TEST3", chain, first)
+    sym = chain["symbol"].iloc[0]
+    later = pd.Timestamp("2026-10-16 14:06", tz="America/Sao_Paulo")
+    store.save("TEST3", chain[chain["symbol"] == sym].assign(underlying_price=29.0), later)
+
+    loaded = store.load("TEST3", dt.date(2026, 10, 17), calendar)
+    aligned, spot = QuoteStore.align_captures(loaded)
+    ages = aligned.set_index("symbol")["quote_age_seconds"]
+    # A referência é a captura com mais séries (11:10), não a última (uma série às 14:06,
+    # como uma atualização do acompanhamento): a cadeia não vira toda "cotação antiga".
+    assert ages.drop(sym).tolist() == pytest.approx([10.0] * (len(ages) - 1))
+    assert ages[sym] == pytest.approx(10.0 + (later - first).total_seconds())
+    assert spot == pytest.approx(31.0)  # preço do ativo da captura de referência
+    # Recorte só com a série nova (pernas do acompanhamento): ela é a própria referência.
+    legs, legs_spot = QuoteStore.align_captures(loaded[loaded["symbol"] == sym])
+    assert legs["quote_age_seconds"].tolist() == pytest.approx([10.0])
+    assert legs_spot == pytest.approx(29.0)
+
+
 def test_quote_store_drops_expired_and_missing(calendar, tmp_path):
     store = QuoteStore(tmp_path)
     assert store.load("NADA3", dt.date(2026, 10, 15), calendar) is None

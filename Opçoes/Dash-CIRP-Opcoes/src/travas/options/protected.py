@@ -31,9 +31,16 @@ import pandas as pd
 
 from travas.calendar_b3 import B3Calendar
 from travas.options import pricing
-from travas.options.analysis import _f, _leg_info, early_exercise_alert, score_candidates
+from travas.options.analysis import (
+    _f,
+    _leg_info,
+    closing_basis,
+    early_exercise_alert,
+    score_candidates,
+)
 from travas.options.implied_vol import IVStatus, atm_implied_vol, options_implied_vol
 from travas.options.liquidity import LiquidityRules, evaluate_liquidity
+from travas.options.margin import exit_spread_cost
 from travas.options.models import Side
 from travas.options.probability import prob_between
 from travas.options.simulation import business_days_until
@@ -333,7 +340,9 @@ def _count(d: dict[str, int], reason: str, n: int = 1) -> None:
 def _usable(frame: pd.DataFrame, price_col: str, prep: ProtectedChain, reason: str) -> pd.DataFrame:
     """Séries com preço para o lado da perna e (salvo pedido) aprovadas em liquidez."""
     ok = frame[price_col].notna()
-    _count(prep.discarded, reason, int((~ok).sum()))
+    closing = frame["price_basis"].eq("ultimo_b3") if "price_basis" in frame else ok & False
+    _count(prep.discarded, reason, int((~ok & ~closing).sum()))
+    _count(prep.discarded, "série sem negócio no dia (fechamento B3)", int((~ok & closing).sum()))
     frame = frame[ok]
     if not prep.params.include_illiquid:
         liquid = frame["liquidity_ok"].astype(bool)
@@ -362,19 +371,19 @@ def candidates(prep: ProtectedChain) -> list[tuple[ProtectedKind, tuple[pd.Serie
         calls = group[
             (group["option_type"] == "call") & (group["strike"] <= spot * p.call_max_pct_spot)
         ]
-        puts = _usable(puts, "ask", prep, "put sem oferta de venda (ask)")
-        shorts = _usable(calls, "bid", prep, "call sem oferta de compra (bid)")
+        puts = _usable(puts, "px_buy", prep, "put sem oferta de venda (ask)")
+        shorts = _usable(calls, "px_sell", prep, "call sem oferta de compra (bid)")
         if p.european_short:
             eur = shorts["exercise_style"] == "european"
             _count(prep.discarded, "call vendida americana (filtro de estilo)", int((~eur).sum()))
             shorts = shorts[eur]
-        longs = _usable(calls, "ask", prep, "call sem oferta de venda (ask)")
+        longs = _usable(calls, "px_buy", prep, "call sem oferta de venda (ask)")
         if puts.empty or shorts.empty:
             continue
         pk = puts["strike"].to_numpy()
-        pa = puts["ask"].to_numpy()
+        pa = puts["px_buy"].to_numpy()
         sk = shorts["strike"].to_numpy()
-        sb = shorts["bid"].to_numpy()
+        sb = shorts["px_sell"].to_numpy()
         units = p.quantity
         if ProtectedKind.COLLAR in p.kinds:
             cost = prep.stock_entry + pa[:, None] - sb[None, :]
@@ -386,7 +395,7 @@ def candidates(prep: ProtectedChain) -> list[tuple[ProtectedKind, tuple[pd.Serie
                 found.append((ratio, ProtectedKind.COLLAR, (puts.iloc[i], shorts.iloc[j])))
         if ProtectedKind.COLLAR_FLY in p.kinds and not longs.empty:
             lk = longs["strike"].to_numpy()
-            la = longs["ask"].to_numpy()
+            la = longs["px_buy"].to_numpy()
             max_wing = spot * p.max_wing_pct_spot
             wing_ok = (lk[None, :] > sk[:, None]) & (lk[None, :] - sk[:, None] <= max_wing + TOL)
             for j, m in zip(*np.nonzero(wing_ok), strict=True):
@@ -434,13 +443,14 @@ def net_cost(
 ) -> float | None:
     """Custo por ação: ativo + Σ (compra +, venda −) × proporção × prêmio.
 
-    `basis` = natural (compra no ask, venda no bid) ou mid.
+    `basis` = natural (compra no ask, venda no bid) ou mid — pelas colunas px_* (no fechamento
+    da B3, o último negócio).
     """
     if stock_price is None:
         return None
     total = stock_price
     for row, (side, ratio) in zip(rows, leg_sides(kind), strict=True):
-        col = "mid" if basis == "mid" else ("ask" if side is Side.LONG else "bid")
+        col = "px_mid" if basis == "mid" else ("px_buy" if side is Side.LONG else "px_sell")
         price = _f(row[col])
         if price is None:
             return None
@@ -623,6 +633,11 @@ def evaluate(prep: ProtectedChain, kind: ProtectedKind, rows: Sequence[pd.Series
         note = row.get("ref_note")
         if isinstance(note, str) and note:
             result["warnings"].append(f"{row['symbol']}: {note}")
+    if closing_basis(*rows):
+        result["warnings"].append(
+            "preço pelo último negócio de cada perna e fechamento do ativo no pregão (fechamento "
+            "B3): indicativo, sem bid/ask; os negócios podem ter sido em horários diferentes"
+        )
     result["limit"] = suggest_limit(prep, natural, mid, prof, units)
     return result
 
@@ -739,7 +754,12 @@ def assumptions(prep: ProtectedChain) -> dict:
         "costs_brl": p.costs_brl,
         "quantity": p.quantity,
         "min_floor_return": p.min_floor_return,
-        "entry_basis": "custo natural: ativo e opções compradas no ask, calls vendidas no bid",
+        "entry_basis": (
+            "fechamento oficial da B3: ativo pelo fechamento e opções pelo último negócio do "
+            "pregão (indicativo, sem bid/ask)"
+            if "price_basis" in prep.chain and (prep.chain["price_basis"] == "ultimo_b3").any()
+            else "custo natural: ativo e opções compradas no ask, calls vendidas no bid"
+        ),
         "risk_zero_definition": (
             "piso no vencimento (menor valor da estrutura) ≥ custo de montagem + custos "
             "informados; não considera exercício antecipado, proventos nem custos não informados"
@@ -819,6 +839,14 @@ def simulation(
         "model_available": bool(dates),
         "model_reason": None if dates else "sem volatilidade confiável em todas as opções",
         "sigmas": sigmas,
+        # Valor para zerar na data simulada = P&L − entrada + custos (mesmo modelo da curva).
+        "entry_cash": -natural * units,
+        "costs": p.costs_brl,
+        "exit_spread_cost": exit_spread_cost(
+            [units] + [ratio * units for _, ratio in leg_sides(kind)],
+            [prep.stock.bid] + [_f(r["bid"]) for r in rows],
+            [prep.stock.ask] + [_f(r["ask"]) for r in rows],
+        ),
         "assumptions": (
             f"Valor teórico antes do vencimento: ativo a mercado + Black-Scholes europeu por "
             f"opção, σ constante ({vols}), juros {p.rate_annual:.2%} a.a., sem proventos, "

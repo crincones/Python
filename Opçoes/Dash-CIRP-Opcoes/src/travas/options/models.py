@@ -10,6 +10,7 @@ from enum import StrEnum
 class OptionType(StrEnum):
     CALL = "call"
     PUT = "put"
+    STOCK = "ativo"  # o próprio ativo-objeto (simulador): valor = preço do ativo, sem strike
 
 
 class Side(StrEnum):
@@ -131,9 +132,13 @@ class Structure:
         )
 
     @property
+    def option_legs(self) -> tuple[Leg, ...]:
+        return tuple(leg for leg in self.legs if leg.option_type is not OptionType.STOCK)
+
+    @property
     def strikes(self) -> list[float]:
-        return sorted({leg.strike for leg in self.legs})
+        return sorted({leg.strike for leg in self.option_legs})
 
     @property
     def expirations(self) -> set[dt.date]:
-        return {leg.expiration for leg in self.legs}
+        return {leg.expiration for leg in self.option_legs}

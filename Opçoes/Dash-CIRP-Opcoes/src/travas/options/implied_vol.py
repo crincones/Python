@@ -96,14 +96,15 @@ def implied_volatility(
 def options_implied_vol(
     options: pd.DataFrame, risk_free_rate_annual: float, settings: PricingSettings
 ) -> pd.DataFrame:
-    """IV sobre o mid de cada série de um snapshot (colunas de schema.OPTIONS_COLUMNS).
+    """IV sobre o mid de cada série de um snapshot (colunas de schema.OPTIONS_COLUMNS); com
+    `px_mid` (liquidity.price_columns), sobre ele — no fechamento da B3, o último negócio.
 
     Devolve DataFrame com o mesmo índice e colunas `t_years`, `rate`, `iv`, `iv_status`.
     """
     t = year_fraction(options["dte_business_days"].to_numpy())
     rate = continuous_rate(risk_free_rate_annual)
     iv, status = implied_volatility(
-        options["mid"].to_numpy(dtype=np.float64),
+        options["px_mid" if "px_mid" in options else "mid"].to_numpy(dtype=np.float64),
         options["underlying_price"].to_numpy(dtype=np.float64),
         options["strike"].to_numpy(dtype=np.float64),
         t,
@@ -125,9 +126,14 @@ def atm_implied_vol(series: pd.DataFrame, settings: PricingSettings) -> pd.DataF
     sem candidata fica fora do resultado. Saída: underlying, expiration_date, atm_iv,
     atm_strike_distance_pct.
     """
+    closing = (
+        series["price_basis"].eq("ultimo_b3")
+        if "price_basis" in series
+        else pd.Series(False, index=series.index)
+    )  # fechamento da B3: sem spread para filtrar (IV sobre o último negócio)
     valid = series[
         (series["iv_status"] == IVStatus.OK.value)
-        & (series["spread_pct_mid"] <= settings.atm_max_spread_pct_mid)
+        & ((series["spread_pct_mid"] <= settings.atm_max_spread_pct_mid) | closing)
     ].assign(strike_distance_pct=lambda d: (d["strike"] / d["underlying_price"] - 1).abs())
     valid = valid[valid["strike_distance_pct"] <= settings.atm_max_strike_distance_pct]
     nearest = (

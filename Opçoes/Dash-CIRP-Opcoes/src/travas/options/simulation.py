@@ -17,8 +17,8 @@ import pandas as pd
 
 from travas.calendar_b3 import B3Calendar
 from travas.options import pricing
-from travas.options.models import Structure
-from travas.options.payoff import expiry_profile, pnl_at_expiry
+from travas.options.models import OptionType, Structure
+from travas.options.payoff import expiry_profile, net_premium, pnl_at_expiry
 from travas.options.valuation import theoretical_pnl, zero_crossings
 
 
@@ -57,10 +57,13 @@ def simulate(
     xs = price_grid(structure, extra_prices, points)
     first = min(structure.expirations)
     single = len(structure.expirations) == 1
-    later_ok = all(
-        _ok(s) for leg, s in zip(structure.legs, sigmas, strict=True) if leg.expiration > first
-    )
-    all_ok = all(_ok(s) for s in sigmas)
+    options = [
+        (leg, s)
+        for leg, s in zip(structure.legs, sigmas, strict=True)
+        if leg.option_type is not OptionType.STOCK
+    ]
+    later_ok = all(_ok(s) for leg, s in options if leg.expiration > first)
+    all_ok = all(_ok(s) for _, s in options)
 
     if single:
         final = pnl_at_expiry(structure, xs, costs)
@@ -87,7 +90,7 @@ def simulate(
                     "breakevens": zero_crossings(xs, ys),
                 }
             )
-    vols = ", ".join(f"{s:.1%}" for s in sigmas if _ok(s)) or "indisponível"
+    vols = ", ".join(f"{s:.1%}" for _, s in options if _ok(s)) or "indisponível"
     return {
         "available": final is not None,
         "reason": None if final is not None else "sem volatilidade para as pernas posteriores",
@@ -101,6 +104,10 @@ def simulate(
         "model_available": bool(dates),
         "model_reason": None if dates else "sem volatilidade confiável em todas as pernas",
         "sigmas": list(sigmas),
+        # Fluxo de entrada (R$ totais, + recebido) e custos: valor para zerar na data simulada =
+        # P&L − entrada + custos (o mesmo modelo da curva).
+        "entry_cash": net_premium(structure),
+        "costs": costs,
         "assumptions": (
             f"Valor teórico: Black-Scholes europeu por perna, σ constante ({vols}), juros "
             f"{rate_annual:.2%} a.a., sem dividendos, T = dias úteis/252. "

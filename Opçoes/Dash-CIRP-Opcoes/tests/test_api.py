@@ -344,3 +344,44 @@ def test_protected_scan_and_detail(client):
 def test_protected_without_mt5_options(client):
     r = client.post("/api/protected/scan", json={"underlying": "SEMO3"})
     assert r.status_code == 422
+
+
+def test_detail_has_margin_and_exit_data(client):
+    r = client.post(
+        "/api/analyze", json={"underlying": "TEST3", "direction": "alta", "flow": "credito"}
+    )
+    body = r.json()
+    first = body["results"][0]
+    assert first["margin"]["available"]
+    assert first["margin"]["estimated"] == pytest.approx(first["max_loss"] - 0.0)
+    d = client.get(f"/api/detail/{body['analysis_id']}/{first['id']}").json()
+    sim = d["simulation"]
+    assert sim["entry_cash"] == pytest.approx(d["net_premium_total"])
+    assert sim["exit_spread_cost"] > 0
+    p = client.post("/api/protected/scan", json={"underlying": "TEST3"}).json()
+    pd_ = client.get(f"/api/protected/detail/{p['scan_id']}/{p['results'][0]['id']}").json()
+    assert pd_["simulation"]["entry_cash"] < 0  # montagem a débito (ativo + opções)
+
+
+def test_simulator_routes(client):
+    exp = synthetic_chain(client.service.calendar)["expiration_date"].iloc[0]
+    r = client.get(f"/api/simulator/chain/test3?expiration={exp.isoformat()}")
+    assert r.status_code == 200, r.text
+    rows = r.json()["rows"]
+    assert rows and {"call", "put"} == {row["option_type"] for row in rows}
+    assert all(row["bid"] is not None for row in rows)
+    legs = [
+        {"symbol": "TESTC1131", "side": "compra", "quantity": 100},
+        {"symbol": "TESTC1133", "side": "venda", "quantity": 100},
+        {"kind": "ativo", "side": "compra", "quantity": 100, "price": 31},
+    ]
+    e = client.post("/api/simulator/evaluate", json={"underlying": "TEST3", "legs": legs})
+    assert e.status_code == 200, e.text
+    body = e.json()
+    assert len(body["legs"]) == 3 and body["simulation"]["dates"]
+    assert body["margin"]["available"]
+    bad = client.post(
+        "/api/simulator/evaluate",
+        json={"underlying": "TEST3", "legs": [{"symbol": "NADA", "side": "compra", "quantity": 1}]},
+    )
+    assert bad.status_code == 422 and "não encontrado" in bad.json()["detail"]

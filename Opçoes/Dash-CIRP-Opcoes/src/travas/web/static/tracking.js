@@ -53,6 +53,7 @@ const Tracking = (() => {
 
   function activate() {
     setup();
+    Gcal.refresh();
     if (!st.data && !st.loading) refresh();
   }
 
@@ -90,6 +91,7 @@ const Tracking = (() => {
     } finally {
       st.loading = false;
       $("trk-refresh").disabled = false;
+      setTimeout(() => Gcal.refresh(), 4000); // mudanças nas estruturas sincronizam a agenda
     }
   }
 
@@ -105,7 +107,7 @@ const Tracking = (() => {
     $("trk-group-list").innerHTML = d.groups.map((g) => `<option value="${esc(g.group)}">`).join("");
     renderTotals(d.totals);
     if (!d.positions.length) {
-      $("trk-groups").innerHTML = '<p class="muted">Nenhuma estrutura registrada. Use "+ Nova estrutura" ou, na aba Análise, "Adicionar ao acompanhamento".</p>';
+      $("trk-groups").innerHTML = '<p class="muted">Nenhuma estrutura registrada. Use "+ Nova estrutura" ou, na aba Análise de travas, "Adicionar ao acompanhamento".</p>';
       return;
     }
     $("trk-groups").innerHTML = d.groups.map((g) => {

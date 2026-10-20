@@ -81,8 +81,7 @@ def protected_router(
         chain, meta = service.chain(underlying, _scope(params, spot), force=body.refresh)
         if chain.empty:
             raise HTTPException(404, f"nenhuma opção de {underlying} encontrada no escopo")
-        if chain["underlying_price"].notna().any():
-            spot = float(chain["underlying_price"].dropna().iloc[-1])
+        spot = meta.get("spot") or spot
         stock = StockQuote(
             symbol=underlying,
             bid=quote.bid,

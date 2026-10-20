@@ -11,6 +11,7 @@ import json
 import os
 import threading
 import uuid
+from collections.abc import Callable
 from pathlib import Path
 
 SCHEMA_VERSION = 1
@@ -20,6 +21,7 @@ class TrackingStore:
     def __init__(self, path: Path) -> None:
         self._path = path
         self._lock = threading.Lock()
+        self.on_change: Callable[[], None] | None = None  # ex.: sincronizar o Google Agenda
 
     def _read(self) -> dict:
         if not self._path.exists():
@@ -35,6 +37,8 @@ class TrackingStore:
         if self._path.exists():
             os.replace(self._path, self._path.with_suffix(".bak"))
         os.replace(tmp, self._path)
+        if self.on_change is not None:
+            self.on_change()
 
     def list(self) -> list[dict]:
         with self._lock:
