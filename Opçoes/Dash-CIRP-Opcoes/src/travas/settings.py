@@ -53,6 +53,8 @@ class PathSettings(_Strict):
     icons_dir: Path
     snapshots_dir: Path = Path("data/snapshots")
     google_calendar_file: Path = Path("data/google_agenda.json")  # id da agenda + token cifrado
+    alert_contacts_file: Path = Path("telegram-token.txt")  # bot, chat id e e-mail (fora do git)
+    alerts_sent_file: Path = Path("data/alertas_stop.json")  # alertas já enviados pelo app
 
     def resolved(self, root: Path) -> PathSettings:
         return PathSettings(**{k: root / v for k, v in self.model_dump().items()})
@@ -177,6 +179,31 @@ class CalendarReminder(_Strict):
     time: str  # HH:MM (Brasília)
 
 
+class AlertSettings(_Strict):
+    """Alertas de stop 1:1 (Telegram + e-mail) das estruturas marcadas na Carteira."""
+
+    enabled: bool = True
+    server_url: str | None = "http://100.113.24.44:8767"  # redundância no servidor (Tailscale)
+    timeout_seconds: PositiveFloat = 5
+
+
+class VolPremiumSettings(_Strict):
+    """Indicador IV/HV da aba Liquidez de Opções (ver options/vol_premium.py)."""
+
+    expirations: PositiveInt = 3  # próximos vencimentos mensais no tooltip
+    cheap_below: PositiveFloat = 0.90  # IV/HV abaixo disto = barata
+    expensive_above: PositiveFloat = 1.20  # IV/HV acima disto = cara
+    min_hv_window: PositiveInt = 10  # janela mínima da vol histórica (pregões)
+    weak_book_spread: PositiveFloat = 0.15  # spread mediano ATM acima disto = pouco confiável
+    min_book_quotes: NonNegativeInt = 4  # séries ATM com bid e ask abaixo disto = pouco confiável
+
+    @model_validator(mode="after")
+    def _ordered(self) -> VolPremiumSettings:
+        if self.cheap_below >= self.expensive_above:
+            raise ValueError("vol_premium: cheap_below deve ser menor que expensive_above")
+        return self
+
+
 class GoogleCalendarSettings(_Strict):
     """Eventos de vencimento das estruturas abertas no Google Agenda (ver tracking/gcal.py)."""
 
@@ -253,6 +280,8 @@ class Settings(_Strict):
     snapshots: SnapshotSettings
     credit_stop: CreditStopSettings
     google_calendar: GoogleCalendarSettings = GoogleCalendarSettings()
+    alerts: AlertSettings = AlertSettings()
+    vol_premium: VolPremiumSettings = VolPremiumSettings()
 
 
 def load_settings(path: Path = DEFAULT_SETTINGS_PATH) -> Settings:

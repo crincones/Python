@@ -64,7 +64,7 @@ def simulator_router(
         return LiquidityRules(**settings.liquidity.model_dump())
 
     def _quotes(underlying: str, symbols: list[str], rate_annual: float, fresh: bool):
-        """Cotações das séries (mesma origem do Acompanhamento: pregão aberto = MT5 e salva;
+        """Cotações das séries (mesma origem da Carteira: pregão aberto = MT5 e salva;
         fechado = últimas do pregão, com a idade medida contra a captura mais recente)."""
         cached = cache.get(underlying)
         if (

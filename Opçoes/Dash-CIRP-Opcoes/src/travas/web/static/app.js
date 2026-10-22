@@ -3,7 +3,7 @@
   const $ = (id) => document.getElementById(id);
   const state = { defaults: null, analysis: null, detail: null, view: null, size: { mode: "qty" }, sort: null, tf: "d1", side: true, underlying: null, levels: [], tab: "analysis",
     // Cada aba tem o próprio ativo e as próprias linhas no gráfico; nada vaza de uma para outra.
-    chart: { analysis: { underlying: null, levels: [] }, tracking: { underlying: null, levels: [] }, heatmap: { underlying: null, levels: [] }, protected: { underlying: null, levels: [] }, simulator: { underlying: null, levels: [] } } };
+    chart: { analysis: { underlying: null, levels: [] }, tracking: { underlying: null, levels: [] }, heatmap: { underlying: null, levels: [] }, protected: { underlying: null, levels: [] }, simulator: { underlying: null, levels: [] }, liquidity: { underlying: null, levels: [] } } };
 
   const KIND_TEXT = {
     "alta|debito": "Trava de alta com débito: compra call de strike menor e vende call de strike maior. Paga débito; ganha se o ativo subir acima do breakeven.",
@@ -135,7 +135,7 @@
 
   function applyChart() {
     const ctx = state.chart[state.tab];
-    // Sem ativo próprio (ex.: Acompanhamento sem estrutura selecionada), mantém o ativo exibido,
+    // Sem ativo próprio (ex.: Carteira sem estrutura selecionada), mantém o ativo exibido,
     // mas sem linhas de outra aba.
     const u = ctx.underlying || state.underlying;
     state.levels = ctx.levels;
@@ -223,7 +223,7 @@
       document.body.classList.remove("resizing");
       savePrefs();
       if (state.detail) drawPayoff();
-      window.dispatchEvent(new Event("resize")); // redesenha o payoff do acompanhamento
+      window.dispatchEvent(new Event("resize")); // redesenha o payoff da carteira
     };
     sp.addEventListener("pointerup", end);
     sp.addEventListener("pointercancel", end);
@@ -248,10 +248,12 @@
     $("tab-heatmap").hidden = name !== "heatmap";
     $("tab-protected").hidden = name !== "protected";
     $("tab-simulator").hidden = name !== "simulator";
+    $("tab-liquidity").hidden = name !== "liquidity";
     if (name === "tracking") Tracking.activate();
     if (name === "heatmap") Heatmap.activate();
     if (name === "protected") Protected.activate();
     if (name === "simulator") Simulator.activate();
+    if (name === "liquidity") Liquidity.activate();
     applyChart();
     savePrefs();
   }
@@ -280,6 +282,8 @@
       state.lastClose = { ticker: u, price: last ? last.close : null };
       Candles.setLevels(state.levels);
       const m = data.meta;
+      // Ativo cujo preço vem de outro símbolo (IBOV11 → índice IBOV): o título diz qual.
+      $("side-title").innerHTML = tickerIcon(u, 24) + esc(m.price_symbol && m.price_symbol !== u ? `${m.price_symbol} (subjacente das opções ${u})` : u);
       $("bar-info").textContent = `Última barra: ${FMT.datetime(m.last_bar_time)}${m.last_bar_forming ? " (em formação)" : " (fechada)"}`;
       const short = m.requested && m.bars < m.requested ? ` (pedidas ${m.requested}: o MT5 só tem esse histórico)` : "";
       $("candle-note").textContent = `${m.bars} barras do MT5${short}, todas visíveis ao carregar (roda do mouse: zoom; ⇔ Tudo: volta a mostrar todas). ${m.ema_method}. Breakevens se referem ao vencimento, salvo indicação.` +
@@ -303,6 +307,7 @@
     $("kind-desc").textContent = KIND_TEXT[`${radio("direction")}|${radio("flow")}`];
     const usesPuts = (radio("direction") === "alta") !== (radio("flow") === "debito");
     $("style-hint").textContent = usesPuts ? "esta estrutura usa puts (na XP todas são europeias)" : "";
+    $("side-label").textContent = `as 2 pernas ${radio("direction") === "alta" ? "abaixo" : "acima"} do preço do ativo`;
     // Filtro Rafael Nobre só existe para travas de débito.
     const debit = radio("flow") === "debito";
     $("nobre-box").classList.toggle("disabled", !debit);
@@ -347,6 +352,7 @@
       nobre_max_cost_fraction: Number($("nobre_fraction").value),
       nobre_prefer_close: $("nobre_prefer_close").checked,
       european_short: $("european_short").checked,
+      legs_beyond_spot: $("legs_beyond_spot").checked,
       credit_stop: radio("flow") === "credito" && $("credit_stop").checked,
       refresh: $("refresh").checked,
       liquidity: {
@@ -492,6 +498,7 @@
         expiry_pnl: expiry,
         expiry_breakevens: z.be(sim.expiry_breakevens),
         entry_cash: z.lin(sim.entry_cash),
+        stop: sim.stop && FMT.ok(sim.stop.pnl_total) ? { ...sim.stop, pnl_total: z.lin(sim.stop.pnl_total) } : sim.stop,
         exit_spread_cost: z.lin(sim.exit_spread_cost),
         costs: z.c,
         dates: (sim.dates || []).map((day) => { const pnl = day.pnl.map(z.pnl); return { ...day, pnl, breakevens: zeroCrossings(sim.spots, pnl) }; }),
@@ -602,8 +609,9 @@
     const stopNote = a.credit_stop ? `<div class="small"><b>Stop 1:1 (Credit Spread Investing):</b> ${esc(a.credit_stop.note)}</div>` : "";
     const styleNote = a.assumptions.exercise_style_filter && a.assumptions.exercise_style_filter.length
       ? `<div class="small"><b>Estilo de exercício:</b> ${esc(a.assumptions.exercise_style_filter.join(" e "))}</div>` : "";
+    const sideNote = a.assumptions.strike_side_filter ? `<div class="small"><b>Strikes:</b> ${esc(a.assumptions.strike_side_filter)}</div>` : "";
     const disc = Object.entries(a.discarded).map(([k, v]) => `${esc(k)}: ${v}`).join(" · ");
-    $("discarded").innerHTML = nobreNote + stopNote + styleNote + `${a.total_ranked} travas ranqueadas de ${a.candidates_evaluated} avaliadas` + (disc ? ` · descartadas — ${disc}` : "") +
+    $("discarded").innerHTML = nobreNote + stopNote + styleNote + sideNote + `${a.total_ranked} travas ranqueadas de ${a.candidates_evaluated} avaliadas` + (disc ? ` · descartadas — ${disc}` : "") +
       (a.atm_iv.length ? ` · IV ATM: ${a.atm_iv.map((x) => `${FMT.date(x.expiration)} ${FMT.pct(x.atm_iv)}`).join(", ")}` : " · sem IV ATM confiável (POP indisponível)");
     renderRankingNote();
     syncSizeFields();
@@ -753,6 +761,7 @@
       ["Perda máxima", FMT.brl(d.max_loss)],
       ["Lucro máximo", FMT.brl(d.max_profit)],
       ["Breakeven (vencimento)", d.breakevens.map(FMT.price).join(" / ")],
+      ...stopRows(d),
       ["Lucro máx. ÷ perda máx.", FMT.ratio(d.reward_risk)],
       ["Perda máx. ÷ lucro máx.", FMT.ratio(d.risk_reward)],
       ["POP no vencimento", d.pop === null ? `indisponível (${esc(d.pop_unavailable_reason)})` : FMT.pct(d.pop)],
@@ -774,14 +783,29 @@
     $("metrics").innerHTML = items.map(([k, v]) => `<div><span>${k}</span><span>${v}</span></div>`).join("");
   }
 
+  // Preço do ativo que aciona o stop 1:1 (prejuízo = lucro máximo), hoje e no vencimento.
+  function stopRows(d) {
+    const s = d.simulation && d.simulation.stop;
+    if (!s) return [];
+    const tip = "Stop 1:1: encerrar quando o prejuízo igualar o lucro máximo. Antes do vencimento, pelo valor teórico (Black-Scholes com a IV de cada perna): o preço muda com o tempo; arraste a data simulada no gráfico.";
+    const tipHtml = ` <span class="tip" title="${esc(tip)}">?</span>`;
+    if (!s.available) return [[`Stop 1:1${tipHtml}`, `<span class="muted">${esc(s.reason)}</span>`]];
+    const today = FMT.ok(s.today_price)
+      ? `${FMT.price(s.today_price)} <span class="muted">(${FMT.pct(s.today_price / d.spot - 1, 1)} do spot)</span>`
+      : s.reason ? "não estimável" : "inatingível hoje";
+    return [
+      [`Stop 1:1: prejuízo que aciona${tipHtml}`, FMT.brl(-s.pnl_total)],
+      ["Stop 1:1: ativo que aciona hoje", today],
+      ["Stop 1:1: ativo no vencimento", FMT.price(s.expiry_price)],
+    ];
+  }
+
   // Stop 1:1 (Credit Spread Investing): métricas do manejo no detalhe.
   function stopMetrics(s) {
     const tipEv = "Média dos caminhos simulados: stop = −perda no stop; sem stop = crédito − valor no vencimento";
     return [
       ["Stop 1:1: custo para desmontar (gatilho)", `${FMT.price(s.trigger_cost)} por ação (${FMT.num(1 + s.loss_multiple, 0)} × crédito)`],
-      ["Stop 1:1: ativo que aciona hoje", s.stop_price_today === null ? "inatingível hoje" : FMT.price(s.stop_price_today)],
       ["Stop 1:1: mais próximo até o vencimento", `${FMT.price(s.stop_price_nearest)} (${FMT.pct(s.stop_distance_pct, 1)} do spot · ${FMT.num(s.stop_distance_sigmas, 2)} σ)`],
-      ["Stop 1:1: no vencimento", FMT.price(s.stop_price_expiry)],
       ["Stop 1:1: perda no stop", `${FMT.brl(s.stop_loss_total)} <span class="muted">(crédito + saída ${FMT.price(s.exit_cost_per_unit)}/ação)</span>`],
       ["Prob. de acionar o stop", `${FMT.pct(s.prob_stop, 1)}${s.median_stop_day ? ` <span class="muted">(mediana: ${FMT.num(s.median_stop_day, 0)} du)</span>` : ""}`],
       ["Prob. de ficar com o crédito inteiro", FMT.pct(s.prob_full_credit, 1)],
@@ -848,8 +872,8 @@
     const i = Number($("time-slider").value);
     const sel = sim.dates[i];
     const showModel = sel && sel.business_days_left > 0;
-    $("time-label").textContent = sel ? `${FMT.date(sel.date)} · ${sel.business_days_left} du até o vencimento${sel.business_days_left === 0 ? " (payoff exato)" : " (modelo)"}` : "";
-    $("payoff-legend").innerHTML = Payoff.legend(showModel, sel, sim.expiry_label);
+    $("time-label").textContent = sel ? `${FMT.date(sel.date)} · ${sel.business_days_left} du até o vencimento${sel.business_days_left === 0 ? " (payoff exato)" : " (modelo)"}${Payoff.stopText(sim, sel)}` : "";
+    $("payoff-legend").innerHTML = Payoff.legend(showModel, sel, sim.expiry_label, sim);
     Payoff.render($("payoff"), d, i, $("tooltip"));
     // Níveis no gráfico do ativo
     const levels = [
@@ -857,7 +881,7 @@
       ...d.breakevens.map((b) => ({ label: "BE venc.", value: b, color: "#157a3c", dashed: true, size: 1.6, fit: true })),
       ...(showModel ? sel.breakevens.map((b) => ({ label: `Equil. ${FMT.date(sel.date)}`, value: b, color: "#1f5fbf", dashed: true, dash: [2, 3] })) : []),
       ...(d.target_price ? [{ label: "Alvo", value: d.target_price, color: "#7a2fc0", dashed: true, size: 1.4 }] : []),
-      ...(d.credit_stop ? [{ label: "Stop 1:1", value: d.credit_stop.stop_price_nearest, color: "#c0262d", dashed: true, size: 1.6, fit: true }] : []),
+      ...Payoff.stopLevels(sim, sel),
       ...d.legs.map((l) => ({ label: `Strike ${l.side === "compra" ? "C" : "V"}`, value: l.strike, color: "#98a2b3", dashed: true, dash: [2, 4], fit: true })),
     ];
     setLevels(levels, "analysis");
@@ -883,7 +907,7 @@
   function savePrefs(now = false) {
     clearTimeout(saveTimer);
     saveTimer = setTimeout(() => {
-      const prefs = { side_width: state.sideWidth || null, nobre_filter: $("nobre_filter").checked, nobre_target_required: $("nobre_target_required").checked, nobre_fraction: $("nobre_fraction").value, nobre_prefer_close: $("nobre_prefer_close").checked, european_short: $("european_short").checked, credit_stop: $("credit_stop").checked, direction: radio("direction"), flow: radio("flow"), tf: state.tf, side: state.side, tab: state.tab, size_mode: state.size.mode, include_illiquid: $("include_illiquid").checked, tracking: Tracking.prefs(), heatmap: Heatmap.prefs(), protected: Protected.prefs(), simulator: Simulator.prefs() };
+      const prefs = { side_width: state.sideWidth || null, nobre_filter: $("nobre_filter").checked, nobre_target_required: $("nobre_target_required").checked, nobre_fraction: $("nobre_fraction").value, nobre_prefer_close: $("nobre_prefer_close").checked, european_short: $("european_short").checked, legs_beyond_spot: $("legs_beyond_spot").checked, credit_stop: $("credit_stop").checked, direction: radio("direction"), flow: radio("flow"), tf: state.tf, side: state.side, tab: state.tab, size_mode: state.size.mode, include_illiquid: $("include_illiquid").checked, tracking: Tracking.prefs(), heatmap: Heatmap.prefs(), protected: Protected.prefs(), simulator: Simulator.prefs(), liquidity: Liquidity.prefs() };
       if (state.offHoursSource) prefs.off_hours_source = state.offHoursSource;
       for (const f of PREF_FIELDS) prefs[f] = $(f).value;
       fetch("/api/preferences", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(prefs) }).catch(() => {});
@@ -911,6 +935,7 @@
     $("nobre_target_required").checked = !!prefs.nobre_target_required;
     if (prefs.nobre_fraction) $("nobre_fraction").value = prefs.nobre_fraction;
     $("european_short").checked = !!prefs.european_short;
+    $("legs_beyond_spot").checked = !!prefs.legs_beyond_spot;
     if (prefs.nobre_prefer_close !== undefined) $("nobre_prefer_close").checked = !!prefs.nobre_prefer_close;
     if (["mn1", "w1", "d1", "h4", "h1"].includes(prefs.tf)) state.tf = prefs.tf;
     document.querySelectorAll(".tf button").forEach((b) => b.classList.toggle("active", b.dataset.tf === state.tf));
@@ -918,9 +943,10 @@
     if (prefs.side === false) setSide(false);
     if (prefs.tracking) Tracking.applyPrefs(prefs.tracking);
     if (prefs.heatmap) Heatmap.applyPrefs(prefs.heatmap);
+    if (prefs.liquidity) Liquidity.applyPrefs(prefs.liquidity);
     Protected.init(def, prefs.protected);
     Simulator.init(def, prefs.simulator);
-    if (["tracking", "heatmap", "protected", "simulator"].includes(prefs.tab)) switchTab(prefs.tab);
+    if (["tracking", "heatmap", "protected", "simulator", "liquidity"].includes(prefs.tab)) switchTab(prefs.tab);
   }
 
   async function init() {
@@ -928,7 +954,7 @@
     state.defaults = def;
     applyDefaults(def, prefs);
     updateKindText();
-    document.querySelectorAll("input[name=direction], input[name=flow], #nobre_filter, #target_price, #target_pct, #european_short, #credit_stop").forEach((r) => r.addEventListener("change", () => { updateKindText(); savePrefs(); }));
+    document.querySelectorAll("input[name=direction], input[name=flow], #nobre_filter, #target_price, #target_pct, #european_short, #legs_beyond_spot, #credit_stop").forEach((r) => r.addEventListener("change", () => { updateKindText(); savePrefs(); }));
     $("underlying").addEventListener("change", onUnderlying);
     $("star-btn").addEventListener("click", onStar);
     Watch.on(updateStar);

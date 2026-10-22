@@ -70,9 +70,7 @@ def write_snapshot(
     if not chain.empty:
         rel = f"{day.isoformat()}/{slot}.csv.gz"
         frame = chain[SNAPSHOT_COLUMNS]
-        _atomic_write(
-            root / rel, lambda tmp: frame.to_csv(tmp, index=False, compression="gzip")
-        )
+        _atomic_write(root / rel, lambda tmp: frame.to_csv(tmp, index=False, compression="gzip"))
         manifest["file"] = rel
     _write_json(folder / f"{slot}.json", manifest)
     write_index(root)
@@ -84,7 +82,7 @@ def write_index(root: Path) -> dict:
     for path in sorted(root.glob("*/*.json")):
         try:
             m = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
+        except OSError, json.JSONDecodeError:
             log.warning("Manifesto ilegível: %s", path)
             continue
         snapshots.append(
@@ -149,19 +147,29 @@ def options_liquidity(
     Ativo de cada opção: referência oficial (`option_reference`); séries que já venceram saem
     dela e vão pela raiz do ticker (4 letras → ativo mais comum dessa raiz)."""
     files = sorted(root.glob(f"*/{B3_FILE}"))[-sessions:]
-    if not files or reference is None or reference.empty:
+    table = options_liquidity_table(files, reference)
+    if table.empty:
         return pd.Series(dtype="float64"), []
+    return table["turnover_brl"], [p.parent.name for p in files]
+
+
+def options_liquidity_table(files: list[Path], reference: pd.DataFrame | None) -> pd.DataFrame:
+    """Por ativo-objeto (índice), média por pregão dos `files` (fechamentos da B3): volume
+    financeiro (`turnover_brl`) e nº de negócios (`deals`) das opções; maior volume primeiro."""
+    columns = ["turnover_brl", "deals"]
+    if not files or reference is None or reference.empty:
+        return pd.DataFrame(columns=columns, dtype="float64")
     by_symbol = reference["underlying"]
     roots = pd.Series(by_symbol.to_numpy(), index=by_symbol.index.str[:4])
     by_root = roots.groupby(level=0).agg(lambda s: s.value_counts().index[0])
     totals = []
     for path in files:
-        day = pd.read_csv(path, usecols=["symbol", "segment", "turnover_brl"])
+        day = pd.read_csv(path, usecols=["symbol", "segment", *columns])
         opts = day[day["segment"].isin(["EQUITY CALL", "EQUITY PUT"])]
         underlying = opts["symbol"].map(by_symbol).fillna(opts["symbol"].str[:4].map(by_root))
-        totals.append(opts["turnover_brl"].groupby(underlying).sum())
-    average = pd.concat(totals, axis=1).fillna(0).sum(axis=1) / len(files)
-    return average.sort_values(ascending=False), [p.parent.name for p in files]
+        totals.append(opts[columns].groupby(underlying).sum())
+    average = pd.concat(totals).groupby(level=0).sum() / len(files)
+    return average.sort_values(["turnover_brl", "deals"], ascending=False)
 
 
 # ---- leitura -----------------------------------------------------------------------------------
@@ -191,13 +199,11 @@ def snapshot_chain(
     expirations = pd.Series(rows["expiration_date"].to_numpy())
     rows["dte_business_days"] = calendar.sessions_until(today, expirations).to_numpy()
     rows["dte_calendar_days"] = (
-        (pd.to_datetime(expirations) - pd.Timestamp(today)).dt.days.to_numpy()
-    )
+        pd.to_datetime(expirations) - pd.Timestamp(today)
+    ).dt.days.to_numpy()
     priced = rows[rows["underlying_price"].notna()]
     spot = (
-        float(priced.loc[priced["read_time"].idxmax(), "underlying_price"])
-        if len(priced)
-        else None
+        float(priced.loc[priced["read_time"].idxmax(), "underlying_price"]) if len(priced) else None
     )
     return rows, spot
 

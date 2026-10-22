@@ -1,4 +1,4 @@
-"""Acompanhamento: cadastro, preço de entrada (líquido x pernas), P&L, encerramento e grupos."""
+"""Carteira: cadastro, preço de entrada (líquido x pernas), P&L, encerramento e grupos."""
 
 from __future__ import annotations
 
@@ -274,3 +274,26 @@ def test_store_roundtrip(tmp_path):
     assert [p["name"] for p in store.list()] == ["y"]
     with pytest.raises(KeyError):
         store.delete("nada")
+
+
+def test_stop_info_feeds_the_stop_alert(chain, catalog, calendar):
+    from travas.alerts.stop_watch import watch_entry
+
+    cheap = {**build_record(bull_call(chain), catalog), "id": "x", "status": "aberta"}
+    stop = evaluate(cheap, chain, calendar=calendar)["stop"]
+    assert not stop["available"] and "não se aplica" in stop["reason"]  # perda 0,80 < lucro 1,20
+    rec = {
+        **build_record(bull_call(chain, entry_net=1.40), catalog),
+        "id": "y",
+        "status": "aberta",
+        "stop_alert": {"enabled": True, "armed_at": "t"},
+    }
+    ev = evaluate(rec, chain, calendar=calendar)
+    stop = ev["stop"]
+    # Débito 1,40, lucro máx. 0,60: stop com a trava valendo 0,80 → no vencimento 30 + 0,80.
+    assert stop["available"] and stop["expiry_price"] == pytest.approx(30.8, abs=1e-6)
+    assert stop["pnl_total"] == pytest.approx(-60.0)
+    assert stop["by_date"][TODAY.isoformat()] == pytest.approx(stop["today_price"])
+    assert ev["stop_alert"] == {"enabled": True, "armed_at": "t"}
+    entry = watch_entry(ev, "t")
+    assert entry["down"] and entry["by_date"][ev["first_expiration"]] == pytest.approx(30.8)

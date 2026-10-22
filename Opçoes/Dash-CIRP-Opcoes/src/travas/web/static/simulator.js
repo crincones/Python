@@ -332,8 +332,8 @@ const Simulator = (() => {
     const i = Number($("sm-slider").value);
     const sel = sim.dates[i];
     const showModel = sel && sel.business_days_left > 0;
-    $("sm-time-label").textContent = sel ? `${FMT.date(sel.date)} · ${sel.business_days_left} du até o 1º vencimento${sel.business_days_left === 0 ? (sim.multi_expiry ? " (pernas posteriores pelo modelo)" : " (payoff exato)") : " (modelo)"}` : "";
-    $("sm-legend").innerHTML = Payoff.legend(showModel, sel, sim.expiry_label);
+    $("sm-time-label").textContent = sel ? `${FMT.date(sel.date)} · ${sel.business_days_left} du até o 1º vencimento${sel.business_days_left === 0 ? (sim.multi_expiry ? " (pernas posteriores pelo modelo)" : " (payoff exato)") : " (modelo)"}${Payoff.stopText(sim, sel)}` : "";
+    $("sm-legend").innerHTML = Payoff.legend(showModel, sel, sim.expiry_label, sim);
     Payoff.render($("sm-payoff"), chartData(r), i, App.tooltip());
     const strikes = [...new Set(r.legs.filter((l) => l.kind === "opcao").map((l) => l.strike))];
     App.setLevels([
@@ -342,6 +342,7 @@ const Simulator = (() => {
       ...(showModel ? sel.breakevens.map((b) => ({ label: `Equil. ${FMT.date(sel.date)}`, value: b, color: "#1f5fbf", dashed: true, dash: [2, 3] })) : []),
       ...(r.target_price ? [{ label: "Alvo", value: r.target_price, color: "#7a2fc0", dashed: true, size: 1.4 }] : []),
       ...strikes.map((k) => ({ label: "Strike", value: k, color: "#98a2b3", dashed: true, dash: [2, 4], fit: true })),
+      ...Payoff.stopLevels(sim, sel),
     ], "simulator");
     const units = r.entry_net_per_unit !== null && r.legs.length ? r.legs[0].quantity * (r.legs[0].multiplier || 1) : null;
     ExitPanel.render($("sm-exit-box"), { sim, index: i, spot: r.spot, target: r.target_price, units });

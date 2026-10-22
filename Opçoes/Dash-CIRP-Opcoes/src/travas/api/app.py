@@ -18,14 +18,18 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, field_validator
 
+from travas.alerts.service import StopAlerts
+from travas.api.alerts_routes import alerts_router
 from travas.api.calendar_routes import calendar_router
 from travas.api.heatmap_routes import heatmap_router
+from travas.api.liquidity_routes import liquidity_router
 from travas.api.protected_routes import protected_router
 from travas.api.simulator_routes import simulator_router
 from travas.api.tracking_routes import tracking_router
 from travas.api.watchlist_routes import watchlist_router
 from travas.data.icons import IconCache
 from travas.data.market_data import ChainScope
+from travas.data.options_liquidity import OptionsLiquidity
 from travas.data.service import OFF_HOURS_SOURCES, MarketDataService, MarketDataUnavailable
 from travas.options.analysis import (
     AnalysisParams,
@@ -87,6 +91,7 @@ class AnalyzeIn(BaseModel):
     nobre_max_cost_fraction: float = 0.25
     nobre_prefer_close: bool = True
     european_short: bool = False
+    legs_beyond_spot: bool = False
     credit_stop: bool = False
 
     @field_validator("nobre_max_cost_fraction")
@@ -152,7 +157,19 @@ def create_app(
         store.list,
         service.calendar,
     )
-    store.on_change = gcal.request_sync  # criar/editar/encerrar/excluir → sincroniza a agenda
+    alerts = StopAlerts(
+        settings.alerts,
+        settings.paths.alert_contacts_file,
+        settings.paths.alerts_sent_file,
+        store.list,
+        gcal,
+    )
+
+    def _on_change() -> None:  # criar/editar/encerrar/excluir → agenda e lista vigiada
+        gcal.request_sync()
+        alerts.request_sync()
+
+    store.on_change = _on_change
 
     @asynccontextmanager
     async def lifespan(_: FastAPI):
@@ -224,10 +241,15 @@ def create_app(
         ].sort_values(["expiration_date", "option_type", "strike"])
         return clean(rows.to_dict(orient="records"))
 
-    app.include_router(tracking_router(settings, service, store, clean))
+    app.include_router(tracking_router(settings, service, store, clean, alerts))
+    app.include_router(alerts_router(alerts))
     app.include_router(heatmap_router(settings, service, clean))
     app.include_router(watchlist_router(watchlist))
     app.include_router(calendar_router(gcal))
+    liquidity = OptionsLiquidity(
+        settings.paths.quotes_dir.parent / "b3" / "negocios", service.calendar, service.instruments
+    )
+    app.include_router(liquidity_router(settings, service, liquidity, clean))
     app.include_router(protected_router(settings, service, clean, _require_mt5_options))
     app.include_router(simulator_router(settings, service, clean, _require_mt5_options))
 
@@ -395,6 +417,7 @@ def _params(body: AnalyzeIn, spot: float, settings: Settings) -> AnalysisParams:
         nobre_max_cost_fraction=body.nobre_max_cost_fraction,
         nobre_prefer_close=body.nobre_prefer_close,
         european_short=body.european_short,
+        legs_beyond_spot=body.legs_beyond_spot,
         credit_stop=body.credit_stop,
         credit_stop_loss_multiple=settings.credit_stop.loss_multiple,
         credit_stop_paths=settings.credit_stop.paths,

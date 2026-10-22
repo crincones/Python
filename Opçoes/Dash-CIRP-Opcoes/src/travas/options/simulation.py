@@ -17,6 +17,7 @@ import pandas as pd
 
 from travas.calendar_b3 import B3Calendar
 from travas.options import pricing
+from travas.options.credit_stop import stop_levels
 from travas.options.models import OptionType, Structure
 from travas.options.payoff import expiry_profile, net_premium, pnl_at_expiry
 from travas.options.valuation import theoretical_pnl, zero_crossings
@@ -53,6 +54,7 @@ def simulate(
     costs: float = 0.0,
     extra_prices: Sequence[float | None] = (),
     points: int = 161,
+    stop_loss_multiple: float = 1.0,
 ) -> dict:
     xs = price_grid(structure, extra_prices, points)
     first = min(structure.expirations)
@@ -90,6 +92,7 @@ def simulate(
                     "breakevens": zero_crossings(xs, ys),
                 }
             )
+    stop = _stop(structure, today, calendar, rate, sigmas, dates, stop_loss_multiple)
     vols = ", ".join(f"{s:.1%}" for _, s in options if _ok(s)) or "indisponível"
     return {
         "available": final is not None,
@@ -104,6 +107,7 @@ def simulate(
         "model_available": bool(dates),
         "model_reason": None if dates else "sem volatilidade confiável em todas as pernas",
         "sigmas": list(sigmas),
+        "stop": stop,
         # Fluxo de entrada (R$ totais, + recebido) e custos: valor para zerar na data simulada =
         # P&L − entrada + custos (o mesmo modelo da curva).
         "entry_cash": net_premium(structure),
@@ -119,6 +123,31 @@ def simulate(
             )
         ),
     }
+
+
+def _stop(
+    structure: Structure,
+    today: dt.date,
+    calendar: B3Calendar,
+    rate: float,
+    sigmas: Sequence[float | None],
+    dates: list[dict],
+    loss_multiple: float,
+) -> dict:
+    """Stop 1:1 (prejuízo = lucro máximo) da trava vertical: preço do ativo hoje, no vencimento e
+    em cada data simulada (gravado em `dates[i]["stop_price"]`)."""
+    if any(leg.price is None for leg in structure.legs):
+        reason = "sem preço de entrada"
+        return {"available": False, "reason": reason, "loss_multiple": loss_multiple}
+    first = min(structure.expirations)
+    now = business_days_until(calendar, today, first)
+    days = [now, 0, *(day["business_days_left"] for day in dates)]
+    stop = stop_levels(structure, rate, sigmas, days, loss_multiple)
+    prices = stop.pop("prices")
+    stop["today_price"], stop["expiry_price"] = prices[0], prices[1]
+    for day, price in zip(dates, prices[2:], strict=True):
+        day["stop_price"] = price
+    return stop
 
 
 def profile_summary(structure: Structure, sim: dict, costs: float = 0.0) -> dict:

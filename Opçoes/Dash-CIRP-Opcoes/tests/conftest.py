@@ -17,9 +17,13 @@ from travas.options.models import Direction, Flow
 from travas.settings import load_settings
 
 SETTINGS = load_settings()
-# Testes nunca falam com o Google Agenda real (a conta conectada do usuário).
+# Testes nunca falam com o Google Agenda real (a conta conectada do usuário),
+# nem com o Telegram/e-mail nem com o servidor de alertas.
 SETTINGS = SETTINGS.model_copy(
-    update={"google_calendar": SETTINGS.google_calendar.model_copy(update={"enabled": False})}
+    update={
+        "google_calendar": SETTINGS.google_calendar.model_copy(update={"enabled": False}),
+        "alerts": SETTINGS.alerts.model_copy(update={"enabled": False, "server_url": None}),
+    }
 )
 TODAY = dt.date(2026, 10, 14)
 SPOT = 31.0

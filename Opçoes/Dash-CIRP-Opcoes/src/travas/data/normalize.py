@@ -76,6 +76,20 @@ def reference_price(last: pd.Series, bid: pd.Series, ask: pd.Series) -> pd.Serie
 
 UNDERLYING_TICKER_RE = r"[A-Z0-9]{4}\d{1,2}"  # PETR4, BOVA11, TAEE11, AAPL34…
 
+# Ativo-objeto como a B3 o cadastra → símbolo de onde vem o PREÇO (cotação e candles). As opções
+# de Ibovespa têm ativo "IBOV11", mas o subjacente é o índice IBOV: no MT5 da XP o IBOV11 só
+# recebe o fechamento uma vez por dia (e tem histórico curto), o IBOV é o índice ao vivo.
+PRICE_SYMBOLS = {"IBOV11": "IBOV"}
+
+
+def price_symbol(underlying: str) -> str:
+    return PRICE_SYMBOLS.get(underlying.upper(), underlying)
+
+
+# Opções sobre índice: vencimento mensal na quarta-feira mais próxima do dia 15 (as de ações e
+# ETFs vencem na 3ª sexta-feira).
+INDEX_OPTION_UNDERLYINGS = frozenset({"IBOV11"})
+
 
 def resolve_underlying(
     names: pd.Series, basis: pd.Series, reference: pd.DataFrame | None

@@ -108,8 +108,8 @@ credit_stop:
     liquidity: 0.20               # pior perna: a saída no stop precisa de liquidez
     exit_cost: 0.10               # (natural − mid) ÷ crédito
 
-# Google Agenda: um evento por vencimento de cada estrutura aberta no Acompanhamento, apagado
-# quando ela é encerrada. Conectar na aba Acompanhamento. Credencial OAuth "App para computador"
+# Google Agenda: um evento por vencimento de cada estrutura aberta na Carteira, apagado
+# quando ela é encerrada. Conectar na aba Carteira. Credencial OAuth "App para computador"
 # (client_secret*.json na raiz do projeto, fora do git); token cifrado em data/google_agenda.json.
 google_calendar:
   enabled: true
@@ -120,7 +120,26 @@ google_calendar:
     - {business_days_before: 5, time: "12:00"}
     - {business_days_before: 1, time: "12:00"}
     - {business_days_before: 0, time: "12:00"}
-  sync_minutes: 30                # além de sincronizar a cada mudança no Acompanhamento
+  sync_minutes: 30                # além de sincronizar a cada mudança na Carteira
+
+# Alertas de stop 1:1 (Carteira, checkbox por estrutura aberta): Telegram + e-mail quando o
+# ativo alcança o preço em que o prejuízo iguala o lucro máximo. Contatos em telegram-token.txt
+# (fora do git); e-mail pela Gmail API da conexão Google (escopo gmail.send). O app checa quando
+# recebe cotações com o mercado aberto; o servidor checa a cada 15 min de pregão (redundância).
+alerts:
+  enabled: true
+  server_url: "http://100.113.24.44:8767"   # servidor de alertas no Debian (Tailscale); null = só o app
+  timeout_seconds: 5
+
+# Aba "Liquidez de Opções": opções baratas/caras pela razão IV ATM / vol histórica (janela do
+# tamanho do prazo), nos próximos vencimentos mensais. Indicativo, não recomendação.
+vol_premium:
+  expirations: 3
+  cheap_below: 0.90               # IV/HV < 0,90 = barata
+  expensive_above: 1.20           # IV/HV > 1,20 = cara (a IV costuma ficar acima da HV)
+  min_hv_window: 10               # pregões
+  weak_book_spread: 0.15          # spread mediano perto do dinheiro acima disto: pouco confiável
+  min_book_quotes: 4              # menos séries com bid e ask perto do dinheiro: pouco confiável
 
 # Aba "Ativo protegido" (Rafael Nobre): ativo + put + calls vendidas, piso no vencimento ≥ custo.
 protected:

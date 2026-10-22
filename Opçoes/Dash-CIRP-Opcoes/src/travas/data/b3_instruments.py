@@ -142,6 +142,12 @@ class B3Instruments:
             data = resp.read()
         if len(data) < 1000:  # arquivo ainda não publicado para o dia
             return None
+        # 1ª linha: "Status do Arquivo: Final|Parcial". O parcial ainda está sendo montado pela
+        # B3 (visto às 09:00 de 20/10/2026): usa-se o último final, de um pregão anterior.
+        status = data[:200].decode("latin-1").splitlines()[0]
+        if "final" not in status.lower():
+            log.info("B3: cadastro de %s ainda não final (%s)", day, status.strip())
+            return None
         return pd.read_csv(
             io.BytesIO(data),
             sep=";",

@@ -16,6 +16,7 @@ from travas.tracking.store import TrackingStore
 class FakeService:
     def __init__(self, calendar, available=True):
         self.calendar = calendar
+        self.instruments = None  # aba Liquidez de Opções: testada em test_options_liquidity
         self.available = available
         self.scopes = []
 

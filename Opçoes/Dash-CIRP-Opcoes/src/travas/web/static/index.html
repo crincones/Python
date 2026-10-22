@@ -11,9 +11,10 @@
   <div class="brand">Dash CIRP Opções <span class="muted">B3 · travas</span></div>
   <nav class="tabs" role="tablist" aria-label="Seções">
     <button data-tab="analysis" class="active" role="tab">Análise de travas</button>
-    <button data-tab="tracking" role="tab">Acompanhamento</button>
+    <button data-tab="tracking" role="tab">Carteira</button>
     <button data-tab="heatmap" role="tab">Heatmap</button>
     <button data-tab="protected" role="tab" title="Ativo + put + calls vendidas com piso no vencimento ≥ custo">Ativo protegido</button>
+    <button data-tab="liquidity" role="tab" title="Ativos com as opções mais líquidas (fechamento oficial da B3) e exportação em CSV">Liquidez de Opções</button>
     <button data-tab="simulator" role="tab" title="Monte qualquer estrutura com opções (e o próprio ativo) e simule a passagem do tempo">Simulador</button>
   </nav>
   <div id="market" class="market-pill" role="status" aria-live="polite" hidden></div>
@@ -70,6 +71,11 @@
           <label class="check-inline"><input type="checkbox" id="european_short"> perna vendida europeia <span class="muted">(evita exercício antecipado)</span></label>
           <span class="tip" title="O risco de ser exercido antes do vencimento (atribuição) é da perna VENDIDA americana — principalmente dentro do dinheiro, com pouco valor extrínseco ou perto da data-com de dividendos. A perna comprada só é exercida se você quiser. Na XP todas as puts são europeias; as calls são mistas.">?</span>
           <span id="style-hint" class="muted small"></span>
+        </div>
+        <div class="nobre-box" id="side-box">
+          <span class="strong small">Strikes:</span>
+          <label class="check-inline"><input type="checkbox" id="legs_beyond_spot"> <span id="side-label">as 2 pernas abaixo do preço do ativo</span></label>
+          <span class="tip" title="Trava de alta: as duas pernas (comprada e vendida) com strike abaixo do preço atual do ativo. Trava de baixa: as duas acima. Vale para crédito e débito. Usa o spot da coleta.">?</span>
         </div>
         <div class="row">
           <div class="field">
@@ -156,7 +162,7 @@
       <div class="card-head">
         <h2 id="detail-title">Estrutura</h2>
         <div class="muted" id="detail-sub"></div>
-        <button type="button" id="btn-track">+ Adicionar ao acompanhamento</button>
+        <button type="button" id="btn-track">+ Adicionar à carteira</button>
       </div>
       <div id="detail-alerts"></div>
       <div class="detail-grid">
@@ -197,7 +203,7 @@
    <div id="tab-tracking" hidden>
     <section class="card">
       <div class="card-head">
-        <h2>Acompanhamento</h2>
+        <h2>Carteira</h2>
         <div class="toolbar">
           <label class="small">Vol. própria (% a.a.) <input id="trk-vol" type="number" step="any" min="0" placeholder="IV das pernas" style="width:8rem"></label>
           <label class="check-inline"><input type="checkbox" id="trk-auto"> Atualizar a cada 60 s</label>
@@ -215,6 +221,7 @@
       </div>
       <div class="muted small" id="trk-meta">Nenhuma atualização ainda.</div>
       <div class="nobre-box" id="gcal-box" hidden></div>
+      <div class="nobre-box" id="alerts-box" hidden></div>
       <div id="trk-market" class="warn" hidden></div>
       <div id="trk-errors" class="warn" hidden></div>
       <div class="busy-host" id="trk-live">
@@ -492,6 +499,27 @@
     </section>
    </div>
 
+   <div id="tab-liquidity" hidden>
+    <section class="card" aria-labelledby="lq-title">
+      <div class="card-head">
+        <h2 id="lq-title">Liquidez de Opções <span class="muted small">ativos ordenados pelo volume financeiro médio das opções (fechamento oficial da B3)</span></h2>
+        <div class="toolbar">
+          <label class="small">Pregões na média
+            <select id="lq-sessions"><option value="1">1</option><option value="5" selected>5</option><option value="10">10</option><option value="20">20</option></select></label>
+          <label class="small">Mostrar
+            <select id="lq-top"><option value="10">top 10</option><option value="20" selected>top 20</option><option value="30">top 30</option><option value="50">top 50</option><option value="0">todos</option></select></label>
+          <button type="button" id="lq-csv" class="primary" title="Baixa a lista exibida em CSV (Excel pt-BR: ; e vírgula decimal)">Gerar CSV</button>
+        </div>
+      </div>
+      <div class="muted small" id="lq-meta"></div>
+      <div id="lq-error" class="warn" hidden></div>
+      <div class="busy-host table-wrap" id="lq-host">
+        <table id="lq-table" class="ranking lq-table"></table>
+      </div>
+      <p class="muted small">Volume financeiro e negócios: média por pregão somando todas as séries (calls e puts) de cada ativo, pelo arquivo público de negócios da B3 (publicado à noite; o pregão do dia entra depois disso). Séries já vencidas no período contam pelo ativo da raiz do ticker. Volume não é open interest. "MT5": opções com cotação na corretora logada (necessário para analisar travas).</p>
+    </section>
+   </div>
+
    <div id="tab-simulator" hidden>
     <section class="card" aria-labelledby="sm-title">
       <div class="card-head">
@@ -626,10 +654,12 @@
 <script src="/static/candles.js"></script>
 <script src="/static/report.js"></script>
 <script src="/static/gcal.js"></script>
+<script src="/static/alerts.js"></script>
 <script src="/static/tracking.js"></script>
 <script src="/static/heatmap.js"></script>
 <script src="/static/protected.js"></script>
 <script src="/static/simulator.js"></script>
+<script src="/static/liquidity.js"></script>
 <script src="/static/app.js"></script>
 </body>
 </html>

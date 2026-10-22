@@ -54,6 +54,20 @@ class B3Calendar:
     def is_monthly_expiration(self, day: dt.date) -> bool:
         return day == self.monthly_expiration(day.year, day.month)
 
+    def index_monthly_expiration(self, year: int, month: int) -> dt.date:
+        """Vencimento mensal das opções sobre o Ibovespa: quarta-feira mais próxima do dia 15;
+        sem pregão nela, o pregão seguinte (ex.: 18/11/2026, 16/12/2026, 13/01/2027)."""
+        fifteenth = dt.date(year, month, 15)
+        offset = (2 - fifteenth.weekday()) % 7  # dias até a próxima quarta (0 se já é quarta)
+        wednesday = fifteenth + dt.timedelta(days=offset if offset <= 3 else offset - 7)
+        rolled = np.busday_offset(
+            np.datetime64(wednesday, "D"), 0, roll="forward", holidays=self._holidays
+        )
+        return pd.Timestamp(rolled).date()
+
+    def is_index_monthly_expiration(self, day: dt.date) -> bool:
+        return day == self.index_monthly_expiration(day.year, day.month)
+
     def previous_sessions(self, day: dt.date, count: int) -> list[dt.date]:
         """Os `count` pregões imediatamente anteriores a `day` (exclusivo), do mais antigo ao
         mais recente."""

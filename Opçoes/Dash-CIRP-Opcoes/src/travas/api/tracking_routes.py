@@ -1,4 +1,4 @@
-"""Rotas da aba Acompanhamento. Nenhuma rota envia ordens: só registra e avalia estruturas."""
+"""Rotas da aba Carteira. Nenhuma rota envia ordens: só registra e avalia estruturas."""
 
 from __future__ import annotations
 
@@ -13,6 +13,7 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
+from travas.alerts.service import StopAlerts
 from travas.data.service import MarketDataService, MarketDataUnavailable
 from travas.options import pricing
 from travas.options.implied_vol import options_implied_vol
@@ -36,13 +37,21 @@ log = logging.getLogger(__name__)
 QUOTES_REUSE_SECONDS = 120
 
 
+class StopAlertIn(BaseModel):
+    enabled: bool
+
+
 class EvaluateIn(BaseModel):
     vol_override: float | None = Field(default=None, gt=0)
     rate_annual: float | None = None
 
 
 def tracking_router(
-    settings: Settings, service: MarketDataService, store: TrackingStore, clean: Callable
+    settings: Settings,
+    service: MarketDataService,
+    store: TrackingStore,
+    clean: Callable,
+    alerts: StopAlerts | None = None,
 ) -> APIRouter:
     router = APIRouter(prefix="/api/tracking")
     cache: dict[str, tuple[float, float | None, pd.DataFrame]] = {}  # ativo → (t, spot, cotações)
@@ -157,9 +166,34 @@ def tracking_router(
             raise HTTPException(404, "estrutura não encontrada") from exc
         return {"ok": True}
 
+    def _alert_state(evaluated: list[dict]) -> None:
+        """Alertas de stop: lista vigiada + envio se o ativo alcançou o stop (só com o mercado
+        aberto e cotações recebidas agora); marca no resultado o que já foi enviado."""
+        if alerts is None:
+            return
+        alerts.process(evaluated, service.market().is_open)
+        for e in evaluated:
+            armed = (e.get("stop_alert") or {}).get("armed_at")
+            e["stop_alert_sent"] = alerts.sent_info(e["id"], armed) if armed else None
+
+    @router.put("/positions/{position_id}/stop-alert")
+    def stop_alert(position_id: str, body: StopAlertIn) -> dict:
+        """Checkbox do alerta de stop 1:1. Marcar de novo rearma (novo alerta possível)."""
+        record = store.get(position_id)
+        if record is None:
+            raise HTTPException(404, "estrutura não encontrada")
+        now = pd.Timestamp.now(tz=LOCAL_TIMEZONE).isoformat(timespec="seconds")
+        flag = {"enabled": body.enabled, "armed_at": now if body.enabled else None}
+        record = store.update(position_id, {"stop_alert": flag})
+        if body.enabled and alerts is not None:  # já monta a tabela do stop para o servidor
+            evaluated, _ = _evaluate([record], EvaluateIn(), fresh=False)
+            _alert_state(evaluated)
+        return clean(record)
+
     @router.post("/evaluate")
     def evaluate(body: EvaluateIn) -> dict:
         evaluated, errors = _evaluate(store.list(), body, fresh=True)
+        _alert_state(evaluated)
         market = service.market()
         legs = [leg for e in evaluated if e["status"] == "aberta" for leg in e["legs"]]
         captured = [
@@ -246,7 +280,7 @@ def tracking_router(
         evaluated, _ = _evaluate(records, EvaluateIn(), fresh=False)
         text = structures_csv(evaluated) if detail == "estruturas" else legs_csv(evaluated)
         stamp = pd.Timestamp.now(tz=LOCAL_TIMEZONE).strftime("%Y%m%d_%H%M")
-        name = f"acompanhamento_{detail}_{scope}_{stamp}.csv"
+        name = f"carteira_{detail}_{scope}_{stamp}.csv"
         return Response(
             content=text.encode("utf-8"),
             media_type="text/csv; charset=utf-8",

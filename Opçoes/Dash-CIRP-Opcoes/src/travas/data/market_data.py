@@ -14,7 +14,14 @@ import pandas as pd
 
 from travas.calendar_b3 import B3Calendar
 from travas.data.mt5_client import MT5Client, MT5Error
-from travas.data.normalize import normalize_bars, normalize_chain, reference_price, zero_as_missing
+from travas.data.normalize import (
+    INDEX_OPTION_UNDERLYINGS,
+    normalize_bars,
+    normalize_chain,
+    price_symbol,
+    reference_price,
+    zero_as_missing,
+)
 from travas.settings import Settings
 from travas.timeutils import LOCAL_TIMEZONE, server_epoch_to_local, server_now_epoch
 
@@ -54,7 +61,9 @@ def _opt(value: float) -> float | None:
 
 
 def underlying_quote(client: MT5Client, symbol: str, server_timezone: str) -> UnderlyingQuote:
-    for batch in client.selected_batches([symbol]):
+    """Cotação do ativo-objeto, lida do símbolo de preço (`price_symbol`: IBOV11 → IBOV)."""
+    source = price_symbol(symbol)
+    for batch in client.selected_batches([source]):
         infos = client.symbol_infos(batch)
         if infos.empty:
             break
@@ -80,7 +89,7 @@ def underlying_quote(client: MT5Client, symbol: str, server_timezone: str) -> Un
             quote_time,
             lag,
         )
-    raise MT5Error(f"ativo {symbol} não encontrado no terminal")
+    raise MT5Error(f"ativo {source} não encontrado no terminal")
 
 
 def _attach_d1(client: MT5Client, infos: pd.DataFrame, server_tz: str) -> pd.DataFrame:
@@ -119,13 +128,14 @@ def fetch_series_quotes(
     corretoras que não preenchem session_*, como a Genial; na XP cada consulta de série sem
     barra falha com "Call failed" e custa ~1 s)."""
     frames = []
-    for _ in client.selected_batches([underlying]):  # mantém o ativo-objeto selecionado
-        for batch in client.selected_batches(symbols, heartbeat=underlying):
+    source = price_symbol(underlying)
+    for _ in client.selected_batches([source]):  # mantém o ativo-objeto selecionado
+        for batch in client.selected_batches(symbols, heartbeat=source):
             read_time = pd.Timestamp.now(tz=LOCAL_TIMEZONE)
             infos = client.symbol_infos(batch)
             if infos.empty:
                 continue
-            spot = client.symbol_infos([underlying])
+            spot = client.symbol_infos([source])
             for field in QUOTE_FIELDS:
                 infos[f"underlying_{field}"] = spot[field].iloc[0] if not spot.empty else 0.0
             infos["underlying_time"] = spot["time"].iloc[0] if not spot.empty else 0
@@ -189,20 +199,28 @@ def candidate_symbols(
                 calendar,
                 scope.monthly_expirations,
                 scope.weekly_max_dte,
+                index=underlying.upper() in INDEX_OPTION_UNDERLYINGS,
             )
         )
     return frame[keep]
 
 
 def select_expirations(
-    expirations, today: dt.date, calendar: B3Calendar, monthly: int, weekly_max_dte: int
+    expirations,
+    today: dt.date,
+    calendar: B3Calendar,
+    monthly: int,
+    weekly_max_dte: int,
+    index: bool = False,
 ) -> set[dt.date]:
-    """Os `monthly` próximos vencimentos mensais (3ª sexta) e os semanais com até
-    `weekly_max_dte` dias úteis que vençam antes do último mensal escolhido."""
+    """Os `monthly` próximos vencimentos mensais e os de curto prazo (semanais; diários no
+    índice) com até `weekly_max_dte` dias úteis que vençam antes do último mensal escolhido.
+    Mensal: 3ª sexta-feira (ações/ETFs) ou quarta-feira mais próxima do dia 15 (`index`)."""
     ordered = sorted(d for d in expirations if d >= today)
-    months = [d for d in ordered if calendar.is_monthly_expiration(d)][:monthly]
-    if not months:
-        return set()
+    is_monthly = calendar.is_index_monthly_expiration if index else calendar.is_monthly_expiration
+    months = [d for d in ordered if is_monthly(d)][:monthly]
+    if not months:  # padrão de vencimento desconhecido: os N mais próximos
+        return set(ordered[:monthly])
     dte = calendar.sessions_until(today, pd.Series(ordered))
     weeklies = {
         d
@@ -242,10 +260,11 @@ def fetch_chain(
 
 
 def fetch_bars(client: MT5Client, underlying: str, timeframe: str, count: int, server_tz: str):
-    for _ in client.selected_batches([underlying]):
-        rates = client.rates(underlying, timeframe, count)
+    source = price_symbol(underlying)  # IBOV11 → candles do índice IBOV
+    for _ in client.selected_batches([source]):
+        rates = client.rates(source, timeframe, count)
         return normalize_bars(rates, timeframe, server_tz, server_now_epoch(server_tz))
-    raise MT5Error(f"ativo {underlying} não pôde ser selecionado")
+    raise MT5Error(f"ativo {source} não pôde ser selecionado")
 
 
 def fetch_daily_set(

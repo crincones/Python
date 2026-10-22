@@ -55,11 +55,11 @@ indicador de mercado do topo (padrão em `collection.off_hours_source`, a escolh
 Cada coleta salva só as séries do seu escopo, então o arquivo do ativo mistura capturas de
 horários diferentes. Ao ler as cotações salvas, a **idade de cada série é medida contra a captura
 principal do recorte usado** (a com mais séries; o preço do ativo da análise é o dessa captura),
-não contra a última do arquivo — que pode ser uma atualização de 2 pernas do Acompanhamento e
+não contra a última do arquivo — que pode ser uma atualização de 2 pernas da Carteira e
 deixaria a cadeia inteira como "cotação antiga" (score limitado a 40*). Uma perna de horas antes vira
 "cotação antiga" e não é combinada com outra perna como se fossem do mesmo momento (caso real:
 put 21,54 das 11:10 + put 22,04 das 14:06 davam um crédito inflado). Vale para Análise de travas, Ativo
-protegido, Acompanhamento e Simulador. O spot de cada análise é o da captura de referência (fora
+protegido, Carteira e Simulador. O spot de cada análise é o da captura de referência (fora
 do pregão) ou o lido junto com o lote mais recente da coleta (pregão aberto).
 
 ## Snapshots no servidor (MT5 no Linux)
@@ -72,13 +72,16 @@ do mesmo prefixo Wine** (`C:\Python314`), com o código deste repositório em `~
 ```
 ~/travas/travas.sh snapshot --slot 1100     # coleta agora, rótulo 1100
 ~/travas/travas.sh b3-archive               # arquiva o fechamento oficial da B3
+~/travas/travas.sh iv-history --out 'Z:\home\carlos\snapshots'   # refaz iv_atm.csv com todos os snapshots
 ```
 
 | Unidade (systemd --user) | Quando | O quê |
 |---|---|---|
-| `travas-snapshot-1100.timer`, `-1630.timer` | seg–sex 11:00 e 16:30 (America/Sao_Paulo) | `travas snapshot`: os 30 ativos com opções mais líquidas (volume financeiro médio das opções nos 5 últimos fechamentos da B3 arquivados) que tenham opções no MT5, do mais líquido ao menos; 3 próximos vencimentos **mensais** (3ª sexta-feira, ou o pregão anterior se for feriado) mais os semanais com até 15 dias úteis, strikes a ±30% do spot |
+| `travas-snapshot-1100.timer`, `-1630.timer` | seg–sex 11:00 e 16:30 (America/Sao_Paulo) | `travas snapshot`: os 30 ativos com opções mais líquidas (volume financeiro médio das opções nos 5 últimos fechamentos da B3 arquivados) que tenham opções no MT5, do mais líquido ao menos; 3 próximos vencimentos **mensais** (3ª sexta-feira, ou o pregão anterior se for feriado; nas opções de índice IBOV11, a quarta-feira mais próxima do dia 15) mais os semanais/diários com até 15 dias úteis, strikes a ±30% do spot |
 | `travas-b3-archive.timer` | 22:00 e 07:30 | `travas b3-archive`: `TradeInformationConsolidatedFile` dos últimos 5 pregões que faltarem |
 | `snapshots-http.service` | sempre | `python3 -m http.server 8766` só no IP do Tailscale (100.113.24.44), somente leitura |
+| `travas-alerts-check.timer` | seg–sex a cada 15 min, 10:00–17:45 | `travas alerts-check --dir ~/alerts`: alertas de stop 1:1 (ver Carteira) |
+| `travas-alerts-http.service` | sempre | `python3 -m travas.alerts.server` na porta 8767, só no IP do Tailscale: lista vigiada, credenciais de envio e alertas enviados |
 
 Feriados da B3 são pulados pelo coletor (calendário do projeto), e horário perdido não é
 recuperado (um snapshot das 11:00 nunca é gravado às 13:00). O coletor espera até 15 min pelo
@@ -88,6 +91,13 @@ terminal conectado e pelo feed vivo; se não conseguir, grava só o manifesto co
 `negocios_b3.csv`; `index.json` lista tudo. São imutáveis e formam um histórico (~1–2 MB por
 snapshot). O app lê `snapshots.server_url` (`config/settings.yaml`) por qualquer máquina na
 mesma rede Tailscale.
+
+**Histórico diário da IV ATM** (base para um futuro IV Rank): a cada snapshot, o coletor grava em
+`~/snapshots/iv_atm.csv` a IV ATM de cada ativo e vencimento (data, horário, ativo, vencimento,
+du, spot, IV, distância do strike, se é mensal), servido pelo mesmo HTTP
+(`http://100.113.24.44:8766/iv_atm.csv`). Regravar um horário substitui as linhas dele; falha
+nesse cálculo vai para o log sem invalidar o snapshot. Começa em 19/10/2026 (snapshots
+anteriores falharam); para o IV Rank, esperar uns 3 meses de histórico.
 
 A CPU do servidor (AMD A6, sem SSE4.1/AVX) não roda o NumPy ≥ 2.4: lá é instalado o
 `numpy==2.3.5` (base SSE3); o restante segue as versões do `pyproject.toml`.
@@ -185,6 +195,12 @@ Mapa de calor (treemap) dos ativos com opções listadas (IBOV11 fica fora: é �
   (termos de uso proíbem acesso automatizado e o robots.txt bloqueia os dados históricos),
   TradingView (só endpoint não oficial; termos restringem uso automatizado).
 
+### Filtro de strikes: pernas do lado contrário ao movimento
+
+Checkbox **Strikes: as 2 pernas abaixo do preço do ativo** (trava de alta) / **acima** (trava de
+baixa), para crédito e débito: só monta travas com os dois strikes estritamente abaixo (alta) ou
+acima (baixa) do spot da coleta. Sem trava possível, a mensagem diz que foi o filtro.
+
 ### Filtro Rafael Nobre (travas de débito)
 
 Opção no formulário de análise, habilitada só para débito:
@@ -198,6 +214,24 @@ Opção no formulário de análise, habilitada só para débito:
 
 O ranking mostra a coluna "R. Nobre" (custo em % da largura e posição da vendida) e o detalhe
 lista os dois critérios.
+
+### Preço do stop 1:1 nos gráficos (crédito e débito)
+
+Em toda trava vertical aberta no detalhe (Análise, Carteira e Simulador) o app mostra o
+**preço do ativo que aciona o stop 1:1** — prejuízo = lucro máximo × `credit_stop.loss_multiple`
+—, calculado pelo preço de entrada da trava (natural na Análise; o registrado na Carteira):
+
+- no gráfico de payoff, uma linha vertical no preço do stop **da data simulada** (muda ao arrastar
+  o controle de tempo) e uma horizontal no prejuízo do stop: a curva teórica da data cruza essa
+  linha exatamente no preço do stop;
+- no gráfico do ativo, as linhas "Stop 1:1 <data>" e "Stop 1:1 venc.";
+- nas métricas, o prejuízo que aciona e o preço do ativo hoje e no vencimento; o rótulo da data
+  simulada também traz o preço.
+
+Antes do vencimento é estimativa pelo modelo (Black-Scholes, IV de cada perna, sem custos); no
+vencimento é exato: crédito → strike vendido ∓ 2 × crédito; débito → strike comprado ± (débito −
+lucro máximo). Só se aplica quando a perda máxima é maior que o lucro máximo (crédito < metade da
+largura; débito > metade da largura); nos demais casos aparece "não se aplica".
 
 ### Stop 1:1 — Credit Spread Investing (travas de crédito)
 
@@ -229,13 +263,13 @@ si, proteção. O que dá vantagem ao manejo é crédito **acima** do modelo (IV
 acima da IV ATM — o skew das puts), custo de saída baixo e liquidez para sair no stop; o ranking
 mede exatamente isso. Resultado esperado e probabilidades são de modelo, não garantia.
 
-### Aba Acompanhamento
+### Aba Carteira
 
 Registra estruturas já montadas — travas ou qualquer combinação de opções do mesmo ativo
 (borboleta, calendário, diagonal, perna isolada, até 8 pernas) — organizadas em **grupos**.
 
 - Entrada: "+ Nova estrutura" (tickers reais do MT5, validados no catálogo) ou, no detalhe de uma
-  trava da Análise de travas, "+ Adicionar ao acompanhamento" (pré-preenche pernas e preço sugerido; ajuste
+  trava da Análise de travas, "+ Adicionar à carteira" (pré-preenche pernas e preço sugerido; ajuste
   para o preço efetivamente executado).
 - **Preço de entrada**: o preço líquido por unidade (débito pago ou crédito recebido) basta para
   o P&L total quando todas as pernas têm a mesma quantidade e entram/saem juntas. Informe o preço
@@ -255,6 +289,11 @@ Registra estruturas já montadas — travas ou qualquer combinação de opções
 - Encerramento: preço líquido de saída ou por perna + custos → P&L realizado. Encerramento
   parcial não é suportado diretamente (edite a quantidade e registre a parte zerada como outra
   estrutura encerrada).
+- Os grupos mostram só as abertas. As encerradas ficam na seção **Operações encerradas**, abaixo
+  dos grupos (saída mais recente primeiro: data e preço de saída, motivo, realizado, grupo;
+  "Reabrir" devolve ao grupo), visível com "Mostrar encerradas" (marcado sozinho ao encerrar).
+  Ao encerrar ou reabrir, a estrutura muda de lugar na hora; o realizado chega com a atualização
+  das cotações. Uma atualização pedida enquanto outra roda é refeita ao fim desta.
 - Estruturas com vencimentos diferentes: a curva "no 1º vencimento" e os extremos dependem do
   modelo para as pernas posteriores e são marcados como estimados.
 - **Totais da carteira** (acima dos grupos): total = P&L aberto pelo natural + realizado; também
@@ -279,15 +318,17 @@ agressividade do preço-limite, lucro/perda mínimo e pesos do ranking. As prefe
 
 ### Google Agenda (vencimentos das estruturas abertas)
 
-Na aba Acompanhamento, **Conectar Google Agenda** cria a agenda "Dash CIRP – Vencimentos" e
+Na aba Carteira, **Conectar Google (Agenda e e-mail)** cria a agenda "Dash CIRP – Vencimentos" e
 mantém nela **um evento por vencimento de cada estrutura aberta** (12:00 do dia do vencimento,
 com lembretes ao meio-dia em D-5, D-1 e no próprio dia; pregões pelo calendário da B3). Criar ou
 editar uma estrutura cria/atualiza o evento; **encerrar ou excluir apaga o evento**. A
-sincronização roda a cada mudança no Acompanhamento, ao abrir o app e a cada 30 min
+sincronização roda a cada mudança na Carteira, ao abrir o app e a cada 30 min
 (`google_calendar` no `config/settings.yaml`: horários, lembretes, intervalo, `enabled`).
 
-- Permissão mínima (`calendar.app.created`): o app só enxerga e altera agendas criadas por ele.
-- Credencial: OAuth "App para computador" do Google Cloud (Calendar API ativada), arquivo
+- Permissões mínimas: `calendar.app.created` (o app só enxerga e altera agendas criadas por ele)
+  e `gmail.send` (só **envia** e-mail, para os alertas de stop; não lê a caixa). Quem conectou
+  antes dos alertas precisa reconectar uma vez para conceder o envio de e-mail.
+- Credencial: OAuth "App para computador" do Google Cloud (Calendar API e Gmail API ativadas), arquivo
   `client_secret*.json` na raiz do projeto (no `.gitignore`). O login e a autorização são feitos
   por você na página do Google; o app recebe o retorno em 127.0.0.1 (PKCE) e nunca vê a senha.
 - O token de acesso fica **cifrado pela DPAPI do Windows** (só a sua conta de usuário decifra) em
@@ -296,6 +337,70 @@ sincronização roda a cada mudança no Acompanhamento, ao abrir o app e a cada 
 - Reconciliação: cada evento guarda o id da estrutura e o vencimento em propriedades privadas; a
   agenda é a fonte da verdade (duplicados e eventos de estruturas encerradas são apagados).
 - Os testes automáticos rodam com a agenda desligada e nunca acessam a sua conta.
+
+### Alertas de stop 1:1 (Telegram + e-mail)
+
+Na tabela da Carteira, a coluna **Stop 1:1 🔔** mostra, para cada estrutura aberta, o preço
+do ativo em que o prejuízo iguala o lucro máximo **hoje** (o mesmo stop dos gráficos; "—" quando a
+perda máxima já é ≤ o lucro máximo). Marcando o checkbox, chega uma mensagem no **Telegram** e um
+**e-mail** quando o ativo alcança esse preço. Cada alerta sai **uma vez**; desmarcar e marcar de
+novo rearma. Nenhuma ordem é enviada.
+
+- **App local** (sem busca ativa): confere quando recebe cotações com o mercado aberto, isto é,
+  ao atualizar a Carteira (botão, abertura da aba ou "Atualizar a cada 60 s").
+- **Servidor Debian** (redundância, com o app fechado): `travas alerts-check` a cada 15 min de
+  pregão (timer `travas-alerts-check.timer`, 10:00–17:45, feriados pulados) lê a cotação do ativo
+  no MT5 do servidor e compara com o stop do dia.
+- O app envia ao servidor (`travas-alerts-http.service`, porta 8767, só na interface do Tailscale)
+  a **lista vigiada** — para cada estrutura marcada, o preço do stop em cada pregão até o
+  vencimento, calculado com a IV das pernas no momento — e as credenciais de envio. Antes de
+  enviar, app e servidor **reservam** o alerta no servidor (`sent.json`): o mesmo alerta não sai
+  duas vezes; com o servidor fora do ar, o app envia mesmo assim.
+- Contatos em `telegram-token.txt` na raiz do projeto (**fora do git**): token do bot, chat id e
+  e-mail, uma informação por linha. E-mail pela Gmail API da conexão Google (escopo `gmail.send`).
+- **Testar envio** manda uma mensagem de teste pelo app e pelo servidor.
+- Credenciais no servidor: `~/alerts/credentials.json` (chmod 600, pasta 700) com o token do bot e
+  o refresh token do Google — necessários para o servidor enviar sozinho. No PC o token do Google
+  segue cifrado pela DPAPI.
+- O preço do stop antes do vencimento é estimativa do modelo (Black-Scholes); o gatilho é o
+  **preço do ativo**, não o P&L das cotações das opções (que podem ter spread largo).
+
+## Aba Liquidez de Opções
+
+Lista dos ativos ordenados pela **liquidez das opções**: volume financeiro médio por pregão
+das **opções** do ativo (prêmio negociado, somando todas as séries — calls e puts; não é o volume
+do ativo à vista), com negócios por pregão, séries vigentes na B3 e se as opções têm cotação no
+MT5 da corretora logada. Não é score composto: a ordem padrão é só o volume financeiro (empate:
+negócios). Volume financeiro favorece opções caras (ex.: IBOV11 tem volume alto com poucos
+negócios); por isso as colunas são **ordenáveis** (clique no cabeçalho; de novo inverte) e o
+"top N" vale depois da ordenação — "top 20" por negócios são os 20 com mais negócios.
+
+**Book perto do dinheiro**: do snapshot mais recente do servidor, séries com strike a até ±10%
+do spot (mid ≥ `liquidity.min_mid_price_brl`): spread mediano (ask − bid)/mid das que têm bid e
+ask e quantas têm book (selo: ≤ 5% bom, ≤ 15% médio, acima disso ruim). É o que mais pesa para
+montar e desmontar uma trava; só para os ativos coletados no snapshot (os demais: "—"). Fonte: arquivo público de negócios da B3
+(fechamento oficial, publicado à noite), guardado por pregão em `data/b3/negocios/` — a 1ª
+consulta baixa os arquivos (~5 s cada), as seguintes usam o cache. Enquanto a lista é montada,
+a tela mostra a etapa ("baixando o pregão 2 de 5…", cadastro, cálculo) com barra de progresso. Escolha de 1, 5, 10 ou 20
+pregões na média e do tamanho da lista (top 10/20/30/50 ou todos). **Gerar CSV** baixa a lista
+exibida, na ordem da tela, com as colunas do book (`;`, UTF-8 com BOM, período no nome). Clicar num ativo mostra o gráfico;
+"Analisar travas" abre a Análise de travas com ele. Mesma metodologia do script
+`Opçoes/lista-opcoes-profitchart` e da escolha dos 30 ativos do coletor de snapshots.
+
+**IV/HV (opções baratas ou caras)**: IV ATM ÷ volatilidade histórica do ativo, para os ativos do
+snapshot do servidor. O selo mostra o 1º vencimento mensal com IV calculável; o tooltip, os 3
+próximos mensais (data, du, IV, HV, razão, rótulo).
+- IV ATM: a mesma da análise (Black-Scholes europeu sobre o mid do snapshot, média call/put do
+  strike mais próximo do spot, spread ≤ `pricing.atm_max_spread_pct_mid`). Mensal sem par com
+  bid e ask aceitáveis aparece como "sem IV ATM".
+- HV: log-retornos diários × √252 das barras D1 fechadas do MT5, janela = pregões até o
+  vencimento (mínimo 10). Sem MT5 conectado, sem HV ("—" com o motivo no tooltip).
+- Razão < 0,90 = **barata**, > 1,20 = **cara**, entre = neutra (`vol_premium` em
+  `config/settings.yaml`). A IV costuma ficar acima da HV, daí o limite de "cara" acima de 1.
+- A liquidez entra como confiança: book perto do dinheiro com spread mediano > 15% ou menos de 4
+  séries com bid e ask deixa o selo cinza tracejado com "?" ("pouco confiável").
+- Indicativo, não recomendação: a HV olha para trás, e eventos (balanço, dividendos) podem
+  justificar IV alta. O CSV traz a classificação e, para os 3 mensais, vencimento, IV, HV e razão.
 
 ## Aba Ativo protegido (estruturas do Rafael Nobre)
 
@@ -319,7 +424,7 @@ Ranking (pesos visíveis e editáveis; padrão em `protected` no `config/setting
 ativo parado e máximo como % do CDI do período, probabilidade de superar o CDI no vencimento
 (lognormal, IV ATM; omitida sem IV confiável), liquidez da pior perna e custo de execução. O
 detalhe mostra payoff, simulação temporal, custo-limite indicativo e as pernas para digitar no
-ProfitChart. Estruturas com ação ainda não podem ser enviadas ao Acompanhamento.
+ProfitChart. Estruturas com ação ainda não podem ser enviadas à Carteira.
 
 **Quantidade ou valor a investir** (antes ou depois do scan, sem nova coleta): os dois campos são
 ligados — digitar a quantidade (ações = puts) mostra o investimento; digitar o valor mostra a
@@ -372,6 +477,7 @@ src/travas/
     b3_trades.py              fechamento oficial da B3 (último negócio do dia) com o mercado fechado
     snapshots.py              snapshots do servidor: gravação, índice, cliente HTTP, cadeia por ativo
     snapshot_collector.py     `travas snapshot` (servidor com MT5): coleta de todos os ativos
+    options_liquidity.py      aba Liquidez de Opções: ranking pelo fechamento da B3 e CSV
     feasibility.py            relatório `travas check`
   options/                    cálculo puro, testado sem MT5
     models.py                 Leg, Structure, as 4 travas
@@ -387,11 +493,14 @@ src/travas/
     credit_stop.py            stop 1:1 das travas de crédito: fronteira do stop e Monte Carlo do manejo
     margin.py                 garantia estimada pelo risco no vencimento e spread de saída
     simulator.py              aba Simulador: pernas livres (opções e o próprio ativo)
-  tracking/                   acompanhamento: modelos, avaliação (P&L, alertas, grupos), store JSON;
+  tracking/                   carteira: modelos, avaliação (P&L, alertas, grupos), store JSON;
                               gcal.py (Google Agenda: OAuth, API, reconciliação), secure_store.py (DPAPI)
+  alerts/                     alertas de stop 1:1: channels (Telegram, Gmail), stop_watch (gatilho,
+                              mensagem), server (HTTP no Debian, só stdlib), check (`travas
+                              alerts-check` no MT5 do servidor), service (app local)
   api/app.py                  FastAPI (nenhuma rota de ordem); api/*_routes.py por aba
   web/static/                 HTML/JS, payoff em SVG, KLineCharts 10.0.4 (empacotado localmente)
-tests/                        223 testes: 4 travas, extremos, breakevens, POP, preço-limite, garantia, simulador, API…
+tests/                        253 testes: 4 travas, extremos, breakevens, POP, preço-limite, garantia, simulador, API…
 ```
 
 ## Definições (fonte de verdade: código em `src/travas/options`)

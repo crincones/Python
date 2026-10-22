@@ -9,3 +9,5 @@ __pycache__/
 config/preferencias.json
 # Credencial OAuth do Google (baixada do Cloud Console): nunca versionar
 client_secret*.json
+# Token do bot do Telegram, chat id e e-mail dos alertas: nunca versionar
+telegram-token*.txt

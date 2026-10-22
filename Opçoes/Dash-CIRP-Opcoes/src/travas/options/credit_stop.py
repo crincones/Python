@@ -84,10 +84,23 @@ def stop_boundary(
 
     `down`: a trava perde com a queda do ativo (put vendida). Pregão em que o custo nunca chega
     ao gatilho (ex.: largura descontada menor que ele) → 0 (queda) ou inf (alta)."""
-    strikes = [leg.strike for leg in structure.legs]
     taus = (dte - np.arange(dte + 1)) / pricing.BUSINESS_DAYS_PER_YEAR
-    lo = np.full(dte + 1, 1e-6 * min(strikes))
-    hi = np.full(dte + 1, 4.0 * max(strikes))
+    return boundary_at(structure, trigger_cost, taus, rate, sigmas, down)
+
+
+def boundary_at(
+    structure: Structure,
+    trigger_cost: float,
+    taus: np.ndarray,
+    rate: float,
+    sigmas: Sequence[float],
+    down: bool,
+) -> np.ndarray:
+    """Fronteira do stop para prazos `taus` (anos de dias úteis) até o vencimento."""
+    strikes = [leg.strike for leg in structure.legs]
+    taus = np.asarray(taus, dtype=np.float64)
+    lo = np.full(taus.shape, 1e-6 * min(strikes))
+    hi = np.full(taus.shape, 4.0 * max(strikes))
     edge = lo if down else hi  # lado em que o custo é máximo (≈ largura descontada)
     reachable = close_cost(structure, edge, taus, rate, sigmas) >= trigger_cost
     for _ in range(BISECTION_STEPS):
@@ -244,3 +257,80 @@ def credit_stop_metrics(
         "paths": paths,
         "path_sigma": path_sigma,
     }, None
+
+
+STOP_NOT_VERTICAL = "stop 1:1 só para travas verticais (duas opções do mesmo tipo e vencimento)"
+STOP_NO_MODEL = "sem volatilidade nas pernas para estimar o preço do stop antes do vencimento"
+
+
+def _vertical(structure: Structure) -> bool:
+    legs = structure.legs
+    return (
+        len(legs) == 2
+        and legs[0].option_type is legs[1].option_type is not OptionType.STOCK
+        and legs[0].option_type in (OptionType.CALL, OptionType.PUT)
+        and legs[0].side is not legs[1].side
+        and legs[0].expiration == legs[1].expiration
+        and abs(legs[0].units - legs[1].units) < 1e-9
+        and legs[0].strike != legs[1].strike
+    )
+
+
+def stop_levels(
+    structure: Structure,
+    rate: float,
+    sigmas: Sequence[float | None],
+    days_left: Sequence[int],
+    loss_multiple: float = 1.0,
+) -> dict:
+    """Preço do ativo em que a trava vertical (crédito ou débito) atinge o stop 1:1 — prejuízo
+    = `loss_multiple` × lucro máximo — em cada data com `days_left` pregões até o vencimento.
+
+    Antes do vencimento pelo valor teórico (Black-Scholes, σ de cada perna); no vencimento pelo
+    payoff. Sem custos operacionais. Na trava em que a perda máxima já é ≤ o prejuízo do stop
+    (débito ≤ metade da largura; crédito ≥ metade), o stop não se aplica."""
+    base = {"loss_multiple": loss_multiple, "prices": [None] * len(days_left)}
+    if not _vertical(structure):
+        return {**base, "available": False, "reason": STOP_NOT_VERTICAL}
+    units = structure.legs[0].units
+    width = abs(structure.legs[0].strike - structure.legs[1].strike)
+    entry = sum(-leg.side.sign * leg.price for leg in structure.legs)  # + crédito, − débito
+    max_profit = width + entry if entry < 0 else entry  # débito: largura − débito
+    max_loss = width - max_profit
+    stop_pnl = -loss_multiple * max_profit
+    base |= {
+        "flow": "credito" if entry > 0 else "debito",
+        "pnl_per_unit": stop_pnl,
+        "pnl_total": stop_pnl * units,
+        "units": units,
+    }
+    if max_profit <= 0 or loss_multiple * max_profit >= max_loss - 1e-9:
+        reason = (
+            "stop 1:1 não se aplica: a perda máxima já é ≤ o lucro máximo"
+            if max_profit > 0
+            else "stop 1:1 não se aplica: lucro máximo ≤ 0"
+        )
+        return {**base, "available": False, "reason": reason}
+    # Desmontar custa `c` por unidade; P&L = entrada − c; stop quando c ≥ entrada + m × lucro.
+    trigger = entry + loss_multiple * max_profit
+    probe = np.array([1e-6 * min(structure.strikes), 4.0 * max(structure.strikes)])
+    zero = np.zeros(2)
+    flat = [1.0, 1.0]  # no vencimento σ não importa
+    low_cost, high_cost = close_cost(structure, probe, zero, rate, flat)
+    down = bool(low_cost > high_cost)  # perde com a queda do ativo (trava de alta)
+    days = np.asarray(days_left, dtype=np.float64)
+    ok = all(s is not None and math.isfinite(s) and s > 0 for s in sigmas)
+    taus = days / pricing.BUSINESS_DAYS_PER_YEAR
+    model = boundary_at(structure, trigger, taus, rate, list(sigmas) if ok else flat, down)
+    prices = [
+        float(b) if (d == 0 or ok) and math.isfinite(b) and b > 0 else None
+        for b, d in zip(model, days, strict=True)
+    ]
+    return {
+        **base,
+        "available": True,
+        "reason": None if ok else STOP_NO_MODEL,
+        "down": down,
+        "trigger_cost": trigger,
+        "prices": prices,
+    }

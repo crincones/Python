@@ -76,3 +76,40 @@ def test_newer_file_wins_over_older_cache(calendar, tmp_path):
         in fresh.reference(dt.date(2026, 10, 19))["expiration_date"].astype(str).tolist()
     )
     assert not (tmp_path / "instrumentos_2026-10-15.csv").exists()  # cache antigo removido
+
+
+def test_partial_file_is_not_used(calendar, tmp_path, monkeypatch):
+    """Cadastro do dia ainda "Parcial" (B3 montando o arquivo): ignorado, vale o último final."""
+    import io as _io
+    import json as _json
+
+    from travas.data import b3_instruments as mod
+
+    header = "TckrSymb;Asst;SctyCtgyNm;XprtnDt;OptnTp;ExrcPric;OptnStyle\n"
+    body = header + "PETRK100;PETR4;OPTION ON EQUITIES;2026-11-19;Call;10,00;AMER\n" * 40
+
+    def fake_urlopen(url, timeout=None):
+        if "requestname" in url:
+            payload = _json.dumps({"token": "t"}).encode()
+        else:
+            payload = ("Status do Arquivo: Parcial\n" + body).encode("latin-1")
+        return _io.BytesIO(payload)
+
+    class _Ctx(_io.BytesIO):
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+    monkeypatch.setattr(
+        mod.urllib.request, "urlopen", lambda u, timeout=None: _Ctx(fake_urlopen(u).read())
+    )
+    store = mod.B3Instruments(tmp_path, calendar)
+    assert store._download(dt.date(2026, 10, 20)) is None
+    monkeypatch.setattr(
+        mod.urllib.request,
+        "urlopen",
+        lambda u, timeout=None: _Ctx(fake_urlopen(u).read().replace(b"Parcial", b"Final")),
+    )
+    assert len(store._download(dt.date(2026, 10, 20))) == 40

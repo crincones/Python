@@ -154,6 +154,9 @@ class AnalysisParams:
     # Exige perna VENDIDA europeia: o risco de exercício antecipado (atribuição) é da vendida
     # americana; a comprada só é exercida se o titular (o usuário) quiser.
     european_short: bool = False
+    # As 2 pernas do lado contrário ao movimento: abaixo do spot na trava de alta, acima na de
+    # baixa (crédito e débito).
+    legs_beyond_spot: bool = False
     # Stop 1:1 (só travas de crédito): perda no stop = loss_multiple × crédito.
     credit_stop: bool = False
     credit_stop_loss_multiple: float = 1.0
@@ -307,6 +310,8 @@ def candidate_pairs(prep: PreparedChain) -> list[tuple[pd.Series, pd.Series]]:
     if p.strike_max is not None:
         frame = frame[frame["strike"] <= p.strike_max]
     long_lower = kind.direction is Direction.BULL
+    if p.legs_beyond_spot:
+        frame = frame[frame["strike"] < prep.spot if long_lower else frame["strike"] > prep.spot]
     pairs: list[tuple[pd.Series, pd.Series]] = []
     for _, group in frame.groupby("expiration_date", sort=True):
         rows = [r for _, r in group.sort_values("strike").iterrows()]
@@ -713,11 +718,22 @@ def empty_reason(prep: PreparedChain) -> str:
         .itertuples(index=False)
     )
     listed = ", ".join(f"{d:%d/%m/%Y} ({n} du)" for d, n in available) or "nenhum"
+    in_term = frame[frame["dte_business_days"].between(max(p.dte_min, 1), p.dte_max)]
+    if p.legs_beyond_spot and not in_term.empty:
+        return (
+            f"o filtro {legs_beyond_spot_label(p)} não deixou 2 strikes no mesmo vencimento "
+            f"(spot {prep.spot:.2f}; confira também a faixa de strikes e a largura máxima)"
+        ).replace(".", ",")
     return (
         f"nenhum vencimento da cadeia coletada atende ao prazo de {max(p.dte_min, 1)} a "
         f"{p.dte_max} dias úteis{' e aos vencimentos escolhidos' if p.expirations else ''} "
         f"(disponíveis: {listed}). Ajuste o prazo mínimo/máximo"
     )
+
+
+def legs_beyond_spot_label(params: AnalysisParams) -> str:
+    side = "abaixo" if params.direction is Direction.BULL else "acima"
+    return f"as 2 pernas {side} do preço do ativo"
 
 
 def credit_stop_summary(params: AnalysisParams) -> dict | None:
@@ -817,6 +833,11 @@ def assumptions(prep: PreparedChain) -> dict:
         "weights": p.weights,
         "settlement_note": SETTLEMENT_NOTE,
         "exercise_style_filter": ["perna vendida europeia"] if p.european_short else [],
+        "strike_side_filter": (
+            f"{legs_beyond_spot_label(p)} ({prep.spot:.2f})".replace(".", ",")
+            if p.legs_beyond_spot
+            else None
+        ),
     }
 
 
@@ -855,6 +876,7 @@ def simulation_grid(
         p.costs_brl,
         extra_prices=(p.target_price, prep.spot),
         points=points,
+        stop_loss_multiple=p.credit_stop_loss_multiple,
     )
     sim["dte_business_days"] = int(long_row["dte_business_days"])
     sim["rate_continuous"] = prep.rate

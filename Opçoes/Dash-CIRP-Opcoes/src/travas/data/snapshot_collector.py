@@ -131,9 +131,7 @@ def collect_snapshot(
     client = None
     try:
         client, terminal = _connect(settings, deadline)
-        manifest["terminal"] = {
-            k: terminal[k] for k in ("build", "server", "company", "connected")
-        }
+        manifest["terminal"] = {k: terminal[k] for k in ("build", "server", "company", "connected")}
         reference = B3Instruments(root / "_b3_cache", calendar).reference(today)
         catalog = option_catalog(client.symbols(), tz, reference)
         alive = catalog[catalog["expiration_date"] >= today]
@@ -201,6 +199,21 @@ def collect_snapshot(
         per_underlying=per_underlying,
     )
     manifest = write_snapshot(root, today, slot, chain, manifest)
+    if len(chain):
+        try:  # histórico diário da IV ATM: uma falha aqui não invalida o snapshot
+            from travas.data import iv_history
+
+            iv_history.record(
+                root,
+                chain,
+                today,
+                slot,
+                settings.pricing.risk_free_rate_annual,
+                settings.pricing,
+                calendar,
+            )
+        except Exception:
+            log.exception("IV ATM do snapshot %s %s não gravada", today, slot)
     log.info(
         "Snapshot %s %s: %s, %d séries de %d ativos em %.0f s",
         today,

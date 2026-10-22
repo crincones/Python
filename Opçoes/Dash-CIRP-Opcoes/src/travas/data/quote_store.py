@@ -1,6 +1,6 @@
 """Últimas cotações capturadas com o mercado ABERTO, por ativo-objeto (disco local).
 
-Cada coleta durante o pregão (cadeia da análise ou pernas do acompanhamento) atualiza as séries
+Cada coleta durante o pregão (cadeia da análise ou pernas da carteira) atualiza as séries
 lidas (a mais recente de cada símbolo prevalece). Fora do pregão, o app lê daqui em vez de
 consultar o MT5, cujo book fica vazio/distorcido. Arquivos em `data/cotacoes/` (fora do git),
 gravados e lidos só por este aplicativo.
@@ -77,7 +77,7 @@ class QuoteStore:
         Cada coleta salva só o seu escopo, então o recorte pode misturar capturas de horários
         diferentes. A referência é a captura com mais séries no recorte (empate: a mais recente)
         — nunca simplesmente a última do arquivo, que pode ser uma atualização de 2 pernas do
-        acompanhamento e tornaria "antiga" a cadeia inteira. As demais séries somam à idade a
+        carteira e tornaria "antiga" a cadeia inteira. As demais séries somam à idade a
         distância (antes ou depois) até a referência: uma perna de horas antes vira "cotação
         antiga" em vez de ser combinada como atual com outra perna e com outro preço do ativo.
         Devolve o recorte e o preço do ativo lido na captura de referência."""

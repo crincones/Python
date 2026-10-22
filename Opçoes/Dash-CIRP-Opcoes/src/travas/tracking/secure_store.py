@@ -27,7 +27,12 @@ def _call(function, data: bytes, *middle) -> bytes:
     source = _Blob(len(data), ctypes.cast(buffer, ctypes.POINTER(ctypes.c_char)))
     target = _Blob()
     ok = function(
-        ctypes.byref(source), *middle, None, None, None, CRYPTPROTECT_UI_FORBIDDEN,
+        ctypes.byref(source),
+        *middle,
+        None,
+        None,
+        None,
+        CRYPTPROTECT_UI_FORBIDDEN,
         ctypes.byref(target),
     )
     if not ok:

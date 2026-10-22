@@ -1,4 +1,4 @@
-// Google Agenda (aba Acompanhamento): conectar, estado da sincronização e desconectar. Os eventos
+// Google Agenda (aba Carteira): conectar, estado da sincronização e desconectar. Os eventos
 // de vencimento são criados/apagados pelo backend a cada mudança nas estruturas.
 const Gcal = (() => {
   const $ = (id) => document.getElementById(id);
@@ -21,7 +21,7 @@ const Gcal = (() => {
     } else if (s.connecting) {
       body = `<span class="muted">aguardando a autorização no navegador (faça login no Google e permita o acesso)…</span>`;
     } else if (!s.connected) {
-      body = `<button id="gcal-connect">Conectar Google Agenda</button>`;
+      body = `<button id="gcal-connect">Conectar Google (Agenda e e-mail)</button>`;
     } else {
       const r = s.last_result;
       const sync = s.last_sync ? `sincronizado ${FMT.datetime(s.last_sync)}${r ? ` · ${r.events} evento(s)${r.created || r.updated || r.deleted ? ` (+${r.created} ~${r.updated} −${r.deleted})` : ""}` : ""}` : "sincronizando…";
@@ -70,5 +70,5 @@ const Gcal = (() => {
     refresh();
   }
 
-  return { refresh, watch };
+  return { refresh, watch, connect };
 })();

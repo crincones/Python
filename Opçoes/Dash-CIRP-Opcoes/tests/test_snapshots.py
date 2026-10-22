@@ -104,10 +104,31 @@ def test_select_expirations_keeps_monthlies_and_short_weeklies(calendar):
     later = [dt.date(2027, 2, 19)]
     picked = market_data.select_expirations(weeklies + monthlies + later, today, calendar, 3, 15)
     # Semanais até 15 du: 23/10 (3), 30/10 (8), 06/11 (13); 13/11 (17 du) e 27/11 ficam fora.
-    assert picked == set(monthlies) | {dt.date(2026, 10, 23), dt.date(2026, 10, 30),
-                                       dt.date(2026, 11, 6)}
+    assert picked == set(monthlies) | {
+        dt.date(2026, 10, 23),
+        dt.date(2026, 10, 30),
+        dt.date(2026, 11, 6),
+    }
     only_monthly = market_data.select_expirations(weeklies + monthlies, today, calendar, 2, 0)
     assert only_monthly == {dt.date(2026, 11, 19), dt.date(2026, 12, 18)}
+    # Padrão desconhecido (nenhum vencimento é mensal): os N mais próximos.
+    odd = [dt.date(2026, 12, 2), dt.date(2027, 2, 3)]
+    assert market_data.select_expirations(odd, today, calendar, 1, 0) == {dt.date(2026, 12, 2)}
+
+
+def test_index_options_monthly_is_wednesday_nearest_15th(calendar):
+    # Vencimentos reais das opções de IBOV11 (cadastro B3 de 20/10/2026).
+    assert calendar.index_monthly_expiration(2026, 11) == dt.date(2026, 11, 18)
+    assert calendar.index_monthly_expiration(2026, 12) == dt.date(2026, 12, 16)
+    assert calendar.index_monthly_expiration(2027, 1) == dt.date(2027, 1, 13)
+    assert calendar.index_monthly_expiration(2027, 2) == dt.date(2027, 2, 17)
+    assert calendar.index_monthly_expiration(2027, 4) == dt.date(2027, 4, 14)
+    today = dt.date(2026, 10, 20)
+    daily = [dt.date(2026, 10, d) for d in (21, 22, 23, 26, 27, 28)] + [dt.date(2026, 11, 13)]
+    months = [dt.date(2026, 11, 18), dt.date(2026, 12, 16), dt.date(2027, 1, 13)]
+    picked = market_data.select_expirations(daily + months, today, calendar, 3, 5, index=True)
+    # Mensais do índice + diários com até 5 du (21/10 a 27/10); 28/10 (6 du) e 13/11 fora.
+    assert picked == set(months) | set(daily[:5])
 
 
 def test_scope_with_monthly_expirations(calendar):
@@ -166,13 +187,13 @@ def test_options_liquidity_ranks_by_average_turnover(tmp_path):
         {"underlying": ["AAAA3", "BBBB4"]}, index=pd.Index(["AAAAK10", "BBBBW20"], name="symbol")
     )
     days = {
-        "2026-10-15": [("AAAAK10", "EQUITY CALL", 100.0), ("BBBBW20", "EQUITY PUT", 900.0)],
+        "2026-10-15": [("AAAAK10", "EQUITY CALL", 100.0, 4), ("BBBBW20", "EQUITY PUT", 900.0, 2)],
         # AAAAJ5 já venceu (fora da referência): vai pela raiz do ticker.
-        "2026-10-16": [("AAAAJ5", "EQUITY CALL", 2000.0), ("AAAA3", "CASH", 1e9)],
+        "2026-10-16": [("AAAAJ5", "EQUITY CALL", 2000.0, 6), ("AAAA3", "CASH", 1e9, 99)],
     }
     for day, rows in days.items():
         (tmp_path / day).mkdir()
-        pd.DataFrame(rows, columns=["symbol", "segment", "turnover_brl"]).to_csv(
+        pd.DataFrame(rows, columns=["symbol", "segment", "turnover_brl", "deals"]).to_csv(
             tmp_path / day / "negocios_b3.csv", index=False
         )
     ranking, used = options_liquidity(tmp_path, reference, 5)
@@ -181,3 +202,7 @@ def test_options_liquidity_ranks_by_average_turnover(tmp_path):
     assert ranking["AAAA3"] == pytest.approx(1050.0)
     assert ranking["BBBB4"] == pytest.approx(450.0)
     assert options_liquidity(tmp_path, reference, 1)[1] == ["2026-10-16"]
+    from travas.data.snapshots import options_liquidity_table
+
+    table = options_liquidity_table(sorted(tmp_path.glob("*/negocios_b3.csv")), reference)
+    assert table.loc["AAAA3", "deals"] == pytest.approx(5.0)  # (4 + 6) / 2 pregões

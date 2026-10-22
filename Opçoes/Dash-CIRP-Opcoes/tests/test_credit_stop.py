@@ -15,8 +15,10 @@ from travas.options.credit_stop import (
     close_cost,
     credit_stop_metrics,
     stop_boundary,
+    stop_levels,
 )
 from travas.options.models import Direction, Flow, Leg, OptionType, Side, Structure
+from travas.options.simulation import simulate
 
 RATE = float(pricing.continuous_rate(0.14))
 EXP = dt.date(2026, 11, 13)
@@ -141,3 +143,66 @@ def test_credit_stop_ignored_for_debit(calendar, chain):
     result = analyze(chain, SPOT, TODAY, calendar, params)
     assert result["credit_stop"]["active"] is False
     assert all("credit_stop" not in r for r in result["results"])
+
+
+def _priced(option: OptionType, long_k: float, long_px: float, short_k: float, short_px: float):
+    return Structure(
+        "TEST3",
+        (
+            Leg(option, Side.LONG, long_k, EXP, 100, 1.0, long_px, "L"),
+            Leg(option, Side.SHORT, short_k, EXP, 100, 1.0, short_px, "S"),
+        ),
+    )
+
+
+@pytest.mark.parametrize(
+    ("option", "long_k", "long_px", "short_k", "short_px", "expiry_stop", "flow"),
+    [
+        # Alta com crédito: crédito 0,60 → stop quando desmontar custa 1,20: 30 − 1,20.
+        (OptionType.PUT, 28.0, 0.4, 30.0, 1.0, 28.8, "credito"),
+        # Baixa com crédito: 30 + 1,20.
+        (OptionType.CALL, 32.0, 0.2, 30.0, 0.8, 31.2, "credito"),
+        # Alta com débito 1,50 (largura 2, lucro máx. 0,50): stop com a trava valendo 1,00.
+        (OptionType.CALL, 30.0, 2.0, 32.0, 0.5, 31.0, "debito"),
+        # Baixa com débito 1,30 (lucro máx. 0,70): stop com a trava valendo 0,60 → 32 − 0,60.
+        (OptionType.PUT, 32.0, 1.6, 30.0, 0.3, 31.4, "debito"),
+    ],
+)
+def test_stop_levels_for_credit_and_debit(
+    option, long_k, long_px, short_k, short_px, expiry_stop, flow
+):
+    s = _priced(option, long_k, long_px, short_k, short_px)
+    r = stop_levels(s, RATE, [SIGMA] * 2, [DTE, 10, 0])
+    assert r["available"] and r["flow"] == flow
+    assert r["prices"][-1] == pytest.approx(expiry_stop, abs=1e-6)
+    entry = short_px - long_px  # + crédito, − débito; largura 2
+    profit = entry if flow == "credito" else 2.0 + entry
+    assert r["pnl_total"] == pytest.approx(-profit * 100)
+    # Antes do vencimento: o valor teórico na fronteira dá exatamente o prejuízo do stop.
+    for days, price in zip([DTE, 10], r["prices"][:2], strict=True):
+        if price is None:
+            continue
+        cost = close_cost(s, np.array(price), np.array(days / 252), RATE, [SIGMA] * 2)
+        assert entry - float(cost) == pytest.approx(-profit, abs=1e-6)
+
+
+def test_stop_levels_not_applicable_and_without_model():
+    cheap_debit = _priced(OptionType.CALL, 30.0, 1.0, 32.0, 0.5)  # perda 0,50 ≤ lucro 1,50
+    r = stop_levels(cheap_debit, RATE, [SIGMA] * 2, [DTE, 0])
+    assert not r["available"] and "não se aplica" in r["reason"]
+    s = _priced(OptionType.PUT, 28.0, 0.4, 30.0, 1.0)
+    r = stop_levels(s, RATE, [None, SIGMA], [DTE, 0])
+    assert r["available"] and r["prices"][0] is None  # sem σ: só o do vencimento
+    assert r["prices"][1] == pytest.approx(28.8, abs=1e-6)
+
+
+def test_simulation_carries_stop_price_per_date(calendar):
+    s = _priced(OptionType.PUT, 28.0, 0.4, 30.0, 1.0)
+    sim = simulate(s, TODAY, calendar, RATE, 0.14, [SIGMA] * 2)
+    stop = sim["stop"]
+    assert stop["available"] and stop["expiry_price"] == pytest.approx(28.8, abs=1e-6)
+    assert sim["dates"][0]["stop_price"] == pytest.approx(stop["today_price"])
+    assert sim["dates"][-1]["stop_price"] == pytest.approx(28.8, abs=1e-6)
+    # Com o tempo o stop se aproxima do strike vendido... até o do vencimento (30 − 2 × 0,60).
+    prices = [d["stop_price"] for d in sim["dates"] if d["stop_price"] is not None]
+    assert prices[0] < prices[-1]

@@ -1,4 +1,4 @@
-"""Google Agenda: um evento por vencimento de cada estrutura ABERTA do Acompanhamento, com
+"""Google Agenda: um evento por vencimento de cada estrutura ABERTA da Carteira, com
 lembretes antes do vencimento; evento apagado quando a estrutura é encerrada ou excluída.
 
 - Permissão mínima: escopo `calendar.app.created` — o app só enxerga e altera agendas criadas por
@@ -36,7 +36,9 @@ from travas.tracking import secure_store
 
 log = logging.getLogger(__name__)
 
-SCOPE = "https://www.googleapis.com/auth/calendar.app.created"
+CALENDAR_SCOPE = "https://www.googleapis.com/auth/calendar.app.created"
+GMAIL_SCOPE = "https://www.googleapis.com/auth/gmail.send"  # alertas de stop por e-mail
+SCOPE = f"{CALENDAR_SCOPE} {GMAIL_SCOPE}"
 API = "https://www.googleapis.com/calendar/v3"
 REVOKE_URL = "https://oauth2.googleapis.com/revoke"
 MARKER = "dashcirp"
@@ -93,8 +95,11 @@ def desired_events(
         if record.get("status") != "aberta":
             continue
         expirations = sorted(
-            {dt.date.fromisoformat(str(leg["expiration"])) for leg in record.get("legs", [])
-             if leg.get("expiration")}
+            {
+                dt.date.fromisoformat(str(leg["expiration"]))
+                for leg in record.get("legs", [])
+                if leg.get("expiration")
+            }
         )
         for expiration in expirations:
             key = f"{record['id']}|{expiration.isoformat()}"
@@ -201,11 +206,12 @@ class OAuthClient:
         self.client_id = info["client_id"]
         self._client_secret = info["client_secret"]
         self.auth_uri = info["auth_uri"]
+        self.client_secret = self._client_secret
         self.token_uri = info["token_uri"]
 
-    def authorization(self) -> tuple[str, Callable[[float], str]]:
+    def authorization(self) -> tuple[str, Callable[[float], tuple[str, str]]]:
         """URL de consentimento e uma função que espera o retorno do Google no loopback e
-        devolve o refresh token."""
+        devolve (refresh token, escopos concedidos)."""
         verifier = secrets.token_urlsafe(64)
         challenge = (
             base64.urlsafe_b64encode(hashlib.sha256(verifier.encode("ascii")).digest())
@@ -228,7 +234,7 @@ class OAuthClient:
                 self.send_header("Content-Type", "text/html; charset=utf-8")
                 self.end_headers()
                 message = (
-                    "Google Agenda conectado ao Dash CIRP. Pode fechar esta aba."
+                    "Google conectado ao Dash CIRP. Pode fechar esta aba."
                     if ok
                     else "Autorização não concedida. Pode fechar esta aba."
                 )
@@ -239,21 +245,25 @@ class OAuthClient:
 
         server = http.server.HTTPServer(("127.0.0.1", 0), Handler)
         redirect = f"http://127.0.0.1:{server.server_address[1]}/"
-        url = self.auth_uri + "?" + urllib.parse.urlencode(
-            {
-                "client_id": self.client_id,
-                "redirect_uri": redirect,
-                "response_type": "code",
-                "scope": SCOPE,
-                "access_type": "offline",
-                "prompt": "consent",
-                "code_challenge": challenge,
-                "code_challenge_method": "S256",
-                "state": state,
-            }
+        url = (
+            self.auth_uri
+            + "?"
+            + urllib.parse.urlencode(
+                {
+                    "client_id": self.client_id,
+                    "redirect_uri": redirect,
+                    "response_type": "code",
+                    "scope": SCOPE,
+                    "access_type": "offline",
+                    "prompt": "consent",
+                    "code_challenge": challenge,
+                    "code_challenge_method": "S256",
+                    "state": state,
+                }
+            )
         )
 
-        def wait(timeout: float) -> str:
+        def wait(timeout: float) -> tuple[str, str]:
             deadline = time.monotonic() + timeout
             server.timeout = 1.0
             try:
@@ -277,7 +287,7 @@ class OAuthClient:
             )
             if "refresh_token" not in tokens:
                 raise GoogleCalendarError("o Google não devolveu refresh token")
-            return tokens["refresh_token"]
+            return tokens["refresh_token"], tokens.get("scope", CALENDAR_SCOPE)
 
         return url, wait
 
@@ -380,7 +390,7 @@ def find_client_secret(root: Path, pattern: str) -> Path | None:
 
 class CalendarSync:
     """Conexão, estado e sincronização em segundo plano (pedido imediato a cada mudança no
-    Acompanhamento e a cada `sync_minutes`)."""
+    Carteira e a cada `sync_minutes`)."""
 
     def __init__(
         self,
@@ -432,9 +442,9 @@ class CalendarSync:
         state = self._read_state()
         return {
             "enabled": self._cfg.enabled,
-            "configured": find_client_secret(self._root, self._cfg.client_secret_glob)
-            is not None,
+            "configured": find_client_secret(self._root, self._cfg.client_secret_glob) is not None,
             "connected": "refresh_token" in state,
+            "gmail": self.gmail_ready(),
             "connecting": self.connecting,
             "calendar_name": self._cfg.calendar_name,
             "calendar_ready": bool(state.get("calendar_id")),
@@ -454,9 +464,10 @@ class CalendarSync:
 
         def finish() -> None:
             try:
-                refresh = wait(CONNECT_TIMEOUT_SECONDS)
+                refresh, scopes = wait(CONNECT_TIMEOUT_SECONDS)
                 state = self._read_state()
                 state["refresh_token"] = secure_store.protect(refresh)
+                state["scopes"] = scopes
                 self._write_state(state)
                 self._access = None
                 log.info("Google Agenda conectado")
@@ -473,6 +484,7 @@ class CalendarSync:
     def disconnect(self) -> None:
         state = self._read_state()
         token = state.pop("refresh_token", None)
+        state.pop("scopes", None)
         if token:
             try:
                 OAuthClient.revoke(secure_store.unprotect(token))
@@ -481,6 +493,26 @@ class CalendarSync:
         self._write_state(state)
         self._access = None
         self.last_result = None
+
+    def gmail_ready(self) -> bool:
+        state = self._read_state()
+        return "refresh_token" in state and GMAIL_SCOPE in state.get("scopes", "").split()
+
+    def access_token(self) -> str:
+        """Access token da conexão (agenda e, se concedido, gmail.send)."""
+        return self._token()
+
+    def server_credentials(self) -> dict | None:
+        """Cliente OAuth + refresh token, para o servidor de alertas enviar e-mail sozinho.
+        None se o e-mail não foi autorizado."""
+        if not self.gmail_ready():
+            return None
+        oauth = self._oauth()
+        return {
+            "client_id": oauth.client_id,
+            "client_secret": oauth.client_secret,
+            "refresh_token": secure_store.unprotect(self._read_state()["refresh_token"]),
+        }
 
     def _token(self) -> str:
         if self._access and time.monotonic() < self._access[1] - 60:

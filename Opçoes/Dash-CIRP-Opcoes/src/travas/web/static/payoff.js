@@ -4,7 +4,7 @@ const Payoff = (() => {
   const M = { l: 78, r: 16, t: 54, b: 38 };
   const COLORS = {
     expiry: "#1d2330", model: "#1f5fbf", zero: "#667085", spot: "#1d2330",
-    target: "#7a2fc0", strike: "#98a2b3", be: "#157a3c", beModel: "#1f5fbf",
+    target: "#7a2fc0", strike: "#98a2b3", be: "#157a3c", beModel: "#1f5fbf", stop: "#c0262d",
     profit: "rgba(21,122,60,0.13)", loss: "rgba(180,35,24,0.11)",
   };
 
@@ -37,6 +37,33 @@ const Payoff = (() => {
       px.push(xs[i]); py.push(ys[i]);
     }
     return [px, py];
+  }
+
+  // Stop 1:1 (prejuízo = lucro máximo) na data simulada; sem simulação temporal, o do vencimento.
+  function stopAt(sim, sel) {
+    const s = sim && sim.stop;
+    if (!s || !s.available) return null;
+    const atExpiry = !sel || sel.business_days_left === 0;
+    const price = atExpiry ? s.expiry_price : sel.stop_price;
+    return { price, atExpiry, date: sel ? sel.date : sim.first_expiration, stop: s };
+  }
+
+  // Texto curto para o rótulo do controle de tempo.
+  function stopText(sim, sel) {
+    const st = stopAt(sim, sel);
+    if (!st) return "";
+    const when = st.atExpiry ? "no vencimento" : `em ${FMT.date(st.date)}`;
+    return FMT.ok(st.price) ? ` · stop 1:1 ${when}: ativo a ${FMT.price(st.price)}` : ` · stop 1:1 inatingível ${when}`;
+  }
+
+  // Linhas do stop para o gráfico do ativo (data simulada e vencimento).
+  function stopLevels(sim, sel) {
+    const st = stopAt(sim, sel);
+    if (!st) return [];
+    const out = [];
+    if (!st.atExpiry && FMT.ok(st.price)) out.push({ label: `Stop 1:1 ${FMT.date(st.date)}`, value: st.price, color: COLORS.stop, dashed: true, size: 1.6, fit: true });
+    if (FMT.ok(st.stop.expiry_price)) out.push({ label: "Stop 1:1 venc.", value: st.stop.expiry_price, color: COLORS.stop, dashed: true, dash: [2, 3], size: 1.2, fit: true });
+    return out;
   }
 
   function render(container, d, dateIndex, tooltip) {
@@ -112,8 +139,19 @@ const Payoff = (() => {
     }
     for (const be of d.breakevens || []) marks.push([be, COLORS.be, "7 3 2 3", `BE venc. ${FMT.price(be)}`, 1.6]);
     marks.push([d.spot, COLORS.spot, "none", `Atual ${FMT.price(d.spot)}`, 1.4]);
+    const st = stopAt(sim, sel);
+    if (st && FMT.ok(st.price)) marks.push([st.price, COLORS.stop, "8 3", `Stop ${st.atExpiry ? "venc." : FMT.date(st.date).slice(0, 5)} ${FMT.price(st.price)}`, 1.8]);
     if (d.target_price) marks.push([d.target_price, COLORS.target, "6 4", `Alvo ${FMT.price(d.target_price)}`, 1.4]);
     marks.sort((a, b) => a[0] - b[0]).forEach((m) => vline(...m));
+
+    // Prejuízo que aciona o stop (a curva da data cruza esta linha no preço do stop).
+    if (st) {
+      const level = st.stop.pnl_total - (sim.costs || 0);
+      if (level >= ylo && level <= yhi) {
+        svg.appendChild(el("line", { x1: M.l, x2: W - M.r, y1: Y(level), y2: Y(level), stroke: COLORS.stop, "stroke-width": 1, "stroke-dasharray": "3 3" }));
+        svg.appendChild(el("text", { x: W - M.r - 4, y: Y(level) + 13, "text-anchor": "end", fill: COLORS.stop }, `Stop 1:1 ${FMT.brl(level)}`));
+      }
+    }
 
     // Curvas
     const path = (ys) => ys.map((y, i) => `${i ? "L" : "M"} ${X(xs[i])} ${Y(y)}`).join(" ");
@@ -169,7 +207,8 @@ const Payoff = (() => {
     hit.addEventListener("mouseleave", () => { tooltip.hidden = true; cross.setAttribute("visibility", "hidden"); });
   }
 
-  function legend(showModel, sel, expiryLabel) {
+  function legend(showModel, sel, expiryLabel, sim) {
+    const st = stopAt(sim, sel);
     const items = [
       `<span><i style="border-color:${COLORS.expiry}"></i>${esc(expiryLabel || "Payoff no vencimento (exato)")}</span>`,
       showModel ? `<span><i style="border-color:${COLORS.model};border-top-style:dashed"></i>Valor teórico em ${FMT.date(sel.date)} (modelo)</span>` : "",
@@ -177,9 +216,10 @@ const Payoff = (() => {
       `<span><i class="box" style="background:${COLORS.loss}"></i>Prejuízo</span>`,
       `<span><i style="border-color:${COLORS.be};border-top-style:dashed"></i>Breakeven no venc.</span>`,
       showModel ? `<span>○ Equilíbrio na data (modelo)</span>` : "",
+      st ? `<span title="Stop 1:1: prejuízo = ${FMT.num(st.stop.loss_multiple, 1)} × lucro máximo. Antes do vencimento, pelo valor teórico (modelo); muda com o tempo"><i style="border-color:${COLORS.stop};border-top-style:dashed"></i>Stop 1:1 ${st.atExpiry ? "no venc." : "na data (modelo)"}</span>` : "",
     ];
     return items.join("");
   }
 
-  return { render, legend };
+  return { render, legend, stopAt, stopText, stopLevels };
 })();

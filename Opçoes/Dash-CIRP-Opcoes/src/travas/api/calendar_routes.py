@@ -1,4 +1,4 @@
-"""Rotas do Google Agenda (eventos de vencimento do Acompanhamento). Nada de ordens."""
+"""Rotas do Google Agenda (eventos de vencimento da Carteira). Nada de ordens."""
 
 from __future__ import annotations
 

@@ -349,6 +349,14 @@ def evaluate_position(
         "warnings": warnings,
         "vol_source": "volatilidade informada" if vol_override else "IV de cada perna (mid)",
     }
+    stop = sim.get("stop") or {}
+    result["stop"] = {
+        **{k: stop.get(k) for k in ("available", "reason", "today_price", "expiry_price", "down")},
+        "pnl_total": stop.get("pnl_total"),
+        "loss_multiple": stop.get("loss_multiple"),
+        "by_date": {d["date"]: d.get("stop_price") for d in sim.get("dates", [])},
+    }
+    result["stop_alert"] = record.get("stop_alert")
     if with_simulation:
         result["simulation"] = sim
     return result

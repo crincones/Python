@@ -1,4 +1,4 @@
-// Relatório das operações encerradas (aba Acompanhamento): estatísticas calculadas no backend
+// Relatório das operações encerradas (aba Carteira): estatísticas calculadas no backend
 // (/api/tracking/report) e gráficos em canvas. Só usa os registros; não consulta o MT5.
 const Report = (() => {
   const $ = (id) => document.getElementById(id);

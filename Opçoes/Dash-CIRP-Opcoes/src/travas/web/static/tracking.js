@@ -1,4 +1,4 @@
-// Aba Acompanhamento: registra estruturas (trava ou qualquer combinação), agrupa e acompanha o
+// Aba Carteira: registra estruturas (trava ou qualquer combinação), agrupa e acompanha o
 // resultado com cotações do MT5. Cálculos no backend; nada é enviado à corretora.
 const Tracking = (() => {
   const $ = (id) => document.getElementById(id);
@@ -33,6 +33,7 @@ const Tracking = (() => {
     $("trk-close-form").addEventListener("submit", saveClose);
     $("tc-cancel").addEventListener("click", () => { $("trk-close-card").hidden = true; });
     $("trk-groups").addEventListener("click", onGroupsClick);
+    $("trk-groups").addEventListener("change", onStopAlertChange);
     $("trk-export").addEventListener("change", () => {
       const v = $("trk-export").value;
       $("trk-export").value = "";
@@ -54,6 +55,7 @@ const Tracking = (() => {
   function activate() {
     setup();
     Gcal.refresh();
+    Alerts.refresh();
     if (!st.data && !st.loading) refresh();
   }
 
@@ -63,8 +65,9 @@ const Tracking = (() => {
   }
 
   async function refresh() {
-    if (st.loading) return;
+    if (st.loading) { st.again = true; return; } // roda de novo ao terminar a atual
     st.loading = true;
+    st.again = false;
     $("trk-refresh").disabled = true;
     $("trk-meta").textContent = "Atualizando cotações no MT5…";
     try {
@@ -91,7 +94,9 @@ const Tracking = (() => {
     } finally {
       st.loading = false;
       $("trk-refresh").disabled = false;
+      if (st.again) refresh();
       setTimeout(() => Gcal.refresh(), 4000); // mudanças nas estruturas sincronizam a agenda
+      setTimeout(() => Alerts.refresh(), 4000); // lista vigiada enviada ao servidor em 2º plano
     }
   }
 
@@ -107,15 +112,17 @@ const Tracking = (() => {
     $("trk-group-list").innerHTML = d.groups.map((g) => `<option value="${esc(g.group)}">`).join("");
     renderTotals(d.totals);
     if (!d.positions.length) {
-      $("trk-groups").innerHTML = '<p class="muted">Nenhuma estrutura registrada. Use "+ Nova estrutura" ou, na aba Análise de travas, "Adicionar ao acompanhamento".</p>';
+      $("trk-groups").innerHTML = '<p class="muted">Nenhuma estrutura registrada. Use "+ Nova estrutura" ou, na aba Análise de travas, "Adicionar à carteira".</p>';
       return;
     }
-    $("trk-groups").innerHTML = d.groups.map((g) => {
-      const rows = d.positions.filter((p) => p.group === g.group && (showClosed || p.status === "aberta"));
+    const closed = d.positions.filter((p) => p.status !== "aberta")
+      .sort((a, b) => String((b.exit || {}).exit_date || "").localeCompare(String((a.exit || {}).exit_date || "")));
+    const groupsHtml = d.groups.map((g) => {
+      const rows = d.positions.filter((p) => p.group === g.group && p.status === "aberta");
       if (!rows.length) return "";
       return `<div class="group">
         <div class="group-head">
-          <h3>${g.underlyings.map((u) => tickerIcon(u, 20)).join("")}${esc(g.group)} <span class="muted small">${g.open} aberta(s) · ${esc(g.underlyings.join(", "))}</span></h3>
+          <h3>${openUnderlyings(rows).map((u) => tickerIcon(u, 20)).join("")}${esc(g.group)} <span class="muted small">${g.open} aberta(s) · ${esc(openUnderlyings(rows).join(", "))}</span></h3>
           <div class="group-stats">
             <span>P&L natural <b>${pnlSpan(g.pnl_natural)}</b></span>
             <span>P&L mid <b>${pnlSpan(g.pnl_mid)}</b></span>
@@ -126,10 +133,49 @@ const Tracking = (() => {
         </div>
         <div class="table-wrap"><table class="trk-table">
           <thead><tr><th class="l">Estrutura</th><th class="l">Pernas</th><th>Venc.</th><th>Entrada (por un.)</th><th>Zerar agora (natural)</th>
-            <th>P&L natural</th><th>P&L mid</th><th title="P&L natural ÷ lucro máximo">% do lucro máx.</th><th>Perda máx.</th><th>Breakeven</th><th class="l">Alertas</th><th></th></tr></thead>
+            <th>P&L natural</th><th>P&L mid</th><th title="P&L natural ÷ lucro máximo">% do lucro máx.</th><th title="Avisar por Telegram e e-mail quando o ativo chegar ao preço em que o prejuízo iguala o lucro máximo (preço do stop de hoje pelo modelo)">Stop 1:1 🔔</th><th>Perda máx.</th><th>Breakeven</th><th class="l">Alertas</th><th></th></tr></thead>
           <tbody>${rows.map(rowHtml).join("")}</tbody>
         </table></div></div>`;
     }).join("");
+    const openNone = groupsHtml ? "" : '<p class="muted">Nenhuma estrutura aberta.</p>';
+    $("trk-groups").innerHTML = openNone + groupsHtml + closedHtml(closed, showClosed);
+  }
+
+  const openUnderlyings = (rows) => [...new Set(rows.map((p) => p.underlying))].sort();
+
+  // ---------- encerradas: seção própria, saída mais recente primeiro ----------
+  const REASON_LABEL = { zerada: "zerada", vencida: "vencida", exercida: "exercida" };
+  function closedHtml(rows, show) {
+    if (!rows.length) return "";
+    if (!show) return `<p class="muted small trk-closed-hint">${rows.length} operação(ões) encerrada(s) oculta(s): marque "Mostrar encerradas".</p>`;
+    return `<div class="group closed-group">
+      <div class="group-head"><h3>Operações encerradas <span class="muted small">${rows.length} · resultado no relatório abaixo</span></h3></div>
+      <div class="table-wrap"><table class="trk-table">
+        <thead><tr><th class="l">Estrutura</th><th class="l">Pernas</th><th>Venc.</th><th>Entrada (por un.)</th><th>Saída</th><th>Realizado</th><th>Perda máx.</th><th class="l">Grupo</th><th></th></tr></thead>
+        <tbody>${rows.map(closedRowHtml).join("")}</tbody>
+      </table></div></div>`;
+  }
+
+  function closedRowHtml(p) {
+    const x = p.exit || {};
+    const flow = p.entry_flow === "credito" ? "crédito" : "débito";
+    const exitPrice = FMT.ok(x.exit_net) ? `${FMT.price(x.exit_net)} <span class="muted small">${x.exit_flow === "credito" ? "crédito" : "débito"}</span>` : x.leg_prices ? '<span class="muted small">por perna</span>' : "";
+    const realized = p.pending ? '<span class="muted small">calculando…</span>' : pnlSpan(p.realized_pnl);
+    return `<tr data-id="${p.id}" title="Clique para ver no gráfico" class="selectable closed ${st.detailKey === p.id ? "selected" : ""}">
+      <td class="l">${tickerIcon(p.underlying, 18)}<b>${esc(p.name)}</b><br><span class="muted small">${esc(p.kind_label)} · ${esc(p.underlying)} · entrada ${FMT.date(p.entry_date)}</span></td>
+      <td class="l small">${legsText(p)}</td>
+      <td>${FMT.date(p.first_expiration)}</td>
+      <td>${FMT.price(p.entry_net_per_unit)} <span class="muted small">${flow}</span></td>
+      <td>${FMT.date(x.exit_date)}<br>${exitPrice} <span class="muted small">${esc(REASON_LABEL[x.reason] || x.reason || "")}</span></td>
+      <td>${realized}</td>
+      <td>${FMT.brl(p.max_loss)}</td>
+      <td class="l small">${esc(p.group)}</td>
+      <td><div class="acts">
+        <button data-act="detail" data-id="${p.id}">Detalhe</button>
+        <button data-act="edit" data-id="${p.id}">Editar</button>
+        <button data-act="reopen" data-id="${p.id}">Reabrir</button>
+        <button data-act="delete" data-id="${p.id}" class="danger">${st.confirmDelete === p.id ? "Confirmar exclusão" : "Excluir"}</button>
+      </div></td></tr>`;
   }
 
   // Totais da carteira: P&L aberto (zerar agora) + realizado das encerradas.
@@ -175,6 +221,7 @@ const Tracking = (() => {
       <td>${open ? pnlSpan(p.pnl_natural) : `<span class="muted small">realizado</span><br>${pnlSpan(p.realized_pnl)}`}</td>
       <td>${open ? pnlSpan(p.pnl_mid) : "—"}</td>
       <td>${open ? FMT.pct(p.pnl_pct_of_max_profit, 0) : "—"}</td>
+      <td>${open ? stopCell(p) : "—"}</td>
       <td>${FMT.brl(p.max_loss)}${p.profile_exact ? "" : '<span class="muted small" title="estimado pelo modelo"> *</span>'}</td>
       <td>${(p.breakevens || []).map(FMT.price).join(" / ") || "—"}</td>
       <td class="l">${alerts}</td>
@@ -186,7 +233,39 @@ const Tracking = (() => {
       </div></td></tr>`;
   }
 
+  // Checkbox do alerta de stop 1:1 + preço do ativo que aciona o stop hoje.
+  function stopCell(p) {
+    const s = p.stop || {};
+    if (!s.available) return `<span class="muted" title="${esc(s.reason || "stop 1:1 indisponível")}">—</span>`;
+    const on = !!(p.stop_alert && p.stop_alert.enabled);
+    const sent = p.stop_alert_sent;
+    const today = FMT.ok(s.today_price) ? FMT.price(s.today_price) : FMT.ok(s.expiry_price) && p.dte_business_days === 0 ? FMT.price(s.expiry_price) : "—";
+    const tip = `Stop 1:1 hoje: ativo a ${today} (prejuízo = lucro máximo, ${FMT.brl(-s.pnl_total)}); no vencimento ${FMT.price(s.expiry_price)}. Marque para receber Telegram + e-mail quando o ativo chegar lá.`;
+    const badge = sent && on ? `<br><span class="badge ${sent.status === "enviado" ? "bad" : "mid"}" title="${esc(`${sent.status} por ${sent.by} em ${FMT.datetime(sent.at)}${sent.channels ? ` · ${Object.entries(sent.channels).map(([k, v]) => `${k}: ${v}`).join(", ")}` : ""}`)}">alerta ${esc(sent.status)} ${FMT.datetime(sent.at).slice(0, 5)}</span>` : "";
+    return `<label class="check-inline" title="${esc(tip)}"><input type="checkbox" class="stop-alert" data-id="${p.id}" ${on ? "checked" : ""}> ${today}</label>${badge}`;
+  }
+
+  async function onStopAlertChange(ev) {
+    const box = ev.target.closest("input.stop-alert");
+    if (!box) return;
+    box.disabled = true;
+    try {
+      const rec = await api(`/api/tracking/positions/${box.dataset.id}/stop-alert`, json("PUT", { enabled: box.checked }));
+      const p = st.data.positions.find((x) => x.id === box.dataset.id);
+      if (p) { p.stop_alert = rec.stop_alert; p.stop_alert_sent = null; }
+      render();
+      setTimeout(() => Alerts.refresh(), 2500);
+    } catch (e) {
+      box.checked = !box.checked;
+      $("trk-errors").hidden = false;
+      $("trk-errors").textContent = `Erro no alerta de stop: ${e.message}`;
+    } finally {
+      box.disabled = false;
+    }
+  }
+
   async function onGroupsClick(ev) {
+    if (ev.target.closest("label.check-inline, input.stop-alert")) return; // checkbox do stop
     const b = ev.target.closest("button[data-act]");
     if (!b) {
       // Clique na linha (fora dos botões) seleciona a estrutura: detalhe + gráfico do ativo.
@@ -209,7 +288,11 @@ const Tracking = (() => {
         openForm({ ...p, _record: records.find((r) => r.id === id) });
       }
       else if (b.dataset.act === "close") openClose(p);
-      else if (b.dataset.act === "reopen") { await api(`/api/tracking/positions/${id}/reopen`, { method: "POST" }); await refresh(); }
+      else if (b.dataset.act === "reopen") {
+        await api(`/api/tracking/positions/${id}/reopen`, { method: "POST" });
+        if (p) { p.status = "aberta"; p.exit = null; p.pending = true; render(); }
+        await refresh();
+      }
       else if (b.dataset.act === "delete") {
         if (st.confirmDelete !== id) {
           st.confirmDelete = id;
@@ -422,6 +505,12 @@ const Tracking = (() => {
     try {
       await api(`/api/tracking/positions/${st.closing}/close`, json("POST", body));
       $("trk-close-card").hidden = true;
+      const p = st.data && st.data.positions.find((x) => x.id === st.closing);
+      if (p) {
+        Object.assign(p, { status: "encerrada", exit: body, realized_pnl: null, pending: true });
+        if (!$("trk-closed").checked) { $("trk-closed").checked = true; App.savePrefs(); }
+        render();
+      }
       await refresh();
     } catch (e) {
       $("tc-msg").className = "msg err";
@@ -475,8 +564,8 @@ const Tracking = (() => {
     const i = Number($("td-slider").value);
     const sel = sim.dates[i];
     const showModel = sel && sel.business_days_left > 0;
-    $("td-time-label").textContent = sel ? `${FMT.date(sel.date)} · ${sel.business_days_left} du até o 1º vencimento${showModel ? " (modelo)" : ""}` : "";
-    $("td-legend").innerHTML = Payoff.legend(showModel, sel, sim.expiry_label);
+    $("td-time-label").textContent = sel ? `${FMT.date(sel.date)} · ${sel.business_days_left} du até o 1º vencimento${showModel ? " (modelo)" : ""}${Payoff.stopText(sim, sel)}` : "";
+    $("td-legend").innerHTML = Payoff.legend(showModel, sel, sim.expiry_label, sim);
     const view = { ...d, breakevens: d.breakevens || [], target_price: null };
     Payoff.render($("td-payoff"), view, i, App.tooltip());
     // Estrutura no gráfico do ativo: cada perna no seu strike e o(s) breakeven(s).
@@ -489,6 +578,7 @@ const Tracking = (() => {
       })),
       ...(d.breakevens || []).map((b) => ({ label: d.profile_exact ? "Breakeven no venc." : "Breakeven 1º venc. (modelo)", value: b, color: "#7a2fc0", size: 2, fit: true })),
       ...(showModel ? sel.breakevens.map((b) => ({ label: `Equilíbrio em ${FMT.date(sel.date)} (modelo)`, value: b, color: "#1f5fbf", dashed: true, dash: [2, 3] })) : []),
+      ...Payoff.stopLevels(sim, sel),
     ], "tracking");
   }
 

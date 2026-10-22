@@ -31,8 +31,14 @@ def _position(pid: str, status: str = "aberta", expirations=("2026-11-19",)) -> 
         "entry_date": "2026-10-16",
         "status": status,
         "legs": [
-            {"symbol": f"L{i}", "side": "compra", "quantity": 100, "option_type": "call",
-             "strike": 25.54, "expiration": exp}
+            {
+                "symbol": f"L{i}",
+                "side": "compra",
+                "quantity": 100,
+                "option_type": "call",
+                "strike": 25.54,
+                "expiration": exp,
+            }
             for i, exp in enumerate(expirations)
         ],
     }

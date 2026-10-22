@@ -20,7 +20,13 @@ from travas.data import market_data
 from travas.data.b3_instruments import B3Instruments
 from travas.data.b3_trades import B3Trades, closing_chain
 from travas.data.mt5_client import MT5Client, MT5Error
-from travas.data.normalize import CHAIN_COLUMNS, ema, normalize_chain, option_catalog
+from travas.data.normalize import (
+    CHAIN_COLUMNS,
+    ema,
+    normalize_chain,
+    option_catalog,
+    price_symbol,
+)
 from travas.data.quote_store import QuoteStore, reference_capture
 from travas.data.snapshots import Snapshot, SnapshotSource, snapshot_chain
 from travas.market_hours import MarketStatus, market_status, parse_hhmm
@@ -55,7 +61,7 @@ class MarketDataService:
         self._catalog_time = 0.0
         self._chains: dict[tuple, tuple[float, pd.DataFrame, dict]] = {}
         self._account_key: tuple | None = None
-        self._daily_cache = None
+        self._daily_cache: dict[tuple, tuple] = {}
         self._quotes = QuoteStore(settings.paths.quotes_dir)
         self._instruments = B3Instruments(settings.paths.quotes_dir.parent / "b3", self._calendar)
         self._trades = B3Trades(settings.paths.quotes_dir.parent / "b3", self._calendar)
@@ -76,6 +82,10 @@ class MarketDataService:
     @property
     def calendar(self) -> B3Calendar:
         return self._calendar
+
+    @property
+    def instruments(self) -> B3Instruments:
+        return self._instruments
 
     @property
     def off_hours_source(self) -> str:
@@ -223,7 +233,7 @@ class MarketDataService:
             log.info("Conta do MT5 mudou para %s: caches descartados", summary["server"])
             self._catalog = None
             self._chains = {}
-            self._daily_cache = None
+            self._daily_cache: dict[tuple, tuple] = {}
         self._account_key = current
         self._state.terminal = {
             "build": summary["build"],
@@ -263,6 +273,11 @@ class MarketDataService:
             "snapshot": self._snapshot_status(),
             "broker": self.broker_name(),
         }
+
+    def latest_snapshot(self) -> Snapshot | None:
+        """Snapshot mais recente do servidor, qualquer que seja a fonte escolhida (uso
+        informativo, ex.: qualidade do book na aba Liquidez de Opções)."""
+        return self._snapshots.latest()
 
     def _snapshot_status(self) -> dict | None:
         """Snapshot em uso (só com a fonte "servidor" e o mercado fechado)."""
@@ -451,7 +466,7 @@ class MarketDataService:
             return chain, meta
 
     def leg_quotes(self, underlying: str, symbols: list[str]) -> pd.DataFrame:
-        """Cotações de séries específicas (acompanhamento). Coluna `source` indica a origem.
+        """Cotações de séries específicas (carteira). Coluna `source` indica a origem.
 
         Pregão aberto: MT5 (e salva). Fora do pregão: últimas cotações salvas; só as séries
         nunca capturadas no pregão são lidas do MT5, marcadas como `mt5_fora_pregao`.
@@ -514,14 +529,14 @@ class MarketDataService:
         return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
 
     def daily_set(self, tickers: list[str]) -> tuple[dict, dict]:
-        """Barras D1 (300) e negócios da sessão de vários ativos, para o heatmap.
-        Cache: 60 s com o pregão aberto; 15 min fora dele."""
+        """Barras D1 (300) e negócios da sessão de vários ativos (heatmap, IV/HV da liquidez).
+        Cache por lista de ativos: 60 s com o pregão aberto; 15 min fora dele."""
         market = self.market()
         ttl = 60 if market.is_open else 900
         key = tuple(sorted(tickers))
-        cached = self._daily_cache
-        if cached and cached[0] == key and time.monotonic() - cached[1] <= ttl:
-            return cached[2], {**cached[3], "from_cache": True}
+        cached = self._daily_cache.get(key)
+        if cached and time.monotonic() - cached[0] <= ttl:
+            return cached[1], {**cached[2], "from_cache": True}
         with self._lock:
             client = self._require()
             try:
@@ -535,7 +550,9 @@ class MarketDataService:
             "market": market.to_dict(),
             "from_cache": False,
         }
-        self._daily_cache = (key, time.monotonic(), data, meta)
+        if len(self._daily_cache) >= 4:
+            self._daily_cache.clear()
+        self._daily_cache[key] = (time.monotonic(), data, meta)
         return data, meta
 
     def candles(self, underlying: str, timeframe: str) -> tuple[pd.DataFrame, dict]:
@@ -554,6 +571,7 @@ class MarketDataService:
         )
         meta = {
             "timeframe": timeframe,
+            "price_symbol": price_symbol(underlying),
             "bars": len(bars),
             "requested": requested,
             "last_bar_time": bars["time"].iloc[-1].isoformat() if len(bars) else None,

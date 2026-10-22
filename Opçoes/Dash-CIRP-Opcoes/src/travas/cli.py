@@ -89,6 +89,22 @@ def cmd_b3_archive(settings: Settings, out: Path) -> int:
     return 0
 
 
+def cmd_iv_history(settings: Settings, out: Path) -> int:
+    from travas.calendar_b3 import B3Calendar
+    from travas.data.iv_history import rebuild
+
+    calendar = B3Calendar.from_csv(settings.paths.holidays_file)
+    rebuild(out, settings.pricing.risk_free_rate_annual, settings.pricing, calendar)
+    return 0
+
+
+def cmd_alerts_check(settings: Settings, root: Path) -> int:
+    from travas.alerts.check import run_check
+
+    result = run_check(settings, root)
+    return 1 if result.get("errors") and not result.get("sent") else 0
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(prog="travas", description="Dash CIRP Opções (travas B3)")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -106,6 +122,15 @@ def main() -> None:
     snap.add_argument("--wait-minutes", type=float, default=15.0)
     archive = sub.add_parser("b3-archive", help="arquiva o fechamento oficial da B3 por pregão")
     archive.add_argument("--out", type=Path, required=True, help="pasta raiz dos snapshots")
+    ivh = sub.add_parser(
+        "iv-history", help="refaz o histórico de IV ATM (iv_atm.csv) com os snapshots guardados"
+    )
+    ivh.add_argument("--out", type=Path, required=True, help="pasta raiz dos snapshots")
+    alerts = sub.add_parser(
+        "alerts-check", help="checa os alertas de stop 1:1 (servidor com MT5, a cada 15 min)"
+    )
+    alerts.add_argument("--dir", type=Path, required=True, help="pasta dos alertas do servidor")
+    alerts.add_argument("--terminal", default=None, help="terminal64.exe (padrão: settings.yaml)")
     args = parser.parse_args()
 
     settings = load_settings()
@@ -119,6 +144,10 @@ def main() -> None:
         sys.exit(cmd_snapshot(settings, args.out, args.slot, args.wait_minutes))
     if args.command == "b3-archive":
         sys.exit(cmd_b3_archive(settings, args.out))
+    if args.command == "iv-history":
+        sys.exit(cmd_iv_history(settings, args.out))
+    if args.command == "alerts-check":
+        sys.exit(cmd_alerts_check(settings, args.dir))
     sys.exit(cmd_serve(settings, settings.server.open_browser and not args.no_browser, args.port))
 
 
