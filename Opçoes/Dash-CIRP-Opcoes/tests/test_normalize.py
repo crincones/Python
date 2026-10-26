@@ -73,3 +73,33 @@ def test_hourly_bar_forming():
     t0 = pd.Timestamp("2026-10-16 10:00").tz_localize("UTC").timestamp()
     bars = normalize_bars(_rates([t0, t0 + 3600]), "h1", "America/Sao_Paulo", t0 + 3600 + 60)
     assert bars["forming"].tolist() == [False, True]
+
+
+def test_crossed_book_discards_prices_and_marks_series():
+    from travas.data.normalize import discard_crossed_book
+    from travas.options.liquidity import FLAG_CROSSED, FLAG_NO_BOOK, LiquidityRules, quote_flags
+
+    frame = pd.DataFrame(
+        {
+            "bid": [2.40, 1.36, 1.00],
+            "ask": [1.30, 8.00, 1.00],  # cruzado, largo mas válido, travado (bid = ask)
+            "mid": [1.85, 4.68, 1.00],
+            "spread_pct_mid": [-0.59, 1.42, 0.0],
+        }
+    )
+    out = discard_crossed_book(frame)
+    assert out["book_crossed"].tolist() == [True, False, False]
+    assert out.loc[0, ["bid", "ask", "mid", "spread_pct_mid"]].isna().all()
+    assert out.loc[1, "ask"] == 8.00 and out.loc[2, "mid"] == 1.00
+
+    chain = out.assign(
+        last=np.nan,
+        quote_time=pd.Timestamp("2026-10-26 09:58", tz="America/Sao_Paulo"),
+        quote_age_seconds=10.0,
+        turnover_brl=1e6,
+        deals=100,
+    )
+    rules = LiquidityRules(10.0, 0.0, 0.0, 0, 600.0)
+    flags = quote_flags(chain, rules)
+    assert FLAG_CROSSED in flags[0] and FLAG_NO_BOOK not in flags[0]
+    assert FLAG_CROSSED not in flags[1]

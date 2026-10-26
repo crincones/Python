@@ -25,10 +25,11 @@ CHAIN_COLUMNS: dict[str, str] = {
     "expiration_date": "Data de vencimento (expiration_time)",
     "dte_business_days": "Pregões após hoje até o vencimento, inclusive",
     "dte_calendar_days": "Dias corridos até o vencimento",
-    "bid": "Melhor oferta de compra (NaN se zero)",
-    "ask": "Melhor oferta de venda (NaN se zero)",
+    "bid": "Melhor oferta de compra (NaN se zero ou book cruzado)",
+    "ask": "Melhor oferta de venda (NaN se zero ou book cruzado)",
     "last": "Último negócio (NaN se zero)",
-    "mid": "(bid + ask)/2; NaN se bid ou ask ausente ou ask < bid",
+    "mid": "(bid + ask)/2; NaN se bid ou ask ausente",
+    "book_crossed": "bid > ask na leitura (leilão/pré-abertura): bid, ask e mid descartados",
     "spread_pct_mid": "(ask − bid)/mid",
     "quote_time": "Horário do último tick da série",
     "quote_age_seconds": "Segundos entre o tick da série e o tick mais recente do mesmo lote",
@@ -67,6 +68,20 @@ def _volume_fallback(raw: pd.DataFrame) -> pd.DataFrame:
 def zero_as_missing(values: pd.Series) -> pd.Series:
     values = values.astype("float64")
     return values.where(values != 0)
+
+
+def discard_crossed_book(frame: pd.DataFrame) -> pd.DataFrame:
+    """Book cruzado (bid > ask, típico de leilão/pré-abertura) não é preço negociável: bid, ask,
+    mid e spread viram NaN e a série fica marcada em `book_crossed`. Também aplicado a
+    snapshots gravados antes da coluna existir."""
+    frame = frame.copy()
+    crossed = frame["bid"].notna() & frame["ask"].notna() & (frame["ask"] < frame["bid"])
+    if "book_crossed" in frame:
+        crossed |= frame["book_crossed"].fillna(False).astype(bool)
+    frame["book_crossed"] = crossed.to_numpy(dtype=bool)
+    for col in ("bid", "ask", "mid", "spread_pct_mid"):
+        frame[col] = frame[col].astype("float64").mask(crossed)
+    return frame
 
 
 def reference_price(last: pd.Series, bid: pd.Series, ask: pd.Series) -> pd.Series:
@@ -191,8 +206,7 @@ def normalize_chain(
     raw = _volume_fallback(raw)
     catalog = option_catalog(raw, server_timezone, reference)
     bid, ask, last = (zero_as_missing(raw[c]) for c in ("bid", "ask", "last"))
-    has_book = bid.notna() & ask.notna() & (ask >= bid)
-    mid = ((bid + ask) / 2).where(has_book)
+    mid = (bid + ask) / 2
     # Idade no relógio do servidor: referência = tick mais recente do mesmo lote (séries + ativo).
     batch_latest = raw.groupby("read_time")["time"].transform("max")
     reference_epoch = pd.concat([batch_latest, raw["underlying_time"]], axis=1).max(axis=1)
@@ -227,7 +241,7 @@ def normalize_chain(
         ref_note=catalog["ref_note"].to_numpy(),
     )
     return (
-        frame[list(CHAIN_COLUMNS)]
+        discard_crossed_book(frame)[list(CHAIN_COLUMNS)]
         .sort_values(["expiration_date", "option_type", "strike"])
         .reset_index(drop=True)
     )

@@ -33,7 +33,7 @@ import pandas as pd
 from travas.calendar_b3 import B3Calendar
 from travas.data.b3_instruments import MAX_LOOKBACK_SESSIONS
 from travas.data.b3_trades import B3Trades
-from travas.data.normalize import CHAIN_COLUMNS
+from travas.data.normalize import CHAIN_COLUMNS, discard_crossed_book
 from travas.timeutils import LOCAL_TIMEZONE
 
 log = logging.getLogger(__name__)
@@ -184,7 +184,7 @@ def read_snapshot(path: Path) -> pd.DataFrame:
     for col in ("ref_note", "volume_source"):
         frame[col] = frame[col].astype(object).where(frame[col].notna(), None)
     frame["deals"] = frame["deals"].fillna(0).astype("int64")
-    return frame[SNAPSHOT_COLUMNS]
+    return discard_crossed_book(frame)[SNAPSHOT_COLUMNS]
 
 
 def snapshot_chain(

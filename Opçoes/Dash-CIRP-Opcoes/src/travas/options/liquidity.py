@@ -16,6 +16,7 @@ from dataclasses import dataclass
 import pandas as pd
 
 FLAG_NO_BOOK = "sem bid/ask válido"
+FLAG_CROSSED = "book cruzado (leilão/pré-abertura): sem preço"
 FLAG_STALE = "cotação antiga"
 FLAG_NO_TICK = "sem tick"
 FLAG_LOW_PREMIUM = "prêmio muito baixo"
@@ -70,9 +71,15 @@ def quote_flags(chain: pd.DataFrame, rules: LiquidityRules) -> pd.Series:
     negócio no dia, prêmio baixo, volume e negócios (do dia inteiro)."""
     book = price_basis(chain) != BASIS_B3_CLOSE
     px_mid = price_columns(chain)["px_mid"]
+    crossed = (
+        chain["book_crossed"].fillna(False).astype(bool)
+        if "book_crossed" in chain
+        else pd.Series(False, index=chain.index)
+    )
     checks: list[tuple[pd.Series, str]] = [
         (book & chain["quote_time"].isna(), FLAG_NO_TICK),
-        (book & chain["mid"].isna(), FLAG_NO_BOOK),
+        (book & crossed, FLAG_CROSSED),
+        (book & ~crossed & chain["mid"].isna(), FLAG_NO_BOOK),
         (book & ~(chain["quote_age_seconds"] <= rules.max_quote_age_seconds), FLAG_STALE),
         (~book & px_mid.isna(), FLAG_NO_TRADE),
         (px_mid < rules.min_mid_price_brl, FLAG_LOW_PREMIUM),

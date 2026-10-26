@@ -64,6 +64,7 @@ def synthetic_chain(calendar: B3Calendar, half_spread: float = 0.02) -> pd.DataF
                         "last": round(theo, 2),
                         "mid": (bid + ask) / 2,
                         "spread_pct_mid": (ask - bid) / ((bid + ask) / 2),
+                        "book_crossed": False,
                         "quote_time": now,
                         "quote_age_seconds": 10.0,
                         "deals": 50,

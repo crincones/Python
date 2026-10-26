@@ -541,6 +541,7 @@ const Tracking = (() => {
     $("td-alerts").innerHTML = alerts.map((a) => `<div class="warn ${/RISCO|STOP/.test(a) ? "alert-risk" : ""}">${esc(a)}</div>`).join("");
     renderMetrics(d);
     renderLegs(d);
+    renderExit(d.exit_plan);
     $("td-notes").textContent = d.notes ? `Observações: ${d.notes}` : "";
     const sim = d.simulation;
     $("td-time").hidden = !sim.model_available;
@@ -617,6 +618,32 @@ const Tracking = (() => {
         <td>${FMT.datetime(l.quote_time)} <span class="muted">(${FMT.age(l.quote_age_seconds)})</span></td>
         <td class="l">${l.flags.length ? `<span class="badge bad">${esc(l.flags.join(", "))}</span>` : '<span class="badge ok">ok</span>'}</td></tr>`).join("") + "</tbody>" +
       (perLeg ? "" : `<caption class="muted small" style="caption-side:bottom;text-align:left">${d.entry_mode === "agregado" ? "Grupo agregado: P&L só no total." : "Só o preço líquido foi informado: P&L por perna indisponível (informe o preço de cada perna para vê-lo)."}</caption>`);
+  }
+
+  // Saída pelo robô do ProfitChart ("corrigir encilhamento a mercado"): qual perna a limite.
+  function renderExit(p) {
+    if (!p) { $("td-exit").innerHTML = ""; return; }
+    if (!p.available) {
+      $("td-exit").innerHTML = `<h3>Saída pelo robô (ProfitChart)</h3><p class="muted small">Plano de saída não estimável: ${esc(p.reason)}.</p>`;
+      return;
+    }
+    const flowWord = (v) => (v > 0 ? "crédito" : "débito");
+    const row = (l, i) => {
+      const isMarket = i === p.market_leg;
+      return `<tr><td class="l">${l.action === "vender" ? "Vender" : "Comprar"}</td><td class="l">${esc(l.symbol)}</td>
+        <td class="l"><span class="badge ${isMarket ? "mid" : "ok"}">${isMarket ? "a mercado" : "a limite"}</span></td>
+        <td>${FMT.price(l.bid)}</td><td>${FMT.price(l.ask)}</td><td>${FMT.price(l.spread)}</td><td>${FMT.brl(l.cross_cost_brl)}</td>
+        <td>${isMarket ? `≈ ${FMT.price(l.market_price)} (${l.action === "vender" ? "bid" : "ask"})` : `${FMT.price(l.limit_price)} (mid)`}</td></tr>`;
+    };
+    $("td-exit").innerHTML = `<h3>Saída pelo robô (ProfitChart)</h3>
+      <p class="small">Preço da trava sugerido: <b>${FMT.price(Math.abs(p.plan_net))} de ${flowWord(p.plan_net)}</b>
+        <span class="muted">(mid ${FMT.price(Math.abs(p.mid_net))} de ${flowWord(p.mid_net)} · natural ${FMT.price(Math.abs(p.natural_net))} de ${flowWord(p.natural_net)})</span>
+        · custo contra o mid ${FMT.brl(p.cost_vs_mid_brl)} · economia contra o natural ${FMT.brl(p.saving_vs_natural_brl)}</p>
+      <div class="table-wrap"><table class="legs"><thead><tr><th class="l">Ação</th><th class="l">Ticker</th><th class="l">Ordem</th><th>Bid</th><th>Ask</th><th>Spread</th>
+        <th title="Unidades × meio spread: quanto se perde contra o mid ao cruzar o book">Custo de cruzar</th><th>Preço</th></tr></thead>
+        <tbody>${p.legs.map(row).join("")}</tbody></table></div>
+      <p class="muted small">${p.notes.map(esc).join(" · ")}. Marque "corrigir encilhamento a mercado": a perna a limite trabalha no book e, quando executar, a outra sai a mercado. Indicativo, sem garantia de execução.</p>
+      ${p.warnings.map((w) => `<div class="warn small">${esc(w)}</div>`).join("")}`;
   }
 
   // ---------- preferências ----------

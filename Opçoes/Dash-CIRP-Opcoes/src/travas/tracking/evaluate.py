@@ -6,6 +6,9 @@ Convenções (iguais às do motor de payoff):
 - P&L não realizado = valor atual + fluxo de entrada − custos de entrada.
 - "Zerar pelo natural": vende as compradas no bid e recompra as vendidas no ask (pior preço
   visível). "Pelo mid": referência, sem garantia de execução.
+- Com todas as pernas no mesmo vencimento, o valor da estrutura fica entre os extremos do payoff.
+  Um P&L natural muito fora de [−perda máx., lucro máx.] vem de book não representativo (leilão,
+  ofertas fora de preço): é omitido com aviso, em vez de exibido como prejuízo real.
 """
 
 from __future__ import annotations
@@ -16,6 +19,7 @@ import math
 import pandas as pd
 
 from travas.calendar_b3 import B3Calendar
+from travas.options.exit_plan import ExitLeg, exit_plan
 from travas.options.models import Flow, Leg, OptionType, Side, Structure
 from travas.options.payoff import net_premium
 from travas.options.simulation import business_days_until, leg_terms, profile_summary, simulate
@@ -26,6 +30,9 @@ from travas.tracking.models import ExitIn, PositionIn
 
 NEAR_EXPIRY_BUSINESS_DAYS = 2
 NET_MISMATCH_TOLERANCE = 0.005  # R$ por unidade
+# Folga além dos extremos do payoff (fração de lucro máx. + perda máx.) antes de considerar o
+# preço natural de saída fora do limite teórico; cobre o spread real em pernas muito ITM.
+OUT_OF_BOUNDS_TOLERANCE = 0.25
 
 
 class PositionError(ValueError):
@@ -185,6 +192,7 @@ def evaluate_position(
     natural_value = mid_value = 0.0
     natural_ok = mid_ok = True
     sigmas: list[float | None] = []
+    exit_legs: list[ExitLeg] = []
     for leg, lg, price in zip(structure.legs, record["legs"], prices, strict=True):
         q = quotes.loc[leg.symbol] if leg.symbol in quotes.index else None
         bid, ask, mid, last = (
@@ -225,6 +233,18 @@ def evaluate_position(
             if entry_mode == "pernas" and close_px is not None
             else None
         )
+        deals = _f(q["deals"]) if q is not None else None
+        exit_legs.append(
+            ExitLeg(
+                leg.symbol,
+                leg.side,
+                leg.units,
+                bid,
+                ask,
+                int(deals) if deals is not None else None,
+                tuple(flags),
+            )
+        )
         legs_out.append(
             {
                 **lg,
@@ -260,6 +280,16 @@ def evaluate_position(
     )
     profile = profile_summary(structure, sim, costs_entry)
     max_profit, max_loss = profile["max_profit"], profile["max_loss"]
+    out_of_bounds = _natural_out_of_bounds(structure, pnl_natural, max_profit, max_loss)
+    if out_of_bounds:
+        pnl_natural = None
+        for lo in legs_out:
+            lo["pnl_natural"] = None
+    plan = (
+        {"available": False, "reason": "book não representativo (fora do limite teórico)"}
+        if out_of_bounds
+        else exit_plan(exit_legs)
+    )
 
     model_ok = spot is not None and all(s is not None and s > 0 for s in sigmas)
     terms = leg_terms(structure, calendar, today)
@@ -280,6 +310,8 @@ def evaluate_position(
         stale = [lg["symbol"] for lg in legs_out if lg["flags"]]
         if stale:
             alerts.append(f"cotação com problema em {', '.join(stale)}: P&L pode não ser real")
+        if out_of_bounds:
+            alerts.append(out_of_bounds)
         tp, sl = record.get("take_profit_pct"), record.get("stop_loss_brl")
         target_hit = (
             tp
@@ -347,6 +379,7 @@ def evaluate_position(
         "notes": record.get("notes", ""),
         "alerts": alerts,
         "warnings": warnings,
+        "exit_plan": plan if status == "aberta" else None,
         "vol_source": "volatilidade informada" if vol_override else "IV de cada perna (mid)",
     }
     stop = sim.get("stop") or {}
@@ -360,6 +393,25 @@ def evaluate_position(
     if with_simulation:
         result["simulation"] = sim
     return result
+
+
+def _natural_out_of_bounds(
+    structure: Structure, pnl: float | None, max_profit: float | None, max_loss: float | None
+) -> str | None:
+    """Aviso se o P&L pelo natural passa dos extremos do payoff além da folga (só com um único
+    vencimento: em calendário/diagonal o valor antes do vencimento não tem esse limite)."""
+    if pnl is None or len(structure.expirations) != 1:
+        return None
+    if not all(v is not None and math.isfinite(v) for v in (max_profit, max_loss)):
+        return None
+    slack = OUT_OF_BOUNDS_TOLERANCE * (max_profit + max_loss)
+    if -max_loss - slack <= pnl <= max_profit + slack:
+        return None
+    value = f"{pnl:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    return (
+        f"zerar pelo natural daria R$ {value}, fora do limite teórico da estrutura: book não "
+        "representativo (leilão, pré-abertura ou ofertas fora de preço); P&L natural omitido"
+    )
 
 
 def _early_exercise(

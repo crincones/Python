@@ -174,6 +174,7 @@ def closing_chain(
         last=day["last"].to_numpy(dtype="float64"),
         mid=nan,
         spread_pct_mid=nan,
+        book_crossed=False,
         quote_time=pd.NaT,
         quote_age_seconds=nan,
         deals=day["deals"].fillna(0).to_numpy(dtype="int64"),

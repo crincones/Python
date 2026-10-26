@@ -297,3 +297,26 @@ def test_stop_info_feeds_the_stop_alert(chain, catalog, calendar):
     assert ev["stop_alert"] == {"enabled": True, "armed_at": "t"}
     entry = watch_entry(ev, "t")
     assert entry["down"] and entry["by_date"][ev["first_expiration"]] == pytest.approx(30.8)
+
+
+def test_natural_exit_beyond_payoff_limits_is_omitted(chain, catalog, calendar):
+    rec = {**build_record(bull_call(chain), catalog), "id": "x", "status": "aberta"}
+    short = rec["legs"][1]["symbol"]
+    absurd = chain.copy()
+    absurd.loc[short, ["ask", "px_buy"]] = 8.00  # oferta de leilão: travas de 2,00 de largura
+    ev = evaluate(rec, absurd, calendar=calendar)
+    assert ev["pnl_natural"] is None and ev["pnl_pct_of_risk"] is None
+    assert any("fora do limite teórico" in a for a in ev["alerts"])
+    assert ev["max_loss"] == pytest.approx(80.0)  # o risco no vencimento não muda
+    # Dentro do limite (book normal): o P&L natural continua exibido.
+    assert evaluate(rec, chain, calendar=calendar)["pnl_natural"] is not None
+
+
+def test_exit_plan_in_evaluation(chain, catalog, calendar):
+    rec = {**build_record(bull_call(chain), catalog), "id": "x", "status": "aberta"}
+    ev = evaluate(rec, chain, calendar=calendar)
+    plan = ev["exit_plan"]
+    assert plan["available"]
+    costs = [leg["cross_cost_brl"] for leg in plan["legs"]]
+    assert costs[plan["market_leg"]] <= costs[plan["limit_leg"]]
+    assert plan["natural_net"] * 100 == pytest.approx(ev["value_natural"])
