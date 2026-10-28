@@ -38,7 +38,8 @@ log = logging.getLogger(__name__)
 
 CALENDAR_SCOPE = "https://www.googleapis.com/auth/calendar.app.created"
 GMAIL_SCOPE = "https://www.googleapis.com/auth/gmail.send"  # alertas de stop por e-mail
-SCOPE = f"{CALENDAR_SCOPE} {GMAIL_SCOPE}"
+DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.file"  # cópia da Carteira (só arquivos do app)
+SCOPE = f"{CALENDAR_SCOPE} {GMAIL_SCOPE} {DRIVE_SCOPE}"
 API = "https://www.googleapis.com/calendar/v3"
 REVOKE_URL = "https://oauth2.googleapis.com/revoke"
 MARKER = "dashcirp"
@@ -412,6 +413,7 @@ class CalendarSync:
         self.last_sync: str | None = None
         self.last_error: str | None = None
         self.last_result: dict | None = None
+        self.on_connected: Callable[[], None] | None = None  # ex.: enviar a Carteira ao Drive
         self._thread: threading.Thread | None = None
 
     # estado persistido (id da agenda + refresh token cifrado)
@@ -472,6 +474,8 @@ class CalendarSync:
                 self._access = None
                 log.info("Google Agenda conectado")
                 self.request_sync()
+                if self.on_connected is not None:
+                    self.on_connected()
             except (GoogleCalendarError, OSError, secure_store.SecureStoreError) as exc:
                 self.last_error = str(exc)
                 log.warning("Google Agenda: conexão falhou: %s", exc)
@@ -498,8 +502,12 @@ class CalendarSync:
         state = self._read_state()
         return "refresh_token" in state and GMAIL_SCOPE in state.get("scopes", "").split()
 
+    def drive_ready(self) -> bool:
+        state = self._read_state()
+        return "refresh_token" in state and DRIVE_SCOPE in state.get("scopes", "").split()
+
     def access_token(self) -> str:
-        """Access token da conexão (agenda e, se concedido, gmail.send)."""
+        """Access token da conexão (agenda e, se concedidos, gmail.send e drive.file)."""
         return self._token()
 
     def server_credentials(self) -> dict | None:

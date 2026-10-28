@@ -22,6 +22,7 @@ SETTINGS = load_settings()
 SETTINGS = SETTINGS.model_copy(
     update={
         "google_calendar": SETTINGS.google_calendar.model_copy(update={"enabled": False}),
+        "google_drive": SETTINGS.google_drive.model_copy(update={"enabled": False}),
         "alerts": SETTINGS.alerts.model_copy(update={"enabled": False, "server_url": None}),
     }
 )

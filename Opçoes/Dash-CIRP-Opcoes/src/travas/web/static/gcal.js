@@ -21,7 +21,7 @@ const Gcal = (() => {
     } else if (s.connecting) {
       body = `<span class="muted">aguardando a autorização no navegador (faça login no Google e permita o acesso)…</span>`;
     } else if (!s.connected) {
-      body = `<button id="gcal-connect">Conectar Google (Agenda e e-mail)</button>`;
+      body = `<button id="gcal-connect">Conectar Google (Agenda, e-mail e Drive)</button>`;
     } else {
       const r = s.last_result;
       const sync = s.last_sync ? `sincronizado ${FMT.datetime(s.last_sync)}${r ? ` · ${r.events} evento(s)${r.created || r.updated || r.deleted ? ` (+${r.created} ~${r.updated} −${r.deleted})` : ""}` : ""}` : "sincronizando…";

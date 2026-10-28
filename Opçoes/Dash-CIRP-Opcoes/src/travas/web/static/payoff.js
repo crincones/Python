@@ -198,6 +198,16 @@ const Payoff = (() => {
         const exit = (showModel ? lerp(ym) : ve) - sim.entry_cash + (sim.costs || 0);
         const word = Math.abs(exit) < 0.005 ? "zero a zero" : exit > 0 ? `recebe ${FMT.brl(exit)}` : `paga ${FMT.brl(-exit)}`;
         html += `<br>Para zerar ${showModel ? `em ${FMT.date(sel.date)}` : "no vencimento"}: ${word}`;
+        // Fração do valor de saída no vencimento (mesmo preço do ativo) capturada saindo na data.
+        if (showModel) {
+          const exitExp = ve - sim.entry_cash + (sim.costs || 0);
+          const scale = Math.max(...ye) - Math.min(...ye);
+          if (Math.abs(exitExp) > 0.01 * scale && exit * exitExp >= 0) {
+            html += `<br>Saindo em ${FMT.date(sel.date)}: <b>${FMT.pct(exit / exitExp)}</b> do valor no vencimento (${FMT.brl(Math.abs(exitExp))})`;
+          } else {
+            html += `<br>% do valor no vencimento: — (valor no vencimento ≈ zero ou de sinal oposto)`;
+          }
+        }
       }
       tooltip.innerHTML = html;
       tooltip.hidden = false;

@@ -55,6 +55,7 @@ const Tracking = (() => {
   function activate() {
     setup();
     Gcal.refresh();
+    Gdrive.refresh();
     Alerts.refresh();
     if (!st.data && !st.loading) refresh();
   }
@@ -96,6 +97,7 @@ const Tracking = (() => {
       $("trk-refresh").disabled = false;
       if (st.again) refresh();
       setTimeout(() => Gcal.refresh(), 4000); // mudanças nas estruturas sincronizam a agenda
+      setTimeout(() => Gdrive.refresh(), 8000); // e enviam a Carteira ao Drive (após a espera)
       setTimeout(() => Alerts.refresh(), 4000); // lista vigiada enviada ao servidor em 2º plano
     }
   }
@@ -658,5 +660,5 @@ const Tracking = (() => {
     setAuto();
   }
 
-  return { activate, prefs, applyPrefs, prefillFromAnalysis };
+  return { activate, refresh, prefs, applyPrefs, prefillFromAnalysis };
 })();

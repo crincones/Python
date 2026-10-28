@@ -53,6 +53,7 @@ class PathSettings(_Strict):
     icons_dir: Path
     snapshots_dir: Path = Path("data/snapshots")
     google_calendar_file: Path = Path("data/google_agenda.json")  # id da agenda + token cifrado
+    google_drive_file: Path = Path("data/google_drive.json")  # ids da pasta/arquivos no Drive
     alert_contacts_file: Path = Path("telegram-token.txt")  # bot, chat id e e-mail (fora do git)
     alerts_sent_file: Path = Path("data/alertas_stop.json")  # alertas já enviados pelo app
 
@@ -216,6 +217,16 @@ class GoogleCalendarSettings(_Strict):
     sync_minutes: PositiveFloat = 30
 
 
+class GoogleDriveSettings(_Strict):
+    """Cópia da Carteira e dos favoritos no Google Drive (ver tracking/gdrive.py)."""
+
+    enabled: bool = True
+    folder_name: str = "Dash CIRP – Carteira"
+    daily_history: bool = True  # também uma cópia por dia na subpasta "Histórico"
+    sync_minutes: PositiveFloat = 60
+    debounce_seconds: NonNegativeFloat = 5
+
+
 class ProtectedWeights(_Strict):
     floor: NonNegativeFloat  # retorno mínimo (piso) ÷ CDI do período
     unchanged: NonNegativeFloat  # retorno com o ativo parado ÷ CDI
@@ -280,6 +291,7 @@ class Settings(_Strict):
     snapshots: SnapshotSettings
     credit_stop: CreditStopSettings
     google_calendar: GoogleCalendarSettings = GoogleCalendarSettings()
+    google_drive: GoogleDriveSettings = GoogleDriveSettings()
     alerts: AlertSettings = AlertSettings()
     vol_premium: VolPremiumSettings = VolPremiumSettings()
 

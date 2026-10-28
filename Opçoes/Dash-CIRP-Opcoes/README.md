@@ -338,6 +338,36 @@ sincronização roda a cada mudança na Carteira, ao abrir o app e a cada 30 min
   agenda é a fonte da verdade (duplicados e eventos de estruturas encerradas são apagados).
 - Os testes automáticos rodam com a agenda desligada e nunca acessam a sua conta.
 
+### Google Drive (cópia da Carteira)
+
+Com a mesma conexão Google, o app guarda uma cópia de `data/acompanhamento.json` (estruturas
+**abertas e encerradas**) e de `data/favoritos.json` na pasta **"Dash CIRP – Carteira"** do seu
+Drive, a cada mudança na Carteira (após 5 s, para juntar gravações seguidas) e a cada 60 min. Só
+envia o que mudou (sha256). A pasta tem a versão atual de cada arquivo (o Drive guarda as
+revisões anteriores) e a subpasta **Histórico** tem uma cópia por dia
+(`acompanhamento_AAAA-MM-DD.json`, a última do dia). O app nunca apaga nada no Drive.
+
+- Permissão mínima: `drive.file`, em que o app só enxerga os arquivos que ele criou, nunca o resto
+  do Drive. É preciso ativar a **Google Drive API** no mesmo projeto do Cloud Console e, para
+  quem já tinha conectado, **reconectar uma vez** (botão no quadro "Google Drive" da Carteira).
+- O arquivo local continua sendo o principal; o Drive é cópia de segurança.
+- **Recuperação (computador formatado ou instalação nova):** coloque o mesmo `client_secret*.json`
+  e conecte o Google. O app **reaproveita a pasta que já existe** (não cria outra) e **baixa
+  sozinho** a Carteira e os favoritos que faltarem no computador; agenda e alertas são refeitos.
+  Isso exige o **mesmo projeto do Google Cloud**: com `drive.file` o app só enxerga o que foi
+  criado por ele. Guarde o `client_secret*.json` e o `telegram-token.txt` fora do computador
+  (gerenciador de senhas ou pendrive), porque eles não estão no git nem no Drive.
+- Se o computador já tiver uma Carteira **diferente** da do Drive, a versão do Drive é copiada
+  para Histórico como `acompanhamento_substituido_AAAA-MM-DD_HHMMSS.json` antes de ser
+  sobrescrita. Nada se perde.
+- **Restaurar do Drive…** (quadro do Drive na Carteira): escolha a versão atual ou uma cópia do
+  Histórico e confirme com um segundo clique. O arquivo local é guardado antes como
+  `acompanhamento.pre-restauracao.bak`.
+- Ids da pasta/arquivos e hashes do último envio em `data/google_drive.json` (sem credenciais).
+  Se a pasta for apagada ou ficar na lixeira, o app cria outra e reenvia tudo.
+- Configuração em `google_drive` no `config/settings.yaml` (`enabled`, nome da pasta, histórico
+  diário, intervalo). Os testes automáticos rodam com o Drive desligado.
+
 ### Alertas de stop 1:1 (Telegram + e-mail)
 
 Na tabela da Carteira, a coluna **Stop 1:1 🔔** mostra, para cada estrutura aberta, o preço

@@ -122,6 +122,16 @@ google_calendar:
     - {business_days_before: 0, time: "12:00"}
   sync_minutes: 30                # além de sincronizar a cada mudança na Carteira
 
+# Cópia da Carteira (abertas e encerradas) e dos favoritos no Google Drive, pela mesma conexão
+# Google (escopo drive.file: o app só vê os arquivos que ele criou). O arquivo local continua
+# sendo o principal; o Drive recebe a versão atual (com revisões) e uma cópia por dia.
+google_drive:
+  enabled: true
+  folder_name: "Dash CIRP – Carteira"
+  daily_history: true             # subpasta "Histórico": acompanhamento_AAAA-MM-DD.json
+  sync_minutes: 60                # além de enviar a cada mudança na Carteira
+  debounce_seconds: 5             # espera para juntar gravações seguidas num envio só
+
 # Alertas de stop 1:1 (Carteira, checkbox por estrutura aberta): Telegram + e-mail quando o
 # ativo alcança o preço em que o prejuízo iguala o lucro máximo. Contatos em telegram-token.txt
 # (fora do git); e-mail pela Gmail API da conexão Google (escopo gmail.send). O app checa quando

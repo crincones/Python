@@ -21,6 +21,7 @@ from pydantic import BaseModel, Field, field_validator
 from travas.alerts.service import StopAlerts
 from travas.api.alerts_routes import alerts_router
 from travas.api.calendar_routes import calendar_router
+from travas.api.drive_routes import drive_router
 from travas.api.heatmap_routes import heatmap_router
 from travas.api.liquidity_routes import liquidity_router
 from travas.api.protected_routes import protected_router
@@ -45,6 +46,7 @@ from travas.options.models import Direction, Flow
 from travas.settings import PROJECT_ROOT, Settings
 from travas.timeutils import LOCAL_TIMEZONE
 from travas.tracking.gcal import CalendarSync
+from travas.tracking.gdrive import DriveBackup
 from travas.tracking.store import TrackingStore
 from travas.watchlist.store import WatchlistStore
 
@@ -165,16 +167,27 @@ def create_app(
         gcal,
     )
 
-    def _on_change() -> None:  # criar/editar/encerrar/excluir → agenda e lista vigiada
+    drive = DriveBackup(
+        settings.google_drive,
+        settings.paths.google_drive_file,
+        [settings.paths.tracking_file, settings.paths.watchlist_file],
+        gcal,
+    )
+    gcal.on_connected = drive.request_sync
+
+    def _on_change() -> None:  # criar/editar/encerrar/excluir → agenda, lista vigiada e Drive
         gcal.request_sync()
         alerts.request_sync()
+        drive.request_sync()
 
     store.on_change = _on_change
+    drive.on_restored = _on_change  # Carteira restaurada do Drive: agenda e alertas refeitos
 
     @asynccontextmanager
     async def lifespan(_: FastAPI):
         service.connect_in_background()
         gcal.start()
+        drive.start()
         yield
         service.close()
 
@@ -246,6 +259,7 @@ def create_app(
     app.include_router(heatmap_router(settings, service, clean))
     app.include_router(watchlist_router(watchlist))
     app.include_router(calendar_router(gcal))
+    app.include_router(drive_router(drive))
     liquidity = OptionsLiquidity(
         settings.paths.quotes_dir.parent / "b3" / "negocios", service.calendar, service.instruments
     )
